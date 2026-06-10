@@ -1,0 +1,213 @@
+    const inSel = (x, y) => !sel || (x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1 && (!selMask || selMask.has(x + ',' + y)));
+    function setCell(x, y, c) {
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return; // выделение работает как маска
+      const g = G(); g[y][x] = c ? c.slice() : null;
+      const mx = W - 1 - x, my = H - 1 - y;
+      if (sym && mx !== x && inSel(mx, y)) g[y][mx] = c ? c.slice() : null;
+      if (symH && my !== y && inSel(x, my)) g[my][x] = c ? c.slice() : null;
+      if (sym && symH && mx !== x && my !== y && inSel(mx, my)) g[my][mx] = c ? c.slice() : null;
+      markDirty(cur);
+    }
+    function pickAt(gx, gy) { if (gx < 0 || gy < 0 || gx >= W || gy >= H) return;
+      const c = compositeAt(gx, gy); if (!c) return;
+      active = c.slice(); $('picker').value = '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+      refreshActive(); buildPalette(); toast('Цвет подобран'); }
+    function ppVisit(x, y) { // пиксель-перфект: при Г-образном уголке убираем средний пиксель
+      if (!ppOn || !stroke) return;
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return;
+      const last = ppPath[ppPath.length - 1];
+      if (last && last[0] === x && last[1] === y) return;
+      const g = G(), k = y * W + x;
+      if (!ppOrig.has(k)) ppOrig.set(k, g[y][x] ? g[y][x].slice() : null);
+      const keep = (xx, yy) => { const kk = yy * W + xx; if (!ppOrig.has(kk)) ppOrig.set(kk, g[yy][xx] ? g[yy][xx].slice() : null); };
+      if (sym) keep(W - 1 - x, y);
+      if (symH) keep(x, H - 1 - y);
+      if (sym && symH) keep(W - 1 - x, H - 1 - y);
+      ppPath.push([x, y]);
+      const n = ppPath.length;
+      if (n < 3) return;
+      const A = ppPath[n - 3], B = ppPath[n - 2], C = ppPath[n - 1];
+      const o1 = Math.abs(A[0] - B[0]) + Math.abs(A[1] - B[1]) === 1, o2 = Math.abs(B[0] - C[0]) + Math.abs(B[1] - C[1]) === 1;
+      if (o1 && o2 && A[0] !== C[0] && A[1] !== C[1]) {
+        const undoAt = (xx, yy) => { const mv = ppOrig.get(yy * W + xx); g[yy][xx] = mv ? mv.slice() : null; };
+        undoAt(B[0], B[1]);
+        if (sym) undoAt(W - 1 - B[0], B[1]);
+        if (symH) undoAt(B[0], H - 1 - B[1]);
+        if (sym && symH) undoAt(W - 1 - B[0], H - 1 - B[1]);
+        markDirty(cur); ppPath.splice(n - 2, 1);
+      }
+    }
+    function paintCell(x, y, erase) { // кисть с прозрачностью и альфа-смешиванием
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return;
+      const br = brushes[erase ? 'eraser' : 'pencil'], o = br.op, g = G(), key = y * W + x;
+      if (o < 1) { if (strokeSeen.has(key)) return; strokeSeen.add(key); }
+      const dst = g[y][x];
+      if (erase) {
+        if (o >= 1) g[y][x] = null;
+        else if (dst) { const a1 = ((dst.length > 3 ? dst[3] : 255) / 255) * (1 - o);
+          g[y][x] = a1 < .04 ? null : [dst[0], dst[1], dst[2], Math.round(a1 * 255)]; }
+      } else {
+        const s = active;
+        if (o >= 1) g[y][x] = [s[0], s[1], s[2], 255];
+        else if (!dst) g[y][x] = [s[0], s[1], s[2], Math.round(o * 255)];
+        else { const a0 = (dst.length > 3 ? dst[3] : 255) / 255, oa = o + a0 * (1 - o);
+          const f = (sc, dc) => Math.round((sc * o + dc * a0 * (1 - o)) / oa);
+          g[y][x] = [f(s[0], dst[0]), f(s[1], dst[1]), f(s[2], dst[2]), Math.round(oa * 255)]; }
+      }
+      markDirty(cur);
+    }
+    function brushStamp(x, y, erase) {
+      const s = brushes[erase ? 'eraser' : 'pencil'].size, off = s >> 1;
+      if (s === 1) ppVisit(x, y);
+      for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) { const xx = x - off + dx, yy = y - off + dy;
+        paintCell(xx, yy, erase);
+        const mx = W - 1 - xx, my = H - 1 - yy;
+        if (sym && mx !== xx) paintCell(mx, yy, erase);
+        if (symH && my !== yy) paintCell(xx, my, erase);
+        if (sym && symH && mx !== xx && my !== yy) paintCell(mx, my, erase); }
+    }
+    function stamp(x, y) {
+      if (tool === 'select') return;
+      if (tool === 'pencil' || tool === 'line') brushStamp(x, y, false);
+      else if (tool === 'eraser') brushStamp(x, y, true);
+      else if (tool === 'pick') { pickAt(x, y); setTool('pencil'); }
+      else if (tool === 'fill') flood(x, y);
+    }
+    function commitLine() { const lp = linePrev; linePrev = null; lineStart = null;
+      if (!lp) { render(); return; }
+      snapshot(); line(lp[0], lp[1], lp[2], lp[3]); render(); afterStroke(); }
+    function smoothPt(e) { // стабилизация: сглаживаем точку ввода
+      if (!stabOn) return [e.clientX, e.clientY];
+      if (!stabPt) { stabPt = { x: e.clientX, y: e.clientY }; return [e.clientX, e.clientY]; }
+      stabPt.x += (e.clientX - stabPt.x) * .35; stabPt.y += (e.clientY - stabPt.y) * .35;
+      return [stabPt.x, stabPt.y]; }
+    function bres(x0, y0, x1, y1, cb) { // Брезенхем — без дырок на быстром штрихе
+      let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+      for (;;) { cb(x0, y0); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+    }
+    const line = (x0, y0, x1, y1) => bres(x0, y0, x1, y1, stamp);
+    function flood(x, y) {
+      if (x < 0 || y < 0 || x >= W || y >= H) return;
+      const g = G(), target = g[y][x], to = active;
+      if (eqc(target, to)) return;
+      const st = [[x, y]];
+      while (st.length) { const [cx, cy] = st.pop(); if (cx < 0 || cy < 0 || cx >= W || cy >= H || !inSel(cx, cy)) continue;
+        const c = g[cy][cx]; if (!(eqc(c, target) || (!c && !target))) continue;
+        setCell(cx, cy, to); st.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); }
+    }
+    function expandCanvas(pl, pt, pr, pb) { // добавить пустые ряды/колонки по краям (во все слои)
+      if (!(pl || pt || pr || pb)) return;
+      W += pl + pr; H += pt + pb;
+      for (const L of layers) { const g = L.grid, out = [];
+        for (let y = 0; y < H; y++) { const row = new Array(W).fill(null);
+          const sy = y - pt; if (sy >= 0 && sy < g.length) for (let x = 0; x < g[sy].length; x++) row[x + pl] = g[sy][x];
+          out.push(row); }
+        const ne = new Map(); // запасные пиксели за краем: сдвигаем и впитываем попавшие в холст
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) + pl, ay = +k.slice(ci + 1) + pt;
+          if (ax >= 0 && ay >= 0 && ax < W && ay < H) out[ay][ax] = c; else ne.set(ax + ',' + ay, c); }
+        L.grid = out; L.ext = ne; }
+      view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
+      sel = null; syncSelbar(); dirtyAll(); }
+    function openOutlinePop() { $('brushpop').classList.remove('on');
+      const v = '#' + active.map((q) => q.toString(16).padStart(2, '0')).join('');
+      $('out-col').value = v; $('out-colsw').style.background = v;
+      $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
+      $('out-op').value = Math.round(outSet.op * 100); $('out-opv').textContent = Math.round(outSet.op * 100) + '%';
+      $('outpop').classList.toggle('on'); }
+    function outlineLayer() { // обводка: толщина, свой цвет, прозрачность
+      outSet.size = +$('out-size').value; outSet.op = +$('out-op').value / 100;
+      const col = hexToRgb($('out-col').value), a = Math.round(outSet.op * 255);
+      snapshot(); let added = 0;
+      const n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+      for (let pass = 0; pass < outSet.size; pass++) {
+        let g = G(), pl = 0, pt = 0, pr = 0, pb = 0; // рисунок у края — раздвигаем холст под обводку
+        for (let x = 0; x < W; x++) { if (g[0][x]) pt = 1; if (g[H - 1][x]) pb = 1; }
+        for (let y = 0; y < H; y++) { if (g[y][0]) pl = 1; if (g[y][W - 1]) pr = 1; }
+        expandCanvas(pl, pt, pr, pb); g = G();
+        const out = cloneGrid(g);
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (g[y][x]) continue;
+          let near = false;
+          for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= W || y2 >= H) continue; if (g[y2][x2]) { near = true; break; } }
+          if (near) { out[y][x] = [col[0], col[1], col[2], a]; added++; } }
+        layers[cur].grid = out; markDirty(cur);
+      }
+      if (!added) { restore(undoStack.pop()); toast('На слое нечего обводить'); return; }
+      $('outpop').classList.remove('on'); render(); layList(); toast('Обводка нанесена');
+    }
+    let cropMode = null, cropDrag = null; // интерактивный кроп: рамка с маркерами
+    function applyCropRect(x0, y0, x1, y1) { // рект может выходить за холст — тогда холст расширяется
+      snapshot();
+      const nw = x1 - x0 + 1, nh = y1 - y0 + 1;
+      for (const L of layers) { const ne = new Map();
+        const out = Array.from({ length: nh }, () => new Array(nw).fill(null));
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; if (!c) continue;
+          const nx2 = x - x0, ny2 = y - y0;
+          if (nx2 >= 0 && ny2 >= 0 && nx2 < nw && ny2 < nh) out[ny2][nx2] = c;
+          else ne.set(nx2 + ',' + ny2, c); } // отрезанное не теряем
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) - x0, ay = +k.slice(ci + 1) - y0;
+          if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; }
+          else ne.set(ax + ',' + ay, c); }
+        L.grid = out; L.ext = ne; }
+      W = nw; H = nh; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Холст: ${W}×${H}`);
+    }
+    let cropSym = false;
+    function toggleCrop() { if (cropMode) { cancelCrop(); return; }
+      cropMode = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, idx: 0, idy: 0 }
+        : { x0: 0, y0: 0, x1: W - 1, y1: H - 1, idx: 0, idy: 0 };
+      deselect(); $('crop').classList.add('on'); $('cropbar').classList.add('on'); render();
+      toast('Грани наружу — расширить · внутри — сдвиг рисунка · ✓/Enter'); }
+    function cancelCrop() { cropMode = null; cropDrag = null; cv.style.cursor = '';
+      $('crop').classList.remove('on'); $('cropbar').classList.remove('on'); render(); }
+    function applyCrop() { if (!cropMode) return; const c = cropMode; cancelCrop();
+      if (c.x0 === 0 && c.y0 === 0 && c.x1 === W - 1 && c.y1 === H - 1 && !c.idx && !c.idy) { toast('Размер не менялся'); return; }
+      applyCropRect(c.x0 - c.idx, c.y0 - c.idy, c.x1 - c.idx, c.y1 - c.idy); } // сдвиг рисунка = рамка наоборот
+    function cropZone(e) { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+      const z = view.zoom, lx = view.ox + cropMode.x0 * z, rx = view.ox + (cropMode.x1 + 1) * z,
+        ty = view.oy + cropMode.y0 * z, by = view.oy + (cropMode.y1 + 1) * z, tol = 24;
+      const nl = Math.abs(px - lx) < tol, nr = Math.abs(px - rx) < tol, nt = Math.abs(py - ty) < tol, nb = Math.abs(py - by) < tol;
+      const inX = px > lx - tol && px < rx + tol, inY = py > ty - tol && py < by + tol;
+      return { l: nl && inY, r: nr && inY, t: nt && inX, b: nb && inX, inside: px > lx && px < rx && py > ty && py < by }; }
+    function cropCursor(zn) { const h = zn.l || zn.r, v = zn.t || zn.b;
+      if (h && v) return ((zn.l && zn.t) || (zn.r && zn.b)) ? 'nwse-resize' : 'nesw-resize';
+      if (h) return 'ew-resize'; if (v) return 'ns-resize'; return zn.inside ? 'move' : ''; }
+    function cropDown(e) { const zn = cropZone(e);
+      if (zn.l || zn.r || zn.t || zn.b) cropDrag = { l: zn.l, r: zn.r, t: zn.t, b: zn.b,
+        cx: (cropMode.x0 + cropMode.x1) / 2, cy: (cropMode.y0 + cropMode.y1) / 2 };
+      else if (zn.inside) { const r = cv.getBoundingClientRect(); // внутри рамки — двигаем сам рисунок
+        cropDrag = { img: true, gx: (e.clientX - r.left - view.ox) / view.zoom, gy: (e.clientY - r.top - view.oy) / view.zoom }; }
+      else cropDrag = null; }
+    function cropMovePt(e) { if (!cropDrag || !cropMode) return; const r = cv.getBoundingClientRect(), z = view.zoom;
+      const MAXC = 640, c = cropMode;
+      const fx = (e.clientX - r.left - view.ox) / z, fy = (e.clientY - r.top - view.oy) / z;
+      if (cropDrag.img) { const dx = Math.round(fx - cropDrag.gx), dy = Math.round(fy - cropDrag.gy);
+        if (dx || dy) { c.idx += dx; c.idy += dy; cropDrag.gx += dx; cropDrag.gy += dy; } }
+      else { const symm = cropSym || e.shiftKey; // от центра — симметрично
+        if (cropDrag.l) { c.x0 = Math.min(c.x1, Math.round(fx)); if (symm) c.x1 = Math.round(2 * cropDrag.cx - c.x0); }
+        if (cropDrag.r) { c.x1 = Math.max(c.x0, Math.round(fx) - 1); if (symm) c.x0 = Math.round(2 * cropDrag.cx - c.x1); }
+        if (cropDrag.t) { c.y0 = Math.min(c.y1, Math.round(fy)); if (symm) c.y1 = Math.round(2 * cropDrag.cy - c.y0); }
+        if (cropDrag.b) { c.y1 = Math.max(c.y0, Math.round(fy) - 1); if (symm) c.y0 = Math.round(2 * cropDrag.cy - c.y1); }
+        if (c.x1 - c.x0 + 1 > MAXC) { if (cropDrag.l) c.x0 = c.x1 - MAXC + 1; else c.x1 = c.x0 + MAXC - 1; }
+        if (c.y1 - c.y0 + 1 > MAXC) { if (cropDrag.t) c.y0 = c.y1 - MAXC + 1; else c.y1 = c.y0 + MAXC - 1; } }
+      render(); }
+    function rotateCanvas() { // поворот всего холста на 90° по часовой
+      snapshot();
+      for (const L of layers) { const g = L.grid, out = [];
+        for (let x = 0; x < W; x++) { const row = []; for (let y = H - 1; y >= 0; y--) row.push(g[y][x]); out.push(row); } L.grid = out;
+        const ne = new Map();
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1); ne.set((H - 1 - ay) + ',' + ax, c); }
+        L.ext = ne; }
+      const t = W; W = H; H = t; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast('Поворот 90°');
+    }
+    function flipLayer(horiz) { // отражение активного слоя
+      snapshot(); const L = layers[cur], g = L.grid;
+      if (horiz) for (const r of g) r.reverse(); else g.reverse();
+      const ne = new Map();
+      for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1);
+        ne.set(horiz ? (W - 1 - ax) + ',' + ay : ax + ',' + (H - 1 - ay), c); }
+      L.ext = ne;
+      markDirty(cur); render(); afterStroke(); toast(horiz ? 'Отражено по горизонтали' : 'Отражено по вертикали');
+    }
+    function clearLayer() { const L = layers[cur]; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
+      snapshot(); L.grid = blank(W, H); L.ext = new Map(); markDirty(cur); render(); afterStroke(); return true; }
+
+    // ---- выделение прямоугольником: рамка, перенос изнутри, маска для рисования ----
