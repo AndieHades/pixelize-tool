@@ -152,8 +152,8 @@
     }
     let cropSym = false;
     function toggleCrop() { if (cropMode) { cancelCrop(); return; }
-      cropMode = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, idx: 0, idy: 0 }
-        : { x0: 0, y0: 0, x1: W - 1, y1: H - 1, idx: 0, idy: 0 };
+      const b = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1 } : { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+      cropMode = { ...b, idx: 0, idy: 0, b }; // b — стартовая рамка для подсчёта дельт по граням
       deselect(); $('crop').classList.add('on'); $('cropbar').classList.add('on'); render();
       toast('Грани наружу — расширить · внутри — сдвиг рисунка · ✓/Enter'); }
     function cancelCrop() { cropMode = null; cropDrag = null; cv.style.cursor = '';

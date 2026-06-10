@@ -106,7 +106,14 @@
       syncStatus(); syncPrev();
     }
     function syncStatus() { let s = W + '×' + H + ' px';
-      if (cropMode) s += ' · кроп ' + (cropMode.x1 - cropMode.x0 + 1) + '×' + (cropMode.y1 - cropMode.y0 + 1);
+      if (cropMode) { const c = cropMode, b = c.b || c;
+        s += ' · кроп ' + (c.x1 - c.x0 + 1) + '×' + (c.y1 - c.y0 + 1);
+        const fmt = (d) => (d > 0 ? '+' + d : d), parts = []; // + наружу (расширил), − внутрь (обрезал)
+        const dl = b.x0 - c.x0, dr = c.x1 - b.x1, dt = b.y0 - c.y0, db = c.y1 - b.y1;
+        if (dl) parts.push('←' + fmt(dl)); if (dr) parts.push('→' + fmt(dr));
+        if (dt) parts.push('↑' + fmt(dt)); if (db) parts.push('↓' + fmt(db));
+        if (parts.length) s += '  ' + parts.join(' ');
+        if (c.idx || c.idy) s += ' · сдвиг ' + c.idx + ',' + c.idy; }
       else if (sel) s += ' · выдел. ' + (sel.x1 - sel.x0 + 1) + '×' + (sel.y1 - sel.y0 + 1);
       const el = $('status'); if (el.textContent !== s) el.textContent = s; }
 
