@@ -1,6 +1,6 @@
 /* global self, caches, fetch */
 // Service worker: офлайн-кеш приложения (cache-first для статики, фолбэк на index.html).
-const CACHE = 'pixel-editor-v2';
+const CACHE = 'pixel-editor-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

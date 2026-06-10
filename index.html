@@ -172,9 +172,17 @@
       .sheet { border-radius: 20px; padding-bottom: 18px; width: 480px; }
       #lay-pop { width: 300px; top: calc(env(safe-area-inset-top, 0px) + 70px); }
     }
+    @media (max-width: 430px) {
+      #topbar { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+      .tb-group { gap: 3px; }
+      button { width: 38px; height: 38px; }
+      button svg { width: 21px; height: 21px; }
+      .tb-sep { margin: 0 2px; }
+      #activewrap { width: 33px; height: 33px; margin-left: 2px; }
+    }
     @media (max-width: 374px) {
       button { width: 35px; height: 35px; }
-      button svg { width: 20px; height: 20px; }
+      button svg { width: 19px; height: 19px; }
     }
   </style>
 </head>
@@ -237,7 +245,7 @@
     <h3>Импорт в пиксель-арт</h3>
     <canvas id="imp-prev"></canvas>
     <div class="irow"><label>Цвета палитры</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
-    <div class="irow"><label>Размер ячейки</label><input id="imp-cell" type="number" min="0" max="64" step="1" value="0" inputmode="numeric" /><span class="hint">0 = авто</span></div>
+    <div class="irow"><label>Детализация</label><input id="imp-cell" type="range" min="0" max="128" step="4" value="0" /><b id="imp-cellv">Авто</b></div>
     <div class="irow"><label>Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
     <div class="irow"><label>Чистка мусора</label><span class="hint">битые пиксели и дырки</span><label class="switch"><input id="imp-clean" type="checkbox" /><span></span></label></div>
     <div class="irow"><label>Симметрия</label><span class="hint">останется при рисовании</span><label class="switch"><input id="imp-sym" type="checkbox" /><span></span></label></div>
@@ -299,7 +307,15 @@
       const isBg = Array.from({ length: ny }, () => new Array(nx).fill(false)), st = [];
       for (let x = 0; x < nx; x++) st.push([x, 0], [x, ny - 1]); for (let y = 0; y < ny; y++) st.push([0, y], [nx - 1, y]);
       while (st.length) { const [x, y] = st.pop(); if (x < 0 || y < 0 || x >= nx || y >= ny || isBg[y][x] || !near(g[y][x])) continue; isBg[y][x] = true; st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); } return isBg; }
-    function sampleGrid(im, cell, bgTol) { const cw = cell || detectPeriod(edgeEnergy(im, 0)), ch = cell || detectPeriod(edgeEnergy(im, 1)), nx = Math.round(im.w / cw), ny = Math.round(im.h / ch), full = [];
+    function sampleGrid(im, cell, bgTol) {
+      let cw, ch;
+      if (cell) { cw = cell; ch = cell; }
+      else if (Math.max(im.w, im.h) <= 256) { cw = 1; ch = 1; } // файл в родном разрешении — берём 1:1, холст = размер картинки
+      else { cw = detectPeriod(edgeEnergy(im, 0)); ch = detectPeriod(edgeEnergy(im, 1));
+        // поиск периода имеет смысл только для скриншотов пиксель-арта; если сетка вышла
+        // слишком грубой — это обычное фото, целимся в ~64 клетки по большой стороне
+        if (Math.max(im.w / cw, im.h / ch) < 32) { cw = ch = Math.max(im.w, im.h) / 64; } }
+      const nx = Math.max(1, Math.round(im.w / cw)), ny = Math.max(1, Math.round(im.h / ch)), full = [];
       for (let j = 0; j < ny; j++) { const row = []; for (let i = 0; i < nx; i++) row.push(cellColor(im, i * im.w / nx, j * im.h / ny, (i + 1) * im.w / nx, (j + 1) * im.h / ny)); full.push(row); }
       const isBg = floodBackground(full, nx, ny, bgTol), grid = [], samples = [];
       for (let j = 0; j < ny; j++) { const row = []; for (let i = 0; i < nx; i++) { if (isBg[j][i]) row.push(null); else { row.push(full[j][i]); samples.push(full[j][i]); } } grid.push(row); } return { grid, samples, nx, ny }; }
@@ -575,7 +591,8 @@
     }
     function impConvert() {
       if (!impData) return;
-      const colors = +$('imp-colors').value, cell = +$('imp-cell').value || 0, bgtol = +$('imp-bgtol').value;
+      const colors = +$('imp-colors').value, detail = +$('imp-cell').value, bgtol = +$('imp-bgtol').value;
+      const cell = detail > 0 ? impData.width / detail : 0; // «Детализация» = ширина результата в клетках
       const r = sampleGrid({ w: impData.width, h: impData.height, ch: 4, data: impData.data }, cell, bgtol);
       let g = r.grid;
       if (colors > 0 && r.samples.length) { const pal = medianCut(r.samples, colors); g = g.map((row) => row.map((c) => (c ? nearest(c, pal) : null))); }
@@ -637,7 +654,7 @@
 
     ['imp-colors', 'imp-bgtol'].forEach((id) => { const el = $(id), out = $(id + 'v');
       el.addEventListener('input', () => { if (out) out.textContent = el.value; impSoon(); }); });
-    $('imp-cell').addEventListener('input', impSoon);
+    $('imp-cell').addEventListener('input', () => { const v = +$('imp-cell').value; $('imp-cellv').textContent = v ? v : 'Авто'; impSoon(); });
     ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
     $('imp-apply').onclick = applyImport;
     $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
