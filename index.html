@@ -90,7 +90,8 @@
     #lay-pop.on { display: block; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
     .pop-head { display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 8px 10px 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
+      padding: 10px 8px 10px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
+      cursor: grab; touch-action: none; }
     .pop-head button { width: 34px; height: 34px; background: rgba(255, 255, 255, .08); }
     #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; }
     .lrow { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; cursor: pointer; }
@@ -205,6 +206,21 @@
     #cctx button.dim { opacity: .45; }
     .cctx-head { color: var(--txt2); font-size: 12px; padding: 6px 12px 2px; }
     .sw.drop { box-shadow: 0 0 0 2px var(--accent); }
+    .sw.plus { background: transparent; border: 1.5px dashed var(--txt2); color: var(--txt2); display: grid; place-items: center; }
+    .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .dragging { opacity: .4; }
+
+    /* ---- попапы настроек инструментов ---- */
+    .toolpop { position: fixed; left: 50%; transform: translateX(-50%);
+      top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 16; display: none; flex-direction: column;
+      width: min(92vw, 330px); padding: 10px 16px 14px; background: var(--panel-solid);
+      border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+    .toolpop.on { display: flex; }
+    .bp-head { font-weight: 700; padding: 4px 0 6px; }
+    .outcolwrap { position: relative; width: 42px; height: 32px; margin-left: auto; }
+    .outcolwrap input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
+    .outcolwrap span { display: block; width: 100%; height: 100%; border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .25); pointer-events: none; background: #ff7a18; }
 
     /* ---- статус-бар ---- */
     #status { position: fixed; left: max(8px, env(safe-area-inset-left, 0px));
@@ -214,6 +230,8 @@
 
     @media (max-width: 430px) {
       #topbar { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+      #tb-right { overflow-x: auto; scrollbar-width: none; }
+      #tb-right::-webkit-scrollbar { display: none; }
       .tb-group { gap: 3px; }
       .tb-sep { display: none; }
       button { width: 35px; height: 35px; }
@@ -230,18 +248,19 @@
   <canvas id="cv"></canvas>
 
   <header id="topbar">
-    <div class="tb-group">
+    <div class="tb-group" id="tb-left">
       <button id="new" title="Новый холст (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
       <button id="imp" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
       <button id="exp" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
     </div>
-    <div class="tb-group">
+    <div class="tb-group" id="tb-right">
       <button id="t-pencil" class="on" title="Карандаш (B)"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
       <button id="t-eraser" title="Ластик (E)"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
       <button id="t-fill" title="Заливка (F)"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
       <button id="t-pick" title="Пипетка (I, пробел, Alt+клик)"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
+      <button id="t-line" title="Линия (U)"><svg viewBox="0 0 24 24"><path d="M5.5 18.5L18.5 5.5"/><circle cx="5.5" cy="18.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="5.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
       <button id="t-select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
-      <div class="tb-sep"></div>
+      <div class="tb-sep" id="tb-sep1"></div>
       <button id="layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
       <label id="activewrap" title="Цвет"><input id="picker" type="color" value="#ff7a18" /><span id="active"></span></label>
     </div>
@@ -251,12 +270,13 @@
     <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
     <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
     <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
-    <div class="sb-sep"></div>
+    <div class="sb-sep" id="sb-sep1"></div>
     <button id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
     <button id="redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
-    <div class="sb-sep"></div>
+    <div class="sb-sep" id="sb-sep2"></div>
     <button id="sym" title="Симметрия (S)"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
     <button id="pp" class="on" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
+    <button id="stab" class="on" title="Стабилизация штриха (T)"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
     <button id="outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
     <button id="flip-h" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
     <button id="flip-v" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
@@ -265,8 +285,22 @@
   </aside>
 
   <div id="cropbar">
+    <button id="crop-sym" title="От центра (или зажми Shift)"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
     <button id="crop-ok" title="Применить кроп (Enter)"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
     <button id="crop-cancel" title="Отмена (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+
+  <div id="brushpop" class="toolpop">
+    <div class="bp-head" id="bp-title">Кисть</div>
+    <div class="irow"><label>Размер</label><input id="bp-size" type="range" min="1" max="8" step="1" value="1" /><b id="bp-sizev">1</b></div>
+    <div class="irow"><label>Непрозр.</label><input id="bp-op" type="range" min="10" max="100" step="5" value="100" /><b id="bp-opv">100%</b></div>
+  </div>
+  <div id="outpop" class="toolpop">
+    <div class="bp-head">Обводка</div>
+    <div class="irow"><label>Толщина</label><input id="out-size" type="range" min="1" max="4" step="1" value="1" /><b id="out-sizev">1</b></div>
+    <div class="irow"><label>Непрозр.</label><input id="out-op" type="range" min="10" max="100" step="5" value="100" /><b id="out-opv">100%</b></div>
+    <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="out-col" type="color" value="#ff7a18" /><span id="out-colsw"></span></label></div>
+    <div class="iact"><button id="out-apply" class="txtbtn primary">Обвести</button></div>
   </div>
 
   <div id="status">32×32 px</div>
@@ -286,8 +320,8 @@
   </div>
 
   <div id="lay-pop">
-    <div class="pop-head"><span>Слои</span>
-      <button id="lay-add" title="Новый слой"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+    <div class="pop-head" id="lay-head"><span>Слои</span>
+      <button id="lay-add" title="Новый слой (Ctrl+A)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
     </div>
     <div id="lay-list"></div>
     <div class="lay-ops">
@@ -327,6 +361,7 @@
   <div id="imp-ovl" class="ovl"><div id="imp-box" class="sheet">
     <h3>Импорт в пиксель-арт</h3>
     <canvas id="imp-prev"></canvas>
+    <div class="irow"><label>Поворот</label><button id="imp-rot" class="txtbtn" style="height:40px">⟳ 90°</button><span class="hint">до симметрии</span></div>
     <div class="irow"><label>Цвета палитры</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
     <div class="irow"><label>Детализация</label><input id="imp-cell" type="range" min="0" max="128" step="4" value="0" /><b id="imp-cellv">Авто</b></div>
     <div class="irow"><label>Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
@@ -373,6 +408,11 @@
     let sel = null, selFloat = null, selDrag = null, selDirect = false, selHinted = false;
     let replaceMode = null, palDrag = null, swHold = null, swX = 0, swY = 0, ctxIdx = -1, replFrom = null;
     let ppOn = true, ppPath = [], ppOrig = new Map(); // пиксель-перфект: чистим Г-образные уголки штриха
+    let stabOn = true, stabPt = null; // стабилизация штриха
+    let lineStart = null, linePrev = null; // инструмент «линия»
+    const brushes = { pencil: { size: 1, op: 1 }, eraser: { size: 1, op: 1 } };
+    const outSet = { size: 1, op: 1 };
+    const strokeSeen = new Set(); // чтобы полупрозрачная кисть не красила клетку дважды за штрих
     const view = { zoom: 12, ox: 0, oy: 0 };
     const undoStack = [], redoStack = [];
 
@@ -446,12 +486,12 @@
       if (c.width !== W || c.height !== H) { c.width = W; c.height = H; dirtySet.add(i); }
       if (dirtySet.has(i)) { const x = c.getContext('2d'), id = x.createImageData(W, H), g = layers[i].grid;
         for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) { const cc = g[y][xx]; if (!cc) continue;
-          const o = (y * W + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = 255; }
+          const o = (y * W + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
         x.putImageData(id, 0, 0); dirtySet.delete(i); }
       return c; }
     function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue; const c = L.grid[y] && L.grid[y][x]; if (!c) continue;
-        const la = L.opacity; r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
+        const la = L.opacity * (c.length > 3 ? c[3] / 255 : 1); r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
       return a > 0.02 ? [Math.round(r), Math.round(g), Math.round(b)] : null; }
 
     function render() {
@@ -466,8 +506,9 @@
         ctx.fillStyle = ((x + y) & 1) ? '#222228' : '#1a1a20';
         ctx.fillRect(ox + x * z, oy + y * z, z, z);
       }
+      const iox = cropMode ? cropMode.idx * z : 0, ioy = cropMode ? cropMode.idy * z : 0; // сдвиг рисунка в кроп-режиме
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-        ctx.globalAlpha = L.opacity; ctx.drawImage(layerCanvas(i), ox, oy, W * z, H * z); }
+        ctx.globalAlpha = L.opacity; ctx.drawImage(layerCanvas(i), ox + iox, oy + ioy, W * z, H * z); }
       ctx.globalAlpha = 1;
       if (z >= 7) {
         ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1; ctx.beginPath();
@@ -477,6 +518,14 @@
       }
       if (sym) { const ax = ox + (W / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
+      if (linePrev) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(active); // превью линии
+        const s = brushes.pencil.size, off = s >> 1;
+        bres(linePrev[0], linePrev[1], linePrev[2], linePrev[3], (px2, py2) => {
+          for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
+            const xx = px2 - off + dx2, yy = py2 - off + dy2;
+            ctx.fillRect(ox + xx * z, oy + yy * z, z, z);
+            if (sym) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z); } });
+        ctx.globalAlpha = 1; }
       if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
         ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }
       if (sel) { const sx = ox + sel.x0 * z, sy = oy + sel.y0 * z, sw = (sel.x1 - sel.x0 + 1) * z, sh = (sel.y1 - sel.y0 + 1) * z;
@@ -523,7 +572,7 @@
     const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
     function snapState() { return { cur, W, H, folderSeq, folders: folders.map((f) => ({ ...f })),
       layers: layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, ext: new Map(L.ext), grid: cloneGrid(L.grid) })) }; }
-    function snapshot() { undoStack.push(snapState()); if (undoStack.length > 30) undoStack.shift(); redoStack.length = 0; }
+    function snapshot() { undoStack.push(snapState()); if (undoStack.length > 30) undoStack.shift(); redoStack.length = 0; strokeSeen.clear(); }
     function restore(s) { W = s.W; H = s.H; layers = s.layers; folders = s.folders; folderSeq = s.folderSeq;
       cur = Math.min(s.cur, layers.length - 1); marked.clear(); dirtyAll(); layList(); render(); }
     function doUndo() { if (!undoStack.length) { toast('Нечего отменять'); return; }
@@ -561,17 +610,52 @@
         markDirty(cur); ppPath.splice(n - 2, 1);
       }
     }
+    function paintCell(x, y, erase) { // кисть с прозрачностью и альфа-смешиванием
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return;
+      const br = brushes[erase ? 'eraser' : 'pencil'], o = br.op, g = G(), key = y * W + x;
+      if (o < 1) { if (strokeSeen.has(key)) return; strokeSeen.add(key); }
+      const dst = g[y][x];
+      if (erase) {
+        if (o >= 1) g[y][x] = null;
+        else if (dst) { const a1 = ((dst.length > 3 ? dst[3] : 255) / 255) * (1 - o);
+          g[y][x] = a1 < .04 ? null : [dst[0], dst[1], dst[2], Math.round(a1 * 255)]; }
+      } else {
+        const s = active;
+        if (o >= 1) g[y][x] = [s[0], s[1], s[2], 255];
+        else if (!dst) g[y][x] = [s[0], s[1], s[2], Math.round(o * 255)];
+        else { const a0 = (dst.length > 3 ? dst[3] : 255) / 255, oa = o + a0 * (1 - o);
+          const f = (sc, dc) => Math.round((sc * o + dc * a0 * (1 - o)) / oa);
+          g[y][x] = [f(s[0], dst[0]), f(s[1], dst[1]), f(s[2], dst[2]), Math.round(oa * 255)]; }
+      }
+      markDirty(cur);
+    }
+    function brushStamp(x, y, erase) {
+      const s = brushes[erase ? 'eraser' : 'pencil'].size, off = s >> 1;
+      if (s === 1) ppVisit(x, y);
+      for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) { const xx = x - off + dx, yy = y - off + dy;
+        paintCell(xx, yy, erase);
+        if (sym) { const mx = W - 1 - xx; if (mx !== xx) paintCell(mx, yy, erase); } }
+    }
     function stamp(x, y) {
       if (tool === 'select') return;
-      if (tool === 'pencil') { ppVisit(x, y); setCell(x, y, active); }
-      else if (tool === 'eraser') { ppVisit(x, y); setCell(x, y, null); }
+      if (tool === 'pencil' || tool === 'line') brushStamp(x, y, false);
+      else if (tool === 'eraser') brushStamp(x, y, true);
       else if (tool === 'pick') { pickAt(x, y); setTool('pencil'); }
       else if (tool === 'fill') flood(x, y);
     }
-    function line(x0, y0, x1, y1) { // Брезенхем — без дырок на быстром штрихе
+    function commitLine() { const lp = linePrev; linePrev = null; lineStart = null;
+      if (!lp) { render(); return; }
+      snapshot(); line(lp[0], lp[1], lp[2], lp[3]); render(); afterStroke(); }
+    function smoothPt(e) { // стабилизация: сглаживаем точку ввода
+      if (!stabOn) return [e.clientX, e.clientY];
+      if (!stabPt) { stabPt = { x: e.clientX, y: e.clientY }; return [e.clientX, e.clientY]; }
+      stabPt.x += (e.clientX - stabPt.x) * .35; stabPt.y += (e.clientY - stabPt.y) * .35;
+      return [stabPt.x, stabPt.y]; }
+    function bres(x0, y0, x1, y1, cb) { // Брезенхем — без дырок на быстром штрихе
       let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
-      for (;;) { stamp(x0, y0); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+      for (;;) { cb(x0, y0); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
     }
+    const line = (x0, y0, x1, y1) => bres(x0, y0, x1, y1, stamp);
     function flood(x, y) {
       if (x < 0 || y < 0 || x >= W || y >= H) return;
       const g = G(), target = g[y][x], to = active;
@@ -594,59 +678,86 @@
         L.grid = out; L.ext = ne; }
       view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
       sel = null; syncSelbar(); dirtyAll(); }
-    function outlineLayer() { // обводка контура активного слоя активным цветом
-      snapshot();
-      let g = G(), pl = 0, pt = 0, pr = 0, pb = 0; // рисунок у края — раздвигаем холст под обводку
-      for (let x = 0; x < W; x++) { if (g[0][x]) pt = 1; if (g[H - 1][x]) pb = 1; }
-      for (let y = 0; y < H; y++) { if (g[y][0]) pl = 1; if (g[y][W - 1]) pr = 1; }
-      expandCanvas(pl, pt, pr, pb); g = G();
+    function openOutlinePop() { $('brushpop').classList.remove('on');
+      const v = '#' + active.map((q) => q.toString(16).padStart(2, '0')).join('');
+      $('out-col').value = v; $('out-colsw').style.background = v;
+      $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
+      $('out-op').value = Math.round(outSet.op * 100); $('out-opv').textContent = Math.round(outSet.op * 100) + '%';
+      $('outpop').classList.toggle('on'); }
+    function outlineLayer() { // обводка: толщина, свой цвет, прозрачность
+      outSet.size = +$('out-size').value; outSet.op = +$('out-op').value / 100;
+      const col = hexToRgb($('out-col').value), a = Math.round(outSet.op * 255);
+      snapshot(); let added = 0;
       const n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-      const out = cloneGrid(g); let added = 0;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (g[y][x]) continue;
-        let near = false;
-        for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= W || y2 >= H) continue; if (g[y2][x2]) { near = true; break; } }
-        if (near) { out[y][x] = active.slice(); added++; } }
+      for (let pass = 0; pass < outSet.size; pass++) {
+        let g = G(), pl = 0, pt = 0, pr = 0, pb = 0; // рисунок у края — раздвигаем холст под обводку
+        for (let x = 0; x < W; x++) { if (g[0][x]) pt = 1; if (g[H - 1][x]) pb = 1; }
+        for (let y = 0; y < H; y++) { if (g[y][0]) pl = 1; if (g[y][W - 1]) pr = 1; }
+        expandCanvas(pl, pt, pr, pb); g = G();
+        const out = cloneGrid(g);
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (g[y][x]) continue;
+          let near = false;
+          for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= W || y2 >= H) continue; if (g[y2][x2]) { near = true; break; } }
+          if (near) { out[y][x] = [col[0], col[1], col[2], a]; added++; } }
+        layers[cur].grid = out; markDirty(cur);
+      }
       if (!added) { restore(undoStack.pop()); toast('На слое нечего обводить'); return; }
-      layers[cur].grid = out; markDirty(cur); render(); layList(); toast('Обводка нанесена');
+      $('outpop').classList.remove('on'); render(); layList(); toast('Обводка нанесена');
     }
     let cropMode = null, cropDrag = null; // интерактивный кроп: рамка с маркерами
-    function applyCropRect(x0, y0, x1, y1) {
+    function applyCropRect(x0, y0, x1, y1) { // рект может выходить за холст — тогда холст расширяется
       snapshot();
+      const nw = x1 - x0 + 1, nh = y1 - y0 + 1;
       for (const L of layers) { const ne = new Map();
-        for (const [k, c] of L.ext) { const ci = k.indexOf(','); ne.set((+k.slice(0, ci) - x0) + ',' + (+k.slice(ci + 1) - y0), c); }
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; // отрезанное не теряем
-          if (c && (x < x0 || x > x1 || y < y0 || y > y1)) ne.set((x - x0) + ',' + (y - y0), c); }
-        L.grid = L.grid.slice(y0, y1 + 1).map((r) => r.slice(x0, x1 + 1)); L.ext = ne; }
-      W = x1 - x0 + 1; H = y1 - y0 + 1; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Обрезано: ${W}×${H}`);
+        const out = Array.from({ length: nh }, () => new Array(nw).fill(null));
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; if (!c) continue;
+          const nx2 = x - x0, ny2 = y - y0;
+          if (nx2 >= 0 && ny2 >= 0 && nx2 < nw && ny2 < nh) out[ny2][nx2] = c;
+          else ne.set(nx2 + ',' + ny2, c); } // отрезанное не теряем
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) - x0, ay = +k.slice(ci + 1) - y0;
+          if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; }
+          else ne.set(ax + ',' + ay, c); }
+        L.grid = out; L.ext = ne; }
+      W = nw; H = nh; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Холст: ${W}×${H}`);
     }
+    let cropSym = false;
     function toggleCrop() { if (cropMode) { cancelCrop(); return; }
-      cropMode = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1 } : { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+      cropMode = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, idx: 0, idy: 0 }
+        : { x0: 0, y0: 0, x1: W - 1, y1: H - 1, idx: 0, idy: 0 };
       deselect(); $('crop').classList.add('on'); $('cropbar').classList.add('on'); render();
-      toast('Потяни рамку за маркеры → ✓ или Enter'); }
-    function cancelCrop() { cropMode = null; cropDrag = null; $('crop').classList.remove('on'); $('cropbar').classList.remove('on'); render(); }
+      toast('Грани наружу — расширить · внутри — сдвиг рисунка · ✓/Enter'); }
+    function cancelCrop() { cropMode = null; cropDrag = null; cv.style.cursor = '';
+      $('crop').classList.remove('on'); $('cropbar').classList.remove('on'); render(); }
     function applyCrop() { if (!cropMode) return; const c = cropMode; cancelCrop();
-      if (c.x0 === 0 && c.y0 === 0 && c.x1 === W - 1 && c.y1 === H - 1) { toast('Размер не менялся'); return; }
-      applyCropRect(c.x0, c.y0, c.x1, c.y1); }
-    function cropDown(e) { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+      if (c.x0 === 0 && c.y0 === 0 && c.x1 === W - 1 && c.y1 === H - 1 && !c.idx && !c.idy) { toast('Размер не менялся'); return; }
+      applyCropRect(c.x0 - c.idx, c.y0 - c.idy, c.x1 - c.idx, c.y1 - c.idy); } // сдвиг рисунка = рамка наоборот
+    function cropZone(e) { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
       const z = view.zoom, lx = view.ox + cropMode.x0 * z, rx = view.ox + (cropMode.x1 + 1) * z,
         ty = view.oy + cropMode.y0 * z, by = view.oy + (cropMode.y1 + 1) * z, tol = 24;
       const nl = Math.abs(px - lx) < tol, nr = Math.abs(px - rx) < tol, nt = Math.abs(py - ty) < tol, nb = Math.abs(py - by) < tol;
       const inX = px > lx - tol && px < rx + tol, inY = py > ty - tol && py < by + tol;
-      cropDrag = { l: nl && inY, r: nr && inY, t: nt && inX, b: nb && inX };
-      if (!(cropDrag.l || cropDrag.r || cropDrag.t || cropDrag.b)) {
-        if (px > lx && px < rx && py > ty && py < by) cropDrag = { move: true, gx: (px - view.ox) / z, gy: (py - view.oy) / z };
-        else cropDrag = null; } }
+      return { l: nl && inY, r: nr && inY, t: nt && inX, b: nb && inX, inside: px > lx && px < rx && py > ty && py < by }; }
+    function cropCursor(zn) { const h = zn.l || zn.r, v = zn.t || zn.b;
+      if (h && v) return ((zn.l && zn.t) || (zn.r && zn.b)) ? 'nwse-resize' : 'nesw-resize';
+      if (h) return 'ew-resize'; if (v) return 'ns-resize'; return zn.inside ? 'move' : ''; }
+    function cropDown(e) { const zn = cropZone(e);
+      if (zn.l || zn.r || zn.t || zn.b) cropDrag = { l: zn.l, r: zn.r, t: zn.t, b: zn.b,
+        cx: (cropMode.x0 + cropMode.x1) / 2, cy: (cropMode.y0 + cropMode.y1) / 2 };
+      else if (zn.inside) { const r = cv.getBoundingClientRect(); // внутри рамки — двигаем сам рисунок
+        cropDrag = { img: true, gx: (e.clientX - r.left - view.ox) / view.zoom, gy: (e.clientY - r.top - view.oy) / view.zoom }; }
+      else cropDrag = null; }
     function cropMovePt(e) { if (!cropDrag || !cropMode) return; const r = cv.getBoundingClientRect(), z = view.zoom;
-      const fx = (e.clientX - r.left - view.ox) / z, fy = (e.clientY - r.top - view.oy) / z, c = cropMode;
-      if (cropDrag.move) { const dx = Math.round(fx - cropDrag.gx), dy = Math.round(fy - cropDrag.gy);
-        if (dx || dy) { const w = c.x1 - c.x0, h = c.y1 - c.y0;
-          c.x0 = Math.max(0, Math.min(W - 1 - w, c.x0 + dx)); c.x1 = c.x0 + w;
-          c.y0 = Math.max(0, Math.min(H - 1 - h, c.y0 + dy)); c.y1 = c.y0 + h;
-          cropDrag.gx = fx; cropDrag.gy = fy; } }
-      else { if (cropDrag.l) c.x0 = Math.max(0, Math.min(c.x1, Math.round(fx)));
-        if (cropDrag.r) c.x1 = Math.min(W - 1, Math.max(c.x0, Math.round(fx) - 1));
-        if (cropDrag.t) c.y0 = Math.max(0, Math.min(c.y1, Math.round(fy)));
-        if (cropDrag.b) c.y1 = Math.min(H - 1, Math.max(c.y0, Math.round(fy) - 1)); }
+      const MAXC = 512, c = cropMode;
+      const fx = (e.clientX - r.left - view.ox) / z, fy = (e.clientY - r.top - view.oy) / z;
+      if (cropDrag.img) { const dx = Math.round(fx - cropDrag.gx), dy = Math.round(fy - cropDrag.gy);
+        if (dx || dy) { c.idx += dx; c.idy += dy; cropDrag.gx += dx; cropDrag.gy += dy; } }
+      else { const symm = cropSym || e.shiftKey; // от центра — симметрично
+        if (cropDrag.l) { c.x0 = Math.min(c.x1, Math.round(fx)); if (symm) c.x1 = Math.round(2 * cropDrag.cx - c.x0); }
+        if (cropDrag.r) { c.x1 = Math.max(c.x0, Math.round(fx) - 1); if (symm) c.x0 = Math.round(2 * cropDrag.cx - c.x1); }
+        if (cropDrag.t) { c.y0 = Math.min(c.y1, Math.round(fy)); if (symm) c.y1 = Math.round(2 * cropDrag.cy - c.y0); }
+        if (cropDrag.b) { c.y1 = Math.max(c.y0, Math.round(fy) - 1); if (symm) c.y0 = Math.round(2 * cropDrag.cy - c.y1); }
+        if (c.x1 - c.x0 + 1 > MAXC) { if (cropDrag.l) c.x0 = c.x1 - MAXC + 1; else c.x1 = c.x0 + MAXC - 1; }
+        if (c.y1 - c.y0 + 1 > MAXC) { if (cropDrag.t) c.y0 = c.y1 - MAXC + 1; else c.y1 = c.y0 + MAXC - 1; } }
       render(); }
     function rotateCanvas() { // поворот всего холста на 90° по часовой
       snapshot();
@@ -738,9 +849,12 @@
     function cancelStroke() { if (!stroke) return; if (undoStack.length) restore(undoStack.pop()); stroke = false; last = null; }
     function afterStroke() { if ($('lay-pop').classList.contains('on')) layList(); }
 
-    let penActive = false, directDrawing = false, directLast = null;
+    let penActive = false, directDrawing = false, directLast = null, rdrag = null;
     function directDown(e) {
-      if (e.pointerType === 'mouse' && e.button !== 0) return; // ПКМ/СКМ не рисуют
+      if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) { // ПКМ/СКМ: драг — пан, тап ПКМ — меню слоёв
+        cv.setPointerCapture(e.pointerId);
+        rdrag = { x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy, moved: false, btn: e.button }; return; }
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       cv.setPointerCapture(e.pointerId); if (e.pointerType === 'pen') penActive = true;
       const [gx, gy] = toGrid(e);
       if (cropMode) { cropDown(e); return; }
@@ -748,18 +862,30 @@
       if (tool === 'select') { selDown(gx, gy); selDirect = true; return; }
       if (tool === 'pick') { pickAt(gx, gy); setTool('pencil'); return; }
       if (tool === 'fill') { snapshot(); stamp(gx, gy); render(); afterStroke(); return; }
-      beginStroke(); stamp(gx, gy); directLast = [gx, gy]; directDrawing = true; render();
+      if (tool === 'line') { lineStart = [gx, gy]; linePrev = [gx, gy, gx, gy]; directDrawing = true; render(); return; }
+      beginStroke(); stabPt = { x: e.clientX, y: e.clientY }; stamp(gx, gy); directLast = [gx, gy]; directDrawing = true; render();
     }
-    function directMove(e) { if (cropDrag) { cropMovePt(e); return; }
+    function directMove(e) {
+      if (rdrag) { const dx = e.clientX - rdrag.x, dy = e.clientY - rdrag.y;
+        if (Math.hypot(dx, dy) > 6) rdrag.moved = true;
+        if (rdrag.moved) { view.ox = rdrag.ox + dx; view.oy = rdrag.oy + dy; render(); } return; }
+      if (cropDrag) { cropMovePt(e); return; }
+      if (cropMode) { if (e.pointerType === 'mouse') cv.style.cursor = cropCursor(cropZone(e)); return; } // курсор-подсказка на гранях
       if (selDirect) { const [gx, gy] = toGrid(e); selMove(gx, gy); return; }
-      if (!directDrawing) return; const [gx, gy] = toGrid(e); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
-    function directUp(e) { if (e.pointerType === 'pen') penActive = false; cropDrag = null;
+      if (directDrawing && tool === 'line') { const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return; }
+      if (!directDrawing) return;
+      const [sx2, sy2] = smoothPt(e), pt = { clientX: sx2, clientY: sy2 };
+      const [gx, gy] = toGrid(pt); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
+    function directUp(e) { if (e.pointerType === 'pen') penActive = false; stabPt = null;
+      if (rdrag) { if (!rdrag.moved && rdrag.btn === 2) openLayerMenu(e.clientX, e.clientY); rdrag = null; return; }
+      cropDrag = null;
       if (selDirect) { selUp(); selDirect = false; }
+      if (directDrawing && tool === 'line' && linePrev) commitLine();
       directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
     cv.addEventListener('pointerdown', (e) => {
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
-      if ($('lay-pop').classList.contains('on')) { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); }
+      $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); // панель слоёв НЕ закрываем — можно рисовать с открытой
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -783,9 +909,14 @@
         if (!selDrag) { const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); selDown(sx0, sy0); }
         const [gx, gy] = toGrid(e); selMove(gx, gy); return;
       }
+      if (gMoved && !gHeld && tool === 'line') {
+        if (!lineStart) lineStart = toGrid({ clientX: gDownX, clientY: gDownY });
+        const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return;
+      }
       if (gMoved && !gHeld && (tool === 'pencil' || tool === 'eraser')) {
-        if (!stroke) { beginStroke(); const [sx, sy] = toGrid({ clientX: gDownX, clientY: gDownY }); stamp(sx, sy); last = [sx, sy]; }
-        const [gx, gy] = toGrid(e); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render();
+        if (!stroke) { beginStroke(); stabPt = { x: gDownX, y: gDownY }; const [sx, sy] = toGrid({ clientX: gDownX, clientY: gDownY }); stamp(sx, sy); last = [sx, sy]; }
+        const [px2, py2] = smoothPt(e);
+        const [gx, gy] = toGrid({ clientX: px2, clientY: py2 }); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render();
       }
     });
     function endPtr(e) {
@@ -795,8 +926,10 @@
       clearTimeout(gHoldTimer);
       if (ptrs.size > 0) { if (ptrs.size < 2) pinch = null; return; }
       const dur = performance.now() - gT0;
+      stabPt = null;
       if (cropMode) { cropDrag = null; }
       else if (selDrag) selUp();
+      else if (linePrev) commitLine();
       else if (stroke) { stroke = false; afterStroke(); }
       else if (gHeld) { /* цвет уже выбран удержанием */ }
       else if (!gMoved && dur < 350) {
@@ -825,7 +958,8 @@
       view.zoom = Math.max(1, Math.min(48, view.zoom * f)); view.ox = cw - wx * view.zoom; view.oy = chh - wy * view.zoom; render(); }
 
     // ---- палитра / инструменты ----
-    function setTool(t) { tool = t; for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select']) $('t-' + id).classList.toggle('on', id === t); }
+    function setTool(t) { tool = t; lineStart = null; linePrev = null;
+      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line']) $('t-' + id).classList.toggle('on', id === t); render(); }
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
       $('palgrip').textContent = 'Палитра · ' + palette.length;
@@ -853,7 +987,11 @@
           if (d.moved) { if (d.to !== d.from) { const [m] = palette.splice(d.from, 1); palette.splice(d.to, 0, m); buildPalette(); } }
           else if (e.type === 'pointerup') openCtx(e.clientX, e.clientY, d.from); };
         b.addEventListener('pointerup', endSw); b.addEventListener('pointercancel', endSw);
-        box.appendChild(b); }); }
+        box.appendChild(b); });
+      const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить цвет';
+      add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+      add.addEventListener('click', () => $('picker').click());
+      box.appendChild(add); }
     function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
     function recolorAll(from, to) { // заменить цвет на всех слоях и в палитре
       snapshot(); let n = 0;
@@ -930,8 +1068,12 @@
       syncOp();
     }
     function syncOp() { const v = Math.round(layers[cur].opacity * 100); $('lay-op').value = v; $('lay-opv').textContent = v + '%'; }
-    const mergeCells = (b, t, op) => !t ? (b ? b.slice() : null) : (!b || op >= 0.999) ? t.slice()
-      : [Math.round(t[0] * op + b[0] * (1 - op)), Math.round(t[1] * op + b[1] * (1 - op)), Math.round(t[2] * op + b[2] * (1 - op))];
+    const mergeCells = (b, t, op) => { if (!t) return b ? b.slice() : null;
+      const ta = op * (t.length > 3 ? t[3] / 255 : 1);
+      if (!b) return [t[0], t[1], t[2], Math.round(ta * 255)];
+      const ba = b.length > 3 ? b[3] / 255 : 1, oa = ta + ba * (1 - ta);
+      const f = (sc, dc) => Math.round((sc * ta + dc * ba * (1 - ta)) / oa);
+      return [f(t[0], b[0]), f(t[1], b[1]), f(t[2], b[2]), Math.round(oa * 255)]; };
     function doMerge() { // слить отмеченные (или активный с нижним)
       let idx = [...marked].sort((a, b) => a - b);
       if (idx.length < 2) { if (cur > 0) idx = [cur - 1, cur]; else { toast('Отметь 2+ слоя галочками'); return; } }
@@ -977,9 +1119,23 @@
         folders = folders.filter((x) => x !== f); layList(); render(); toast('Папка расформирована'); } };
     $('layers').addEventListener('click', () => { const p = $('lay-pop'); const on = p.classList.toggle('on');
       $('layers').classList.toggle('on', on); if (on) layList(); });
-    $('lay-add').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
+    function doAddLayer() { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
       snapshot(); const nl = newLayer('Слой ' + (++layerSeq)); nl.fid = layers[cur].fid;
-      layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render(); });
+      layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render(); }
+    $('lay-add').addEventListener('click', doAddLayer);
+    (function layWin() { // панель слоёв можно перетащить за шапку и оставить открытой
+      const p = $('lay-pop'), head = $('lay-head'); let d = null;
+      head.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
+        head.setPointerCapture(e.pointerId); const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+      head.addEventListener('pointermove', (e) => { if (!d) return;
+        p.style.left = Math.max(4, Math.min(e.clientX - d.dx, innerWidth - 90)) + 'px';
+        p.style.top = Math.max(4, Math.min(e.clientY - d.dy, innerHeight - 60)) + 'px'; p.style.right = 'auto'; });
+      const end = () => { if (!d) return; d = null;
+        const r = p.getBoundingClientRect(); try { localStorage.setItem('laywin', JSON.stringify({ l: r.left, t: r.top })); } catch (err) {} };
+      head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
+      try { const s = JSON.parse(localStorage.getItem('laywin'));
+        if (s && s.l != null) { p.style.left = Math.max(4, Math.min(s.l, innerWidth - 90)) + 'px'; p.style.top = Math.max(4, Math.min(s.t, innerHeight - 60)) + 'px'; p.style.right = 'auto'; } } catch (err) {}
+    })();
     $('lay-dup').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
       snapshot(); const L = layers[cur];
       layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
@@ -1026,6 +1182,13 @@
       impGrid = g; drawTo($('imp-prev'), g, r.nx, r.ny);
     }
     const impSoon = () => { clearTimeout(impTimer); impTimer = setTimeout(impConvert, 60); };
+    function rotateImp() { // поворот исходника на 90° до конвертации (симметрия применится после)
+      if (!impData) return;
+      const w = impData.width, h = impData.height;
+      const a = document.createElement('canvas'); a.width = w; a.height = h; a.getContext('2d').putImageData(impData, 0, 0);
+      const b2 = document.createElement('canvas'); b2.width = h; b2.height = w;
+      const x = b2.getContext('2d'); x.translate(h, 0); x.rotate(Math.PI / 2); x.drawImage(a, 0, 0);
+      impData = x.getImageData(0, 0, h, w); impConvert(); }
     function drawTo(cvp, g, nx, ny) {
       const dpr = window.devicePixelRatio || 1, cw = cvp.clientWidth, chh = cvp.clientHeight;
       if (cvp.width !== Math.round(cw * dpr)) { cvp.width = Math.round(cw * dpr); cvp.height = Math.round(chh * dpr); }
@@ -1063,21 +1226,37 @@
       const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); }, 'image/png'); }
 
     // ---- проводка UI ----
-    $('t-pencil').onclick = () => setTool('pencil'); $('t-eraser').onclick = () => setTool('eraser');
+    let bpTool = 'pencil';
+    function openBrushPop(t) { bpTool = t; $('bp-title').textContent = t === 'eraser' ? 'Ластик' : 'Кисть';
+      const br = brushes[bpTool]; $('bp-size').value = br.size; $('bp-sizev').textContent = br.size;
+      $('bp-op').value = Math.round(br.op * 100); $('bp-opv').textContent = Math.round(br.op * 100) + '%';
+      $('outpop').classList.remove('on'); $('brushpop').classList.toggle('on'); }
+    $('bp-size').addEventListener('input', () => { brushes[bpTool].size = +$('bp-size').value; $('bp-sizev').textContent = $('bp-size').value; });
+    $('bp-op').addEventListener('input', () => { brushes[bpTool].op = +$('bp-op').value / 100; $('bp-opv').textContent = $('bp-op').value + '%'; });
+    $('t-pencil').onclick = () => { if (tool === 'pencil') openBrushPop('pencil'); else setTool('pencil'); };
+    $('t-eraser').onclick = () => { if (tool === 'eraser') openBrushPop('eraser'); else setTool('eraser'); };
+    $('t-line').onclick = () => { if (tool === 'line') openBrushPop('pencil'); else setTool('line'); };
     $('t-pick').onclick = () => setTool('pick'); $('t-fill').onclick = () => setTool('fill');
     $('t-select').onclick = () => setTool('select');
+    $('out-apply').onclick = outlineLayer;
+    $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; });
+    $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; });
+    $('out-col').addEventListener('input', () => { $('out-colsw').style.background = $('out-col').value; });
+    $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? 'Кроп от центра' : 'Кроп от грани'); };
+    $('stab').onclick = () => { stabOn = !stabOn; $('stab').classList.toggle('on', stabOn); toast(stabOn ? 'Стабилизация включена' : 'Стабилизация выключена'); };
     $('sel-copy').onclick = doCopy; $('sel-cut').onclick = doCut; $('sel-paste').onclick = doPaste;
     $('sel-del').onclick = doDelete; $('sel-off').onclick = deselect;
     $('sym').onclick = () => { sym = !sym; $('sym').classList.toggle('on', sym); render(); toast(sym ? 'Симметрия включена' : 'Симметрия выключена'); };
     $('pp').onclick = () => { ppOn = !ppOn; $('pp').classList.toggle('on', ppOn); toast(ppOn ? 'Пиксель-перфект включён' : 'Пиксель-перфект выключен'); };
-    $('outline').onclick = outlineLayer;
+    $('outline').onclick = openOutlinePop;
     $('flip-h').onclick = () => flipLayer(true);
     $('flip-v').onclick = () => flipLayer(false);
     $('rot').onclick = rotateCanvas;
     $('crop').onclick = toggleCrop;
     $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
-    cv.addEventListener('contextmenu', (e) => { e.preventDefault(); // ПКМ по холсту — выбор слоя
+    cv.addEventListener('contextmenu', (e) => e.preventDefault());
+    function openLayerMenu(px, py) { // тап ПКМ по холсту — выбор слоя
       const m = $('cctx'); m.innerHTML = '';
       const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Слой:'; m.appendChild(head);
       for (let i = layers.length - 1; i >= 0; i--) { const b = document.createElement('button');
@@ -1086,9 +1265,9 @@
         m.appendChild(b); }
       m.style.visibility = 'hidden'; m.classList.add('on');
       requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-        m.style.left = Math.max(8, Math.min(e.clientX, innerWidth - r.width - 8)) + 'px';
-        m.style.top = Math.max(8, Math.min(e.clientY, innerHeight - r.height - 8)) + 'px';
-        m.style.visibility = ''; }); });
+        m.style.left = Math.max(8, Math.min(px, innerWidth - r.width - 8)) + 'px';
+        m.style.top = Math.max(8, Math.min(py, innerHeight - r.height - 8)) + 'px';
+        m.style.visibility = ''; }); }
 
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
     //      H/V — флипы, R или Ctrl+T — поворот, C — кроп, N — новый, +/−/0 — зум,
@@ -1107,6 +1286,7 @@
         else if (c === 'KeyD') { e.preventDefault(); deselect(); }
         else if (c === 'KeyE') { e.preventDefault(); doMerge(); }
         else if (c === 'KeyG') { e.preventDefault(); doGroup(); }
+        else if (c === 'KeyA') { e.preventDefault(); doAddLayer(); }
         else if (c === 'KeyT') { e.preventDefault(); rotateCanvas(); }
         else if (c === 'KeyO') { e.preventDefault(); $('file').click(); }
         else if (c === 'KeyS') { e.preventDefault(); exportPng(); }
@@ -1116,7 +1296,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
-          $('ctx').classList.remove('on'); $('lctx').classList.remove('on'); $('cctx').classList.remove('on'); deselect(); } }
+          for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
@@ -1126,7 +1306,9 @@
       else if (c === 'KeyL') $('layers').click();
       else if (c === 'KeyS') $('sym').click();
       else if (c === 'KeyP') $('pp').click();
-      else if (c === 'KeyO') outlineLayer();
+      else if (c === 'KeyU') setTool('line');
+      else if (c === 'KeyT') $('stab').click();
+      else if (c === 'KeyO') openOutlinePop();
       else if (c === 'KeyH') flipLayer(true);
       else if (c === 'KeyV') flipLayer(false);
       else if (c === 'KeyR') rotateCanvas();
@@ -1154,6 +1336,7 @@
     $('imp-cell').addEventListener('input', () => { const v = +$('imp-cell').value; $('imp-cellv').textContent = v ? v : 'Авто'; impSoon(); });
     ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
     $('imp-apply').onclick = applyImport;
+    $('imp-rot').onclick = rotateImp;
     $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
 
     $('new').onclick = () => $('new-ovl').classList.add('on');
@@ -1187,7 +1370,7 @@
       grip.addEventListener('pointerdown', (e) => { grip.setPointerCapture(e.pointerId);
         const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
       grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
-      const dEnd = () => { if (d) { d = null; save(); fitView(); } };
+      const dEnd = () => { if (d) { d = null; save(); } }; // холст не трогаем — палитра живёт сама по себе
       grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
       let rz = null;
       rs.addEventListener('pointerdown', (e) => { e.preventDefault(); rs.setPointerCapture(e.pointerId);
@@ -1196,9 +1379,38 @@
       rs.addEventListener('pointermove', (e) => { if (!rz) return;
         p.style.width = Math.max(130, Math.min(innerWidth - 12, rz.w + e.clientX - rz.x)) + 'px';
         $('pal').style.height = Math.max(38, Math.min(innerHeight * .6, rz.h + e.clientY - rz.y)) + 'px'; });
-      const rEnd = () => { if (rz) { rz = null; save(); fitView(); } };
+      const rEnd = () => { if (rz) { rz = null; save(); } };
       rs.addEventListener('pointerup', rEnd); rs.addEventListener('pointercancel', rEnd);
     })();
+
+    // ---- перестановка кнопок на панелях: ПКМ-перетаскивание или долгий тап ----
+    function saveOrder() { const o = {};
+      for (const id of ['tb-left', 'tb-right', 'sidebar']) o[id] = [...$(id).children].map((c) => c.id).filter(Boolean);
+      try { localStorage.setItem('toolorder', JSON.stringify(o)); } catch (err) {} }
+    function restoreOrder() { try { const o = JSON.parse(localStorage.getItem('toolorder')); if (!o) return;
+      for (const id of ['tb-left', 'tb-right', 'sidebar']) { const box = $(id); if (!o[id]) continue;
+        for (const cid of o[id]) { const el = document.getElementById(cid); if (el && el.parentElement === box) box.appendChild(el); } } } catch (err) {} }
+    function makeArrangeable(boxId) { const box = $(boxId); let drag = null, sup = null;
+      box.addEventListener('contextmenu', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+      box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (!b || b.parentElement !== box) return;
+        if (e.button === 2) { e.preventDefault(); start(b, e); }
+        else if (e.pointerType === 'touch') { const x0 = e.clientX, y0 = e.clientY, pid = e.pointerId;
+          const t = setTimeout(() => start(b, { pointerId: pid }), 520);
+          const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 9) stop2(); };
+          const stop2 = () => { clearTimeout(t); b.removeEventListener('pointermove', mv); b.removeEventListener('pointerup', stop2); b.removeEventListener('pointercancel', stop2); };
+          b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } });
+      function start(b, e) { drag = b; b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
+      box.addEventListener('pointermove', (e) => { if (!drag) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY); const t = el ? el.closest('#' + boxId + ' > *') : null;
+        if (t && t !== drag) { const r = t.getBoundingClientRect();
+          const before = boxId === 'sidebar' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
+          box.insertBefore(drag, before ? t : t.nextSibling); } });
+      const end = () => { if (!drag) return; drag.classList.remove('dragging'); sup = drag; drag = null; saveOrder();
+        setTimeout(() => { sup = null; }, 0); };
+      box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+      box.addEventListener('click', (e) => { if (sup && e.target.closest('button') === sup) { e.stopPropagation(); e.preventDefault(); } }, true); }
+    restoreOrder();
+    for (const id of ['tb-left', 'tb-right', 'sidebar']) makeArrangeable(id);
 
     refreshActive(); buildPalette(); layList();
     requestAnimationFrame(() => { fitView(); toast('Долгий тап — пипетка · тап 2 пальцами — отмена'); });
