@@ -146,6 +146,8 @@
       $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
       $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-png-full').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-png-tight').style.display = kind === 'layer' ? '' : 'none';
       if (kind === 'layer') $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + 'Обтравочная маска';
       const m = $('lctx'); m.style.visibility = 'hidden'; m.classList.add('on');
       requestAnimationFrame(() => { const r = m.getBoundingClientRect();
@@ -153,6 +155,8 @@
         m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
+    $('lctx-png-full').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, false); };
+    $('lctx-png-tight').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, true); };
     $('lctx-clip').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return;
       snapshot(); const L = lctxRef.ref; L.clip = !L.clip; layList(); render();

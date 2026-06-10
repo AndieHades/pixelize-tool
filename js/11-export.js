@@ -6,6 +6,20 @@
         x.globalAlpha = L.opacity; x.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
       saveCanvas(c, `pixel_${W}x${H}.png`);
     }
+    function gridToCanvas(grid, x0, y0, w, h) { // фрагмент слоя → canvas с попиксельной альфой
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const x = c.getContext('2d'), id = x.createImageData(w, h);
+      for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const cc = grid[y0 + y][x0 + xx]; if (!cc) continue;
+        const o = (y * w + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
+      x.putImageData(id, 0, 0); return c; }
+    function exportLayerPng(L, tight) { // tight=false — весь холст (для анимации), true — по контуру содержимого
+      const safe = (L.name || 'layer').replace(/[^\wА-Яа-яЁё -]+/g, '_').trim() || 'layer';
+      if (!tight) { saveCanvas(gridToCanvas(L.grid, 0, 0, W, H), `${safe}_${W}x${H}.png`); return; }
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) { toast('Слой пустой'); return; }
+      const w = x1 - x0 + 1, h = y1 - y0 + 1;
+      saveCanvas(gridToCanvas(L.grid, x0, y0, w, h), `${safe}_${w}x${h}.png`); }
     async function saveBlob(b, name, desc, mime) { // классический диалог → share → скачивание
       if (window.showSaveFilePicker && !matchMedia('(pointer: coarse)').matches) {
         try { const ext = '.' + name.split('.').pop();
