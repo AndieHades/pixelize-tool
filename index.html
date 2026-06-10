@@ -56,17 +56,29 @@
     #sidebar { position: fixed; left: max(8px, env(safe-area-inset-left, 0px)); top: 50%;
       transform: translateY(-50%); z-index: 9; display: flex; flex-direction: column; gap: 2px; padding: 6px;
       background: var(--panel); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--line); border-radius: 14px; }
+      border: 1px solid var(--line); border-radius: 14px;
+      max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px); overflow-y: auto; scrollbar-width: none; }
+    #sidebar::-webkit-scrollbar { display: none; }
     #sidebar button { width: 38px; height: 38px; }
     .sb-sep { height: 1px; background: var(--line); margin: 4px 2px; }
 
-    /* ---- нижняя палитра ---- */
-    #palbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 8px) max(12px, env(safe-area-inset-left, 0px));
+    /* ---- плавающее окно палитры ---- */
+    #palbar { position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); z-index: 12;
+      width: min(92vw, 560px); display: flex; flex-direction: column;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border-top: 1px solid var(--line); }
-    #pal { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1; padding: 3px 2px; }
+      border: 1px solid var(--line); border-radius: 16px; padding: 0 8px 8px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, .45); }
+    #palgrip { height: 24px; display: flex; align-items: center; justify-content: center;
+      cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; letter-spacing: .4px;
+      flex: none; -webkit-user-select: none; user-select: none; }
+    #palgrip:active { cursor: grabbing; }
+    #pal { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: center; gap: 6px;
+      padding: 2px; overflow-y: auto; min-height: 38px; scrollbar-width: none; }
+    #pal::-webkit-scrollbar { display: none; }
+    #palrsz { position: absolute; right: 1px; bottom: 1px; width: 20px; height: 20px;
+      cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
+    #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
     .sw { width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .14); }
     .sw.on { box-shadow: 0 0 0 2px #fff; border-color: transparent; }
 
@@ -92,9 +104,17 @@
     .lay-ops { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); }
     .lay-ops label { color: var(--txt2); font-size: 12px; flex: none; }
     .lay-ops b { min-width: 42px; text-align: right; font-size: 13px; }
-    .lay-act { display: flex; justify-content: space-around; padding: 6px; border-top: 1px solid var(--line); }
-    .lay-act button { width: 44px; height: 38px; color: var(--txt2); }
+    .lay-act { display: flex; justify-content: space-around; padding: 6px 4px; border-top: 1px solid var(--line); }
+    .lay-act button { width: 34px; height: 36px; color: var(--txt2); }
+    .lay-act button svg { width: 20px; height: 20px; }
     .lay-act button:active { color: var(--txt); }
+    .lrow.inf { margin-left: 16px; }
+    .lchk { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--txt2); flex: none; }
+    .lchk.on { background: var(--accent); border-color: var(--accent); }
+    .caret { width: 26px; height: 26px; color: var(--txt2); flex: none; }
+    .caret svg { width: 16px; height: 16px; transition: transform .15s; }
+    .caret.open svg { transform: rotate(90deg); }
+    .frow .lname { font-weight: 600; }
 
     /* ---- слайдеры ---- */
     input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 28px; background: transparent; }
@@ -126,8 +146,8 @@
     .irow { display: flex; align-items: center; gap: 12px; min-height: 44px; }
     .irow label { color: var(--txt2); min-width: 104px; font-size: 13px; }
     .irow b { min-width: 30px; text-align: right; }
-    .irow input[type=number] { width: 76px; background: #101014; color: var(--txt); border: 1px solid var(--line);
-      border-radius: 10px; padding: 9px 10px; font: inherit; }
+    .irow input[type=number], .irow input[type=text] { width: 76px; background: #101014; color: var(--txt); border: 1px solid var(--line);
+      border-radius: 10px; padding: 9px 10px; font: inherit; -webkit-user-select: text; user-select: text; }
     .hint { color: var(--txt2); font-size: 12px; }
     .iact { display: flex; gap: 10px; margin-top: 16px; }
     .iact .txtbtn { flex: 1; }
@@ -161,25 +181,48 @@
       button svg { width: 24px; height: 24px; }
       #activewrap { width: 38px; height: 38px; margin-left: 10px; }
       #sidebar button { width: 44px; height: 44px; }
-      #palbar { left: 50%; right: auto; transform: translateX(-50%); width: min(680px, 92vw);
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); border: 1px solid var(--line);
-        border-radius: 18px; padding: 10px 14px; }
       .sw { width: 36px; height: 36px; border-radius: 10px; }
       .ovl { align-items: center; padding: 24px; }
       .sheet { border-radius: 20px; padding-bottom: 18px; width: 480px; }
       #lay-pop { width: 300px; top: calc(env(safe-area-inset-top, 0px) + 70px); }
     }
+    /* ---- панели действий (выделение, кроп) ---- */
+    #selbar, #cropbar { position: fixed; left: 50%; transform: translateX(-50%);
+      top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 15; display: none; gap: 2px; padding: 5px;
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: 0 10px 34px rgba(0, 0, 0, .5); }
+    #selbar.on, #cropbar.on { display: flex; }
+    #crop-ok { color: #6fdb8b; }
+
+    /* ---- контекстные меню ---- */
+    #ctx, #lctx, #cctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
+      box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+    #ctx.on, #lctx.on, #cctx.on { display: flex; }
+    #ctx button, #lctx button, #cctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
+      align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
+    #cctx button.cur { background: var(--accent); }
+    #cctx button.dim { opacity: .45; }
+    .cctx-head { color: var(--txt2); font-size: 12px; padding: 6px 12px 2px; }
+    .sw.drop { box-shadow: 0 0 0 2px var(--accent); }
+
+    /* ---- статус-бар ---- */
+    #status { position: fixed; left: max(8px, env(safe-area-inset-left, 0px));
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); z-index: 8;
+      font-size: 12px; color: var(--txt2); background: rgba(13, 13, 16, .72);
+      border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; pointer-events: none; }
+
     @media (max-width: 430px) {
       #topbar { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
       .tb-group { gap: 3px; }
-      button { width: 38px; height: 38px; }
-      button svg { width: 21px; height: 21px; }
-      .tb-sep { margin: 0 2px; }
+      .tb-sep { display: none; }
+      button { width: 35px; height: 35px; }
+      button svg { width: 20px; height: 20px; }
       #activewrap { width: 33px; height: 33px; margin-left: 2px; }
     }
     @media (max-width: 374px) {
-      button { width: 35px; height: 35px; }
-      button svg { width: 19px; height: 19px; }
+      button { width: 32px; height: 32px; }
+      button svg { width: 18px; height: 18px; }
     }
   </style>
 </head>
@@ -188,36 +231,59 @@
 
   <header id="topbar">
     <div class="tb-group">
-      <button id="new" title="Новый холст"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
-      <button id="imp" title="Импорт картинки"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
-      <button id="exp" title="Сохранить PNG"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
+      <button id="new" title="Новый холст (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
+      <button id="imp" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
+      <button id="exp" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
     </div>
     <div class="tb-group">
-      <button id="t-pencil" class="on" title="Карандаш"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
-      <button id="t-eraser" title="Ластик"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
-      <button id="t-fill" title="Заливка"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
-      <button id="t-pick" title="Пипетка"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
+      <button id="t-pencil" class="on" title="Карандаш (B)"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
+      <button id="t-eraser" title="Ластик (E)"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
+      <button id="t-fill" title="Заливка (F)"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
+      <button id="t-pick" title="Пипетка (I, пробел, Alt+клик)"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
+      <button id="t-select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
       <div class="tb-sep"></div>
-      <button id="layers" title="Слои"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
+      <button id="layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
       <label id="activewrap" title="Цвет"><input id="picker" type="color" value="#ff7a18" /><span id="active"></span></label>
     </div>
   </header>
 
   <aside id="sidebar">
-    <button id="zin" title="Приблизить"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-    <button id="zout" title="Отдалить"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
-    <button id="fit" title="Вписать"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
+    <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+    <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+    <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
     <div class="sb-sep"></div>
-    <button id="undo" title="Отменить"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
-    <button id="redo" title="Вернуть"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
+    <button id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
+    <button id="redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
     <div class="sb-sep"></div>
-    <button id="sym" title="Симметрия"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
-    <button id="outline" title="Обводка контуром"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
+    <button id="sym" title="Симметрия (S)"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
+    <button id="pp" class="on" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
+    <button id="outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
+    <button id="flip-h" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
+    <button id="flip-v" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
+    <button id="rot" title="Поворот на 90° (R, Ctrl+T)"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
+    <button id="crop" title="Кроп (C): рамка → Enter"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
   </aside>
 
+  <div id="cropbar">
+    <button id="crop-ok" title="Применить кроп (Enter)"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
+    <button id="crop-cancel" title="Отмена (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+
+  <div id="status">32×32 px</div>
+
   <footer id="palbar">
+    <div id="palgrip" title="Перетащить палитру">Палитра</div>
     <div id="pal"></div>
+    <div id="palrsz" title="Изменить размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </footer>
+
+  <div id="selbar">
+    <button id="sel-copy" title="Копировать"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 4.5H6.5A2.5 2.5 0 0 0 4 7v9.5"/></svg></button>
+    <button id="sel-cut" title="Вырезать"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="6" cy="17" r="2.3"/><path d="M8.1 8.3L19.5 17M8.1 15.7L19.5 7"/></svg></button>
+    <button id="sel-paste" title="Вставить"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4.5V3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5v1"/><path d="M12 9.5v7M9 13.5l3 3 3-3"/></svg></button>
+    <button id="sel-del" title="Удалить выделенное"><svg viewBox="0 0 24 24"><path d="M4.5 6.5h15"/><path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M6.5 6.5l.8 11.7A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8l.8-11.7"/><path d="M10 10.5v6M14 10.5v6"/></svg></button>
+    <button id="sel-off" title="Снять выделение"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
 
   <div id="lay-pop">
     <div class="pop-head"><span>Слои</span>
@@ -233,9 +299,30 @@
       <button id="lay-up" title="Выше"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
       <button id="lay-down" title="Ниже"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
       <button id="lay-dup" title="Дублировать"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 4.5H6.5A2.5 2.5 0 0 0 4 7v9.5"/></svg></button>
-      <button id="lay-del" title="Удалить"><svg viewBox="0 0 24 24"><path d="M4.5 6.5h15"/><path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M6.5 6.5l.8 11.7A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8l.8-11.7"/><path d="M10 10.5v6M14 10.5v6"/></svg></button>
+      <button id="lay-merge" title="Слить отмеченные (Ctrl+E)"><svg viewBox="0 0 24 24"><path d="M12 3.5v8"/><path d="M8.5 8L12 11.5 15.5 8"/><rect x="4.5" y="15" width="15" height="5.5" rx="1.8"/></svg></button>
+      <button id="lay-group" title="В папку (Ctrl+G)"><svg viewBox="0 0 24 24"><path d="M3.5 7A2.5 2.5 0 0 1 6 4.5h4l2 2.5h6A2.5 2.5 0 0 1 20.5 9.5V17a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17V7z"/></svg></button>
+      <button id="lay-clear" title="Очистить слой (содержимое)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/></svg></button>
+      <button id="lay-del" title="Удалить слой"><svg viewBox="0 0 24 24"><path d="M4.5 6.5h15"/><path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M6.5 6.5l.8 11.7A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8l.8-11.7"/><path d="M10 10.5v6M14 10.5v6"/></svg></button>
     </div>
   </div>
+
+  <div id="ctx">
+    <button data-act="replace">Заменить цвет…</button>
+    <button data-act="select">Выбрать все пиксели</button>
+    <button data-act="delete">Удалить из палитры</button>
+  </div>
+  <div id="lctx">
+    <button id="lctx-ren">Переименовать…</button>
+    <button id="lctx-ung">Расформировать папку</button>
+  </div>
+  <div id="cctx"></div>
+  <input id="repl" type="color" style="position:fixed; left:-100px; top:-100px; width:1px; height:1px; opacity:0" />
+
+  <div id="ren-ovl" class="ovl"><div class="sheet">
+    <h3>Переименовать</h3>
+    <div class="irow"><input id="ren-name" type="text" maxlength="24" style="flex:1" /></div>
+    <div class="iact"><button id="ren-cancel" class="txtbtn">Отмена</button><button id="ren-ok" class="txtbtn primary">Сохранить</button></div>
+  </div></div>
 
   <div id="imp-ovl" class="ovl"><div id="imp-box" class="sheet">
     <h3>Импорт в пиксель-арт</h3>
@@ -274,12 +361,18 @@
     // ---- состояние ----
     let W = 32, H = 32, layerSeq = 1;
     function blank(w, h) { return Array.from({ length: h }, () => new Array(w).fill(null)); }
-    function newLayer(name) { return { name, grid: blank(W, H), opacity: 1, visible: true }; }
+    function newLayer(name) { return { name, grid: blank(W, H), opacity: 1, visible: true, fid: null, ext: new Map() }; }
     let layers = [newLayer('Слой 1')], cur = 0;
+    let folders = [], folderSeq = 0; const marked = new Set(); // папки слоёв и мультивыбор
+    const effVis = (i) => { const L = layers[i]; if (!L.visible) return false; if (L.fid == null) return true;
+      const f = folders.find((x) => x.id === L.fid); return !f || f.visible; };
     const G = () => layers[cur].grid;
     let palette = ['#0c0c10', '#202733', '#cbd3dc', '#e9edf0', '#ff7a18', '#c74a00', '#78d7ff'].map(hexToRgb);
     let active = palette[4];
     let tool = 'pencil', sym = false;
+    let sel = null, selFloat = null, selDrag = null, selDirect = false, selHinted = false;
+    let replaceMode = null, palDrag = null, swHold = null, swX = 0, swY = 0, ctxIdx = -1, replFrom = null;
+    let ppOn = true, ppPath = [], ppOrig = new Map(); // пиксель-перфект: чистим Г-образные уголки штриха
     const view = { zoom: 12, ox: 0, oy: 0 };
     const undoStack = [], redoStack = [];
 
@@ -357,7 +450,7 @@
         x.putImageData(id, 0, 0); dirtySet.delete(i); }
       return c; }
     function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
-      for (const L of layers) { if (!L.visible || L.opacity <= 0) continue; const c = L.grid[y] && L.grid[y][x]; if (!c) continue;
+      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue; const c = L.grid[y] && L.grid[y][x]; if (!c) continue;
         const la = L.opacity; r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
       return a > 0.02 ? [Math.round(r), Math.round(g), Math.round(b)] : null; }
 
@@ -373,7 +466,7 @@
         ctx.fillStyle = ((x + y) & 1) ? '#222228' : '#1a1a20';
         ctx.fillRect(ox + x * z, oy + y * z, z, z);
       }
-      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!L.visible || L.opacity <= 0) continue;
+      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         ctx.globalAlpha = L.opacity; ctx.drawImage(layerCanvas(i), ox, oy, W * z, H * z); }
       ctx.globalAlpha = 1;
       if (z >= 7) {
@@ -384,12 +477,42 @@
       }
       if (sym) { const ax = ox + (W / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
+      if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+        ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }
+      if (sel) { const sx = ox + sel.x0 * z, sy = oy + sel.y0 * z, sw = (sel.x1 - sel.x0 + 1) * z, sh = (sel.y1 - sel.y0 + 1) * z;
+        if (!selFloat) { ctx.fillStyle = 'rgba(0,0,0,.28)'; // затемнение вне выделения
+          ctx.fillRect(ox, oy, W * z, sy - oy); ctx.fillRect(ox, sy + sh, W * z, oy + H * z - sy - sh);
+          ctx.fillRect(ox, sy, sx - ox, sh); ctx.fillRect(sx + sw, sy, ox + W * z - sx - sw, sh); }
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+        ctx.strokeRect(sx + .75, sy + .75, sw - 1.5, sh - 1.5); ctx.setLineDash([]); }
+      if (replaceMode) { ctx.fillStyle = 'rgba(61,139,253,.5)'; // подсветка пикселей выбранного цвета
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          let hit = false; for (let i = 0; i < layers.length; i++) { if (!effVis(i)) continue; const c = layers[i].grid[y][x]; if (c && eqc(c, replaceMode.from)) { hit = true; break; } }
+          if (hit) ctx.fillRect(ox + x * z, oy + y * z, z, z); } }
+      if (cropMode) { const x = ox + cropMode.x0 * z, y = oy + cropMode.y0 * z,
+          w = (cropMode.x1 - cropMode.x0 + 1) * z, h = (cropMode.y1 - cropMode.y0 + 1) * z;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(ox, oy, W * z, y - oy); ctx.fillRect(ox, y + h, W * z, oy + H * z - y - h);
+        ctx.fillRect(ox, y, x - ox, h); ctx.fillRect(x + w, y, ox + W * z - x - w, h);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+        ctx.fillStyle = '#fff';
+        const hs = Math.min(18, h - 4), ws = Math.min(18, w - 4), hw = 5, cs = 10; // боковые маркеры и углы
+        ctx.fillRect(x - hw / 2, y + h / 2 - hs / 2, hw, hs); ctx.fillRect(x + w - hw / 2, y + h / 2 - hs / 2, hw, hs);
+        ctx.fillRect(x + w / 2 - ws / 2, y - hw / 2, ws, hw); ctx.fillRect(x + w / 2 - ws / 2, y + h - hw / 2, ws, hw);
+        for (const p of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) ctx.fillRect(p[0] - cs / 2, p[1] - cs / 2, cs, cs);
+      }
+      syncStatus();
     }
+    function syncStatus() { let s = W + '×' + H + ' px';
+      if (cropMode) s += ' · кроп ' + (cropMode.x1 - cropMode.x0 + 1) + '×' + (cropMode.y1 - cropMode.y0 + 1);
+      else if (sel) s += ' · выдел. ' + (sel.x1 - sel.x0 + 1) + '×' + (sel.y1 - sel.y0 + 1);
+      const el = $('status'); if (el.textContent !== s) el.textContent = s; }
 
     function fitView() {
       const cw = cv.clientWidth, chh = cv.clientHeight;
       const tb = $('topbar').getBoundingClientRect(), pb = $('palbar').getBoundingClientRect(), sb = $('sidebar').getBoundingClientRect();
-      const mt = tb.bottom + 16, mb = (chh - pb.top) + 16, ml = Math.max(sb.right + 14, 20), mr = 20;
+      const mt = tb.bottom + 16, ml = Math.max(sb.right + 14, 20), mr = 20;
+      const mb = (pb.top > chh * 0.55 && pb.bottom > chh - 40) ? (chh - pb.top) + 16 : 24; // палитру учитываем, только если она у низа
       view.zoom = Math.max(1, Math.floor(Math.min((cw - ml - mr) / W, (chh - mt - mb) / H)));
       view.ox = Math.round(ml + (cw - ml - mr - W * view.zoom) / 2);
       view.oy = Math.round(mt + (chh - mt - mb - H * view.zoom) / 2);
@@ -398,28 +521,50 @@
 
     // ---- undo/redo: снимок всего документа (слои + размеры) ----
     const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
-    function snapState() { return { cur, W, H, layers: layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, grid: cloneGrid(L.grid) })) }; }
+    function snapState() { return { cur, W, H, folderSeq, folders: folders.map((f) => ({ ...f })),
+      layers: layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, ext: new Map(L.ext), grid: cloneGrid(L.grid) })) }; }
     function snapshot() { undoStack.push(snapState()); if (undoStack.length > 30) undoStack.shift(); redoStack.length = 0; }
-    function restore(s) { W = s.W; H = s.H; layers = s.layers; cur = Math.min(s.cur, layers.length - 1);
-      dirtyAll(); layList(); render(); }
+    function restore(s) { W = s.W; H = s.H; layers = s.layers; folders = s.folders; folderSeq = s.folderSeq;
+      cur = Math.min(s.cur, layers.length - 1); marked.clear(); dirtyAll(); layList(); render(); }
     function doUndo() { if (!undoStack.length) { toast('Нечего отменять'); return; }
       redoStack.push(snapState()); restore(undoStack.pop()); toast('Отменено'); }
     function doRedo() { if (!redoStack.length) return; undoStack.push(snapState()); restore(redoStack.pop()); toast('Возвращено'); }
 
     // ---- инструменты ----
+    const inSel = (x, y) => !sel || (x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1);
     function setCell(x, y, c) {
-      if (x < 0 || y < 0 || x >= W || y >= H) return;
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return; // выделение работает как маска
       const g = G(); g[y][x] = c ? c.slice() : null;
-      if (sym) { const mx = W - 1 - x; if (mx >= 0 && mx < W) g[y][mx] = c ? c.slice() : null; }
+      if (sym) { const mx = W - 1 - x; if (mx >= 0 && mx < W && inSel(mx, y)) g[y][mx] = c ? c.slice() : null; }
       markDirty(cur);
     }
     function pickAt(gx, gy) { if (gx < 0 || gy < 0 || gx >= W || gy >= H) return;
       const c = compositeAt(gx, gy); if (!c) return;
       active = c.slice(); $('picker').value = '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
       refreshActive(); buildPalette(); toast('Цвет подобран'); }
+    function ppVisit(x, y) { // пиксель-перфект: при Г-образном уголке убираем средний пиксель
+      if (!ppOn || !stroke) return;
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return;
+      const last = ppPath[ppPath.length - 1];
+      if (last && last[0] === x && last[1] === y) return;
+      const g = G(), k = y * W + x;
+      if (!ppOrig.has(k)) ppOrig.set(k, g[y][x] ? g[y][x].slice() : null);
+      if (sym) { const mx = W - 1 - x; if (mx >= 0 && mx < W) { const mk = y * W + mx; if (!ppOrig.has(mk)) ppOrig.set(mk, g[y][mx] ? g[y][mx].slice() : null); } }
+      ppPath.push([x, y]);
+      const n = ppPath.length;
+      if (n < 3) return;
+      const A = ppPath[n - 3], B = ppPath[n - 2], C = ppPath[n - 1];
+      const o1 = Math.abs(A[0] - B[0]) + Math.abs(A[1] - B[1]) === 1, o2 = Math.abs(B[0] - C[0]) + Math.abs(B[1] - C[1]) === 1;
+      if (o1 && o2 && A[0] !== C[0] && A[1] !== C[1]) {
+        const ov = ppOrig.get(B[1] * W + B[0]); g[B[1]][B[0]] = ov ? ov.slice() : null;
+        if (sym) { const mbx = W - 1 - B[0]; if (mbx >= 0 && mbx < W) { const mv = ppOrig.get(B[1] * W + mbx); g[B[1]][mbx] = mv ? mv.slice() : null; } }
+        markDirty(cur); ppPath.splice(n - 2, 1);
+      }
+    }
     function stamp(x, y) {
-      if (tool === 'pencil') setCell(x, y, active);
-      else if (tool === 'eraser') setCell(x, y, null);
+      if (tool === 'select') return;
+      if (tool === 'pencil') { ppVisit(x, y); setCell(x, y, active); }
+      else if (tool === 'eraser') { ppVisit(x, y); setCell(x, y, null); }
       else if (tool === 'pick') { pickAt(x, y); setTool('pencil'); }
       else if (tool === 'fill') flood(x, y);
     }
@@ -432,42 +577,188 @@
       const g = G(), target = g[y][x], to = active;
       if (eqc(target, to)) return;
       const st = [[x, y]];
-      while (st.length) { const [cx, cy] = st.pop(); if (cx < 0 || cy < 0 || cx >= W || cy >= H) continue;
+      while (st.length) { const [cx, cy] = st.pop(); if (cx < 0 || cy < 0 || cx >= W || cy >= H || !inSel(cx, cy)) continue;
         const c = g[cy][cx]; if (!(eqc(c, target) || (!c && !target))) continue;
         setCell(cx, cy, to); st.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); }
     }
+    function expandCanvas(pl, pt, pr, pb) { // добавить пустые ряды/колонки по краям (во все слои)
+      if (!(pl || pt || pr || pb)) return;
+      W += pl + pr; H += pt + pb;
+      for (const L of layers) { const g = L.grid, out = [];
+        for (let y = 0; y < H; y++) { const row = new Array(W).fill(null);
+          const sy = y - pt; if (sy >= 0 && sy < g.length) for (let x = 0; x < g[sy].length; x++) row[x + pl] = g[sy][x];
+          out.push(row); }
+        const ne = new Map(); // запасные пиксели за краем: сдвигаем и впитываем попавшие в холст
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) + pl, ay = +k.slice(ci + 1) + pt;
+          if (ax >= 0 && ay >= 0 && ax < W && ay < H) out[ay][ax] = c; else ne.set(ax + ',' + ay, c); }
+        L.grid = out; L.ext = ne; }
+      view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
+      sel = null; syncSelbar(); dirtyAll(); }
     function outlineLayer() { // обводка контура активного слоя активным цветом
-      const g = G(), n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-      snapshot(); const out = cloneGrid(g); let added = 0;
+      snapshot();
+      let g = G(), pl = 0, pt = 0, pr = 0, pb = 0; // рисунок у края — раздвигаем холст под обводку
+      for (let x = 0; x < W; x++) { if (g[0][x]) pt = 1; if (g[H - 1][x]) pb = 1; }
+      for (let y = 0; y < H; y++) { if (g[y][0]) pl = 1; if (g[y][W - 1]) pr = 1; }
+      expandCanvas(pl, pt, pr, pb); g = G();
+      const n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+      const out = cloneGrid(g); let added = 0;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (g[y][x]) continue;
         let near = false;
         for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= W || y2 >= H) continue; if (g[y2][x2]) { near = true; break; } }
         if (near) { out[y][x] = active.slice(); added++; } }
-      if (!added) { undoStack.pop(); toast('На слое нечего обводить'); return; }
+      if (!added) { restore(undoStack.pop()); toast('На слое нечего обводить'); return; }
       layers[cur].grid = out; markDirty(cur); render(); layList(); toast('Обводка нанесена');
     }
+    let cropMode = null, cropDrag = null; // интерактивный кроп: рамка с маркерами
+    function applyCropRect(x0, y0, x1, y1) {
+      snapshot();
+      for (const L of layers) { const ne = new Map();
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','); ne.set((+k.slice(0, ci) - x0) + ',' + (+k.slice(ci + 1) - y0), c); }
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; // отрезанное не теряем
+          if (c && (x < x0 || x > x1 || y < y0 || y > y1)) ne.set((x - x0) + ',' + (y - y0), c); }
+        L.grid = L.grid.slice(y0, y1 + 1).map((r) => r.slice(x0, x1 + 1)); L.ext = ne; }
+      W = x1 - x0 + 1; H = y1 - y0 + 1; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Обрезано: ${W}×${H}`);
+    }
+    function toggleCrop() { if (cropMode) { cancelCrop(); return; }
+      cropMode = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1 } : { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+      deselect(); $('crop').classList.add('on'); $('cropbar').classList.add('on'); render();
+      toast('Потяни рамку за маркеры → ✓ или Enter'); }
+    function cancelCrop() { cropMode = null; cropDrag = null; $('crop').classList.remove('on'); $('cropbar').classList.remove('on'); render(); }
+    function applyCrop() { if (!cropMode) return; const c = cropMode; cancelCrop();
+      if (c.x0 === 0 && c.y0 === 0 && c.x1 === W - 1 && c.y1 === H - 1) { toast('Размер не менялся'); return; }
+      applyCropRect(c.x0, c.y0, c.x1, c.y1); }
+    function cropDown(e) { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+      const z = view.zoom, lx = view.ox + cropMode.x0 * z, rx = view.ox + (cropMode.x1 + 1) * z,
+        ty = view.oy + cropMode.y0 * z, by = view.oy + (cropMode.y1 + 1) * z, tol = 24;
+      const nl = Math.abs(px - lx) < tol, nr = Math.abs(px - rx) < tol, nt = Math.abs(py - ty) < tol, nb = Math.abs(py - by) < tol;
+      const inX = px > lx - tol && px < rx + tol, inY = py > ty - tol && py < by + tol;
+      cropDrag = { l: nl && inY, r: nr && inY, t: nt && inX, b: nb && inX };
+      if (!(cropDrag.l || cropDrag.r || cropDrag.t || cropDrag.b)) {
+        if (px > lx && px < rx && py > ty && py < by) cropDrag = { move: true, gx: (px - view.ox) / z, gy: (py - view.oy) / z };
+        else cropDrag = null; } }
+    function cropMovePt(e) { if (!cropDrag || !cropMode) return; const r = cv.getBoundingClientRect(), z = view.zoom;
+      const fx = (e.clientX - r.left - view.ox) / z, fy = (e.clientY - r.top - view.oy) / z, c = cropMode;
+      if (cropDrag.move) { const dx = Math.round(fx - cropDrag.gx), dy = Math.round(fy - cropDrag.gy);
+        if (dx || dy) { const w = c.x1 - c.x0, h = c.y1 - c.y0;
+          c.x0 = Math.max(0, Math.min(W - 1 - w, c.x0 + dx)); c.x1 = c.x0 + w;
+          c.y0 = Math.max(0, Math.min(H - 1 - h, c.y0 + dy)); c.y1 = c.y0 + h;
+          cropDrag.gx = fx; cropDrag.gy = fy; } }
+      else { if (cropDrag.l) c.x0 = Math.max(0, Math.min(c.x1, Math.round(fx)));
+        if (cropDrag.r) c.x1 = Math.min(W - 1, Math.max(c.x0, Math.round(fx) - 1));
+        if (cropDrag.t) c.y0 = Math.max(0, Math.min(c.y1, Math.round(fy)));
+        if (cropDrag.b) c.y1 = Math.min(H - 1, Math.max(c.y0, Math.round(fy) - 1)); }
+      render(); }
+    function rotateCanvas() { // поворот всего холста на 90° по часовой
+      snapshot();
+      for (const L of layers) { const g = L.grid, out = [];
+        for (let x = 0; x < W; x++) { const row = []; for (let y = H - 1; y >= 0; y--) row.push(g[y][x]); out.push(row); } L.grid = out;
+        const ne = new Map();
+        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1); ne.set((H - 1 - ay) + ',' + ax, c); }
+        L.ext = ne; }
+      const t = W; W = H; H = t; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast('Поворот 90°');
+    }
+    function flipLayer(horiz) { // отражение активного слоя
+      snapshot(); const L = layers[cur], g = L.grid;
+      if (horiz) for (const r of g) r.reverse(); else g.reverse();
+      const ne = new Map();
+      for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1);
+        ne.set(horiz ? (W - 1 - ax) + ',' + ay : ax + ',' + (H - 1 - ay), c); }
+      L.ext = ne;
+      markDirty(cur); render(); afterStroke(); toast(horiz ? 'Отражено по горизонтали' : 'Отражено по вертикали');
+    }
+    function clearLayer() { const L = layers[cur]; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
+      snapshot(); L.grid = blank(W, H); L.ext = new Map(); markDirty(cur); render(); afterStroke(); return true; }
+
+    // ---- выделение прямоугольником: рамка, перенос изнутри, маска для рисования ----
+    function normSel(ax, ay, bx, by) { let x0 = Math.min(ax, bx), x1 = Math.max(ax, bx), y0 = Math.min(ay, by), y1 = Math.max(ay, by);
+      x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(W - 1, x1); y1 = Math.min(H - 1, y1);
+      return (x1 < x0 || y1 < y0) ? null : { x0, y0, x1, y1 }; }
+    function syncSelbar() { $('selbar').classList.toggle('on', !!sel); }
+    function deselect() { sel = null; syncSelbar(); render(); }
+    function liftSelection() { const L = layers[cur], g = L.grid, w = sel.x1 - sel.x0 + 1, h = sel.y1 - sel.y0 + 1;
+      const cells = new Map();
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = g[sel.y0 + y][sel.x0 + x];
+        if (c) { cells.set(x + ',' + y, c); g[sel.y0 + y][sel.x0 + x] = null; } }
+      for (const [k, c] of [...L.ext]) { // рамка у края — прихватываем пиксели, спрятанные за границей
+        const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1);
+        const grab = (sel.x1 === W - 1 && ax >= W && ay >= sel.y0 && ay <= sel.y1)
+          || (sel.x0 === 0 && ax < 0 && ay >= sel.y0 && ay <= sel.y1)
+          || (sel.y1 === H - 1 && ay >= H && ax >= sel.x0 && ax <= sel.x1)
+          || (sel.y0 === 0 && ay < 0 && ax >= sel.x0 && ax <= sel.x1);
+        if (grab) { cells.set((ax - sel.x0) + ',' + (ay - sel.y0), c); L.ext.delete(k); } }
+      selFloat = { cells, w, h, x: sel.x0, y: sel.y0, ox: sel.x0, oy: sel.y0 }; markDirty(cur); }
+    function commitFloat() { if (!selFloat) return; const L = layers[cur], g = L.grid;
+      for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+        const xx = selFloat.x + dx, yy = selFloat.y + dy;
+        if (xx >= 0 && yy >= 0 && xx < W && yy < H) g[yy][xx] = c;
+        else L.ext.set(xx + ',' + yy, c); } // за границей — не теряем, можно перетащить обратно
+      selFloat = null; markDirty(cur); afterStroke(); }
+    function selDown(gx, gy) {
+      if (sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1) selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false };
+      else selDrag = { mode: 'new', sx: gx, sy: gy, moved: false }; }
+    function selMove(gx, gy) { if (!selDrag) return;
+      if (selDrag.mode === 'new') { if (gx !== selDrag.sx || gy !== selDrag.sy) selDrag.moved = true; sel = normSel(selDrag.sx, selDrag.sy, gx, gy); }
+      else { if (!selDrag.lifted) { if (gx === selDrag.sx && gy === selDrag.sy) return; snapshot(); liftSelection(); selDrag.lifted = true; }
+        selFloat.x = selFloat.ox + (gx - selDrag.sx); selFloat.y = selFloat.oy + (gy - selDrag.sy);
+        sel = { x0: selFloat.x, y0: selFloat.y, x1: selFloat.x + selFloat.w - 1, y1: selFloat.y + selFloat.h - 1 }; selDrag.moved = true; }
+      syncSelbar(); render(); }
+    function selUp() { if (!selDrag) return;
+      if (selDrag.mode === 'move') { if (selDrag.lifted) { commitFloat(); sel = sel ? normSel(sel.x0, sel.y0, sel.x1, sel.y1) : null; } }
+      else if (!selDrag.moved) sel = null;
+      else if (sel && !selHinted) { selHinted = true; toast('Рисование теперь только внутри рамки'); }
+      selDrag = null; syncSelbar(); render(); }
+    function fragFromSel() { const g = G(), f = [];
+      for (let y = sel.y0; y <= sel.y1; y++) { const row = []; for (let x = sel.x0; x <= sel.x1; x++) { const c = g[y][x]; row.push(c ? c.slice() : null); } f.push(row); } return f; }
+    function deleteSelContent() { const g = G(); let any = false;
+      for (let y = sel.y0; y <= sel.y1 && !any; y++) for (let x = sel.x0; x <= sel.x1; x++) if (g[y][x]) { any = true; break; }
+      if (!any) return false; snapshot();
+      for (let y = sel.y0; y <= sel.y1; y++) for (let x = sel.x0; x <= sel.x1; x++) g[y][x] = null;
+      markDirty(cur); render(); afterStroke(); return true; }
+    let clip = null;
+    function doCopy() { clip = sel ? fragFromSel() : cloneGrid(G()); toast(sel ? 'Выделение скопировано' : 'Слой скопирован'); }
+    function doCut() { clip = sel ? fragFromSel() : cloneGrid(G()); toast((sel ? deleteSelContent() : clearLayer()) ? 'Вырезано' : 'Тут пусто'); }
+    function doPaste() { if (!clip) { toast('Буфер пуст'); return; } snapshot();
+      const px = sel ? sel.x0 : 0, py = sel ? sel.y0 : 0, asNew = layers.length < 8;
+      let g;
+      if (asNew) { const nl = newLayer('Вставка'); nl.fid = layers[cur].fid; // вставка — на новый слой
+        layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); g = nl.grid; }
+      else g = G(); // достигнут лимит слоёв — кладём в активный
+      for (let y = 0; y < clip.length; y++) for (let x = 0; x < clip[y].length; x++) { const c = clip[y][x]; if (!c) continue;
+        const yy = py + y, xx = px + x; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; g[yy][xx] = c.slice(); }
+      sel = normSel(px, py, px + clip[0].length - 1, py + clip.length - 1);
+      markDirty(cur); syncSelbar(); layList(); render(); afterStroke(); toast(asNew ? 'Вставлено на новый слой' : 'Вставлено'); }
+    function doDelete() { if (sel ? deleteSelContent() : clearLayer()) toast(sel ? 'Выделение удалено' : 'Слой очищен'); }
 
     // ---- ввод: 1 палец — рисование/тап; 2 пальца — зум/панорама или тап-отмена; 3 пальца — повтор;
     //      долгий тап — пипетка; перо/мышь рисуют сразу (палм-реджект для Apple Pencil) ----
     const ptrs = new Map();
     let last = null, pinch = null, stroke = false, gMaxN = 0, gMoved = false, gT0 = 0, gDownX = 0, gDownY = 0, gHoldTimer = null, gHeld = false;
     const toGrid = (e) => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - view.ox) / view.zoom), Math.floor((e.clientY - r.top - view.oy) / view.zoom)]; };
-    function beginStroke() { snapshot(); stroke = true; }
+    function beginStroke() { snapshot(); stroke = true; ppPath = []; ppOrig = new Map(); }
     function cancelStroke() { if (!stroke) return; if (undoStack.length) restore(undoStack.pop()); stroke = false; last = null; }
     function afterStroke() { if ($('lay-pop').classList.contains('on')) layList(); }
 
     let penActive = false, directDrawing = false, directLast = null;
     function directDown(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return; // ПКМ/СКМ не рисуют
       cv.setPointerCapture(e.pointerId); if (e.pointerType === 'pen') penActive = true;
       const [gx, gy] = toGrid(e);
+      if (cropMode) { cropDown(e); return; }
+      if (e.altKey) { pickAt(gx, gy); return; } // Alt+клик — пипетка, инструмент не меняется
+      if (tool === 'select') { selDown(gx, gy); selDirect = true; return; }
       if (tool === 'pick') { pickAt(gx, gy); setTool('pencil'); return; }
       if (tool === 'fill') { snapshot(); stamp(gx, gy); render(); afterStroke(); return; }
       beginStroke(); stamp(gx, gy); directLast = [gx, gy]; directDrawing = true; render();
     }
-    function directMove(e) { if (!directDrawing) return; const [gx, gy] = toGrid(e); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
-    function directUp(e) { if (e.pointerType === 'pen') penActive = false; directDrawing = false; directLast = null; stroke = false; afterStroke(); }
+    function directMove(e) { if (cropDrag) { cropMovePt(e); return; }
+      if (selDirect) { const [gx, gy] = toGrid(e); selMove(gx, gy); return; }
+      if (!directDrawing) return; const [gx, gy] = toGrid(e); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
+    function directUp(e) { if (e.pointerType === 'pen') penActive = false; cropDrag = null;
+      if (selDirect) { selUp(); selDirect = false; }
+      directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
     cv.addEventListener('pointerdown', (e) => {
+      if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
       if ($('lay-pop').classList.contains('on')) { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); }
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
@@ -476,15 +767,22 @@
       if (ptrs.size === 1) {
         gT0 = performance.now(); gMoved = false; gHeld = false; gDownX = e.clientX; gDownY = e.clientY; last = null;
         clearTimeout(gHoldTimer);
-        gHoldTimer = setTimeout(() => { if (ptrs.size === 1 && !gMoved && !stroke) { gHeld = true; const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY }); pickAt(gx, gy); } }, 450);
-      } else if (ptrs.size === 2) { clearTimeout(gHoldTimer); if (stroke) cancelStroke(); startPinch(); }
+        if (cropMode) cropDown(e);
+        else gHoldTimer = setTimeout(() => { if (ptrs.size === 1 && !gMoved && !stroke) { gHeld = true; const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY }); pickAt(gx, gy); } }, 450);
+      } else if (ptrs.size === 2) { clearTimeout(gHoldTimer); if (stroke) cancelStroke(); cropDrag = null;
+        if (selDrag) { if (selDrag.lifted) commitFloat(); selDrag = null; syncSelbar(); } startPinch(); }
     });
     cv.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'touch') { directMove(e); return; }
       if (penActive || !ptrs.has(e.pointerId)) return;
       ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (ptrs.size >= 2) { doPinch(); return; }
+      if (cropMode) { if (cropDrag) cropMovePt(e); return; }
       if (Math.hypot(e.clientX - gDownX, e.clientY - gDownY) > 6) { gMoved = true; clearTimeout(gHoldTimer); }
+      if (gMoved && !gHeld && tool === 'select') {
+        if (!selDrag) { const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); selDown(sx0, sy0); }
+        const [gx, gy] = toGrid(e); selMove(gx, gy); return;
+      }
       if (gMoved && !gHeld && (tool === 'pencil' || tool === 'eraser')) {
         if (!stroke) { beginStroke(); const [sx, sy] = toGrid({ clientX: gDownX, clientY: gDownY }); stamp(sx, sy); last = [sx, sy]; }
         const [gx, gy] = toGrid(e); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render();
@@ -497,11 +795,14 @@
       clearTimeout(gHoldTimer);
       if (ptrs.size > 0) { if (ptrs.size < 2) pinch = null; return; }
       const dur = performance.now() - gT0;
-      if (stroke) { stroke = false; afterStroke(); }
+      if (cropMode) { cropDrag = null; }
+      else if (selDrag) selUp();
+      else if (stroke) { stroke = false; afterStroke(); }
       else if (gHeld) { /* цвет уже выбран удержанием */ }
       else if (!gMoved && dur < 350) {
         if (gMaxN === 1) { const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY });
-          if (tool === 'pick') { stamp(gx, gy); } else { snapshot(); stamp(gx, gy); render(); afterStroke(); } }
+          if (tool === 'select') { if (!(sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1)) deselect(); }
+          else if (tool === 'pick') { stamp(gx, gy); } else { snapshot(); stamp(gx, gy); render(); afterStroke(); } }
         else if (gMaxN === 2) doUndo();
         else if (gMaxN >= 3) doRedo();
       }
@@ -524,48 +825,176 @@
       view.zoom = Math.max(1, Math.min(48, view.zoom * f)); view.ox = cw - wx * view.zoom; view.oy = chh - wy * view.zoom; render(); }
 
     // ---- палитра / инструменты ----
-    function setTool(t) { tool = t; for (const id of ['pencil', 'eraser', 'pick', 'fill']) $('t-' + id).classList.toggle('on', id === t); }
+    function setTool(t) { tool = t; for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select']) $('t-' + id).classList.toggle('on', id === t); }
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
-      palette.forEach((c) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c);
-        if (eqc(c, active)) b.classList.add('on'); b.addEventListener('click', () => { active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); }); box.appendChild(b); }); }
+      $('palgrip').textContent = 'Палитра · ' + palette.length;
+      palette.forEach((c, idx) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;
+        if (eqc(c, active)) b.classList.add('on');
+        b.addEventListener('click', () => { clearTimeout(swHold);
+          if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, c.slice()); return; }
+          active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); });
+        b.addEventListener('contextmenu', (e) => e.preventDefault());
+        b.addEventListener('pointerdown', (e) => {
+          if (e.button === 2) { e.preventDefault(); b.setPointerCapture(e.pointerId); // ПКМ: тап — меню, движение — перестановка
+            palDrag = { from: idx, to: idx, x: e.clientX, y: e.clientY, moved: false }; }
+          else if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY;
+            clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), 480); } });
+        b.addEventListener('pointermove', (e) => {
+          if (palDrag) { if (Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) > 6) palDrag.moved = true;
+            if (!palDrag.moved) return;
+            const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest ? el.closest('.sw') : null;
+            box.querySelectorAll('.sw.drop').forEach((s) => s.classList.remove('drop'));
+            if (t) { palDrag.to = +t.dataset.i; if (palDrag.to !== palDrag.from) t.classList.add('drop'); } }
+          else if (swHold !== null && Math.hypot(e.clientX - swX, e.clientY - swY) > 8) clearTimeout(swHold); });
+        const endSw = (e) => { clearTimeout(swHold); if (!palDrag) return;
+          const d = palDrag; palDrag = null;
+          box.querySelectorAll('.sw.drop').forEach((s) => s.classList.remove('drop'));
+          if (d.moved) { if (d.to !== d.from) { const [m] = palette.splice(d.from, 1); palette.splice(d.to, 0, m); buildPalette(); } }
+          else if (e.type === 'pointerup') openCtx(e.clientX, e.clientY, d.from); };
+        b.addEventListener('pointerup', endSw); b.addEventListener('pointercancel', endSw);
+        box.appendChild(b); }); }
     function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
+    function recolorAll(from, to) { // заменить цвет на всех слоях и в палитре
+      snapshot(); let n = 0;
+      for (const L of layers) { const g = L.grid;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y][x] && eqc(g[y][x], from)) { g[y][x] = to.slice(); n++; }
+        for (const [k, c] of L.ext) if (eqc(c, from)) L.ext.set(k, to.slice()); }
+      const pi = palette.findIndex((p) => eqc(p, from));
+      if (pi >= 0) { if (palette.some((p, i) => i !== pi && eqc(p, to))) palette.splice(pi, 1); else palette[pi] = to.slice(); }
+      if (eqc(active, from)) active = to.slice();
+      refreshActive(); dirtyAll(); buildPalette(); render(); afterStroke(); toast(n ? `Перекрашено: ${n} пикс.` : 'Цвет заменён в палитре'); }
+    function startReplace(from) { replaceMode = { from: from.slice() }; render(); toast('Пиксели подсвечены — тапни новый цвет в палитре'); }
+    function openCtx(x, y, idx) { ctxIdx = idx; const m = $('ctx'); m.style.visibility = 'hidden'; m.classList.add('on');
+      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
+        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
+        m.style.top = Math.max(8, Math.min(y - r.height - 10, innerHeight - r.height - 8)) + 'px';
+        m.style.visibility = ''; }); }
+    document.addEventListener('pointerdown', (e) => { // клик мимо меню закрывает его
+      for (const id of ['ctx', 'lctx', 'cctx']) { const m = $(id);
+        if (m.classList.contains('on') && !(e.target.closest && e.target.closest('#' + id))) m.classList.remove('on'); } }, true);
+    $('ctx').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (!btn) return;
+      const col = palette[ctxIdx]; $('ctx').classList.remove('on'); if (!col) return;
+      if (btn.dataset.act === 'delete') { palette.splice(ctxIdx, 1); buildPalette(); toast('Цвет удалён из палитры'); }
+      else if (btn.dataset.act === 'select') startReplace(col);
+      else if (btn.dataset.act === 'replace') { const r = $('repl'); replFrom = col.slice();
+        r.value = '#' + col.map((v) => v.toString(16).padStart(2, '0')).join(''); r.click(); } });
+    $('repl').addEventListener('change', (e) => { if (!replFrom) return; const from = replFrom; replFrom = null; recolorAll(from, hexToRgb(e.target.value)); });
 
-    // ---- слои: список, выбор, операции ----
+    // ---- слои: список с папками, мультивыбор, операции ----
     const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>';
+    function longPress(el, fn) { // ПКМ или долгий тап
+      let t = null, x0 = 0, y0 = 0;
+      el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); fn(e.clientX, e.clientY); });
+      el.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return;
+        x0 = e.clientX; y0 = e.clientY; clearTimeout(t); t = setTimeout(() => fn(x0, y0), 480); });
+      el.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 8) { clearTimeout(t); t = null; } });
+      const c = () => { clearTimeout(t); t = null; };
+      el.addEventListener('pointerup', c); el.addEventListener('pointercancel', c); }
+    function thumbFor(i) { const th = document.createElement('canvas'); th.className = 'lth'; th.width = 40; th.height = 40;
+      const tx = th.getContext('2d'); tx.imageSmoothingEnabled = false;
+      tx.fillStyle = '#26262c'; tx.fillRect(0, 0, 40, 40); tx.fillStyle = '#1d1d23';
+      for (let yy = 0; yy < 5; yy++) for (let xx = 0; xx < 5; xx++) if ((xx + yy) & 1) tx.fillRect(xx * 8, yy * 8, 8, 8);
+      const k = Math.min(40 / W, 40 / H), w2 = Math.max(1, Math.round(W * k)), h2 = Math.max(1, Math.round(H * k));
+      tx.drawImage(layerCanvas(i), (40 - w2) / 2, (40 - h2) / 2, w2, h2); return th; }
     function layList() {
+      folders = folders.filter((f) => layers.some((L) => L.fid === f.id)); // пустые папки исчезают
       const box = $('lay-list'); box.innerHTML = '';
+      const doneF = new Set();
       for (let i = layers.length - 1; i >= 0; i--) { const L = layers[i];
-        const row = document.createElement('div'); row.className = 'lrow' + (i === cur ? ' on' : '');
-        const th = document.createElement('canvas'); th.className = 'lth'; th.width = 40; th.height = 40;
-        const tx = th.getContext('2d'); tx.imageSmoothingEnabled = false;
-        tx.fillStyle = '#26262c'; tx.fillRect(0, 0, 40, 40); tx.fillStyle = '#1d1d23';
-        for (let yy = 0; yy < 5; yy++) for (let xx = 0; xx < 5; xx++) if ((xx + yy) & 1) tx.fillRect(xx * 8, yy * 8, 8, 8);
-        const k = Math.min(40 / W, 40 / H), w2 = Math.max(1, Math.round(W * k)), h2 = Math.max(1, Math.round(H * k));
-        tx.drawImage(layerCanvas(i), (40 - w2) / 2, (40 - h2) / 2, w2, h2);
+        const f = L.fid != null ? folders.find((x) => x.id === L.fid) : null;
+        if (f && !doneF.has(f.id)) { doneF.add(f.id);
+          const fr = document.createElement('div'); fr.className = 'lrow frow';
+          const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : '');
+          car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+          const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = f.name;
+          const eye = document.createElement('button'); eye.className = 'eye' + (f.visible ? '' : ' off'); eye.innerHTML = EYE;
+          eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); render(); });
+          fr.append(car, nm, eye);
+          fr.addEventListener('click', () => { f.open = !f.open; layList(); });
+          longPress(fr, (x, y) => openLctx(x, y, 'folder', f));
+          box.appendChild(fr); }
+        if (f && !f.open) continue;
+        const row = document.createElement('div'); row.className = 'lrow' + (i === cur ? ' on' : '') + (f ? ' inf' : '');
+        const chk = document.createElement('button'); chk.className = 'lchk' + (marked.has(i) ? ' on' : ''); chk.title = 'Отметить для слияния/папки';
+        chk.addEventListener('click', ((idx) => (ev) => { ev.stopPropagation();
+          if (marked.has(idx)) marked.delete(idx); else marked.add(idx); layList(); })(i));
         const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = L.name;
         const eye = document.createElement('button'); eye.className = 'eye' + (L.visible ? '' : ' off'); eye.innerHTML = EYE;
         eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); render(); });
-        row.append(th, nm, eye);
+        row.append(chk, thumbFor(i), nm, eye);
         row.addEventListener('click', ((idx) => () => { cur = idx; layList(); })(i));
+        longPress(row, (x, y) => openLctx(x, y, 'layer', L));
         box.appendChild(row);
       }
       syncOp();
     }
     function syncOp() { const v = Math.round(layers[cur].opacity * 100); $('lay-op').value = v; $('lay-opv').textContent = v + '%'; }
+    const mergeCells = (b, t, op) => !t ? (b ? b.slice() : null) : (!b || op >= 0.999) ? t.slice()
+      : [Math.round(t[0] * op + b[0] * (1 - op)), Math.round(t[1] * op + b[1] * (1 - op)), Math.round(t[2] * op + b[2] * (1 - op))];
+    function doMerge() { // слить отмеченные (или активный с нижним)
+      let idx = [...marked].sort((a, b) => a - b);
+      if (idx.length < 2) { if (cur > 0) idx = [cur - 1, cur]; else { toast('Отметь 2+ слоя галочками'); return; } }
+      snapshot();
+      const base = idx[0], out = cloneGrid(layers[base].grid), ext = new Map(layers[base].ext);
+      for (let j = 1; j < idx.length; j++) { const L = layers[idx[j]];
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const t = L.grid[y][x]; if (t) out[y][x] = mergeCells(out[y][x], t, L.opacity); }
+        for (const [k, c] of L.ext) ext.set(k, c); }
+      const merged = { name: layers[base].name, grid: out, opacity: 1, visible: true, fid: layers[base].fid, ext };
+      for (let j = idx.length - 1; j >= 0; j--) layers.splice(idx[j], 1);
+      layers.splice(base, 0, merged); cur = base; marked.clear(); dirtyAll(); layList(); render(); toast('Слои слиты');
+    }
+    function doGroup() { // папка из отмеченных (или активного)
+      let idx = [...marked].sort((a, b) => a - b); if (!idx.length) idx = [cur];
+      snapshot();
+      const f = { id: ++folderSeq, name: 'Папка ' + folderSeq, open: true, visible: true };
+      folders.push(f);
+      const moved = [];
+      for (let j = idx.length - 1; j >= 0; j--) moved.unshift(layers.splice(idx[j], 1)[0]);
+      moved.forEach((L) => { L.fid = f.id; });
+      layers.splice(idx[0], 0, ...moved);
+      cur = idx[0] + moved.length - 1; marked.clear(); dirtyAll(); layList(); render(); toast('Папка создана');
+    }
+    let renRef = null, lctxRef = null;
+    function openRename(ref) { renRef = ref; $('ren-name').value = ref.name; $('ren-ovl').classList.add('on');
+      setTimeout(() => { $('ren-name').focus(); $('ren-name').select(); }, 80); }
+    $('ren-ok').onclick = () => { if (renRef) { const v = $('ren-name').value.trim();
+      if (v) { snapshot(); renRef.name = v.slice(0, 24); layList(); } }
+      renRef = null; $('ren-ovl').classList.remove('on'); };
+    $('ren-cancel').onclick = () => { renRef = null; $('ren-ovl').classList.remove('on'); };
+    $('ren-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ren-ok').click(); });
+    function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
+      $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
+      const m = $('lctx'); m.style.visibility = 'hidden'; m.classList.add('on');
+      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
+        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
+        m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
+        m.style.visibility = ''; }); }
+    $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
+    $('lctx-ung').onclick = () => { $('lctx').classList.remove('on');
+      if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref;
+        layers.forEach((L) => { if (L.fid === f.id) L.fid = null; });
+        folders = folders.filter((x) => x !== f); layList(); render(); toast('Папка расформирована'); } };
     $('layers').addEventListener('click', () => { const p = $('lay-pop'); const on = p.classList.toggle('on');
       $('layers').classList.toggle('on', on); if (on) layList(); });
     $('lay-add').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
-      snapshot(); layers.splice(cur + 1, 0, newLayer('Слой ' + (++layerSeq))); cur++; dirtyAll(); layList(); render(); });
+      snapshot(); const nl = newLayer('Слой ' + (++layerSeq)); nl.fid = layers[cur].fid;
+      layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-dup').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
-      snapshot(); const L = layers[cur]; layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, grid: cloneGrid(L.grid) });
-      cur++; dirtyAll(); layList(); render(); });
+      snapshot(); const L = layers[cur];
+      layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
+      cur++; marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-del').addEventListener('click', () => { if (layers.length < 2) { toast('Это единственный слой'); return; }
-      snapshot(); layers.splice(cur, 1); cur = Math.max(0, cur - 1); dirtyAll(); layList(); render(); });
+      snapshot(); layers.splice(cur, 1); cur = Math.max(0, cur - 1); marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-up').addEventListener('click', () => { if (cur >= layers.length - 1) return;
-      snapshot(); [layers[cur], layers[cur + 1]] = [layers[cur + 1], layers[cur]]; cur++; dirtyAll(); layList(); render(); });
+      snapshot(); const a = layers[cur], b = layers[cur + 1]; const tf = a.fid; a.fid = b.fid; b.fid = tf; // папка прикреплена к месту
+      [layers[cur], layers[cur + 1]] = [b, a]; cur++; marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-down').addEventListener('click', () => { if (cur <= 0) return;
-      snapshot(); [layers[cur], layers[cur - 1]] = [layers[cur - 1], layers[cur]]; cur--; dirtyAll(); layList(); render(); });
+      snapshot(); const a = layers[cur], b = layers[cur - 1]; const tf = a.fid; a.fid = b.fid; b.fid = tf;
+      [layers[cur], layers[cur - 1]] = [b, a]; cur--; marked.clear(); dirtyAll(); layList(); render(); });
+    $('lay-merge').addEventListener('click', doMerge);
+    $('lay-group').addEventListener('click', doGroup);
+    $('lay-clear').addEventListener('click', () => { if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); });
     $('lay-op').addEventListener('pointerdown', () => snapshot());
     $('lay-op').addEventListener('input', () => { layers[cur].opacity = +$('lay-op').value / 100; syncOp(); render(); });
 
@@ -609,7 +1038,8 @@
       if (!impGrid) return;
       const g = cropEmpty(impGrid.map((r) => r.map((c) => (c ? c.slice() : null))));
       W = g[0].length; H = g.length;
-      layerSeq = 1; layers = [{ name: 'Слой 1', grid: g, opacity: 1, visible: true }]; cur = 0;
+      layerSeq = 1; layers = [{ name: 'Слой 1', grid: g, opacity: 1, visible: true, fid: null, ext: new Map() }]; cur = 0;
+      folders = []; folderSeq = 0; marked.clear();
       palette = paletteFromGrid(g); if (palette.length) active = palette[0];
       sym = $('imp-sym').checked; $('sym').classList.toggle('on', sym);
       undoStack.length = redoStack.length = 0; dirtyAll();
@@ -622,7 +1052,7 @@
     function exportPng() {
       const c = document.createElement('canvas'); c.width = W; c.height = H;
       const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!L.visible || L.opacity <= 0) continue;
+      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         x.globalAlpha = L.opacity; x.drawImage(layerCanvas(i), 0, 0); }
       saveCanvas(c, `pixel_${W}x${H}.png`);
     }
@@ -635,13 +1065,84 @@
     // ---- проводка UI ----
     $('t-pencil').onclick = () => setTool('pencil'); $('t-eraser').onclick = () => setTool('eraser');
     $('t-pick').onclick = () => setTool('pick'); $('t-fill').onclick = () => setTool('fill');
+    $('t-select').onclick = () => setTool('select');
+    $('sel-copy').onclick = doCopy; $('sel-cut').onclick = doCut; $('sel-paste').onclick = doPaste;
+    $('sel-del').onclick = doDelete; $('sel-off').onclick = deselect;
     $('sym').onclick = () => { sym = !sym; $('sym').classList.toggle('on', sym); render(); toast(sym ? 'Симметрия включена' : 'Симметрия выключена'); };
+    $('pp').onclick = () => { ppOn = !ppOn; $('pp').classList.toggle('on', ppOn); toast(ppOn ? 'Пиксель-перфект включён' : 'Пиксель-перфект выключен'); };
     $('outline').onclick = outlineLayer;
+    $('flip-h').onclick = () => flipLayer(true);
+    $('flip-v').onclick = () => flipLayer(false);
+    $('rot').onclick = rotateCanvas;
+    $('crop').onclick = toggleCrop;
+    $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
+    cv.addEventListener('contextmenu', (e) => { e.preventDefault(); // ПКМ по холсту — выбор слоя
+      const m = $('cctx'); m.innerHTML = '';
+      const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Слой:'; m.appendChild(head);
+      for (let i = layers.length - 1; i >= 0; i--) { const b = document.createElement('button');
+        b.textContent = layers[i].name; if (i === cur) b.classList.add('cur'); if (!effVis(i)) b.classList.add('dim');
+        b.addEventListener('click', ((idx) => () => { cur = idx; layList(); m.classList.remove('on'); toast('Слой: ' + layers[idx].name); })(i));
+        m.appendChild(b); }
+      m.style.visibility = 'hidden'; m.classList.add('on');
+      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
+        m.style.left = Math.max(8, Math.min(e.clientX, innerWidth - r.width - 8)) + 'px';
+        m.style.top = Math.max(8, Math.min(e.clientY, innerHeight - r.height - 8)) + 'px';
+        m.style.visibility = ''; }); });
+
+    // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
+    //      H/V — флипы, R или Ctrl+T — поворот, C — кроп, N — новый, +/−/0 — зум,
+    //      Ctrl+Z/Y/C/X/V/D/E/G/O/S, Del — удалить, Enter/Esc — кроп, пробел — пипетка ----
+    let spaceTool = null;
+    window.addEventListener('keydown', (e) => {
+      if (e.target.matches && e.target.matches('input, textarea')) return;
+      if (document.querySelector('.ovl.on')) return;
+      const mod = e.ctrlKey || e.metaKey, c = e.code;
+      if (mod) {
+        if (c === 'KeyZ') { e.preventDefault(); if (e.shiftKey) doRedo(); else doUndo(); }
+        else if (c === 'KeyY') { e.preventDefault(); doRedo(); }
+        else if (c === 'KeyC') { e.preventDefault(); doCopy(); }
+        else if (c === 'KeyX') { e.preventDefault(); doCut(); }
+        else if (c === 'KeyV') { e.preventDefault(); doPaste(); }
+        else if (c === 'KeyD') { e.preventDefault(); deselect(); }
+        else if (c === 'KeyE') { e.preventDefault(); doMerge(); }
+        else if (c === 'KeyG') { e.preventDefault(); doGroup(); }
+        else if (c === 'KeyT') { e.preventDefault(); rotateCanvas(); }
+        else if (c === 'KeyO') { e.preventDefault(); $('file').click(); }
+        else if (c === 'KeyS') { e.preventDefault(); exportPng(); }
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); doDelete(); }
+      else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
+      else if (e.key === 'Escape') { if (cropMode) cancelCrop();
+        else { if (replaceMode) { replaceMode = null; render(); }
+          $('ctx').classList.remove('on'); $('lctx').classList.remove('on'); $('cctx').classList.remove('on'); deselect(); } }
+      else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
+      else if (c === 'KeyB') setTool('pencil');
+      else if (c === 'KeyE') setTool('eraser');
+      else if (c === 'KeyF') setTool('fill');
+      else if (c === 'KeyI') setTool('pick');
+      else if (c === 'KeyM') setTool('select');
+      else if (c === 'KeyL') $('layers').click();
+      else if (c === 'KeyS') $('sym').click();
+      else if (c === 'KeyP') $('pp').click();
+      else if (c === 'KeyO') outlineLayer();
+      else if (c === 'KeyH') flipLayer(true);
+      else if (c === 'KeyV') flipLayer(false);
+      else if (c === 'KeyR') rotateCanvas();
+      else if (c === 'KeyC') toggleCrop();
+      else if (c === 'KeyN') $('new-ovl').classList.add('on');
+      else if (c === 'Equal' || c === 'NumpadAdd') zoomBy(1.25);
+      else if (c === 'Minus' || c === 'NumpadSubtract') zoomBy(0.8);
+      else if (c === 'Digit0') fitView();
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' && spaceTool !== null) { setTool(spaceTool === 'pick' ? 'pencil' : spaceTool); spaceTool = null; }
+    });
     $('zin').onclick = () => zoomBy(1.25); $('zout').onclick = () => zoomBy(0.8); $('fit').onclick = fitView;
     $('imp').onclick = () => $('file').click();
     $('exp').onclick = exportPng;
-    $('picker').onchange = (e) => addColor(e.target.value);
+    $('picker').onchange = (e) => { if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, hexToRgb(e.target.value)); } else addColor(e.target.value); };
     $('ovlclose').onclick = () => $('ovl').classList.remove('on');
 
     const fileInp = document.createElement('input'); fileInp.type = 'file'; fileInp.accept = 'image/*'; fileInp.id = 'file';
@@ -663,13 +1164,41 @@
     $('new-create').onclick = () => {
       const s = parseInt($('new-size').value, 10);
       if (!s || s < 2 || s > 256) { toast('Размер от 2 до 256'); return; }
-      snapshot(); W = H = s; layerSeq = 1; layers = [newLayer('Слой 1')]; cur = 0; dirtyAll();
+      snapshot(); W = H = s; layerSeq = 1; layers = [newLayer('Слой 1')]; cur = 0;
+      folders = []; folderSeq = 0; marked.clear(); dirtyAll();
       $('new-ovl').classList.remove('on'); layList(); fitView(); toast(`Холст ${s}×${s}`);
     };
     $('new-cancel').onclick = () => $('new-ovl').classList.remove('on');
 
-    for (const id of ['ovl', 'imp-ovl', 'new-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); });
+    for (const id of ['ovl', 'imp-ovl', 'new-ovl', 'ren-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); });
     window.addEventListener('resize', fitView);
+
+    // ---- плавающее окно палитры: перетаскивание за шапку, размер за уголок ----
+    (function palWin() {
+      const p = $('palbar'), grip = $('palgrip'), rs = $('palrsz');
+      function place(l, t) { p.style.left = Math.max(4, Math.min(l, innerWidth - 90)) + 'px';
+        p.style.top = Math.max(4, Math.min(t, innerHeight - 50)) + 'px';
+        p.style.bottom = 'auto'; p.style.transform = 'none'; }
+      function save() { const r = p.getBoundingClientRect();
+        try { localStorage.setItem('palwin', JSON.stringify({ l: r.left, t: r.top, w: r.width, h: $('pal').offsetHeight })); } catch (err) {} }
+      try { const s = JSON.parse(localStorage.getItem('palwin'));
+        if (s && s.l != null) { place(s.l, s.t); if (s.w) p.style.width = s.w + 'px'; if (s.h) $('pal').style.height = s.h + 'px'; } } catch (err) {}
+      let d = null;
+      grip.addEventListener('pointerdown', (e) => { grip.setPointerCapture(e.pointerId);
+        const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+      grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
+      const dEnd = () => { if (d) { d = null; save(); fitView(); } };
+      grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
+      let rz = null;
+      rs.addEventListener('pointerdown', (e) => { e.preventDefault(); rs.setPointerCapture(e.pointerId);
+        const r = p.getBoundingClientRect(); if (!p.style.top) place(r.left, r.top);
+        rz = { w: r.width, h: $('pal').offsetHeight, x: e.clientX, y: e.clientY }; });
+      rs.addEventListener('pointermove', (e) => { if (!rz) return;
+        p.style.width = Math.max(130, Math.min(innerWidth - 12, rz.w + e.clientX - rz.x)) + 'px';
+        $('pal').style.height = Math.max(38, Math.min(innerHeight * .6, rz.h + e.clientY - rz.y)) + 'px'; });
+      const rEnd = () => { if (rz) { rz = null; save(); fitView(); } };
+      rs.addEventListener('pointerup', rEnd); rs.addEventListener('pointercancel', rEnd);
+    })();
 
     refreshActive(); buildPalette(); layList();
     requestAnimationFrame(() => { fitView(); toast('Долгий тап — пипетка · тап 2 пальцами — отмена'); });
