@@ -35,6 +35,19 @@
     #ovlbox p { color: #ffd6a0; margin: 0 0 12px; }
     #ovlimg { width: 70vmin; height: auto; image-rendering: pixelated; background: #1c2029; border: 1px solid #222a3c; border-radius: 6px; }
     #ovlclose { margin-top: 14px; }
+    #imp-ovl { position: fixed; inset: 0; background: rgba(4,8,16,.93); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 14px; z-index: 60; }
+    #imp-ovl.on { display: flex; }
+    #imp-box { background: #131826; border: 1px solid #222a3c; border-radius: 12px; padding: 14px; width: min(96vw, 420px); max-height: 94vh; overflow: auto; }
+    #imp-box h3 { margin: 0 0 10px; color: #ffd6a0; font-size: 14px; }
+    #imp-prev { width: 100%; aspect-ratio: 1; image-rendering: pixelated; background: #161a28; border: 1px solid #222a3c; border-radius: 8px; }
+    .irow { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .irow label { color: #aab2c6; min-width: 96px; }
+    .irow b { color: #ffd6a0; margin-left: auto; }
+    .irow input[type=range] { flex: 1; accent-color: #ff8a3c; }
+    .irow input[type=number] { width: 70px; background: #0e1220; color: #d7dce6; border: 1px solid #2c374f; border-radius: 6px; padding: 6px; }
+    .iact { display: flex; gap: 8px; margin-top: 14px; }
+    .iact button { flex: 1; font-size: 14px; }
+    #imp-apply { background: #ff7a18; color: #1a0f06; border-color: #ff7a18; font-weight: 700; }
     .sep { width: 1px; align-self: stretch; background: #2c374f; margin: 0 2px; }
     .hint { color: #6f7a90; font-size: 11px; }
   </style>
@@ -70,6 +83,16 @@
   <div id="ovl"><div id="ovlbox">
     <p>Зажми картинку и выбери «Сохранить в Файлы» (или «Сохранить изображение»)</p>
     <img id="ovlimg" alt="результат" /><div><button id="ovlclose">Закрыть</button></div>
+  </div></div>
+  <div id="imp-ovl"><div id="imp-box">
+    <h3>Развить картинку в пиксель-арт</h3>
+    <canvas id="imp-prev"></canvas>
+    <div class="irow"><label>Цвета</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
+    <div class="irow"><label>Размер ячейки</label><input id="imp-cell" type="number" min="0" max="64" step="1" value="0" /><span class="hint">0 = авто</span></div>
+    <div class="irow"><label>Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
+    <div class="irow"><label>Чистка</label><input id="imp-clean" type="checkbox" /><span class="hint">убрать мусор/дырки</span></div>
+    <div class="irow"><label>Симметрия</label><input id="imp-sym" type="checkbox" /><span class="hint">лево-право</span></div>
+    <div class="iact"><button id="imp-apply">Применить</button><button id="imp-cancel">Отмена</button></div>
   </div></div>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -110,6 +133,20 @@
       return bx.map((b) => { const s = [0, 0, 0]; for (const c of b) for (let k = 0; k < 3; k++) s[k] += c[k]; return s.map((v) => Math.round(v / b.length)); }); }
     const nearest = (c, pal) => { let best = pal[0], bd = Infinity; for (const p of pal) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } } return best; };
     function usedColors(g) { const m = new Map(); for (const row of g) for (const c of row) { if (c) m.set(c.join(','), c); } return [...m.values()]; }
+    function despeckle(g, nx, ny) { const out = g.map((r) => r.slice()), n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+      for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { let solid = 0; const freq = new Map();
+        for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= nx || y2 >= ny) continue; const v = g[y2][x2]; if (v) { solid++; const k = v.join(); freq.set(k, (freq.get(k) || 0) + 1); } }
+        if (g[y][x] && solid <= 1) { out[y][x] = null; continue; }
+        if (!g[y][x] && solid >= 7) { let bk = null, bn = 0; for (const [k, v] of freq) if (v > bn) { bn = v; bk = k; } if (bk) out[y][x] = bk.split(',').map(Number); } }
+      return out; }
+    function symmetrizeV(g, nx, ny) { const eq = (a, b) => (!a && !b) || (a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2]);
+      let sx = 0, n = 0; for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) if (g[y][x]) { sx += x; n++; }
+      const c0 = n ? sx / n : nx / 2; let twoC = Math.round(c0 * 2), best = -1;
+      for (let t = Math.round((c0 - 8) * 2); t <= Math.round((c0 + 8) * 2); t++) { let m = 0, tot = 0; for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const xm = t - x; if (xm <= x || xm < 0 || xm >= nx) continue; tot++; if (eq(g[y][x], g[y][xm])) m++; } if (tot && m / tot > best) { best = m / tot; twoC = t; } }
+      let left = 0, right = 0; for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) if (g[y][x]) { if (2 * x < twoC) left++; else if (2 * x > twoC) right++; }
+      const keepLeft = left >= right, out = g.map((r) => r.slice());
+      for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { if (keepLeft ? 2 * x > twoC : 2 * x < twoC) continue; const xm = twoC - x; if (xm >= 0 && xm < nx) out[y][xm] = g[y][x] ? g[y][x].slice() : null; }
+      return out; }
 
     // ---- рендер ----
     function render() {
@@ -166,22 +203,65 @@
         setCell(cx, cy, to); st.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); }
     }
 
-    // ---- ввод: рисование одним пальцем, зум/панорама двумя ----
-    const ptrs = new Map(); let drawing = false, last = null, pinch = null;
+    // ---- ввод: рисование по движению/одиночному тапу; 2 пальца = зум (раздвигание) или
+    //      отмена (тап), 3 пальца тапом = повтор. Тапы отличаем от зума по отсутствию движения.
+    const ptrs = new Map();
+    let last = null, pinch = null, stroke = false, gMaxN = 0, gMoved = false, gT0 = 0, gDownX = 0, gDownY = 0, gHoldTimer = null, gHeld = false;
     const toGrid = (e) => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - view.ox) / view.zoom), Math.floor((e.clientY - r.top - view.oy) / view.zoom)]; };
+    function beginStroke() { snapshot(); stroke = true; }
+    function cancelStroke() { if (!stroke) return; if (undoStack.length) { grid = undoStack.pop(); H = grid.length; W = grid[0].length; } stroke = false; last = null; render(); }
+    function pickAt(gx, gy) { const c = grid[gy] && grid[gy][gx]; if (!c) return; active = c.slice(); $('picker').value = '#' + c.map((v) => v.toString(16).padStart(2, '0')).join(''); refreshActive(); buildPalette(); }
+
+    // Перо/мышь — прямое рисование сразу при касании. Пока перо активно, пальцы игнорируем (палм-реджект).
+    let penActive = false, directDrawing = false, directLast = null;
+    function directDown(e) {
+      cv.setPointerCapture(e.pointerId); if (e.pointerType === 'pen') penActive = true;
+      const [gx, gy] = toGrid(e);
+      if (tool === 'pick') { pickAt(gx, gy); return; }
+      if (tool === 'fill') { snapshot(); stamp(gx, gy); render(); return; }
+      beginStroke(); stamp(gx, gy); directLast = [gx, gy]; directDrawing = true; render();
+    }
+    function directMove(e) { if (!directDrawing) return; const [gx, gy] = toGrid(e); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
+    function directUp(e) { if (e.pointerType === 'pen') penActive = false; directDrawing = false; directLast = null; stroke = false; }
+
     cv.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') { directDown(e); return; }
+      if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (ptrs.size === 1) { drawing = true; if (tool !== 'pick' && tool !== 'fill') snapshot(); else if (tool === 'fill') snapshot();
-        const [gx, gy] = toGrid(e); last = [gx, gy]; stamp(gx, gy); render(); }
-      else { drawing = false; startPinch(); }
+      gMaxN = Math.max(gMaxN, ptrs.size);
+      if (ptrs.size === 1) {
+        gT0 = performance.now(); gMoved = false; gHeld = false; gDownX = e.clientX; gDownY = e.clientY; last = null;
+        clearTimeout(gHoldTimer);
+        gHoldTimer = setTimeout(() => { if (ptrs.size === 1 && !gMoved && !stroke) { gHeld = true; const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY }); pickAt(gx, gy); } }, 450);
+      } else if (ptrs.size === 2) { clearTimeout(gHoldTimer); if (stroke) cancelStroke(); startPinch(); }
     });
     cv.addEventListener('pointermove', (e) => {
-      if (!ptrs.has(e.pointerId)) return;
+      if (e.pointerType !== 'touch') { directMove(e); return; }
+      if (penActive || !ptrs.has(e.pointerId)) return;
       ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (ptrs.size >= 2) { doPinch(); return; }
-      if (drawing && (tool === 'pencil' || tool === 'eraser')) { const [gx, gy] = toGrid(e); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render(); }
+      if (Math.hypot(e.clientX - gDownX, e.clientY - gDownY) > 6) { gMoved = true; clearTimeout(gHoldTimer); }
+      if (gMoved && !gHeld && (tool === 'pencil' || tool === 'eraser')) {
+        if (!stroke) { beginStroke(); const [sx, sy] = toGrid({ clientX: gDownX, clientY: gDownY }); stamp(sx, sy); last = [sx, sy]; }
+        const [gx, gy] = toGrid(e); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render();
+      }
     });
-    function endPtr(e) { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (ptrs.size === 0) { drawing = false; last = null; } else drawing = false; }
+    function endPtr(e) {
+      if (e.pointerType !== 'touch') { directUp(e); return; }
+      if (!ptrs.has(e.pointerId)) return;
+      ptrs.delete(e.pointerId);
+      clearTimeout(gHoldTimer);
+      if (ptrs.size > 0) { if (ptrs.size < 2) pinch = null; return; }
+      const dur = performance.now() - gT0;
+      if (stroke) { stroke = false; }
+      else if (gHeld) { /* цвет уже выбран удержанием */ }
+      else if (!gMoved && dur < 350) {
+        if (gMaxN === 1) { const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY }); if (tool === 'pick') stamp(gx, gy); else { snapshot(); stamp(gx, gy); render(); } }
+        else if (gMaxN === 2) doUndo();
+        else if (gMaxN >= 3) doRedo();
+      }
+      gMaxN = 0; gMoved = false; gHeld = false; pinch = null; last = null;
+    }
     cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
     function pts() { return [...ptrs.values()]; }
     function startPinch() { const p = pts(); const mid = { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 }; const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
@@ -205,14 +285,46 @@
         if (eqc(c, active)) b.classList.add('on'); b.addEventListener('click', () => { active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); }); box.appendChild(b); }); }
     function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
 
-    // ---- импорт картинки (через конвертер) ----
-    function importImage(file) { if (!file) return; const im = new Image();
-      im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0);
-        const data = x.getImageData(0, 0, c.width, c.height); const r = sampleGrid({ w: c.width, h: c.height, ch: 4, data: data.data }, 0, 30);
-        let g = r.grid; if (r.samples.length) { const pal = medianCut(r.samples, 24); g = g.map((row) => row.map((cc) => (cc ? nearest(cc, pal) : null))); }
-        W = r.nx; H = r.ny; grid = g; palette = usedColors(g).slice(0, 32); if (palette.length) active = palette[0];
-        undoStack.length = redoStack.length = 0; refreshActive(); buildPalette(); fitView(); };
-      im.src = URL.createObjectURL(file); }
+    // ---- импорт: панель «развить картинку» (с уменьшением больших фото из галереи) ----
+    let impData = null, impGrid = null, impNx = 0, impNy = 0;
+    function openImport(file) {
+      if (!file) return;
+      const im = new Image();
+      im.onerror = () => alert('Не удалось открыть картинку (неподдерживаемый формат?).');
+      im.onload = () => {
+        const MAX = 600, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
+        const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+        impData = x.getImageData(0, 0, w, h);
+        $('imp-ovl').classList.add('on'); impConvert();
+      };
+      im.src = URL.createObjectURL(file);
+    }
+    function impConvert() {
+      if (!impData) return;
+      const colors = +$('imp-colors').value, cell = +$('imp-cell').value || 0, bgtol = +$('imp-bgtol').value;
+      const r = sampleGrid({ w: impData.width, h: impData.height, ch: 4, data: impData.data }, cell, bgtol);
+      let g = r.grid;
+      if (colors > 0 && r.samples.length) { const pal = medianCut(r.samples, colors); g = g.map((row) => row.map((c) => (c ? nearest(c, pal) : null))); }
+      if ($('imp-sym').checked) g = symmetrizeV(g, r.nx, r.ny);
+      if ($('imp-clean').checked) g = despeckle(g, r.nx, r.ny);
+      impGrid = g; impNx = r.nx; impNy = r.ny; drawTo($('imp-prev'), g, r.nx, r.ny);
+    }
+    function drawTo(cvp, g, nx, ny) {
+      const dpr = window.devicePixelRatio || 1, cw = cvp.clientWidth, chh = cvp.clientHeight;
+      if (cvp.width !== Math.round(cw * dpr)) { cvp.width = Math.round(cw * dpr); cvp.height = Math.round(chh * dpr); }
+      const c = cvp.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.imageSmoothingEnabled = false;
+      c.fillStyle = '#161a28'; c.fillRect(0, 0, cw, chh);
+      const z = Math.max(1, Math.floor(Math.min((cw - 8) / nx, (chh - 8) / ny))), ox = Math.floor((cw - nx * z) / 2), oy = Math.floor((chh - ny * z) / 2);
+      for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const col = g[y][x]; c.fillStyle = col ? rgb(col) : (((x + y) & 1) ? '#262b38' : '#1b2029'); c.fillRect(ox + x * z, oy + y * z, z, z); }
+    }
+    function applyImport() {
+      if (!impGrid) return;
+      grid = impGrid.map((r) => r.map((c) => (c ? c.slice() : null))); W = impNx; H = impNy;
+      palette = usedColors(grid).slice(0, 32); if (palette.length) active = palette[0];
+      undoStack.length = redoStack.length = 0; refreshActive(); buildPalette(); $('imp-ovl').classList.remove('on'); fitView();
+    }
 
     // ---- экспорт ----
     function exportPng() {
@@ -235,7 +347,11 @@
     $('sym').onclick = () => { sym = !sym; $('sym').classList.toggle('on', sym); render(); };
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
     $('zin').onclick = () => zoomBy(1.25); $('zout').onclick = () => zoomBy(0.8); $('fit').onclick = fitView;
-    $('imp').onclick = () => $('file').click(); $('file').onchange = (e) => importImage(e.target.files[0]);
+    $('imp').onclick = () => $('file').click(); $('file').onchange = (e) => { openImport(e.target.files[0]); e.target.value = ''; };
+    ['imp-colors', 'imp-bgtol'].forEach((id) => { const el = $(id), out = $(id + 'v'); el.addEventListener('input', () => { if (out) out.textContent = el.value; impConvert(); }); });
+    $('imp-cell').addEventListener('input', impConvert);
+    ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
+    $('imp-apply').onclick = applyImport; $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
     $('exp').onclick = exportPng;
     $('new').onclick = () => { const s = parseInt(prompt('Размер холста (пикселей):', '32'), 10); if (!s || s < 2 || s > 256) return; snapshot(); W = H = s; grid = blank(W, H); fitView(); };
     $('picker').onchange = (e) => addColor(e.target.value);
