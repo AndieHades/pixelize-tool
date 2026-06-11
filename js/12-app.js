@@ -1,22 +1,25 @@
-    let bpTool = 'pencil';
+    // ---- левая полоса кисти (как в Procreate): размер сверху, пипетка по центру, прозрачность снизу ----
     const BP_SMAX = 8;
+    const curBrush = () => (tool === 'eraser' ? 'eraser' : 'pencil'); // полоса правит активную кисть/ластик
     function vslPos(fillId, knobId, frac) { const p = Math.max(0, Math.min(1, frac)) * 100;
       $(fillId).style.height = p + '%'; $(knobId).style.bottom = p + '%'; }
-    function syncBpSize() { const s = brushes[bpTool].size; $('bp-sizev').textContent = s + ' px';
-      vslPos('bp-size-fill', 'bp-size-knob', (s - 1) / (BP_SMAX - 1)); }
-    function syncBpOp() { const o = brushes[bpTool].op; $('bp-opv').textContent = Math.round(o * 100) + '%';
-      vslPos('bp-op-fill', 'bp-op-knob', o); }
+    function syncBars() { const b = brushes[curBrush()];
+      vslPos('bp-size-fill', 'bp-size-knob', (b.size - 1) / (BP_SMAX - 1));
+      vslPos('bp-op-fill', 'bp-op-knob', b.op); }
+    let bbValT = null;
+    function showBbVal(slId, txt) { const v = $('bb-val'), r = $(slId).getBoundingClientRect();
+      v.textContent = txt; v.style.left = (r.right + 8) + 'px'; v.style.top = r.top + r.height / 2 + 'px'; v.classList.add('on');
+      clearTimeout(bbValT); bbValT = setTimeout(() => v.classList.remove('on'), 700); }
     function vslDrag(slId, onFrac) { const sl = $(slId); let on = false;
       const set = (e) => { const r = sl.getBoundingClientRect(); onFrac(Math.max(0, Math.min(1, 1 - (e.clientY - r.top) / r.height))); };
       sl.addEventListener('pointerdown', (e) => { on = true; sl.setPointerCapture(e.pointerId); set(e); });
       sl.addEventListener('pointermove', (e) => { if (on) set(e); });
       const end = () => { on = false; }; sl.addEventListener('pointerup', end); sl.addEventListener('pointercancel', end); }
-    vslDrag('bp-size-sl', (f) => { brushes[bpTool].size = Math.max(1, Math.min(BP_SMAX, Math.round(1 + f * (BP_SMAX - 1)))); syncBpSize(); render(); });
-    vslDrag('bp-op-sl', (f) => { brushes[bpTool].op = Math.max(0, Math.min(1, f)); syncBpOp(); });
-    function openBrushPop(t) { bpTool = t; $('bp-title').textContent = t === 'eraser' ? 'Ластик' : 'Кисть';
-      syncBpSize(); syncBpOp();
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
-      if (outPreview || dsPreview) { outPreview = null; dsPreview = null; render(); } $('brushpop').classList.toggle('on'); }
+    vslDrag('bp-size-sl', (f) => { brushes[curBrush()].size = Math.max(1, Math.min(BP_SMAX, Math.round(1 + f * (BP_SMAX - 1))));
+      syncBars(); showBbVal('bp-size-sl', brushes[curBrush()].size + ' px'); render(); });
+    vslDrag('bp-op-sl', (f) => { brushes[curBrush()].op = Math.max(0, Math.min(1, f));
+      syncBars(); showBbVal('bp-op-sl', Math.round(brushes[curBrush()].op * 100) + '%'); });
+    $('bb-pick').onclick = () => setTool('pick');
     function makeDraggable(el) { let d = null; // окошко настроек можно отодвинуть и поставить рядом
       el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button, .vsl')) return;
         el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
@@ -26,13 +29,13 @@
         el.style.transform = 'none'; el.style.right = 'auto'; el.style.bottom = 'auto'; });
       const dEnd2 = () => { d = null; };
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
-    makeDraggable($('brushpop')); makeDraggable($('outpop')); makeDraggable($('dspop'));
+    makeDraggable($('outpop')); makeDraggable($('dspop'));
     let dsRef = null;
     function computeDsPreview() { if (!dsRef || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
       const dx = +$('ds-x').value, dy = +$('ds-y').value, pre = [];
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (dsRef.grid[y][x]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) pre.push([nx, ny]); }
       dsPreview = pre; render(); }
-    function openDsPop(L) { dsRef = L; $('brushpop').classList.remove('on'); $('outpop').classList.remove('on');
+    function openDsPop(L) { dsRef = L; $('outpop').classList.remove('on');
       const on = $('dspop').classList.toggle('on'); if (on) computeDsPreview(); else { dsPreview = null; render(); } }
     $('ds-x').addEventListener('input', () => { $('ds-xv').textContent = $('ds-x').value; computeDsPreview(); });
     $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; computeDsPreview(); });
@@ -40,10 +43,10 @@
     $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; render(); });
     $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); dsPreview = null;
       if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
-    $('t-pencil').onclick = () => { if (tool === 'pencil') openBrushPop('pencil'); else setTool('pencil'); };
-    $('t-eraser').onclick = () => { if (tool === 'eraser') openBrushPop('eraser'); else setTool('eraser'); };
-    $('t-line').onclick = () => { if (tool === 'line') openBrushPop('pencil'); else setTool('line'); };
-    $('t-rect').onclick = () => { if (tool === 'rect') openBrushPop('pencil'); else setTool('rect'); };
+    $('t-pencil').onclick = () => setTool('pencil');
+    $('t-eraser').onclick = () => setTool('eraser');
+    $('t-line').onclick = () => setTool('line');
+    $('t-rect').onclick = () => setTool('rect');
     $('t-pick').onclick = () => setTool('pick');
     $('t-fill').onclick = () => { if (sel) fillSelection(); else setTool('fill'); }; // с выделением — мгновенная заливка
     $('t-select').onclick = () => setTool('select');
@@ -76,7 +79,7 @@
     function colApply() { active = hsvToRgb(colH, colS, colV); refreshActive(); $('picker').value = rgbToHex(active); buildPalette(); render(); }
     function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); return; }
       const [h, s, v] = rgbToHsv(active[0], active[1], active[2]); colH = h; colS = s; colV = v;
-      $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); syncColUI(); $('colpop').classList.add('on'); }
+      $('outpop').classList.remove('on'); syncColUI(); $('colpop').classList.add('on'); }
     // угловой кружок: тап — открыть пикер; перетащить на холст — залить активным цветом (как в Procreate)
     let colDrop = null;
     $('activewrap').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -163,7 +166,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
-          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
@@ -175,8 +178,7 @@
       else if (c === 'BracketLeft' || c === 'BracketRight') { // размер кисти/ластика
         const t = tool === 'eraser' ? 'eraser' : (tool === 'pencil' || tool === 'line') ? 'pencil' : null;
         if (t) { const br = brushes[t]; br.size = Math.max(1, Math.min(BP_SMAX, br.size + (c === 'BracketRight' ? 1 : -1)));
-          if ($('brushpop').classList.contains('on') && bpTool === t) syncBpSize();
-          toast((t === 'eraser' ? 'Ластик: ' : 'Кисть: ') + br.size + ' px'); render(); } }
+          syncBars(); toast((t === 'eraser' ? 'Ластик: ' : 'Кисть: ') + br.size + ' px'); render(); } }
       else if (c === 'KeyP') $('pp').click();
       else if (c === 'KeyU') setTool('line');
       else if (c === 'KeyK') setTool('rect');
@@ -519,13 +521,13 @@
       el.classList.toggle('tool-hidden', toolHidden.has(el.id)); }
     try { toolHidden = new Set(JSON.parse(localStorage.getItem('toolhidden')) || []); } catch (err) {}
     let tDrag = null, tSup = null, tctxBtn = null;
-    function startToolDrag(b, x, y, rmb) { tDrag = { b, x, y, moved: false, rmb }; b.classList.add('dragging'); } // без setPointerCapture — иначе при переносе в другую панель захват слетает
+    function startToolDrag(b, x, y, rmb, byTouch) { tDrag = { b, x, y, moved: false, menu: rmb || byTouch }; b.classList.add('dragging'); } // без setPointerCapture — иначе при переносе в другую панель захват слетает
     for (const boxId of TOOLBOXES) { const box = $(boxId);
       box.addEventListener('contextmenu', (e) => { if (e.target.closest('button')) e.preventDefault(); });
       box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (!b || b.parentElement !== box) return;
-        if (e.button === 2) { e.preventDefault(); startToolDrag(b, e.clientX, e.clientY, true); }
+        if (e.button === 2) { e.preventDefault(); startToolDrag(b, e.clientX, e.clientY, true, false); }
         else if (e.pointerType === 'touch') { const x0 = e.clientX, y0 = e.clientY;
-          const t = setTimeout(() => startToolDrag(b, x0, y0, false), 520);
+          const t = setTimeout(() => startToolDrag(b, x0, y0, false, true), 520); // долгий тап — меню «Скрыть/Настроить»
           const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 9) stop2(); };
           const stop2 = () => { clearTimeout(t); b.removeEventListener('pointermove', mv); b.removeEventListener('pointerup', stop2); b.removeEventListener('pointercancel', stop2); };
           b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } }); }
@@ -541,7 +543,7 @@
     document.addEventListener('pointerup', (e) => { if (!tDrag) return;
       const d = tDrag; tDrag = null; d.b.classList.remove('dragging');
       if (d.moved) { tSup = d.b; saveOrder(); setTimeout(() => { tSup = null; }, 0); }
-      else if (d.rmb) openTctx(e.clientX, e.clientY, d.b); }); // ПКМ-тап без движения — меню кнопки
+      else if (d.menu) { tSup = d.b; setTimeout(() => { tSup = null; }, 0); openTctx(e.clientX, e.clientY, d.b); } }); // ПКМ-тап/долгий тап — меню кнопки (клик подавляем)
     document.addEventListener('click', (e) => { if (tSup && e.target.closest('button') === tSup) { e.stopPropagation(); e.preventDefault(); } }, true);
     function openTctx(x, y, b) { tctxBtn = b;
       const m = $('tctx'); m.style.visibility = 'hidden'; m.classList.add('on');
@@ -575,6 +577,6 @@
       location.reload(); };
     restoreOrder(); applyHidden();
 
-    refreshActive(); buildPalette(); layList();
+    refreshActive(); buildPalette(); layList(); syncBars();
     requestAnimationFrame(() => { fitView(); toast('Долгий тап — пипетка · тап 2 пальцами — отмена'); });
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

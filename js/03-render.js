@@ -138,8 +138,9 @@
 
     function fitView() {
       const cw = cv.clientWidth, chh = cv.clientHeight;
-      const tb = $('topbar').getBoundingClientRect(), pb = $('palbar').getBoundingClientRect(), sb = $('sidebar').getBoundingClientRect();
-      const mt = tb.bottom + 16, ml = Math.max(sb.right + 14, 20), mr = 20;
+      const tb = $('topbar').getBoundingClientRect(), pb = $('palbar').getBoundingClientRect(),
+        sb = $('sidebar').getBoundingClientRect(), bb = $('brushbar').getBoundingClientRect();
+      const mt = tb.bottom + 16, ml = Math.max(sb.right + 14, bb.right + 14, 20), mr = 20;
       const mb = (pb.top > chh * 0.55 && pb.bottom > chh - 40) ? (chh - pb.top) + 16 : 24; // палитру учитываем, только если она у низа
       view.zoom = Math.max(1, Math.floor(Math.min((cw - ml - mr) / W, (chh - mt - mb) / H)));
       view.ox = Math.round(ml + (cw - ml - mr - W * view.zoom) / 2);

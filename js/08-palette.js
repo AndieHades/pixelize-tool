@@ -1,5 +1,7 @@
     function setTool(t) { tool = t; lineStart = null; linePrev = null;
       for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect', 'move']) $('t-' + id).classList.toggle('on', id === t);
+      $('bb-pick').classList.toggle('on', t === 'pick'); // полоса кисти: пипетка
+      if (typeof syncBars === 'function') syncBars();
       cv.style.cursor = t === 'move' ? 'move' : ''; render(); }
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';

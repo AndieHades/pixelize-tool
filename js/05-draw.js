@@ -117,7 +117,7 @@
         L.grid = out; L.ext = ne; }
       view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
       sel = null; syncSelbar(); dirtyAll(); }
-    function openOutlinePop() { $('brushpop').classList.remove('on'); $('dspop').classList.remove('on'); dsPreview = null;
+    function openOutlinePop() { $('dspop').classList.remove('on'); dsPreview = null;
       const v = '#' + active.map((q) => q.toString(16).padStart(2, '0')).join('');
       $('out-col').value = v; $('out-colsw').style.background = v;
       $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
@@ -271,7 +271,7 @@
     function bcRestore() { if (!bcBackup) return;
       for (const b of bcBackup) { b.L.grid = cloneGrid(b.grid); b.L.ext = new Map(b.ext); }
       dirtyAll(); render(); }
-    function openBcPop(targets, title) { bcCancel(); $('brushpop').classList.remove('on'); $('outpop').classList.remove('on');
+    function openBcPop(targets, title) { bcCancel(); $('outpop').classList.remove('on');
       bcBackup = targets.map((L) => ({ L, grid: cloneGrid(L.grid), ext: new Map(L.ext) }));
       $('bc-title').textContent = title;
       $('bc-bri').value = 0; $('bc-briv').textContent = '0';

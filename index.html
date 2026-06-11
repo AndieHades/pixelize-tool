@@ -77,21 +77,12 @@
     <button id="crop-cancel" title="Отмена (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
 
-  <div id="brushpop" class="toolpop">
-    <div class="bp-head" id="bp-title">Кисть</div>
-    <div class="bp-sliders">
-      <div class="vsl-col">
-        <div class="vsl-val" id="bp-sizev">1</div>
-        <div class="vsl" id="bp-size-sl"><div class="vsl-fill" id="bp-size-fill"></div><div class="vsl-knob" id="bp-size-knob"></div></div>
-        <div class="vsl-cap">размер</div>
-      </div>
-      <div class="vsl-col">
-        <div class="vsl-val" id="bp-opv">100%</div>
-        <div class="vsl" id="bp-op-sl"><div class="vsl-fill" id="bp-op-fill"></div><div class="vsl-knob" id="bp-op-knob"></div></div>
-        <div class="vsl-cap">прозр.</div>
-      </div>
-    </div>
+  <div id="brushbar">
+    <div class="vsl bb-size" id="bp-size-sl"><div class="vsl-fill" id="bp-size-fill"></div><div class="vsl-knob" id="bp-size-knob"></div></div>
+    <button id="bb-pick" title="Пипетка"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
+    <div class="vsl bb-op" id="bp-op-sl"><div class="vsl-fill" id="bp-op-fill"></div><div class="vsl-knob" id="bp-op-knob"></div></div>
   </div>
+  <div id="bb-val"></div>
   <div id="bcpop" class="toolpop">
     <div class="bp-head" id="bc-title">Яркость/контраст</div>
     <div class="irow"><label>Яркость</label><input id="bc-bri" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-briv">0</b></div>
