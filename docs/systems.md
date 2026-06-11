@@ -71,7 +71,7 @@
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
 | `systems/toolbars.js` | кнопки панелей: инструменты/тогглы/эффекты/экспорт | ✅ | 12-app |
 | `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
-| `app.js` | поднимает системы и инициализирует приложение | 🔲 | 12-app |
+| `app.js` | поднимает системы и инициализирует приложение | ✅ | 12-app |
 
 > «Окна» (`floatingWindow`, `pinchZoom`) — общие помощники из
 > [utilities.md](utilities.md), а не отдельные системы: preview/reference/палитра
@@ -106,22 +106,19 @@
 |------|-----------|:--:|
 | `vite.config.js` | конфиг сборки (base для Pages) | ✅ |
 | `package.json` scripts | `dev`/`build`/`preview`/`test` | ✅ |
-| `.github/workflows/deploy.yml` | сборка и публикация на Pages | ✅ (ждёт §1) |
-| `src/app.js` | модульная точка входа (включает Vite-сборку) | 🔲 |
+| `.github/workflows/deploy.yml` | сборка и публикация на Pages | ✅ |
+| `src/app.js` | модульная точка входа (Vite-сборка активна) | ✅ |
 
 ## Тесты
 
 - `test/unit.mjs` — `logic/*`, `core/state`, `core/bus` в чистом node.
-- `test/probe.js` — сценарии по системам, исполняются в общем scope приложения.
-- `test/smoke.mjs` + `test/harness.mjs` — поднимают приложение в jsdom
-  (фейковый 2D-контекст) и гоняют пробу. После переключения `index.html` на
-  модули smoke грузит точку входа `app.js`, которая выставляет
-  `window.__app.run(probe)`.
+- `test/module-int.mjs` — системы под jsdom (импорт модулей напрямую), 61 сценарий.
+- `test/module-boot.mjs` — загрузка `src/app.js` целиком (приложение поднимается).
+- `test/harness.mjs` — общий jsdom + фейковый 2D-контекст.
 
-## Порядок переключения на модули (в конце миграции)
+## Миграция завершена ✅
 
-1. Все строки таблиц выше — ✅.
-2. `app.js` выставляет `window.__app = { run }` для пробы.
-3. `index.html`: один `<script type="module" src="src/app.js">` вместо `js/*.js`.
-4. `npm test` зелёный по модульному пути.
-5. Удалить `js/*.js` и `js/00-util.js`.
+`index.html` грузит `src/app.js` (модули); монолит `js/*.js` удалён;
+`vite build` собирает `dist/`; `npm test` зелёный по модульному пути
+(unit + module-int + module-boot). Осталась ручная проверка интерактива в
+браузере перед мержем и продуктовые фазы §3–§6 (см. [roadmap.md](roadmap.md)).
