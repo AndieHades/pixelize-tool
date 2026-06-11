@@ -44,6 +44,9 @@
       const dx = x - c.x, dy = y - c.y;
       return { x: (dx * ca + dy * sa) / m.sx + m.b.w / 2, y: (-dx * sa + dy * ca) / m.sy + m.b.h / 2 };
     }
+    function rotState(m = rotMode) { return { ang: m.ang, sx: m.sx, sy: m.sy, tx: m.tx, ty: m.ty }; }
+    function rotHasChanges(m) { return Math.abs(m.ang) > 1e-4 || Math.abs(m.sx - 1) > 1e-4 || Math.abs(m.sy - 1) > 1e-4 || Math.abs(m.tx) > 1e-4 || Math.abs(m.ty) > 1e-4; }
+    function rotRestoreState(m, s) { m.ang = s.ang; m.sx = s.sx; m.sy = s.sy; m.tx = s.tx; m.ty = s.ty; m.changed = rotHasChanges(m); }
     function rotFrame(m = rotMode) {
       if (!m) return null;
       const p = [rotLocalToWorld(m, 0, 0), rotLocalToWorld(m, m.b.w, 0), rotLocalToWorld(m, m.b.w, m.b.h), rotLocalToWorld(m, 0, m.b.h)];
@@ -84,7 +87,7 @@
       const src = []; for (let y = b0.miny; y <= b0.maxy; y++) {
         const row = []; for (let x = b0.minx; x <= b0.maxx; x++) row.push(L.grid[y][x] ? L.grid[y][x].slice() : null); src.push(row); }
       rotMode = { idx: i, src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 },
-        ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false };
+        ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [] };
       layList(); $('rotbar').classList.add('on'); rotRebuild();
       toast('Углы — поворот · стороны — растяжение · Enter/ПКМ — применить'); }
     function applyRotMode(m) {
@@ -99,7 +102,10 @@
         const nx = x + pl, ny = y + pt; if (nx >= 0 && ny >= 0 && nx < W && ny < H) g[ny][nx] = c.slice(); }
       L.grid = g; L.ext = new Map(); markDirty(m.idx); dirtyAll(); layList(); render(); return true;
     }
-    function exitRotMode(apply) { if (!rotMode) return; const m = rotMode, changed = m.changed;
+    function undoRotStep() { if (!rotMode) return false;
+      if (!rotMode.hist.length) { toast('В трансформации нечего отменять'); return true; }
+      rotRestoreState(rotMode, rotMode.hist.pop()); rotRebuild(); toast('Шаг трансформации отменён'); return true; }
+    function exitRotMode(apply) { if (!rotMode) return; const m = rotMode, changed = rotHasChanges(m);
       rotMode = null; rotPrev = null; $('rotbar').classList.remove('on'); cv.style.cursor = '';
       if (apply && changed) { if (applyRotMode(m)) toast('Трансформация применена'); }
       else { render(); if (!apply && changed) toast('Трансформация отменена'); } }
@@ -116,8 +122,9 @@
       const p = rotPointer(e), c = rotCenter(rotMode);
       rotMode.grab = { ...hit, start: p, sx: rotMode.sx, sy: rotMode.sy, tx: rotMode.tx, ty: rotMode.ty,
         ang: rotMode.ang, cx: c.x, cy: c.y, a0: Math.atan2(p.y - c.y, p.x - c.x),
-        w0: rotMode.b.w * rotMode.sx, h0: rotMode.b.h * rotMode.sy }; }
+        w0: rotMode.b.w * rotMode.sx, h0: rotMode.b.h * rotMode.sy, logged: false }; }
     function rotDrag(e) { const g = rotMode && rotMode.grab; if (!g) return; const p = rotPointer(e);
+      if (!g.logged) { rotMode.hist.push(rotState()); g.logged = true; }
       if (g.kind === 'rotate') { let a = g.ang + Math.atan2(p.y - g.cy, p.x - g.cx) - g.a0;
         if (e.shiftKey) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12); rotMode.ang = a; }
       else if (g.kind === 'scale-x') { const ax = { x: Math.cos(g.ang), y: Math.sin(g.ang) };
@@ -127,7 +134,7 @@
         const d = ((p.x - g.start.x) * ay.x + (p.y - g.start.y) * ay.y) * g.sign;
         rotMode.sy = Math.max(ROT_MIN_SCALE, (g.h0 + d * 2) / rotMode.b.h); }
       else if (g.kind === 'move') { rotMode.tx = g.tx + p.x - g.start.x; rotMode.ty = g.ty + p.y - g.start.y; }
-      rotMode.changed = true; rotRebuildSoon(); }
+      rotMode.changed = rotHasChanges(rotMode); rotRebuildSoon(); }
     function rotHover(e) { const h = rotHit(e); cv.style.cursor = !h ? '' : h.kind === 'move' ? 'move' : h.kind === 'rotate' ? 'grab' : h.kind === 'scale-x' ? 'ew-resize' : 'ns-resize'; }
     function drawTransformFrame() {
       if (!rotMode) return; const f = rotFrame(rotMode), pts = f.p.map(rotScreen);
@@ -192,7 +199,7 @@
     $('outline').onclick = openOutlinePop;
     $('flip-h').onclick = () => flipLayer(true);
     $('flip-v').onclick = () => flipLayer(false);
-    $('rot').onclick = () => enterRotMode(layers[cur]);
+    $('rot').onclick = rotateCanvas;
     $('mono').onclick = monoAll;
     // ---- кастомный HSV-пикер в углу ----
     let colH = 0, colS = 0, colV = 100;
@@ -268,7 +275,7 @@
         m.style.visibility = ''; }); }
 
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
-    //      H/V — флипы, R или Ctrl+T — трансформация, C — кроп, N — новый, +/−/0 — зум,
+    //      H/V — флипы, R — поворот холста, Ctrl+T — трансформация слоя, C — кроп, N — новый, +/−/0 — зум,
     //      Ctrl+Z/Y/C/X/V/D/E/G/O/S, Del — удалить, Enter/Esc — кроп, пробел — пипетка ----
     let altPick = null;
     window.addEventListener('keydown', (e) => {
@@ -276,7 +283,7 @@
         e.preventDefault(); altPick = tool; setTool('pick'); return; } // Alt — пипетка пока держишь, отпустил → прежний инструмент
       const mod = e.ctrlKey || e.metaKey, c = e.code;
       if (rotMode) {
-        if (mod && c === 'KeyZ') { e.preventDefault(); exitRotMode(false); return; }
+        if (mod && c === 'KeyZ') { e.preventDefault(); doUndo(); return; }
         if (e.key === 'Enter') { e.preventDefault(); exitRotMode(true); return; }
         if (e.key === 'Escape') { e.preventDefault(); exitRotMode(false); return; }
       }
@@ -321,7 +328,7 @@
       else if (c === 'KeyO') { if ($('outpop').classList.contains('on')) outlineLayer(); else openOutlinePop(); } // 1-е O — превью, 2-е — применить
       else if (c === 'KeyH') flipLayer(true);
       else if (c === 'KeyV') flipLayer(false);
-      else if (c === 'KeyR') enterRotMode(layers[cur]);
+      else if (c === 'KeyR') rotateCanvas();
       else if (c === 'KeyC') toggleCrop();
       else if (c === 'KeyN') $('new-ovl').classList.add('on');
       else if (c === 'Equal' || c === 'NumpadAdd') zoomBy(1.25);

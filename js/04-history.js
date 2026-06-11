@@ -7,7 +7,7 @@
       redoStack.length = 0; strokeSeen.clear(); }
     function restore(s) { W = s.W; H = s.H; layers = s.layers; folders = s.folders; folderSeq = s.folderSeq;
       cur = Math.min(s.cur, layers.length - 1); marked.clear(); dirtyAll(); layList(); render(); }
-    function doUndo() { if (rotMode) { exitRotMode(false); return; }
+    function doUndo() { if (rotMode) { undoRotStep(); return; }
       if (!undoStack.length) { toast('Нечего отменять'); return; }
       redoStack.push(snapState()); restore(undoStack.pop()); toast('Отменено'); }
     function doRedo() { if (!redoStack.length) return; undoStack.push(snapState()); restore(redoStack.pop()); toast('Возвращено'); }
