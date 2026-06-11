@@ -15,6 +15,9 @@ import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
+import { t as tr } from '../src/i18n/index.js';
+import { ru } from '../src/i18n/locales/ru.js';
+import { en } from '../src/i18n/locales/en.js';
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
@@ -75,5 +78,8 @@ t('config: historyCap не растёт с площадью', () => { assert.ok(
 t('config: пресеты размеров валидны', () => { assert.ok(SIZE_PRESETS.length > 0); for (const p of SIZE_PRESETS) assert.ok(p.w > 0 && p.h > 0 && p.label); assert.ok(DEFAULT_DOC.w > 0 && DEFAULT_DOC.h > 0); });
 t('config: палитра по умолчанию', () => { const p = defaultPalette(); assert.equal(p.length, DEFAULT_PALETTE_HEX.length); assert.ok(DEFAULT_ACTIVE < p.length); assert.deepEqual(p[0], [12, 12, 16]); });
 t('config: S берёт дефолты из config', () => { assert.equal(S.palette.length, DEFAULT_PALETTE_HEX.length); assert.deepEqual(S.active, defaultPalette()[DEFAULT_ACTIVE]); });
+
+t('i18n: t() даёт строку ru по умолчанию', () => { assert.equal(tr('tool.pencil'), ru['tool.pencil']); assert.equal(tr('нет.такого'), 'нет.такого'); });
+t('i18n: ключи ru и en совпадают', () => { assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort()); });
 
 console.log(`\nВсе ${n} юнит-тестов прошли ✓`);

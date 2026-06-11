@@ -16,47 +16,47 @@
 
   <header id="topbar">
     <div class="tb-group" id="tb-left">
-      <button id="docsbtn" title="Документы"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="13.5" height="13.5" rx="2.5"/><path d="M16.5 3.5h-10A3 3 0 0 0 3.5 6.5v10"/></svg></button>
-      <button id="new" title="Новый документ (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
-      <button id="imp" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
-      <button id="exp" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
+      <button id="docsbtn" data-i18n-title="tool.docs" title="Документы"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="13.5" height="13.5" rx="2.5"/><path d="M16.5 3.5h-10A3 3 0 0 0 3.5 6.5v10"/></svg></button>
+      <button id="new" data-i18n-title="tool.new" title="Новый документ (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
+      <button id="imp" data-i18n-title="tool.import" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
+      <button id="exp" data-i18n-title="tool.export" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
       <div class="tb-sep" id="tb-sep-l"></div>
-      <button id="prev" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
-      <button id="refbtn" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
-      <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
-      <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-      <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+      <button id="prev" data-i18n-title="tool.preview" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
+      <button id="refbtn" data-i18n-title="tool.reference" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
+      <button id="fit" data-i18n-title="tool.fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
+      <button id="zin" data-i18n-title="tool.zoomIn" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+      <button id="zout" data-i18n-title="tool.zoomOut" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
     </div>
     <div class="tb-group" id="tb-right">
-      <button id="t-pencil" class="on" title="Карандаш (B)"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
-      <button id="t-eraser" title="Ластик (E)"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
-      <button id="t-fill" title="Заливка (F)"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
-      <button id="t-pick" title="Пипетка (I, пробел, Alt+клик)"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
-      <button id="t-line" title="Линия (U)"><svg viewBox="0 0 24 24"><path d="M5.5 18.5L18.5 5.5"/><circle cx="5.5" cy="18.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="5.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
-      <button id="t-rect" title="Прямоугольник (K)"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg></button>
-      <button id="t-move" title="Перемещение слоя (ЛКМ-перетаскивание)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></svg></button>
-      <button id="t-adjust" title="Кисть-коррекция: осветлить / затемнить / тон"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
-      <button id="t-select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
+      <button id="t-pencil" class="on" data-i18n-title="tool.pencil" title="Карандаш (B)"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
+      <button id="t-eraser" data-i18n-title="tool.eraser" title="Ластик (E)"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
+      <button id="t-fill" data-i18n-title="tool.fill" title="Заливка (F)"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
+      <button id="t-pick" data-i18n-title="tool.pick" title="Пипетка (I, пробел, Alt+клик)"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
+      <button id="t-line" data-i18n-title="tool.line" title="Линия (U)"><svg viewBox="0 0 24 24"><path d="M5.5 18.5L18.5 5.5"/><circle cx="5.5" cy="18.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="5.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
+      <button id="t-rect" data-i18n-title="tool.rect" title="Прямоугольник (K)"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg></button>
+      <button id="t-move" data-i18n-title="tool.move" title="Перемещение слоя (ЛКМ-перетаскивание)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></svg></button>
+      <button id="t-adjust" data-i18n-title="tool.adjust" title="Кисть-коррекция: осветлить / затемнить / тон"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
+      <button id="t-select" data-i18n-title="tool.select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
       <div class="tb-sep" id="tb-sep1"></div>
-      <button id="layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
-      <button id="activewrap" title="Цвет (HSV)"><span id="active"></span></button>
+      <button id="layers" data-i18n-title="tool.layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
+      <button id="activewrap" data-i18n-title="tool.color" title="Цвет (HSV)"><span id="active"></span></button>
     </div>
   </header>
 
   <aside id="sidebar">
     <div id="sb-grip" title="Перетащить панель"></div>
-    <button id="sym" title="Симметрия лево-право (S)"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
-    <button id="sym-h" title="Симметрия верх-низ (Shift+S)"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg></button>
-    <button id="pp" class="on" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
-    <button id="stab" class="on" title="Стабилизация штриха (T)"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
-    <button id="outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
-    <button id="flip-h" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
-    <button id="flip-v" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
-    <button id="rot" title="Поворот холста 90° (R)"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
-    <button id="mono" title="Монохром (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button>
-    <button id="bc" title="Яркость/контраст (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></button>
-    <button id="crop" title="Кроп (C): рамка → Enter"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
-    <button id="trim" title="Trim — обрезать пустые поля впритык к рисунку"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9" rx="1"/><path d="M4 7.5V4.5h3M20 7.5V4.5h-3M4 16.5v3h3M20 16.5v3h-3"/></svg></button>
+    <button id="sym" data-i18n-title="side.symV" title="Симметрия лево-право (S)"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
+    <button id="sym-h" data-i18n-title="side.symH" title="Симметрия верх-низ (Shift+S)"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg></button>
+    <button id="pp" class="on" data-i18n-title="side.pp" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
+    <button id="stab" class="on" data-i18n-title="side.stab" title="Стабилизация штриха (T)"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
+    <button id="outline" data-i18n-title="side.outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
+    <button id="flip-h" data-i18n-title="side.flipH" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
+    <button id="flip-v" data-i18n-title="side.flipV" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
+    <button id="rot" data-i18n-title="side.rotate" title="Поворот холста 90° (R)"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
+    <button id="mono" data-i18n-title="side.mono" title="Монохром (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button>
+    <button id="bc" data-i18n-title="side.bc" title="Яркость/контраст (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></button>
+    <button id="crop" data-i18n-title="side.crop" title="Кроп (C): рамка → Enter"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
+    <button id="trim" data-i18n-title="side.trim" title="Trim — обрезать пустые поля впритык к рисунку"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9" rx="1"/><path d="M4 7.5V4.5h3M20 7.5V4.5h-3M4 16.5v3h3M20 16.5v3h-3"/></svg></button>
     <div id="sb-rsz" title="Изменить размер панели"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </aside>
 

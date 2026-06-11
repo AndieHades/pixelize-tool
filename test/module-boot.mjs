@@ -15,5 +15,6 @@ await import('../src/app.js');
 assert.ok(window.__app && window.__app.S, 'window.__app выставлен');
 assert.ok(document.querySelectorAll('#pal .sw:not(.plus)').length > 0, 'палитра построена');
 assert.ok(document.getElementById('active').style.background, 'активный цвет отрисован');
+assert.ok(document.getElementById('t-pencil').title.includes('(B)'), 'тултип локализован');
 console.log('Boot-тест: приложение поднялось ✓');
 console.log(`  свотчей в палитре: ${document.querySelectorAll('#pal .sw:not(.plus)').length}`);

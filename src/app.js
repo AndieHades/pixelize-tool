@@ -5,6 +5,7 @@ import * as bus from './core/bus.js';
 import { $ } from './core/dom.js';
 import { floatingWindow } from './core/floating-window.js';
 import { fitView } from './systems/render/index.js';
+import { detect, applyDom } from './i18n/index.js';
 
 // системы с UI-монтированием
 import * as palette from './systems/palette.js';
@@ -43,8 +44,10 @@ import { mount as mountKeyboard } from './systems/keyboard/index.js';
 const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, documents, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust];
 
 export function start() {
+  detect();
   for (const m of MOUNTS) if (m.mount) m.mount();
   mountKeyboard();
+  applyDom(); // проставить переводы в статичный UI
 
   floatingWindow($('palbar'), { grip: $('palgrip'), handle: $('palrsz'), storeKey: 'palwin', clampBottom: 50,
     onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
