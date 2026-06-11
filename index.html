@@ -51,7 +51,7 @@
     <button id="outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
     <button id="flip-h" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
     <button id="flip-v" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
-    <button id="rot" title="Поворот на 90° (R, Ctrl+T)"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
+    <button id="rot" title="Поворот холста 90° (R) · свободный поворот слоя — Ctrl+T"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
     <button id="mono" title="Монохром (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button>
     <button id="bc" title="Яркость/контраст (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></button>
     <button id="crop" title="Кроп (C): рамка → Enter"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
@@ -75,6 +75,11 @@
     <button id="crop-sym" title="От центра (или зажми Shift)"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
     <button id="crop-ok" title="Применить кроп (Enter)"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
     <button id="crop-cancel" title="Отмена (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+
+  <div id="rotbar">
+    <button id="rot-ok" title="Применить поворот (Enter)"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
+    <button id="rot-x" title="Отмена (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
 
   <div id="brushbar">
@@ -212,6 +217,7 @@
     <button id="lctx-fill">Залить активным цветом</button>
     <button id="lctx-clear">Очистить слой</button>
     <button id="lctx-symm">Симметрировать слой</button>
+    <button id="lctx-rotate">Свободный поворот…</button>
     <button id="lctx-shadow">Тень (Drop Shadow)…</button>
     <button id="lctx-mono">В монохром</button>
     <button id="lctx-bc">Яркость/контраст…</button>

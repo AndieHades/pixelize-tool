@@ -1,7 +1,7 @@
 /* global self, caches, fetch */
 // Service worker: network-first (берём свежее из сети, кэш — только офлайн-фолбэк),
 // чтобы обновления приходили сразу без ручной очистки кэша.
-const CACHE = 'pixel-editor-v40';
+const CACHE = 'pixel-editor-v41';
 const ASSETS = ['./', './index.html', './style.css', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   './js/01-state.js', './js/02-convert.js', './js/03-render.js', './js/04-history.js', './js/05-draw.js',
   './js/06-selection.js', './js/07-input.js', './js/08-palette.js', './js/09-layers-ui.js', './js/10-import.js',

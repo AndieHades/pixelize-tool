@@ -50,8 +50,9 @@
       directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
     cv.addEventListener('pointerdown', (e) => {
+      if (rotMode) { cv.setPointerCapture(e.pointerId); rotGrab(e); return; } // режим поворота — тянем угол
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем — можно рисовать с открытой
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
@@ -65,6 +66,7 @@
         if (selDrag) { if (selDrag.lifted) commitFloat(); selDrag = null; syncSelbar(); } startPinch(); }
     });
     cv.addEventListener('pointermove', (e) => {
+      if (rotMode) { if (rotMode.grab !== null) rotDrag(e); return; }
       if (e.pointerType !== 'touch') { directMove(e); return; }
       if (penActive || !ptrs.has(e.pointerId)) return;
       { const pi = ptrs.get(e.pointerId); if (pi) { pi.x = e.clientX; pi.y = e.clientY; } } // не теряем время касания
@@ -90,6 +92,7 @@
       }
     });
     function endPtr(e) {
+      if (rotMode) { rotMode.grab = null; return; }
       if (e.pointerType !== 'touch') { directUp(e); return; }
       if (!ptrs.has(e.pointerId)) return;
       const _pi = ptrs.get(e.pointerId); if (_pi && performance.now() - _pi.t >= 30) gRealN++; // фантомные касания <30мс не считаем

@@ -40,6 +40,7 @@
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue; // обтравка без базы не видна
         ctx.globalAlpha = L.opacity;
+        if (rotPrev && rotMode && rotPrev.idx === i) { ctx.drawImage(rotPrev.canvas, ox + rotPrev.px * z, oy + rotPrev.py * z, rotPrev.ow * z, rotPrev.oh * z); continue; } // живое превью поворота вместо слоя
         const mdx = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dx * z : 0; // живой сдвиг слоя инструментом Move
         const mdy = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dy * z : 0;
         ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
@@ -125,7 +126,8 @@
       syncStatus(); syncPrev();
     }
     function syncStatus() { let s = W + '×' + H + ' px';
-      if (cropMode) { const c = cropMode, b = c.b || c;
+      if (rotMode) s += ' · поворот ' + (Math.round(rotMode.ang * 180 / Math.PI * 10) / 10) + '°';
+      else if (cropMode) { const c = cropMode, b = c.b || c;
         s += ' · кроп ' + (c.x1 - c.x0 + 1) + '×' + (c.y1 - c.y0 + 1);
         const fmt = (d) => (d > 0 ? '+' + d : d), parts = []; // + наружу (расширил), − внутрь (обрезал)
         const dl = b.x0 - c.x0, dr = c.x1 - b.x1, dt = b.y0 - c.y0, db = c.y1 - b.y1;

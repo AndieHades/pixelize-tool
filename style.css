@@ -231,12 +231,12 @@
       #lay-pop { width: 300px; top: calc(env(safe-area-inset-top, 0px) + 70px); }
     }
     /* ---- панели действий (выделение, кроп) ---- */
-    #selbar, #cropbar { position: fixed; left: 50%; transform: translateX(-50%);
+    #selbar, #cropbar, #rotbar { position: fixed; left: 50%; transform: translateX(-50%);
       top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 15; display: none; gap: 2px; padding: 5px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px;
       box-shadow: 0 10px 34px rgba(0, 0, 0, .5); }
-    #selbar.on, #cropbar.on { display: flex; }
-    #crop-ok { color: #6fdb8b; }
+    #selbar.on, #cropbar.on, #rotbar.on { display: flex; }
+    #crop-ok, #rot-ok { color: #6fdb8b; }
 
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }

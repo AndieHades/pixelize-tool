@@ -30,6 +30,25 @@
       const dEnd2 = () => { d = null; };
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
     makeDraggable($('outpop')); makeDraggable($('dspop'));
+    // ---- свободный поворот слоя прямо на холсте (Ctrl+T): тянешь — крутишь, Shift — по 45° ----
+    let rotRAF = 0;
+    function rotScale() { return Math.max(W, H) <= 96 ? 8 : Math.max(W, H) <= 192 ? 4 : 2; }
+    function rotRebuild() { if (!rotMode) return;
+      const pv = buildRotPreview(layers[rotMode.idx], rotMode.ang, rotScale()); pv.idx = rotMode.idx; rotPrev = pv; render(); }
+    function rotRebuildSoon() { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); }
+    function enterRotMode(L) { const i = layers.indexOf(L); if (i < 0) return; cur = i;
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
+      rotMode = { idx: i, ang: 0, grab: null, base: 0 }; layList(); $('rotbar').classList.add('on'); rotRebuild();
+      toast('Тяни по холсту — поворот · Shift — по 45° · ✓/Enter — применить'); }
+    function exitRotMode(apply) { if (!rotMode) return; const m = rotMode; rotMode = null; rotPrev = null; $('rotbar').classList.remove('on');
+      if (apply && layers[m.idx] && Math.abs(m.ang) > 1e-3) freeRotateLayer(layers[m.idx], m.ang, rotScale()); else render(); }
+    $('rot-ok').onclick = () => exitRotMode(true);
+    $('rot-x').onclick = () => exitRotMode(false);
+    function rotPt(e) { const r = cv.getBoundingClientRect();
+      return Math.atan2((e.clientY - r.top - view.oy) / view.zoom - H / 2, (e.clientX - r.left - view.ox) / view.zoom - W / 2); }
+    function rotGrab(e) { rotMode.grab = rotPt(e); rotMode.base = rotMode.ang; }
+    function rotDrag(e) { if (rotMode.grab === null) return; let ang = rotMode.base + (rotPt(e) - rotMode.grab);
+      if (e.shiftKey) ang = Math.round(ang / (Math.PI / 4)) * (Math.PI / 4); rotMode.ang = ang; rotRebuildSoon(); }
     let dsRef = null;
     function computeDsPreview() { if (!dsRef || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
       const dx = +$('ds-x').value, dy = +$('ds-y').value, pre = [];
@@ -159,14 +178,14 @@
         else if (c === 'KeyE') { e.preventDefault(); doMerge(); }
         else if (c === 'KeyG') { e.preventDefault(); doGroup(); }
         else if (c === 'KeyA') { e.preventDefault(); doAddLayer(); }
-        else if (c === 'KeyT') { e.preventDefault(); rotateCanvas(); }
+        else if (c === 'KeyT') { e.preventDefault(); enterRotMode(layers[cur]); }
         else if (c === 'KeyO') { e.preventDefault(); $('file').click(); }
         else if (c === 'KeyS') { e.preventDefault(); if (e.shiftKey) exportPsd(); else exportPng(); }
         return;
       }
       if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); doDelete(); }
-      else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
-      else if (e.key === 'Escape') { if (cropMode) cancelCrop();
+      else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } else if (rotMode) { e.preventDefault(); exitRotMode(true); } }
+      else if (e.key === 'Escape') { if (cropMode) cancelCrop(); else if (rotMode) exitRotMode(false);
         else { if (replaceMode) { replaceMode = null; render(); }
           bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'KeyB') setTool('pencil');

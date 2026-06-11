@@ -18,7 +18,7 @@
     const defaultPalette = () => ['#0c0c10', '#202733', '#cbd3dc', '#e9edf0', '#ff7a18', '#c74a00', '#78d7ff'].map(hexToRgb);
     let palette = defaultPalette();
     let active = palette[4];
-    let tool = 'pencil', sym = false, symH = false, outPreview = null, dsPreview = null;
+    let tool = 'pencil', sym = false, symH = false, outPreview = null, dsPreview = null, rotPrev = null, rotMode = null;
     let sel = null, selMask = null, selFloat = null, selDrag = null, selDirect = false, selHinted = false, moveDrag = null;
     let replaceMode = null, palDrag = null, palSquelch = false, swHold = null, swX = 0, swY = 0, ctxIdx = -1, replFrom = null;
     let ppOn = true, ppPath = [], ppOrig = new Map(); // пиксель-перфект: чистим Г-образные уголки штриха
