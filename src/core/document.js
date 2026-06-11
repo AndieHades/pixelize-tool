@@ -1,9 +1,9 @@
 // Структурные операции над холстом-документом (примитив для многих систем).
 // Меняет размеры/слои, сдвигает запасные пиксели, сбрасывает выделение.
-import { S } from './state.js';
+import { S, blank } from './state.js';
 import * as bus from './bus.js';
 import { parseKey } from '../logic/raster.js';
-import { dirtyAll } from './layer-cache.js';
+import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
 import { toast } from './dom.js';
 
@@ -39,4 +39,11 @@ export function applyCropRect(x0, y0, x1, y1) {
   S.W = nw; S.H = nh; S.sel = null;
   bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit');
   toast(`Холст: ${S.W}×${S.H}`);
+}
+
+// очистить текущий слой; false — если уже пуст
+export function clearLayer() {
+  const L = S.layers[S.cur]; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
+  snapshot(); L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.cur);
+  bus.emit('render'); bus.emit('layers'); return true;
 }
