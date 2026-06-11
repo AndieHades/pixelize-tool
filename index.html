@@ -79,8 +79,18 @@
 
   <div id="brushpop" class="toolpop">
     <div class="bp-head" id="bp-title">Кисть</div>
-    <div class="irow"><label>Размер</label><input id="bp-size" type="range" min="1" max="8" step="1" value="1" /><b id="bp-sizev">1</b></div>
-    <div class="irow"><label>Непрозр.</label><input id="bp-op" type="range" min="10" max="100" step="5" value="100" /><b id="bp-opv">100%</b></div>
+    <div class="bp-sliders">
+      <div class="vsl-col">
+        <div class="vsl-val" id="bp-sizev">1</div>
+        <div class="vsl" id="bp-size-sl"><div class="vsl-fill" id="bp-size-fill"></div><div class="vsl-knob" id="bp-size-knob"></div></div>
+        <div class="vsl-cap">размер</div>
+      </div>
+      <div class="vsl-col">
+        <div class="vsl-val" id="bp-opv">100%</div>
+        <div class="vsl" id="bp-op-sl"><div class="vsl-fill" id="bp-op-fill"></div><div class="vsl-knob" id="bp-op-knob"></div></div>
+        <div class="vsl-cap">прозр.</div>
+      </div>
+    </div>
   </div>
   <div id="bcpop" class="toolpop">
     <div class="bp-head" id="bc-title">Яркость/контраст</div>

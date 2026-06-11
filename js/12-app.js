@@ -1,11 +1,24 @@
     let bpTool = 'pencil';
+    const BP_SMAX = 8;
+    function vslPos(fillId, knobId, frac) { const p = Math.max(0, Math.min(1, frac)) * 100;
+      $(fillId).style.height = p + '%'; $(knobId).style.bottom = p + '%'; }
+    function syncBpSize() { const s = brushes[bpTool].size; $('bp-sizev').textContent = s + ' px';
+      vslPos('bp-size-fill', 'bp-size-knob', (s - 1) / (BP_SMAX - 1)); }
+    function syncBpOp() { const o = brushes[bpTool].op; $('bp-opv').textContent = Math.round(o * 100) + '%';
+      vslPos('bp-op-fill', 'bp-op-knob', o); }
+    function vslDrag(slId, onFrac) { const sl = $(slId); let on = false;
+      const set = (e) => { const r = sl.getBoundingClientRect(); onFrac(Math.max(0, Math.min(1, 1 - (e.clientY - r.top) / r.height))); };
+      sl.addEventListener('pointerdown', (e) => { on = true; sl.setPointerCapture(e.pointerId); set(e); });
+      sl.addEventListener('pointermove', (e) => { if (on) set(e); });
+      const end = () => { on = false; }; sl.addEventListener('pointerup', end); sl.addEventListener('pointercancel', end); }
+    vslDrag('bp-size-sl', (f) => { brushes[bpTool].size = Math.max(1, Math.min(BP_SMAX, Math.round(1 + f * (BP_SMAX - 1)))); syncBpSize(); render(); });
+    vslDrag('bp-op-sl', (f) => { brushes[bpTool].op = Math.max(0, Math.min(1, f)); syncBpOp(); });
     function openBrushPop(t) { bpTool = t; $('bp-title').textContent = t === 'eraser' ? 'Ластик' : 'Кисть';
-      const br = brushes[bpTool]; $('bp-size').value = br.size; $('bp-sizev').textContent = br.size;
-      $('bp-op').value = Math.round(br.op * 100); $('bp-opv').textContent = Math.round(br.op * 100) + '%';
+      syncBpSize(); syncBpOp();
       $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
       if (outPreview || dsPreview) { outPreview = null; dsPreview = null; render(); } $('brushpop').classList.toggle('on'); }
     function makeDraggable(el) { let d = null; // окошко настроек можно отодвинуть и поставить рядом
-      el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button')) return;
+      el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button, .vsl')) return;
         el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
       el.addEventListener('pointermove', (e) => { if (!d) return;
         el.style.left = Math.max(4, Math.min(e.clientX - d.dx, innerWidth - 90)) + 'px';
@@ -27,8 +40,6 @@
     $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; render(); });
     $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); dsPreview = null;
       if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
-    $('bp-size').addEventListener('input', () => { brushes[bpTool].size = +$('bp-size').value; $('bp-sizev').textContent = $('bp-size').value; });
-    $('bp-op').addEventListener('input', () => { brushes[bpTool].op = +$('bp-op').value / 100; $('bp-opv').textContent = $('bp-op').value + '%'; });
     $('t-pencil').onclick = () => { if (tool === 'pencil') openBrushPop('pencil'); else setTool('pencil'); };
     $('t-eraser').onclick = () => { if (tool === 'eraser') openBrushPop('eraser'); else setTool('eraser'); };
     $('t-line').onclick = () => { if (tool === 'line') openBrushPop('pencil'); else setTool('line'); };
@@ -163,8 +174,8 @@
       else if (c === 'KeyS') { if (e.shiftKey) $('sym-h').click(); else $('sym').click(); }
       else if (c === 'BracketLeft' || c === 'BracketRight') { // размер кисти/ластика
         const t = tool === 'eraser' ? 'eraser' : (tool === 'pencil' || tool === 'line') ? 'pencil' : null;
-        if (t) { const br = brushes[t]; br.size = Math.max(1, Math.min(8, br.size + (c === 'BracketRight' ? 1 : -1)));
-          if ($('brushpop').classList.contains('on') && bpTool === t) { $('bp-size').value = br.size; $('bp-sizev').textContent = br.size; }
+        if (t) { const br = brushes[t]; br.size = Math.max(1, Math.min(BP_SMAX, br.size + (c === 'BracketRight' ? 1 : -1)));
+          if ($('brushpop').classList.contains('on') && bpTool === t) syncBpSize();
           toast((t === 'eraser' ? 'Ластик: ' : 'Кисть: ') + br.size + ' px'); render(); } }
       else if (c === 'KeyP') $('pp').click();
       else if (c === 'KeyU') setTool('line');
