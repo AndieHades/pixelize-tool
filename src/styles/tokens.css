@@ -17,6 +17,13 @@
   --btn: 40px;
   --radius: 12px;
   --gap: 8px;
+  /* анимации (тайминги/кривые/масштабы — единое место настройки, см. animations.css) */
+  --anim-fast: 120ms;
+  --anim-pop: 240ms;
+  --ease-out: cubic-bezier(.22, .61, .36, 1);
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --press-scale: .9;
+  --lift-scale: 1.08;
   /* цвета холста (читаются JS-рендером) */
   --cv-bg: #0d0d10;
   --cv-doc: #141419;

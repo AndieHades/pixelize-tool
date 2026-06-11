@@ -1,0 +1,37 @@
+// Галерея: сборка экрана, кнопки (Photo/Convert/Import/Select), навигация,
+// автосохранение, инициализация (открыть последнюю работу или создать новую).
+import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
+import { $ } from '../../core/dom.js';
+import { imageData, looksPixelArt } from '../../core/image.js';
+import { DEFAULT_DOC } from '../../config/presets.js';
+import { newWork, newWorkFromImage, newWorkFromLayers, beginConvertedWork, saveCurrent, autosave, openWork } from './doc.js';
+import { listAll } from './store.js';
+import { configure, render, goBack, setSelecting, isSelecting, stackSelected, dupSelected, delSelected } from './screen.js';
+import { readPsd } from '../../logic/psd.js';
+
+export function show() { saveCurrent(); render(); $('gallery').classList.add('on'); }
+function hide() { $('gallery').classList.remove('on'); }
+
+function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
+  i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
+
+function photo() { pick('image/*', (f) => { const im = new Image(); im.onerror = () => {};
+  im.onload = () => { if (looksPixelArt(im)) { const d = imageData(im, im.naturalWidth, im.naturalHeight, false); hide(); newWorkFromImage(d.width, d.height, d.data, f.name.replace(/\.\w+$/, '')); }
+    else { beginConvertedWork(); hide(); actions.run('import.openFile', f); } }; im.src = URL.createObjectURL(f); }); }
+function convert() { pick('image/*', (f) => { beginConvertedWork(); hide(); actions.run('import.openFile', f); }); }
+function importPsd() { pick('.psd,image/vnd.adobe.photoshop', async (f) => { try { const psd = readPsd(await f.arrayBuffer());
+  if (psd && psd.layers.length) { hide(); newWorkFromLayers(psd.W, psd.H, psd.layers, f.name.replace(/\.psd$/i, '')); } } catch (e) {} }); }
+
+export async function mount() {
+  configure({ onOpen: hide });
+  $('gal-photo').onclick = photo; $('gal-convert').onclick = convert; $('gal-import').onclick = importPsd;
+  $('gal-select').onclick = () => setSelecting(!isSelecting());
+  $('gal-stack').onclick = stackSelected; $('gal-dup').onclick = dupSelected; $('gal-del').onclick = delSelected;
+  $('gal-back').onclick = goBack;
+  $('docsbtn').onclick = show;
+  bus.on('snapshot', autosave); bus.on('layers', autosave);
+  const docs = (await listAll()).filter((d) => d.kind !== 'folder');
+  if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); show(); }
+  else newWork(DEFAULT_DOC.w, DEFAULT_DOC.h);
+}

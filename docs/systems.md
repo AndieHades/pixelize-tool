@@ -85,7 +85,14 @@
 | `styles/tokens.css` | задаёт дизайн-токены темы | 🔲 | [theming.md](theming.md) |
 | `systems/settings.js` | переключает язык и тему | 🔲 | i18n/theming |
 | `core/storage.js` | хранит документы в IndexedDB | ✅ | roadmap §5 |
-| `systems/gallery.js` | показывает галерею работ и открывает их | ✅ | roadmap §5 |
+| `systems/gallery/store.js` | элементы галереи: папки, перемещение, дубль, удаление | ✅ | roadmap §5 |
+| `systems/gallery/doc.js` | персистентность активной работы (снимок ↔ запись, автосейв) | ✅ | roadmap §5 |
+| `systems/gallery/drag.js` | перетаскивание плиток (долгий тап → драг → папка) | ✅ | roadmap §5 |
+| `systems/gallery/screen.js` | рендер плиток, режим выбора, переименование | ✅ | roadmap §5 |
+| `systems/gallery/index.js` | кнопки (Photo/Convert/Import/Select/＋), навигация, инициализация | ✅ | roadmap §5 |
+| `systems/new-canvas.js` | диалог «Новый холст»: пресеты + кастомные размеры | ✅ | roadmap §5 |
+| `logic/psd.js` | чтение PSD послойно (raw + RLE) для импорта | ✅ | roadmap §5 |
+| `styles/animations.css` | анимации UI (нажатие, выбор, драг) — единое место | ✅ | [theming.md](theming.md) |
 | `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
 
 ## Конфигурация (`src/config/`)

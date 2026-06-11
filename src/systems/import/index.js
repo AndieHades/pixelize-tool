@@ -7,11 +7,11 @@ import { snapshot, restore } from '../../core/history.js';
 import { expandCanvas, placeImageLayer } from '../../core/document.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { $, toast, t } from '../../core/dom.js';
+import { imageData, looksPixelArt } from '../../core/image.js';
 import { setImpData, impConvert, applyImport, rotateImp } from './convert.js';
 
 let impSrcImg = null;
-const imageData = (im, w, h, smooth) => { const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d'); x.imageSmoothingEnabled = smooth; x.drawImage(im, 0, 0, w, h); return x.getImageData(0, 0, w, h); };
+export { looksPixelArt };
 
 export function insertPixelImage(im) { // вставить как есть в натуральном размере
   const iw = im.naturalWidth, ih = im.naturalHeight, d = imageData(im, iw, ih, false).data;
@@ -20,17 +20,6 @@ export function insertPixelImage(im) { // вставить как есть в н
   if (nW !== S.W || nH !== S.H) { const pl = (nW - S.W) >> 1, pt = (nH - S.H) >> 1; expandCanvas(pl, pt, nW - S.W - pl, nH - S.H - pt); }
   if (S.layers.length >= MAX_LAYERS) { restore(S.undoStack.pop()); toast(t('toast.maxLayersDel')); return; }
   placeImageLayer(iw, ih, d); bus.emit('layers'); bus.emit('fit'); toast(t('toast.inserted', { w: iw, h: ih }));
-}
-
-export function looksPixelArt(im) { // эвристика: мало цветов и/или маленький размер
-  const w = im.naturalWidth, h = im.naturalHeight;
-  if (Math.max(w, h) <= 96) return true;
-  const SAMP = 220, k = Math.min(1, SAMP / Math.max(w, h));
-  const sw = Math.max(1, Math.round(w * k)), sh = Math.max(1, Math.round(h * k));
-  const d = imageData(im, sw, sh, false).data, colors = new Set();
-  for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) continue;
-    colors.add((d[i] >> 2) + ',' + (d[i + 1] >> 2) + ',' + (d[i + 2] >> 2)); if (colors.size > 180) return false; }
-  return true;
 }
 
 export function openImport(file) {
@@ -69,3 +58,5 @@ export function mount() {
     const f = e.dataTransfer && [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
     if (f) dropImage(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast(t('toast.notImage')); });
 }
+
+actions.register('import.openFile', openImport); // открыть файл в конвертере (для галереи)

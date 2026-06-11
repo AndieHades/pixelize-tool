@@ -43,6 +43,23 @@ grep -RnE "#[0-9a-fA-F]{3,8}|rgba?\(" src/styles --include='*.css' \
   | grep -v tokens.css && echo "вынеси в токен" || echo "ok"
 ```
 
+## Анимации
+
+Движения интерфейса вынесены в **отдельный** файл `src/styles/animations.css`
+(подключён в `index.html`). Это единственное место для keyframes и переходов;
+правишь анимацию — правишь его, ничего больше искать не нужно.
+
+Длительности, кривые и масштабы — это тоже токены в `tokens.css`
+(`--anim-fast`, `--anim-pop`, `--ease-out`, `--ease-pop`, `--press-scale`,
+`--lift-scale`). `animations.css` ссылается только на них:
+
+```css
+.gal-actions button:active { transform: scale(var(--press-scale)); }
+@keyframes pop-in { from { transform: scale(0) } to { transform: scale(1) } }
+```
+
+Так «сделать отдачу резче/мягче» = поменять один токен, а не перебирать правила.
+
 ## Связь с i18n
 
 Переключатели языка и темы живут рядом (системные настройки приложения) и оба

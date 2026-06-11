@@ -377,19 +377,44 @@
 /* ---- галерея работ (Procreate-стиль) ---- */
 #gallery { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
 #gallery.on { display: flex; }
-#gal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+#gal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); gap: 12px; }
+#gal-left { display: flex; align-items: center; gap: 8px; }
 #gal-title { font-weight: 700; font-size: 18px; color: var(--txt); }
-.gal-actions { display: flex; gap: 6px; align-items: center; }
+#gal-back { width: 32px; height: 32px; font-size: 22px; color: var(--txt); border-radius: var(--radius); }
+#gal-back:hover { background: var(--accent-soft); }
+.gal-actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .gal-actions button { width: auto; height: 34px; padding: 0 12px; border-radius: var(--radius); color: var(--txt); font-size: 14px; }
 .gal-actions button:hover { background: var(--accent-soft); }
-#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; padding: 22px; align-content: start; }
-.gal-tile { cursor: pointer; }
-.gal-tile img { width: 100%; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; background: var(--surface); border-radius: 8px; border: 1px solid var(--line); }
-.gal-tile:hover img { border-color: var(--accent); }
-.gal-cap { padding: 6px 2px; }
-.gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; }
-.gal-cap small { color: var(--txt2); font-size: 12px; }
-.gal-tile.sel img { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
-#gal-del { color: var(--danger); }
-#gal-del:disabled { opacity: .4; }
 .gal-actions button.on { background: var(--accent); color: #fff; }
+#gal-del { color: var(--danger); }
+.gal-actions button:disabled { opacity: .4; pointer-events: none; }
+#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 22px; padding: 24px; align-content: start; }
+.gal-tile { cursor: pointer; user-select: none; }
+.gal-thumb { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center; }
+.gal-tile:not(.folder) .gal-thumb { display: block; }
+.gal-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.gal-tile.folder .gal-thumb { gap: 2px; padding: 6px; background: var(--panel-solid); }
+.gal-tile.folder .gal-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.gal-tile:hover .gal-thumb { border-color: var(--accent); }
+.gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, 0 6px 18px rgba(0,0,0,.35); }
+/* чек-кружок в углу плитки (виден только в режиме выбора) */
+.gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
+  border: 2px solid #fff; background: rgba(0,0,0,.4); box-shadow: 0 1px 4px rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; color: #fff; font-size: 15px; line-height: 1; }
+#gal-grid.selecting .gal-check { display: flex; }
+.gal-check::after { content: '✓'; opacity: 0; }
+.gal-check.on { background: var(--accent); border-color: var(--accent); }
+.gal-check.on::after { opacity: 1; }
+/* кнопка Stack «загорается», когда выбрано 2+ */
+.gal-actions button.lit { background: var(--accent); color: #fff; }
+/* кнопка подтверждения выбора (галочка) */
+.gal-actions button.confirm { background: var(--accent); color: #fff; font-size: 17px; }
+.gal-cap { padding: 8px 2px 0; }
+.gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; outline: none; }
+.gal-cap b.editing { background: var(--panel-solid); border-radius: 4px; padding: 1px 4px; }
+.gal-cap small { color: var(--txt2); font-size: 12px; }
+.gal-ghost { position: fixed; z-index: 200; width: 120px; pointer-events: none; opacity: .85; transform: translate(-50%,-50%); }
+.gal-tile.dragging { opacity: .35; }
+.gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
+.gal-tile.drop-before .gal-thumb { box-shadow: -4px 0 0 var(--accent); }

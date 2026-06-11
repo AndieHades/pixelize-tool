@@ -11,6 +11,7 @@
   <title>Pixel Heart</title>
   <link rel="stylesheet" href="src/styles/tokens.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="src/styles/animations.css" />
 </head>
 <body>
   <canvas id="cv"></canvas>
@@ -296,12 +297,15 @@
 
   <div id="gallery">
     <header id="gal-top">
-      <span id="gal-title">Pixel Heart</span>
+      <span id="gal-left"><button id="gal-back" style="display:none">‹</button><span id="gal-title">Pixel Heart</span></span>
       <span class="gal-actions">
-        <button id="gal-select" data-i18n="gallery.select">Выбрать</button>
-        <button id="gal-import" data-i18n="gallery.import">Импорт</button>
-        <button id="gal-convert" data-i18n="gallery.convert">Конвертер</button>
+        <button id="gal-stack" data-i18n="gallery.stack" style="display:none">Сложить</button>
+        <button id="gal-dup" data-i18n="gallery.duplicate" style="display:none">Дублировать</button>
         <button id="gal-del" data-i18n="gallery.delete" style="display:none">Удалить</button>
+        <button id="gal-select" data-i18n="gallery.select">Выбрать</button>
+        <button id="gal-convert" data-i18n="gallery.convert">Конвертер</button>
+        <button id="gal-import" data-i18n="gallery.import">Импорт</button>
+        <button id="gal-photo" data-i18n="gallery.photo">Фото</button>
         <button id="gal-new" data-i18n-title="gallery.new" title="Новый документ">＋</button>
       </span>
     </header>
