@@ -5,7 +5,7 @@
 import { MAX_LAYERS, MAX_SIZE, BP_SMAX } from '../config/limits.js';
 import { DEFAULT_DOC } from '../config/presets.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
-import { BRUSH_DEFAULTS } from '../config/defaults.js';
+import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT } from '../config/defaults.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
 export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
@@ -20,6 +20,8 @@ export const S = {
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   tool: 'pencil', sym: false, symH: false,
   brushes: BRUSH_DEFAULTS(),
+  ppOn: FLAGS_DEFAULT.pixelPerfect, stabOn: FLAGS_DEFAULT.stabilize, stroke: false,
+  adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
   sel: null, selMask: null, selFloat: null,
   view: { zoom: 12, ox: 0, oy: 0 },
   undoStack: [], redoStack: [],

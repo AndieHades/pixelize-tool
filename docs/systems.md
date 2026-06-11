@@ -15,6 +15,8 @@
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
 | `core/layers.js` | отвечает на запросы видимости/обтравки/симметрии слоёв | ✅ | 01-state |
 | `core/document.js` | структурно меняет холст (expandCanvas) | ✅ | 05-draw |
+| `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
+| `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
 | `core/history.js` | пишет и откатывает снимки документа | ✅ | 04-history |
 | `core/actions.js` | реестр именованных действий (для хоткеев/кнопок/меню) | ✅ | (новое) |
@@ -36,11 +38,7 @@
 | Модуль | Одна фраза | Статус | Источник |
 |--------|-----------|:--:|----------|
 | `systems/render/*` | рисует видимый холст (index+overlays+checker) | ✅ | 03-render |
-| `systems/draw-brush.js` | кладёт кисть/ластик с альфой | 🔲 | 05-draw |
-| `systems/draw-shapes.js` | рисует линию и прямоугольник | 🔲 | 05-draw |
-| `systems/pixel-perfect.js` | убирает Г-образные уголки штриха | 🔲 | 05-draw |
-| `systems/fill.js` | заливает связную область | 🔲 | 05-draw |
-| `systems/adjust.js` | осветляет/затемняет/тонирует кистью | 🔲 | 05-draw |
+| `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка/пипетка | ✅ | 05-draw |
 | `systems/outline.js` | обводит контур слоя | 🔲 | 05-draw |
 | `systems/shadow.js` | строит drop-shadow слоя | 🔲 | 05-draw |
 | `systems/glow.js` | строит ореол слоя | 🔲 | 05-draw |
