@@ -220,6 +220,14 @@
         L.ext = ne; }
       const t = W; W = H; H = t; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast('Поворот 90°');
     }
+    function toMono(L) { // оттенки серого по яркости (Rec. 601), альфа сохраняется
+      const lum = (c) => Math.round(c[0] * .299 + c[1] * .587 + c[2] * .114);
+      const g = L.grid;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = g[y][x]; if (!c) continue;
+        const v = lum(c); g[y][x] = c.length > 3 ? [v, v, v, c[3]] : [v, v, v]; }
+      for (const [k, c] of L.ext) { const v = lum(c); L.ext.set(k, c.length > 3 ? [v, v, v, c[3]] : [v, v, v]); } }
+    function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); layList(); render(); toast('Слой в монохроме'); }
+    function monoAll() { snapshot(); for (const L of layers) toMono(L); dirtyAll(); layList(); render(); toast('Изображение в монохроме'); }
     function flipLayer(horiz) { // отражение активного слоя
       snapshot(); const L = layers[cur], g = L.grid;
       if (horiz) for (const r of g) r.reverse(); else g.reverse();

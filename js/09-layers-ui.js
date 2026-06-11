@@ -171,6 +171,7 @@
       $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-full').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-tight').style.display = kind === 'layer' ? '' : 'none';
@@ -182,6 +183,8 @@
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
     $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
+    $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');
+      if (lctxRef && lctxRef.kind === 'layer') monoLayer(lctxRef.ref); };
     $('lctx-clear').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return; const idx = layers.indexOf(lctxRef.ref); if (idx < 0) return;
       cur = idx; if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); };

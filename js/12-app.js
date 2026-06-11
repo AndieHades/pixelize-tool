@@ -37,6 +37,7 @@
     $('flip-h').onclick = () => flipLayer(true);
     $('flip-v').onclick = () => flipLayer(false);
     $('rot').onclick = rotateCanvas;
+    $('mono').onclick = monoAll;
     $('crop').onclick = toggleCrop;
     $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
