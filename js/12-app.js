@@ -93,6 +93,7 @@
     $('bc-cancel').onclick = bcCancel;
     makeDraggable($('bcpop'));
     $('crop').onclick = toggleCrop;
+    $('trim').onclick = trimCanvas;
     $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
     cv.addEventListener('contextmenu', (e) => e.preventDefault());

@@ -172,6 +172,13 @@
         L.grid = out; L.ext = ne; }
       W = nw; H = nh; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Холст: ${W}×${H}`);
     }
+    function trimCanvas() { // обрезать пустые поля впритык к рисунку (по всем слоям)
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (const L of layers) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) { toast('Холст пуст'); return; }
+      if (x0 === 0 && y0 === 0 && x1 === W - 1 && y1 === H - 1) { toast('Обрезать нечего'); return; }
+      applyCropRect(x0, y0, x1, y1); }
     let cropSym = false;
     function toggleCrop() { if (cropMode) { cancelCrop(); return; }
       const b = sel ? { x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1 } : { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
