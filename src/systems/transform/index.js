@@ -67,3 +67,4 @@ export function mount() {
 }
 
 actions.register('transform.enter', () => enterRotMode(S.layers[S.cur]));
+actions.register('transform.enterTargets', (targets) => enterRotMode(targets));

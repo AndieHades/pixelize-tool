@@ -60,6 +60,9 @@ const input = await import('../src/systems/input/index.js');
 await import('../src/systems/selection/input.js');
 const sfloat = await import('../src/systems/selection/float.js');
 const tf = await import('../src/systems/transform/index.js');
+const layers = await import('../src/systems/layers/index.js');
+const { layList } = await import('../src/systems/layers/list.js');
+const lops = await import('../src/systems/layers/ops.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
@@ -234,5 +237,10 @@ t('selection-float: lift + commit переносит фрагмент', () => { 
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
+
+t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
+  assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
+  S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

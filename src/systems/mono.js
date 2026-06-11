@@ -16,4 +16,5 @@ export function toMono(L) { const g = L.grid;
 export function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast('Слой в монохроме'); }
 export function monoAll() { snapshot(); for (const L of S.layers) toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast('Изображение в монохроме'); }
 
-actions.register('effect.mono', monoAll);
+export function monoTargets(targets) { snapshot(); for (const L of targets) toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast('В монохроме'); }
+actions.register('effect.mono', (targets) => (targets && targets.length) ? monoTargets(targets) : monoAll());

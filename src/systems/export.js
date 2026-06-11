@@ -63,5 +63,6 @@ export function exportPsd() { // минимальный PSD: RGBA-слои бе�
   saveFile(new Blob(chunks, { type: 'image/vnd.adobe.photoshop' }), `pixel_${W}x${H}.psd`, 'image/vnd.adobe.photoshop', 'Photoshop PSD');
 }
 
+actions.register('export.layer', (L, tight) => exportLayerPng(L, tight));
 actions.register('file.exportPng', exportPng);
 actions.register('file.exportPsd', exportPsd);

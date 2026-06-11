@@ -31,4 +31,4 @@ export function bcApply() { if (!bcBackup) return;
 
 export function bcCancel() { if (bcBackup) { bcRestore(); bcBackup = null; } $('bcpop').classList.remove('on'); }
 
-actions.register('effect.bc', () => openBcPop(S.layers, 'Яркость/контраст — всё изображение'));
+actions.register('effect.bc', (targets, title) => openBcPop(targets && targets.length ? targets : S.layers, title || 'Яркость/контраст — всё изображение'));

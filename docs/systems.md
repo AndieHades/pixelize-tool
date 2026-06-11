@@ -59,13 +59,10 @@
 | `systems/input/*` | разбирает указатель и тач-жесты, диспетчеризует в обработчики | ✅ | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
-| `systems/layers-list.js` | рисует список слоёв и папок | 🔲 | 09-layers-ui |
-| `systems/layers-drag.js` | перетаскивает слои и папки | 🔲 | 09-layers-ui |
-| `systems/layers-ops.js` | сливает/группирует/дублирует слои | 🔲 | 09-layers-ui |
-| `systems/layers-menu.js` | контекстное меню слоя/папки | 🔲 | 09-layers-ui |
 | `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
+| `systems/layers/*` | панель слоёв: список/драг/операции/меню | ✅ | 09-layers-ui |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
 | `systems/documents.js` | держит несколько документов | 🔲 | 12-app |
