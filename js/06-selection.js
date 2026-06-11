@@ -30,9 +30,23 @@
         if (grab) { cells.set((ax - sel.x0) + ',' + (ay - sel.y0), c); L.ext.delete(k); } }
       selMask = null; // форму дальше несёт «плавающий» фрагмент
       selFloat = { cells, w, h, x: sel.x0, y: sel.y0, ox: sel.x0, oy: sel.y0 }; markDirty(cur); }
+    function liftSelectionSym(grabX, grabY) { // лифт симметричного выделения для зеркального переноса
+      const L = layers[cur], g = L.grid, gL = grabX * 2 <= W - 1, gT = grabY * 2 <= H - 1, items = [];
+      for (const k of selMask) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+        const c = g[y] && g[y][x]; if (!c) continue; g[y][x] = null;
+        const sgnx = sym ? (x === W - 1 - x ? 0 : ((x * 2 <= W - 1) === gL ? 1 : -1)) : 1;
+        const sgny = symH ? (y === H - 1 - y ? 0 : ((y * 2 <= H - 1) === gT ? 1 : -1)) : 1;
+        items.push({ ax: x, ay: y, c, sgnx, sgny }); }
+      selMask = null; selFloat = { symItems: items, dx: 0, dy: 0 }; markDirty(cur); }
+    function symFloatBounds() { let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (const it of selFloat.symItems) { const xx = it.ax + it.sgnx * selFloat.dx, yy = it.ay + it.sgny * selFloat.dy;
+        if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+      sel = x1 < 0 ? null : { x0, y0, x1, y1 }; }
     function commitFloat() { if (!selFloat) return; const L = layers[cur], g = L.grid;
       const landed = new Set();
-      for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+      if (selFloat.symItems) { for (const it of selFloat.symItems) { const xx = it.ax + it.sgnx * selFloat.dx, yy = it.ay + it.sgny * selFloat.dy;
+        if (xx >= 0 && yy >= 0 && xx < W && yy < H) { g[yy][xx] = it.c; landed.add(xx + ',' + yy); } else L.ext.set(xx + ',' + yy, it.c); } }
+      else for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
         const xx = selFloat.x + dx, yy = selFloat.y + dy;
         if (xx >= 0 && yy >= 0 && xx < W && yy < H) { g[yy][xx] = c; landed.add(xx + ',' + yy); }
         else L.ext.set(xx + ',' + yy, c); } // за границей — не теряем, можно перетащить обратно
@@ -53,7 +67,7 @@
             x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, lifted: true, moved: true };
           return; } }
       if (sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1 && (!selMask || selMask.has(gx + ',' + gy)))
-        selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false };
+        selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false, sym: !!(selMask && (sym || symH)) };
       else { selMask = null; selDrag = { mode: 'new', sx: gx, sy: gy, moved: false }; } }
     function selMove(gx, gy) { if (!selDrag) return;
       if (selDrag.mode === 'scale') { const d = selDrag;
@@ -75,9 +89,12 @@
         sel = { x0: nx0, y0: ny0, x1: nx0 + nw - 1, y1: ny0 + nh - 1 };
         syncSelbar(); render(); return; }
       if (selDrag.mode === 'new') { if (gx !== selDrag.sx || gy !== selDrag.sy) selDrag.moved = true; sel = normSel(selDrag.sx, selDrag.sy, gx, gy); }
-      else { if (!selDrag.lifted) { if (gx === selDrag.sx && gy === selDrag.sy) return; snapshot(); liftSelection(); selDrag.lifted = true; }
-        selFloat.x = selFloat.ox + (gx - selDrag.sx); selFloat.y = selFloat.oy + (gy - selDrag.sy);
-        sel = { x0: selFloat.x, y0: selFloat.y, x1: selFloat.x + selFloat.w - 1, y1: selFloat.y + selFloat.h - 1 }; selDrag.moved = true; }
+      else { if (!selDrag.lifted) { if (gx === selDrag.sx && gy === selDrag.sy) return; snapshot();
+          if (selDrag.sym) liftSelectionSym(selDrag.sx, selDrag.sy); else liftSelection(); selDrag.lifted = true; }
+        if (selFloat.symItems) { selFloat.dx = gx - selDrag.sx; selFloat.dy = gy - selDrag.sy; symFloatBounds(); }
+        else { selFloat.x = selFloat.ox + (gx - selDrag.sx); selFloat.y = selFloat.oy + (gy - selDrag.sy);
+          sel = { x0: selFloat.x, y0: selFloat.y, x1: selFloat.x + selFloat.w - 1, y1: selFloat.y + selFloat.h - 1 }; }
+        selDrag.moved = true; }
       syncSelbar(); render(); }
     function symmetrizeSelection() { // при включённой симметрии добавляем в выделение зеркальные клетки
       if (!sel || (!sym && !symH)) return;

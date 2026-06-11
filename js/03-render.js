@@ -74,7 +74,10 @@
         const dc = hexToRgb($('ds-col').value); ctx.fillStyle = rgb(dc); ctx.globalAlpha = (+$('ds-op').value / 100) * .85;
         for (const p of dsPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z);
         ctx.globalAlpha = 1; }
-      if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+      if (selFloat && selFloat.symItems) { const sdx = selFloat.dx, sdy = selFloat.dy; // зеркальный перенос
+        for (const it of selFloat.symItems) { ctx.fillStyle = rgb(it.c);
+          ctx.fillRect(ox + (it.ax + it.sgnx * sdx) * z, oy + (it.ay + it.sgny * sdy) * z, z, z); } }
+      else if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
         ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }
       if (sel && !selMask) { const sx = ox + sel.x0 * z, sy = oy + sel.y0 * z, sw = (sel.x1 - sel.x0 + 1) * z, sh = (sel.y1 - sel.y0 + 1) * z;
         if (!selFloat) { ctx.fillStyle = 'rgba(0,0,0,.28)'; // затемнение вне выделения
