@@ -5,6 +5,7 @@ import { rgbToHsv, hsvToRgb } from '../../logic/color.js';
 import { symA, symHA } from '../../core/layers.js';
 import { inSel } from '../../core/selection.js';
 import { markDirty } from '../../core/layer-cache.js';
+import { $ } from '../../core/dom.js';
 import { strokeSeen } from './seen.js';
 
 export function adjustCell(x, y) {
@@ -27,4 +28,10 @@ export function adjustStamp(x, y) {
     if (sa && mx !== xx) adjustCell(mx, yy);
     if (sha && my !== yy) adjustCell(xx, my);
     if (sa && sha && mx !== xx && my !== yy) adjustCell(mx, my); }
+}
+
+export function mount() {
+  document.querySelectorAll('#adj-modes button').forEach((b) => { b.onclick = () => { S.adjMode = b.dataset.m;
+    document.querySelectorAll('#adj-modes button').forEach((x) => x.classList.toggle('on', x === b)); }; });
+  $('adj-amt').addEventListener('input', () => { S.adjAmt = +$('adj-amt').value; $('adj-amtv').textContent = S.adjAmt; });
 }

@@ -49,6 +49,9 @@ const docs = await import('../src/systems/documents.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tb = await import('../src/systems/toolbars.js');
 const outline = await import('../src/systems/outline.js');
+const shadow = await import('../src/systems/shadow.js');
+const glow = await import('../src/systems/glow.js');
+const adjust = await import('../src/systems/draw/adjust.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -192,5 +195,10 @@ t('palette-manager: монтируется и сохраняет палитру'
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
 t('outline: openOutlinePop через action', () => { outline.mount(); resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll(); actions.run('effect.outline'); assert.ok(document.getElementById('outpop').classList.contains('on')); });
+
+t('shadow/glow: popup открывается и копит превью', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  shadow.mount(); glow.mount(); adjust.mount();
+  actions.run('effect.shadow', S.layers[0]); assert.ok(document.getElementById('dspop').classList.contains('on'));
+  actions.run('effect.glow', S.layers[0]); assert.ok(document.getElementById('glowpop').classList.contains('on')); assert.ok(S.glowPreview && S.glowPreview.length > 0); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
