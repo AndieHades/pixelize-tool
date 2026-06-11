@@ -228,6 +228,32 @@
       for (const [k, c] of L.ext) { const v = lum(c); L.ext.set(k, c.length > 3 ? [v, v, v, c[3]] : [v, v, v]); } }
     function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); layList(); render(); toast('Слой в монохроме'); }
     function monoAll() { snapshot(); for (const L of layers) toMono(L); dirtyAll(); layList(); render(); toast('Изображение в монохроме'); }
+    // ---- яркость/контраст с живым предпросмотром ----
+    let bcBackup = null; // [{L, grid, ext}] — оригиналы на время подгонки
+    function bcAdjust(c, bri, f) { const ap = (v) => Math.max(0, Math.min(255, Math.round(f * (v - 128) + 128 + bri)));
+      return c.length > 3 ? [ap(c[0]), ap(c[1]), ap(c[2]), c[3]] : [ap(c[0]), ap(c[1]), ap(c[2])]; }
+    function bcPreview() { if (!bcBackup) return;
+      const bri = +$('bc-bri').value * 1.27, cc = +$('bc-con').value * 1.27;
+      const f = (259 * (cc + 255)) / (255 * (259 - cc));
+      for (const b of bcBackup) { const L = b.L;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = b.grid[y][x];
+          L.grid[y][x] = c ? bcAdjust(c, bri, f) : null; }
+        L.ext = new Map(); for (const [k, c] of b.ext) L.ext.set(k, bcAdjust(c, bri, f)); }
+      dirtyAll(); render(); }
+    function bcRestore() { if (!bcBackup) return;
+      for (const b of bcBackup) { b.L.grid = cloneGrid(b.grid); b.L.ext = new Map(b.ext); }
+      dirtyAll(); render(); }
+    function openBcPop(targets, title) { bcCancel(); $('brushpop').classList.remove('on'); $('outpop').classList.remove('on');
+      bcBackup = targets.map((L) => ({ L, grid: cloneGrid(L.grid), ext: new Map(L.ext) }));
+      $('bc-title').textContent = title;
+      $('bc-bri').value = 0; $('bc-briv').textContent = '0';
+      $('bc-con').value = 0; $('bc-conv').textContent = '0';
+      $('bcpop').classList.add('on'); }
+    function bcApply() { if (!bcBackup) return;
+      bcRestore(); snapshot(); // в историю уходит оригинал
+      const bk = bcBackup; bcBackup = bk; bcPreview(); // финальный прогон по тем же ползункам
+      bcBackup = null; $('bcpop').classList.remove('on'); layList(); render(); toast('Применено'); }
+    function bcCancel() { if (bcBackup) { bcRestore(); bcBackup = null; } $('bcpop').classList.remove('on'); }
     function flipLayer(horiz) { // отражение активного слоя
       snapshot(); const L = layers[cur], g = L.grid;
       if (horiz) for (const r of g) r.reverse(); else g.reverse();

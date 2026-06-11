@@ -172,6 +172,7 @@
       $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-bc').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-full').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-tight').style.display = kind === 'layer' ? '' : 'none';
@@ -185,6 +186,8 @@
     $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
     $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');
       if (lctxRef && lctxRef.kind === 'layer') monoLayer(lctxRef.ref); };
+    $('lctx-bc').onclick = () => { $('lctx').classList.remove('on');
+      if (lctxRef && lctxRef.kind === 'layer') openBcPop([lctxRef.ref], 'Яркость/контраст — ' + lctxRef.ref.name); };
     $('lctx-clear').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return; const idx = layers.indexOf(lctxRef.ref); if (idx < 0) return;
       cur = idx; if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); };

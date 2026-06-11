@@ -38,6 +38,12 @@
     $('flip-v').onclick = () => flipLayer(false);
     $('rot').onclick = rotateCanvas;
     $('mono').onclick = monoAll;
+    $('bc').onclick = () => openBcPop(layers, 'Яркость/контраст — всё изображение');
+    $('bc-bri').addEventListener('input', () => { $('bc-briv').textContent = $('bc-bri').value; bcPreview(); });
+    $('bc-con').addEventListener('input', () => { $('bc-conv').textContent = $('bc-con').value; bcPreview(); });
+    $('bc-apply').onclick = bcApply;
+    $('bc-cancel').onclick = bcCancel;
+    makeDraggable($('bcpop'));
     $('crop').onclick = toggleCrop;
     $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
     $('undo').onclick = doUndo; $('redo').onclick = doRedo;
@@ -82,7 +88,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
-          for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
