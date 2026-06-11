@@ -43,6 +43,10 @@ export const en = {
   'gallery.new': 'New document',
   'gallery.delete': 'Delete',
   'gallery.done': 'Done',
+  'menu.documents': 'Documents',
+  'menu.pickLayer': 'Layer:',
+  'menu.copyTo': 'Copy to:',
+  'palette.none': 'No saved palettes yet',
   // тосты
   'toast.bufferEmpty': 'Clipboard empty',
   'toast.mono': 'To monochrome',

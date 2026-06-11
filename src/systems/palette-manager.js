@@ -14,7 +14,7 @@ function loadPalette(arr, name) { S.palette = dedupePal(arr); if (S.palette.leng
 
 function palListUI() { const box = $('pal-list'); box.innerHTML = '';
   const st = palStore(), names = Object.keys(st);
-  if (!names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">Сохранённых палитр пока нет</p>'; return; }
+  if (!names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('palette.none') + '</p>'; return; }
   for (const nm of names) { const row = document.createElement('div'); row.className = 'prow';
     const dots = document.createElement('span'); dots.className = 'pdots';
     st[nm].slice(0, 6).forEach((c) => { const i = document.createElement('i'); i.style.background = rgb(c); dots.appendChild(i); });

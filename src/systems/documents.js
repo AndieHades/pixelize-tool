@@ -51,7 +51,7 @@ export function sendLayerToDoc(L, i) { const d = docs[i];
   d.layers.push(copy); toast(t('toast.layerSentTo', { name: d.name })); }
 
 function openDocsMenu() { const m = $('dctx'); m.innerHTML = '';
-  const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Документы'; m.appendChild(head);
+  const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('menu.documents'); m.appendChild(head);
   docs.forEach((d, i) => { const row = document.createElement('div'); row.style.display = 'flex'; row.style.gap = '2px';
     const b = document.createElement('button'); b.style.flex = '1';
     b.textContent = (d.name || 'Документ') + ' · ' + (i === docCur ? `${S.W}×${S.H}` : `${d.W}×${d.H}`);
@@ -85,7 +85,7 @@ export function mount() {
   $('docsbtn').onclick = openDocsMenu;
   bus.on('send-layer', (L) => { if (docs.length < 2) { toast(t('toast.createSecondDoc')); return; }
     saveDocState(); const m = $('cctx'); m.innerHTML = '';
-    const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Куда копировать:'; m.appendChild(head);
+    const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('menu.copyTo'); m.appendChild(head);
     docs.forEach((d, i) => { if (i === docCur) return; const b = document.createElement('button'); b.textContent = (d.name || 'Документ') + ` · ${d.W}×${d.H}`;
       b.onclick = () => { m.classList.remove('on'); sendLayerToDoc(L, i); }; m.appendChild(b); });
     m.style.visibility = 'hidden'; m.classList.add('on');

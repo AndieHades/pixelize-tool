@@ -14,7 +14,7 @@ import { doAddLayer, doMerge, doGroup, deleteLayer } from './ops.js';
 import { mountMenu } from './menu.js';
 
 function openLayerMenu(px, py) { const m = $('cctx'); m.innerHTML = '';
-  const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Слой:'; m.appendChild(head);
+  const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('menu.pickLayer'); m.appendChild(head);
   for (let i = S.layers.length - 1; i >= 0; i--) { const b = document.createElement('button'); b.textContent = S.layers[i].name;
     if (i === S.cur) b.classList.add('cur'); if (!effVis(i)) b.classList.add('dim');
     b.addEventListener('click', ((idx) => () => { S.cur = idx; layList(); m.classList.remove('on'); })(i)); m.appendChild(b); }

@@ -51,6 +51,10 @@ export const ru = {
   'gallery.new': 'Новый документ',
   'gallery.delete': 'Удалить',
   'gallery.done': 'Готово',
+  'menu.documents': 'Документы',
+  'menu.pickLayer': 'Слой:',
+  'menu.copyTo': 'Куда копировать:',
+  'palette.none': 'Сохранённых палитр пока нет',
   // тосты
   'toast.bufferEmpty': 'Буфер пуст',
   'toast.mono': 'В монохроме',

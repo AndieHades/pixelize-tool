@@ -70,7 +70,7 @@
     <h3 data-i18n="dialog.panels">Кнопки панелей</h3>
     <p class="hint" style="margin:0 2px">Включай и выключай кнопки. Перетащить между панелями: зажми ПКМ (или долгий тап) и тащи.</p>
     <div id="tools-list"></div>
-    <div class="iact"><button id="tools-reset" class="txtbtn">Сбросить панели</button><button id="tools-close" class="txtbtn primary">Готово</button></div>
+    <div class="iact"><button id="tools-reset" class="txtbtn">Сбросить панели</button><button id="tools-close" data-i18n="btn.done" class="txtbtn primary">Готово</button></div>
   </div></div>
 
   <div id="cropbar">
@@ -97,8 +97,8 @@
   <div id="bcpop" class="toolpop">
     <div class="bp-head" id="bc-title">Яркость/контраст</div>
     <div class="irow"><label>Яркость</label><input id="bc-bri" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-briv">0</b></div>
-    <div class="irow"><label>Контраст</label><input id="bc-con" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-conv">0</b></div>
-    <div class="iact"><button id="bc-cancel" class="txtbtn">Отмена</button><button id="bc-apply" class="txtbtn primary">Применить</button></div>
+    <div class="irow"><label data-i18n="label.contrast">Контраст</label><input id="bc-con" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-conv">0</b></div>
+    <div class="iact"><button id="bc-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="bc-apply" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div>
 
   <div id="adjpop" class="toolpop">
@@ -108,33 +108,33 @@
       <button data-m="burn" data-i18n="adj.burn">Затемнить</button>
       <button data-m="colorize" data-i18n="adj.colorize">В активный цвет</button>
     </div>
-    <div class="irow"><label>Сила за штрих</label><input id="adj-amt" type="range" min="2" max="30" step="1" value="8" /><b id="adj-amtv">8</b></div>
+    <div class="irow"><label data-i18n="label.strength">Сила за штрих</label><input id="adj-amt" type="range" min="2" max="30" step="1" value="8" /><b id="adj-amtv">8</b></div>
     <p class="hint" style="margin:0 2px">Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.</p>
   </div>
 
   <div id="glowpop" class="toolpop">
     <div class="bp-head">Свечение</div>
-    <div class="irow"><label>Диапазон</label><input id="glow-range" type="range" min="1" max="32" step="1" value="6" /><b id="glow-rangev">6</b></div>
-    <div class="irow"><label>Интенсивность</label><input id="glow-int" type="range" min="10" max="100" step="5" value="80" /><b id="glow-intv">80%</b></div>
+    <div class="irow"><label data-i18n="label.range">Диапазон</label><input id="glow-range" type="range" min="1" max="32" step="1" value="6" /><b id="glow-rangev">6</b></div>
+    <div class="irow"><label data-i18n="label.intensity">Интенсивность</label><input id="glow-int" type="range" min="10" max="100" step="5" value="80" /><b id="glow-intv">80%</b></div>
     <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="glow-col" type="color" value="#78d7ff" /><span id="glow-colsw" style="background:#78d7ff"></span></label></div>
-    <div class="iact"><button id="glow-apply" class="txtbtn primary">Добавить свечение</button></div>
+    <div class="iact"><button id="glow-apply" data-i18n="btn.glow" class="txtbtn primary">Добавить свечение</button></div>
   </div>
 
   <div id="dspop" class="toolpop">
     <div class="bp-head">Тень (Drop Shadow)</div>
-    <div class="irow"><label>Смещение X</label><input id="ds-x" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-xv">2</b></div>
-    <div class="irow"><label>Смещение Y</label><input id="ds-y" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-yv">2</b></div>
+    <div class="irow"><label data-i18n="label.offsetX">Смещение X</label><input id="ds-x" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-xv">2</b></div>
+    <div class="irow"><label data-i18n="label.offsetY">Смещение Y</label><input id="ds-y" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-yv">2</b></div>
     <div class="irow"><label>Непрозр.</label><input id="ds-op" type="range" min="10" max="100" step="5" value="60" /><b id="ds-opv">60%</b></div>
     <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="ds-col" type="color" value="#000000" /><span id="ds-colsw" style="background:#000"></span></label></div>
-    <div class="iact"><button id="ds-apply" class="txtbtn primary">Создать тень</button></div>
+    <div class="iact"><button id="ds-apply" data-i18n="btn.shadow" class="txtbtn primary">Создать тень</button></div>
   </div>
 
   <div id="outpop" class="toolpop">
     <div class="bp-head">Обводка</div>
-    <div class="irow"><label>Толщина</label><input id="out-size" type="range" min="1" max="4" step="1" value="1" /><b id="out-sizev">1</b></div>
+    <div class="irow"><label data-i18n="label.thickness">Толщина</label><input id="out-size" type="range" min="1" max="4" step="1" value="1" /><b id="out-sizev">1</b></div>
     <div class="irow"><label>Непрозр.</label><input id="out-op" type="range" min="10" max="100" step="5" value="100" /><b id="out-opv">100%</b></div>
     <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="out-col" type="color" value="#ff7a18" /><span id="out-colsw"></span></label></div>
-    <div class="iact"><button id="out-apply" class="txtbtn primary">Обвести</button></div>
+    <div class="iact"><button id="out-apply" data-i18n="btn.outline" class="txtbtn primary">Обвести</button></div>
   </div>
 
   <div id="status">32×32 px</div>
@@ -169,17 +169,17 @@
   <div id="exp-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.save">Сохранить</h3>
     <div style="display:flex; flex-direction:column; gap:10px">
-      <button id="exp-png" class="txtbtn primary" style="width:100%">PNG — картинка с прозрачным фоном</button>
-      <button id="exp-psd" class="txtbtn" style="width:100%">PSD — со слоями (Photoshop, Krita)</button>
+      <button id="exp-png" data-i18n="btn.exportPng" class="txtbtn primary" style="width:100%">PNG — картинка с прозрачным фоном</button>
+      <button id="exp-psd" data-i18n="btn.exportPsd" class="txtbtn" style="width:100%">PSD — со слоями (Photoshop, Krita)</button>
     </div>
   </div></div>
 
   <div id="pal-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.palettes">Палитры</h3>
-    <div class="irow"><label>Текущая</label><input id="pal-name" type="text" maxlength="20" placeholder="Имя палитры" style="flex:1" /><button id="pal-save" class="txtbtn" style="height:40px">Сохранить</button></div>
+    <div class="irow"><label>Текущая</label><input id="pal-name" type="text" maxlength="20" placeholder="Имя палитры" style="flex:1" /><button id="pal-save" data-i18n="btn.save" class="txtbtn" style="height:40px">Сохранить</button></div>
     <div class="iact" style="margin-top:6px"><button id="pal-from-img" class="txtbtn">Палитра из изображения…</button></div>
     <div id="pal-list"></div>
-    <div class="iact"><button id="pal-close" class="txtbtn">Закрыть</button></div>
+    <div class="iact"><button id="pal-close" data-i18n="btn.close" class="txtbtn">Закрыть</button></div>
   </div></div>
 
   <div id="selbar">
@@ -199,7 +199,7 @@
     </div>
     <div id="lay-list"></div>
     <div class="lay-ops">
-      <label>Непрозрачность</label>
+      <label data-i18n="label.layerOpacity">Непрозрачность</label>
       <input id="lay-op" type="range" min="0" max="100" step="1" value="100" />
       <b id="lay-opv">100%</b>
     </div>
@@ -226,10 +226,10 @@
   <div id="colpop" class="toolpop">
     <div class="bp-head">Цвет</div>
     <div class="col-row"><span id="col-sw"></span><input id="col-hex" type="text" maxlength="7" spellcheck="false" /></div>
-    <div class="irow"><label>Тон</label><input id="col-h" type="range" min="0" max="360" step="1" class="hue" /><b id="col-hv">0</b></div>
-    <div class="irow"><label>Насыщенность</label><input id="col-s" type="range" min="0" max="100" step="1" /><b id="col-sv">0</b></div>
+    <div class="irow"><label data-i18n="label.hue">Тон</label><input id="col-h" type="range" min="0" max="360" step="1" class="hue" /><b id="col-hv">0</b></div>
+    <div class="irow"><label data-i18n="label.saturation">Насыщенность</label><input id="col-s" type="range" min="0" max="100" step="1" /><b id="col-sv">0</b></div>
     <div class="irow"><label>Яркость</label><input id="col-v" type="range" min="0" max="100" step="1" /><b id="col-vv">0</b></div>
-    <div class="iact"><button id="col-add" class="txtbtn primary">Добавить в палитру</button></div>
+    <div class="iact"><button id="col-add" data-i18n="btn.addPalette" class="txtbtn primary">Добавить в палитру</button></div>
   </div>
   <div id="lctx">
     <button id="lctx-ren" data-i18n="menu.rename">Переименовать…</button>
@@ -257,19 +257,19 @@
   <div id="ren-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.rename">Переименовать</h3>
     <div class="irow"><input id="ren-name" type="text" maxlength="24" style="flex:1" /></div>
-    <div class="iact"><button id="ren-cancel" class="txtbtn">Отмена</button><button id="ren-ok" class="txtbtn primary">Сохранить</button></div>
+    <div class="iact"><button id="ren-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="ren-ok" data-i18n="btn.save" class="txtbtn primary">Сохранить</button></div>
   </div></div>
 
   <div id="imp-ovl" class="ovl"><div id="imp-box" class="sheet">
     <h3 data-i18n="dialog.import">Импорт в пиксель-арт</h3>
     <canvas id="imp-prev"></canvas>
     <div class="irow"><label>Поворот</label><button id="imp-rot" class="txtbtn" style="height:40px">⟳ 90°</button><span class="hint">до симметрии</span></div>
-    <div class="irow"><label>Цвета палитры</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
-    <div class="irow"><label>Детализация</label><input id="imp-cell" type="range" min="0" max="128" step="4" value="0" /><b id="imp-cellv">Авто</b></div>
-    <div class="irow"><label>Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
-    <div class="irow"><label>Чистка мусора</label><span class="hint">битые пиксели и дырки</span><label class="switch"><input id="imp-clean" type="checkbox" /><span></span></label></div>
+    <div class="irow"><label data-i18n="label.colors">Цвета палитры</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
+    <div class="irow"><label data-i18n="label.detail">Детализация</label><input id="imp-cell" type="range" min="0" max="128" step="4" value="0" /><b id="imp-cellv">Авто</b></div>
+    <div class="irow"><label data-i18n="label.bgTol">Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
+    <div class="irow"><label data-i18n="label.clean">Чистка мусора</label><span class="hint">битые пиксели и дырки</span><label class="switch"><input id="imp-clean" type="checkbox" /><span></span></label></div>
     <div class="irow"><label>Симметрия</label><span class="hint">останется при рисовании</span><label class="switch"><input id="imp-sym" type="checkbox" /><span></span></label></div>
-    <div class="iact"><button id="imp-cancel" class="txtbtn">Отмена</button><button id="imp-asis" class="txtbtn">Вставить как есть</button><button id="imp-apply" class="txtbtn primary">Применить</button></div>
+    <div class="iact"><button id="imp-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="imp-asis" data-i18n="btn.insertAsIs" class="txtbtn">Вставить как есть</button><button id="imp-apply" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div></div>
 
   <div id="new-ovl" class="ovl"><div class="sheet">
@@ -282,16 +282,16 @@
       <button data-w="320" data-h="180">320×180</button><button data-w="320" data-h="240">320×240</button>
       <button data-w="640" data-h="360">640×360</button><button data-w="640" data-h="480">640×480 VGA</button>
     </div>
-    <div class="irow"><label>Ширина</label><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" />
+    <div class="irow"><label data-i18n="label.width">Ширина</label><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" />
       <label style="min-width:auto">Высота</label><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /></div>
-    <div class="iact"><button id="new-cancel" class="txtbtn">Отмена</button><button id="new-create" class="txtbtn primary">Создать документ</button></div>
+    <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="new-create" data-i18n="btn.create" class="txtbtn primary">Создать документ</button></div>
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">
     <h3 data-i18n="dialog.done">Готово</h3>
     <p>Зажми картинку → «Сохранить изображение», и она появится в Фото</p>
     <img id="ovlimg" alt="результат" />
-    <div><button id="ovlclose" class="txtbtn primary">Закрыть</button></div>
+    <div><button id="ovlclose" data-i18n="btn.close" class="txtbtn primary">Закрыть</button></div>
   </div></div>
 
   <div id="gallery">
