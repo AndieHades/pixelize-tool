@@ -50,13 +50,20 @@
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
       if (symH) { const ay = oy + (H / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ox - 8, ay); ctx.lineTo(ox + W * z + 8, ay); ctx.stroke(); ctx.setLineDash([]); }
-      if (linePrev) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(active); // превью линии
+      if (linePrev) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(active); // превью линии/прямоугольника
         const s = brushes.pencil.size, off = s >> 1;
-        bres(linePrev[0], linePrev[1], linePrev[2], linePrev[3], (px2, py2) => {
-          for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
-            const xx = px2 - off + dx2, yy = py2 - off + dy2;
-            ctx.fillRect(ox + xx * z, oy + yy * z, z, z);
-            if (sym) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z); } });
+        const paint = (px2, py2) => { for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
+          const xx = px2 - off + dx2, yy = py2 - off + dy2;
+          ctx.fillRect(ox + xx * z, oy + yy * z, z, z);
+          if (sym) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
+          if (symH) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
+          if (sym && symH) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
+        if (tool === 'rect') rectEdges(linePrev[0], linePrev[1], linePrev[2], linePrev[3], paint);
+        else bres(linePrev[0], linePrev[1], linePrev[2], linePrev[3], paint);
+        ctx.globalAlpha = 1; }
+      if (outPreview && $('outpop').classList.contains('on')) { // призрак будущей обводки
+        const oc = hexToRgb($('out-col').value); ctx.fillStyle = rgb(oc); ctx.globalAlpha = (+$('out-op').value / 100) * .8;
+        for (const p of outPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z);
         ctx.globalAlpha = 1; }
       if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
         ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }

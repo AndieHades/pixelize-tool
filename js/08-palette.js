@@ -1,5 +1,5 @@
     function setTool(t) { tool = t; lineStart = null; linePrev = null;
-      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line']) $('t-' + id).classList.toggle('on', id === t); render(); }
+      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect']) $('t-' + id).classList.toggle('on', id === t); render(); }
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
       $('palgrip').textContent = 'Палитра · ' + palette.length;
@@ -7,6 +7,9 @@
         if (eqc(c, active)) b.classList.add('on');
         b.addEventListener('click', () => { clearTimeout(swHold);
           if (palSquelch) { palSquelch = false; return; } // клик после перетаскивания не выбирает цвет
+          if ($('outpop').classList.contains('on')) { // окно обводки открыто — палитра задаёт его цвет
+            const v = '#' + c.map((q) => q.toString(16).padStart(2, '0')).join('');
+            $('out-col').value = v; $('out-colsw').style.background = v; return; }
           if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, c.slice()); return; }
           active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); });
         b.addEventListener('contextmenu', (e) => { e.preventDefault(); openCtx(e.clientX, e.clientY, idx); }); // ПКМ — меню

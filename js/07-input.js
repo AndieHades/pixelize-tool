@@ -19,7 +19,7 @@
       if (tool === 'select') { selDown(gx, gy, e); selDirect = true; return; }
       if (tool === 'pick') { pickAt(gx, gy); setTool('pencil'); return; }
       if (tool === 'fill') { snapshot(); stamp(gx, gy); render(); afterStroke(); return; }
-      if (tool === 'line') { lineStart = [gx, gy]; linePrev = [gx, gy, gx, gy]; directDrawing = true; render(); return; }
+      if (tool === 'line' || tool === 'rect') { lineStart = [gx, gy]; linePrev = [gx, gy, gx, gy]; directDrawing = true; render(); return; }
       beginStroke(); stabPt = { x: e.clientX, y: e.clientY }; stamp(gx, gy); directLast = [gx, gy]; directDrawing = true; render();
     }
     function directMove(e) {
@@ -32,7 +32,7 @@
       if (!selDirect && tool === 'select' && sel && !selFloat && e.pointerType === 'mouse' && !directDrawing) {
         const zn = selZone(e); cv.style.cursor = zn ? cropCursor(zn) : ''; }
       if (selDirect) { const [gx, gy] = toGrid(e); selMove(gx, gy); return; }
-      if (directDrawing && tool === 'line') { const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return; }
+      if (directDrawing && (tool === 'line' || tool === 'rect')) { const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return; }
       if (!directDrawing) { render(); return; } // перерисовка ради контура кисти под курсором
       const [sx2, sy2] = smoothPt(e), pt = { clientX: sx2, clientY: sy2 };
       const [gx, gy] = toGrid(pt); if (directLast) line(directLast[0], directLast[1], gx, gy); else stamp(gx, gy); directLast = [gx, gy]; render(); }
@@ -40,7 +40,7 @@
       if (rdrag) { if (!rdrag.moved && rdrag.btn === 2) openLayerMenu(e.clientX, e.clientY); rdrag = null; return; }
       cropDrag = null;
       if (selDirect) { selUp(); selDirect = false; }
-      if (directDrawing && tool === 'line' && linePrev) commitLine();
+      if (directDrawing && (tool === 'line' || tool === 'rect') && linePrev) commitLine();
       directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
     cv.addEventListener('pointerdown', (e) => {
@@ -69,7 +69,7 @@
         if (!selDrag) { const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); selDown(sx0, sy0, { clientX: gDownX, clientY: gDownY }); }
         const [gx, gy] = toGrid(e); selMove(gx, gy); return;
       }
-      if (gMoved && !gHeld && tool === 'line') {
+      if (gMoved && !gHeld && (tool === 'line' || tool === 'rect')) {
         if (!lineStart) lineStart = toGrid({ clientX: gDownX, clientY: gDownY });
         const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return;
       }

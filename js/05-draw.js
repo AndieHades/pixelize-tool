@@ -75,7 +75,13 @@
     }
     function commitLine() { const lp = linePrev; linePrev = null; lineStart = null;
       if (!lp) { render(); return; }
-      snapshot(); line(lp[0], lp[1], lp[2], lp[3]); render(); afterStroke(); }
+      snapshot();
+      if (tool === 'rect') rectEdges(lp[0], lp[1], lp[2], lp[3], stamp); // углы целы: pp молчит при stroke=false
+      else line(lp[0], lp[1], lp[2], lp[3]);
+      render(); afterStroke(); }
+    function rectEdges(x0, y0, x1, y1, cb) { const ax = Math.min(x0, x1), bx = Math.max(x0, x1), ay = Math.min(y0, y1), by = Math.max(y0, y1);
+      for (let x = ax; x <= bx; x++) { cb(x, ay); if (by !== ay) cb(x, by); }
+      for (let y = ay + 1; y < by; y++) { cb(ax, y); if (bx !== ax) cb(bx, y); } }
     function smoothPt(e) { // стабилизация: сглаживаем точку ввода
       if (!stabOn) return [e.clientX, e.clientY];
       if (!stabPt) { stabPt = { x: e.clientX, y: e.clientY }; return [e.clientX, e.clientY]; }
@@ -113,7 +119,20 @@
       $('out-col').value = v; $('out-colsw').style.background = v;
       $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
       $('out-op').value = Math.round(outSet.op * 100); $('out-opv').textContent = Math.round(outSet.op * 100) + '%';
-      $('outpop').classList.toggle('on'); }
+      const on = $('outpop').classList.toggle('on');
+      if (on) computeOutlinePreview(); else outPreview = null;
+      render(); }
+    function computeOutlinePreview() { // те же кольца, что и при применении, но без мутации слоя
+      const size = +$('out-size').value, g = G();
+      const filled = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => !!g[y][x]));
+      const n8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]], pre = [];
+      for (let pass = 0; pass < size; pass++) { const ring = [];
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (filled[y][x]) continue;
+          let near = false;
+          for (const [dx, dy] of n8) { const x2 = x + dx, y2 = y + dy; if (x2 < 0 || y2 < 0 || x2 >= W || y2 >= H) continue; if (filled[y2][x2]) { near = true; break; } }
+          if (near) ring.push([x, y]); }
+        for (const [x, y] of ring) { filled[y][x] = true; pre.push([x, y]); } }
+      outPreview = pre; }
     function outlineLayer() { // обводка: толщина, свой цвет, прозрачность
       outSet.size = +$('out-size').value; outSet.op = +$('out-op').value / 100;
       const col = hexToRgb($('out-col').value), a = Math.round(outSet.op * 255);
@@ -132,7 +151,7 @@
         layers[cur].grid = out; markDirty(cur);
       }
       if (!added) { restore(undoStack.pop()); toast('На слое нечего обводить'); return; }
-      $('outpop').classList.remove('on'); render(); layList(); toast('Обводка нанесена');
+      outPreview = null; $('outpop').classList.remove('on'); render(); layList(); toast('Обводка нанесена');
     }
     let cropMode = null, cropDrag = null; // интерактивный кроп: рамка с маркерами
     function applyCropRect(x0, y0, x1, y1) { // рект может выходить за холст — тогда холст расширяется

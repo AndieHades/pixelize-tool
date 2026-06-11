@@ -2,7 +2,7 @@
     function openBrushPop(t) { bpTool = t; $('bp-title').textContent = t === 'eraser' ? 'Ластик' : 'Кисть';
       const br = brushes[bpTool]; $('bp-size').value = br.size; $('bp-sizev').textContent = br.size;
       $('bp-op').value = Math.round(br.op * 100); $('bp-opv').textContent = Math.round(br.op * 100) + '%';
-      $('outpop').classList.remove('on'); $('brushpop').classList.toggle('on'); }
+      $('outpop').classList.remove('on'); if (outPreview) { outPreview = null; render(); } $('brushpop').classList.toggle('on'); }
     function makeDraggable(el) { let d = null; // окошко настроек можно отодвинуть и поставить рядом
       el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button')) return;
         el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
@@ -18,13 +18,14 @@
     $('t-pencil').onclick = () => { if (tool === 'pencil') openBrushPop('pencil'); else setTool('pencil'); };
     $('t-eraser').onclick = () => { if (tool === 'eraser') openBrushPop('eraser'); else setTool('eraser'); };
     $('t-line').onclick = () => { if (tool === 'line') openBrushPop('pencil'); else setTool('line'); };
+    $('t-rect').onclick = () => { if (tool === 'rect') openBrushPop('pencil'); else setTool('rect'); };
     $('t-pick').onclick = () => setTool('pick');
     $('t-fill').onclick = () => { if (sel) fillSelection(); else setTool('fill'); }; // с выделением — мгновенная заливка
     $('t-select').onclick = () => setTool('select');
     $('out-apply').onclick = outlineLayer;
-    $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; });
-    $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; });
-    $('out-col').addEventListener('input', () => { $('out-colsw').style.background = $('out-col').value; });
+    $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; computeOutlinePreview(); render(); });
+    $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; render(); });
+    $('out-col').addEventListener('input', () => { $('out-colsw').style.background = $('out-col').value; render(); });
     $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? 'Кроп от центра' : 'Кроп от грани'); };
     $('stab').onclick = () => { stabOn = !stabOn; $('stab').classList.toggle('on', stabOn); toast(stabOn ? 'Стабилизация включена' : 'Стабилизация выключена'); };
     $('sel-copy').onclick = doCopy; $('sel-cut').onclick = doCut; $('sel-paste').onclick = doPaste;
@@ -96,6 +97,7 @@
           toast((t === 'eraser' ? 'Ластик: ' : 'Кисть: ') + br.size + ' px'); render(); } }
       else if (c === 'KeyP') $('pp').click();
       else if (c === 'KeyU') setTool('line');
+      else if (c === 'KeyK') setTool('rect');
       else if (c === 'KeyT') $('stab').click();
       else if (c === 'KeyO') openOutlinePop();
       else if (c === 'KeyH') flipLayer(true);
@@ -389,7 +391,7 @@
     function restoreOrder() { try { const o = JSON.parse(localStorage.getItem('toolorder')); if (!o) return;
       for (const id of ['tb-left', 'tb-right', 'sidebar']) { const box = $(id); if (!o[id]) continue;
         for (const cid of o[id]) { const el = document.getElementById(cid); if (el && el.parentElement === box) box.appendChild(el); } } } catch (err) {} }
-    function makeArrangeable(boxId) { const box = $(boxId); let drag = null, sup = null;
+    function makeArrangeable(boxId) { const box = $(boxId); let drag = null, sup = null, moved = false;
       box.addEventListener('contextmenu', (e) => { if (e.target.closest('button')) e.preventDefault(); });
       box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (!b || b.parentElement !== box) return;
         if (e.button === 2) { e.preventDefault(); start(b, e); }
@@ -398,14 +400,14 @@
           const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 9) stop2(); };
           const stop2 = () => { clearTimeout(t); b.removeEventListener('pointermove', mv); b.removeEventListener('pointerup', stop2); b.removeEventListener('pointercancel', stop2); };
           b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } });
-      function start(b, e) { drag = b; b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
+      function start(b, e) { drag = b; moved = false; b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
       box.addEventListener('pointermove', (e) => { if (!drag) return;
         const el = document.elementFromPoint(e.clientX, e.clientY); const t = el ? el.closest('#' + boxId + ' > *') : null;
         if (t && t !== drag) { const r = t.getBoundingClientRect();
           const before = boxId === 'sidebar' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
-          box.insertBefore(drag, before ? t : t.nextSibling); } });
-      const end = () => { if (!drag) return; drag.classList.remove('dragging'); sup = drag; drag = null; saveOrder();
-        setTimeout(() => { sup = null; }, 0); };
+          box.insertBefore(drag, before ? t : t.nextSibling); moved = true; } });
+      const end = () => { if (!drag) return; drag.classList.remove('dragging'); if (moved) { sup = drag; saveOrder(); } drag = null;
+        setTimeout(() => { sup = null; }, 0); }; // клик глушим только если реально переставили — иначе тап-тоггл (симметрия) срабатывает
       box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
       box.addEventListener('click', (e) => { if (sup && e.target.closest('button') === sup) { e.stopPropagation(); e.preventDefault(); } }, true); }
     restoreOrder();
