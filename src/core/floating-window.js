@@ -1,0 +1,30 @@
+// Плавающее окно: перетаскивание за грип + ресайз за уголок + сохранение
+// геометрии. Один помощник на палитру, боковую панель, окна слоёв/превью/референса.
+export function floatingWindow(el, opts = {}) {
+  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize } = opts;
+  const place = (l, t) => {
+    el.style.left = Math.max(4, Math.min(l, innerWidth - clampRight)) + 'px';
+    el.style.top = Math.max(4, Math.min(t, innerHeight - clampBottom)) + 'px';
+    el.style.right = 'auto'; el.style.bottom = 'auto'; el.style.transform = 'none';
+  };
+  const save = () => { if (!storeKey) return; const r = el.getBoundingClientRect();
+    try { localStorage.setItem(storeKey, JSON.stringify({ l: r.left, t: r.top, w: r.width, h: r.height })); } catch (e) {} };
+  const applySize = (w, h) => { if (onResize) onResize(w, h); else { el.style.width = Math.max(minW, w) + 'px'; el.style.height = Math.max(minH, h) + 'px'; } };
+
+  if (storeKey) try { const s = JSON.parse(localStorage.getItem(storeKey));
+    if (s && s.l != null) { place(s.l, s.t); if (s.w) applySize(s.w, s.h); } } catch (e) {}
+
+  let d = null;
+  grip.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
+    grip.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+  grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
+  const dEnd = () => { if (d) { d = null; save(); } };
+  grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
+
+  if (handle) { let rz = null;
+    handle.addEventListener('pointerdown', (e) => { e.preventDefault(); handle.setPointerCapture(e.pointerId);
+      const r = el.getBoundingClientRect(); rz = { w: r.width, h: r.height, x: e.clientX, y: e.clientY }; });
+    handle.addEventListener('pointermove', (e) => { if (rz) applySize(rz.w + e.clientX - rz.x, rz.h + e.clientY - rz.y); });
+    const rEnd = () => { if (rz) { rz = null; save(); } };
+    handle.addEventListener('pointerup', rEnd); handle.addEventListener('pointercancel', rEnd); }
+}

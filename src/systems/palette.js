@@ -33,6 +33,8 @@ export function setActiveColor(c, pickTool = true) {
 
 export function addColor(hex) { const c = hexToRgb(hex); if (!S.palette.some((p) => eqc(p, c))) S.palette.push(c); setActiveColor(c); }
 
+actions.register('palette.add', addColor);
+
 function openCtx(x, y, idx) { ctxIdx = idx; showMenuAt($('ctx'), x, y, true); }
 
 export function buildPalette() {

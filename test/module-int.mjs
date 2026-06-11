@@ -43,6 +43,8 @@ const imp = await import('../src/systems/import/convert.js');
 const pal = await import('../src/systems/palette.js');
 const bb = await import('../src/systems/brush-bar.js');
 const cp = await import('../src/systems/color-picker.js');
+const prev = await import('../src/systems/preview-window.js');
+const ref = await import('../src/systems/reference-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -172,5 +174,7 @@ t('palette: setActiveColor меняет активный', () => { pal.setActive
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
+
+t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

@@ -68,8 +68,8 @@
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
 | `systems/documents.js` | держит несколько документов | 🔲 | 12-app |
-| `systems/preview-window.js` | показывает превью 1:1 | 🔲 | 12-app |
-| `systems/reference-window.js` | показывает окно референса | 🔲 | 12-app |
+| `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
+| `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | 🔲 | 12-app |
 | `systems/toolbars.js` | настраивает и перетаскивает кнопки панелей | 🔲 | 12-app |
 | `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
