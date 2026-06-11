@@ -141,8 +141,10 @@
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
     //      H/V — флипы, R или Ctrl+T — поворот, C — кроп, N — новый, +/−/0 — зум,
     //      Ctrl+Z/Y/C/X/V/D/E/G/O/S, Del — удалить, Enter/Esc — кроп, пробел — пипетка ----
-    let spaceTool = null;
+    let spaceTool = null, altPick = null;
     window.addEventListener('keydown', (e) => {
+      if ((e.code === 'AltLeft' || e.code === 'AltRight') && altPick === null && tool !== 'pick' && !document.querySelector('.ovl.on')) {
+        e.preventDefault(); altPick = tool; setTool('pick'); return; } // Alt — пипетка пока держишь, отпустил → прежний инструмент
       if (e.target.matches && e.target.matches('input, textarea')) return;
       if (e.target.isContentEditable) return;
       if (document.querySelector('.ovl.on')) return;
@@ -195,7 +197,9 @@
     });
     window.addEventListener('keyup', (e) => {
       if (e.code === 'Space' && spaceTool !== null) { setTool(spaceTool === 'pick' ? 'pencil' : spaceTool); spaceTool = null; }
+      if ((e.code === 'AltLeft' || e.code === 'AltRight') && altPick !== null) { setTool(altPick === 'pick' ? 'pencil' : altPick); altPick = null; }
     });
+    window.addEventListener('blur', () => { if (altPick !== null) { setTool(altPick === 'pick' ? 'pencil' : altPick); altPick = null; } }); // потеря фокуса с зажатым Alt
     $('zin').onclick = () => zoomBy(1.25); $('zout').onclick = () => zoomBy(0.8); $('fit').onclick = fitView;
     $('imp').onclick = () => $('file').click();
     $('exp').onclick = () => $('exp-ovl').classList.add('on');
