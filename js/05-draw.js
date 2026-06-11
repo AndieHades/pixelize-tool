@@ -1,11 +1,13 @@
     const inSel = (x, y) => !sel || (x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1 && (!selMask || selMask.has(x + ',' + y)));
+    const symA = () => sym && !layers[cur].symLock;   // симметрия лево-право активна на текущем слое?
+    const symHA = () => symH && !layers[cur].symLock; // верх-низ
     function setCell(x, y, c) {
       if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return; // выделение работает как маска
       const g = G(); g[y][x] = c ? c.slice() : null;
-      const mx = W - 1 - x, my = H - 1 - y;
-      if (sym && mx !== x && inSel(mx, y)) g[y][mx] = c ? c.slice() : null;
-      if (symH && my !== y && inSel(x, my)) g[my][x] = c ? c.slice() : null;
-      if (sym && symH && mx !== x && my !== y && inSel(mx, my)) g[my][mx] = c ? c.slice() : null;
+      const mx = W - 1 - x, my = H - 1 - y, sa = symA(), sha = symHA();
+      if (sa && mx !== x && inSel(mx, y)) g[y][mx] = c ? c.slice() : null;
+      if (sha && my !== y && inSel(x, my)) g[my][x] = c ? c.slice() : null;
+      if (sa && sha && mx !== x && my !== y && inSel(mx, my)) g[my][mx] = c ? c.slice() : null;
       markDirty(cur);
     }
     function pickAt(gx, gy) { if (gx < 0 || gy < 0 || gx >= W || gy >= H) return;
@@ -20,9 +22,9 @@
       const g = G(), k = y * W + x;
       if (!ppOrig.has(k)) ppOrig.set(k, g[y][x] ? g[y][x].slice() : null);
       const keep = (xx, yy) => { const kk = yy * W + xx; if (!ppOrig.has(kk)) ppOrig.set(kk, g[yy][xx] ? g[yy][xx].slice() : null); };
-      if (sym) keep(W - 1 - x, y);
-      if (symH) keep(x, H - 1 - y);
-      if (sym && symH) keep(W - 1 - x, H - 1 - y);
+      if (symA()) keep(W - 1 - x, y);
+      if (symHA()) keep(x, H - 1 - y);
+      if (symA() && symHA()) keep(W - 1 - x, H - 1 - y);
       ppPath.push([x, y]);
       const n = ppPath.length;
       if (n < 3) return;
@@ -31,9 +33,9 @@
       if (o1 && o2 && A[0] !== C[0] && A[1] !== C[1]) {
         const undoAt = (xx, yy) => { const mv = ppOrig.get(yy * W + xx); g[yy][xx] = mv ? mv.slice() : null; };
         undoAt(B[0], B[1]);
-        if (sym) undoAt(W - 1 - B[0], B[1]);
-        if (symH) undoAt(B[0], H - 1 - B[1]);
-        if (sym && symH) undoAt(W - 1 - B[0], H - 1 - B[1]);
+        if (symA()) undoAt(W - 1 - B[0], B[1]);
+        if (symHA()) undoAt(B[0], H - 1 - B[1]);
+        if (symA() && symHA()) undoAt(W - 1 - B[0], H - 1 - B[1]);
         markDirty(cur); ppPath.splice(n - 2, 1);
       }
     }
@@ -59,12 +61,13 @@
     function brushStamp(x, y, erase) {
       const s = brushes[erase ? 'eraser' : 'pencil'].size, off = s >> 1;
       if (s === 1) ppVisit(x, y);
+      const sa = symA(), sha = symHA();
       for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) { const xx = x - off + dx, yy = y - off + dy;
         paintCell(xx, yy, erase);
         const mx = W - 1 - xx, my = H - 1 - yy;
-        if (sym && mx !== xx) paintCell(mx, yy, erase);
-        if (symH && my !== yy) paintCell(xx, my, erase);
-        if (sym && symH && mx !== xx && my !== yy) paintCell(mx, my, erase); }
+        if (sa && mx !== xx) paintCell(mx, yy, erase);
+        if (sha && my !== yy) paintCell(xx, my, erase);
+        if (sa && sha && mx !== xx && my !== yy) paintCell(mx, my, erase); }
     }
     function stamp(x, y) {
       if (tool === 'select') return;

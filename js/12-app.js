@@ -144,7 +144,7 @@
     };
 
     // ---- документы: несколько работ в памяти, перенос слоёв между ними ----
-    let docs = [{ name: 'Документ 1' }], docCur = 0, docSeq = 1;
+    let docs = [{ name: 'Документ 1' }], docCur = 0, docSeq = 1, docDblTimer = null, docDblIdx = -1;
     function saveDocState() { const old = docs[docCur] || {};
       docs[docCur] = { name: old.name || 'Документ ' + (docCur + 1), W, H, layers, folders, folderSeq, layerSeq,
         palette, active, cur, undo: undoStack.slice(), redo: redoStack.slice(), view: { ...view } }; }
@@ -183,7 +183,10 @@
         const b = document.createElement('button'); b.style.flex = '1';
         b.textContent = (d.name || 'Документ') + ' · ' + (i === docCur ? `${W}×${H}` : `${d.W}×${d.H}`);
         if (i === docCur) b.classList.add('cur');
-        b.onclick = () => { m.classList.remove('on'); loadDoc(i); };
+        b.onclick = () => { // двойной клик — переименование, одиночный (через паузу) — переключение
+          if (docDblTimer && docDblIdx === i) { clearTimeout(docDblTimer); docDblTimer = null; m.classList.remove('on'); openRename(docs[i]); return; }
+          if (docDblTimer) clearTimeout(docDblTimer);
+          docDblIdx = i; docDblTimer = setTimeout(() => { docDblTimer = null; m.classList.remove('on'); loadDoc(i); }, 280); };
         row.appendChild(b);
         if (docs.length > 1) { const x = document.createElement('button'); x.textContent = '✕'; x.style.width = '40px';
           x.onclick = (ev) => { ev.stopPropagation(); m.classList.remove('on'); closeDoc(i); }; row.appendChild(x); }

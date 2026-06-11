@@ -1,4 +1,6 @@
     const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>';
+    const SYMLOCK = '<svg viewBox="0 0 24 24"><path d="M12 5v14" stroke-dasharray="2.5 2.5"/><path d="M8.5 8.5L5 12l3.5 3.5"/><path d="M15.5 8.5L19 12l-3.5 3.5"/><path class="slash" d="M4 4l16 16"/></svg>';
+    let lastLayClick = { idx: -1, t: 0 }; // распознавание двойного клика по слою
     function longPress(el, fn) { // ПКМ или долгий тап
       let t = null, x0 = 0, y0 = 0;
       el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); fn(e.clientX, e.clientY); });
@@ -27,7 +29,10 @@
           const eye = document.createElement('button'); eye.className = 'eye' + (f.visible ? '' : ' off'); eye.innerHTML = EYE;
           eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); render(); });
           fr.append(car, nm, eye);
-          fr.addEventListener('click', () => { if (layDragSquelch) return; f.open = !f.open; layList(); });
+          fr.addEventListener('click', ((fld) => () => { if (layDragSquelch) return;
+            const now = performance.now(), key = 'f' + fld.id;
+            if (lastLayClick.idx === key && now - lastLayClick.t < 350) { lastLayClick.idx = -1; openRename(fld); return; } // двойной клик — переименование папки
+            lastLayClick = { idx: key, t: now }; fld.open = !fld.open; layList(); })(f));
           longPress(fr, (x, y) => openLctx(x, y, 'folder', f));
           dragRow(fr, { kind: 'folder', fid: f.id });
           box.appendChild(fr); }
@@ -40,8 +45,19 @@
         const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = (L.clip ? '⤵ ' : '') + L.name;
         const eye = document.createElement('button'); eye.className = 'eye' + (L.visible ? '' : ' off'); eye.innerHTML = EYE;
         eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); render(); });
-        row.append(chk, thumbFor(i), nm, eye);
-        row.addEventListener('click', ((idx) => () => { if (layDragSquelch) return; cur = idx; layList(); })(i));
+        row.append(chk, thumbFor(i), nm);
+        if (sym || symH) { // замок симметрии виден только когда симметрия включена
+          const sl = document.createElement('button'); sl.className = 'symlock' + (L.symLock ? ' off' : '');
+          sl.title = L.symLock ? 'Симметрия отключена на слое — включить' : 'Симметрия активна на слое — отключить';
+          sl.innerHTML = SYMLOCK;
+          sl.addEventListener('click', (ev) => { ev.stopPropagation(); L.symLock = !L.symLock; layList(); render();
+            toast(L.symLock ? 'Симметрия на слое отключена' : 'Симметрия на слое включена'); });
+          row.append(sl); }
+        row.append(eye);
+        row.addEventListener('click', ((idx, lay) => () => { if (layDragSquelch) return;
+          const now = performance.now();
+          if (lastLayClick.idx === idx && now - lastLayClick.t < 350) { lastLayClick.idx = -1; openRename(lay); return; } // двойной клик — переименование
+          lastLayClick = { idx, t: now }; cur = idx; layList(); })(i, L));
         longPress(row, (x, y) => openLctx(x, y, 'layer', L));
         dragRow(row, { kind: 'layer', idx: i });
         box.appendChild(row);
@@ -203,7 +219,7 @@
       im.src = URL.createObjectURL(f); };
     $('lay-dup').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
       snapshot(); const L = layers[cur];
-      layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
+      layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
       cur++; marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-del').addEventListener('click', () => { if (layers.length < 2) { toast('Это единственный слой'); return; }
       snapshot(); layers.splice(cur, 1); cur = Math.max(0, cur - 1); marked.clear(); dirtyAll(); layList(); render(); });

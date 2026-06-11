@@ -3,8 +3,9 @@
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
       $('palgrip').textContent = 'Палитра · ' + palette.length;
+      let activeShown = false;
       palette.forEach((c, idx) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;
-        if (eqc(c, active)) b.classList.add('on');
+        if (!activeShown && eqc(c, active)) { b.classList.add('on'); activeShown = true; } // только первый совпавший — не дублируем подсветку
         b.addEventListener('click', () => { clearTimeout(swHold);
           if (palSquelch) { palSquelch = false; return; } // клик после перетаскивания не выбирает цвет
           if ($('outpop').classList.contains('on')) { // окно обводки открыто — палитра задаёт его цвет

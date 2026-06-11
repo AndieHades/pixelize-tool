@@ -17,13 +17,15 @@
         r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
       return a > 0.02 ? [Math.round(r), Math.round(g), Math.round(b)] : null; }
 
-    let chkPat = null, chkPatZ = 0;
-    function checkerPattern(z) { if (chkPat && chkPatZ === z) return chkPat; // шахматка одним паттерном вместо W×H заливок
-      const c = document.createElement('canvas'); c.width = c.height = Math.max(2, Math.round(z * 2));
-      const x = c.getContext('2d'), s = c.width / 2;
-      x.fillStyle = '#1a1a20'; x.fillRect(0, 0, c.width, c.width);
-      x.fillStyle = '#222228'; x.fillRect(s, 0, s, s); x.fillRect(0, s, s, s);
-      chkPat = ctx.createPattern(c, 'repeat'); chkPatZ = z; return chkPat; }
+    let chkTile = null;
+    function checkerPattern() { // 2×2 тайл по 1px, масштабируется паттерном до z — клетки точно ложатся на сетку при любом зуме
+      if (!chkTile) { chkTile = document.createElement('canvas'); chkTile.width = chkTile.height = 2;
+        const x = chkTile.getContext('2d');
+        x.fillStyle = '#1a1a20'; x.fillRect(0, 0, 2, 2);
+        x.fillStyle = '#222228'; x.fillRect(1, 0, 1, 1); x.fillRect(0, 1, 1, 1); }
+      const p = ctx.createPattern(chkTile, 'repeat');
+      if (p && p.setTransform) p.setTransform(new DOMMatrix([view.zoom, 0, 0, view.zoom, 0, 0]));
+      return p; }
     function render() {
       const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
       if (cv.width !== Math.round(cw * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
@@ -32,7 +34,7 @@
       const z = view.zoom, ox = view.ox, oy = view.oy;
       ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
       ctx.fillStyle = '#141419'; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
-      ctx.save(); ctx.translate(ox, oy); ctx.fillStyle = checkerPattern(z);
+      ctx.save(); ctx.translate(ox, oy); ctx.fillStyle = checkerPattern();
       ctx.fillRect(0, 0, W * z, H * z); ctx.restore();
       const iox = cropMode ? cropMode.idx * z : 0, ioy = cropMode ? cropMode.idy * z : 0; // сдвиг рисунка в кроп-режиме
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
@@ -52,12 +54,13 @@
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ox - 8, ay); ctx.lineTo(ox + W * z + 8, ay); ctx.stroke(); ctx.setLineDash([]); }
       if (linePrev) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(active); // превью линии/прямоугольника
         const s = brushes.pencil.size, off = s >> 1;
+        const sa = symA(), sha = symHA();
         const paint = (px2, py2) => { for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
           const xx = px2 - off + dx2, yy = py2 - off + dy2;
           ctx.fillRect(ox + xx * z, oy + yy * z, z, z);
-          if (sym) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
-          if (symH) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
-          if (sym && symH) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
+          if (sa) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
+          if (sha) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
+          if (sa && sha) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
         if (tool === 'rect') rectEdges(linePrev[0], linePrev[1], linePrev[2], linePrev[3], paint);
         else bres(linePrev[0], linePrev[1], linePrev[2], linePrev[3], paint);
         ctx.globalAlpha = 1; }
