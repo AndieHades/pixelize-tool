@@ -50,7 +50,13 @@
       while (x0 < x1 && colEmpty(x0)) x0++; while (x1 > x0 && colEmpty(x1)) x1--;
       return g.slice(y0, y1 + 1).map((r) => r.slice(x0, x1 + 1)); }
     function paletteFromGrid(g) { const m = new Map();
-      for (const row of g) for (const c of row) { if (!c) continue; const k = c.join(','); const e = m.get(k); if (e) e.n++; else m.set(k, { c: c.slice(), n: 1 }); }
+      for (const row of g) for (const c of row) { if (!c) continue;
+        const k = c[0] + ',' + c[1] + ',' + c[2]; // только RGB: полупрозрачные варианты того же цвета не плодят дубликаты
+        const e = m.get(k); if (e) e.n++; else m.set(k, { c: [c[0], c[1], c[2]], n: 1 }); }
       return [...m.values()].sort((a, b) => b.n - a.n).slice(0, 32).map((e) => e.c); }
+    function dedupePal(arr) { const seen = new Set(), out = [];
+      for (const c of arr || []) { if (!c) continue; const k = c[0] + ',' + c[1] + ',' + c[2];
+        if (!seen.has(k)) { seen.add(k); out.push([c[0], c[1], c[2]]); } }
+      return out.length ? out : [[12, 12, 16]]; }
 
     // ---- послойный рендер: каждый слой кешируется в canvas W×H ----

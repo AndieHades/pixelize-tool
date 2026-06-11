@@ -149,7 +149,7 @@
       docs[docCur] = { name: old.name || 'Документ ' + (docCur + 1), W, H, layers, folders, folderSeq, layerSeq,
         palette, active, cur, undo: undoStack.slice(), redo: redoStack.slice(), view: { ...view } }; }
     function applyDoc(d) { W = d.W; H = d.H; layers = d.layers; folders = d.folders;
-      folderSeq = d.folderSeq; layerSeq = d.layerSeq; palette = d.palette; active = d.active;
+      folderSeq = d.folderSeq; layerSeq = d.layerSeq; palette = dedupePal(d.palette); active = d.active;
       cur = Math.min(d.cur || 0, layers.length - 1);
       undoStack.length = 0; undoStack.push(...d.undo); redoStack.length = 0; redoStack.push(...d.redo);
       Object.assign(view, d.view); marked.clear();
@@ -359,7 +359,7 @@
         st[nm].slice(0, 6).forEach((c) => { const i = document.createElement('i'); i.style.background = rgb(c); dots.appendChild(i); });
         const t = document.createElement('span'); t.className = 'pname'; t.textContent = nm;
         const load = document.createElement('button'); load.textContent = 'Загрузить';
-        load.onclick = () => { palette = st[nm].map((c) => c.slice()); if (palette.length) active = palette[0].slice();
+        load.onclick = () => { palette = dedupePal(st[nm]); if (palette.length) active = palette[0].slice();
           refreshActive(); buildPalette(); $('pal-ovl').classList.remove('on'); toast('Палитра «' + nm + '» загружена'); };
         const del = document.createElement('button'); del.textContent = '✕'; del.style.minWidth = '36px'; del.style.padding = '0';
         del.onclick = () => { const s2 = palStore(); delete s2[nm];
