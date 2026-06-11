@@ -86,6 +86,18 @@
 | `systems/gallery.js` | показывает галерею работ и открывает их | 🔲 | roadmap §5 |
 | `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
 
+## Конфигурация (`src/config/`)
+
+| Файл | Что настраивает | Статус |
+|------|-----------------|:--:|
+| `config/limits.js` | пределы и глубина истории | ✅ |
+| `config/presets.js` | пресеты размеров нового документа | ✅ |
+| `config/palette.js` | палитра по умолчанию | ✅ |
+| `config/defaults.js` | дефолты кисти/эффектов/импорта | ✅ |
+| `config/timings.js` | тайминги и пороги жестов | ✅ |
+
+Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
+
 ## Инфраструктура
 
 | Файл | Назначение | Статус |

@@ -56,6 +56,8 @@
 
 | Ресурс | Как использовать |
 |--------|------------------|
+| `config/*` → `MAX_LAYERS`, `SIZE_PRESETS`, `GLOW_DEFAULT`, `LONG_PRESS_MS`… | любое настраиваемое значение (см. [config.md](config.md)) |
+| `core/actions.js` → `register(name, fn)` / `run(name)` | команда по имени для хоткея/кнопки/меню (см. [keymap.md](keymap.md)) |
 | `i18n` → `t('ключ', vars?)` | любая UI-строка; тексты в `locales/*` (см. [i18n.md](i18n.md)) |
 | `styles/tokens.css` → `var(--col-…)`, `var(--btn)` | любое значение стиля (см. [theming.md](theming.md)) |
 
@@ -68,3 +70,5 @@
 - Своя обвязка drag/resize окна вместо `floatingWindow`.
 - Прямой импорт другой системы вместо `bus.emit(...)`.
 - Зашитая строка в UI вместо `t(...)`; зашитый цвет/размер вместо токена.
+- Магическое число (предел/пресет/дефолт/тайминг) вместо значения из `config/*`.
+- Разбор клавиш в системе вместо `keymap` + `actions`.

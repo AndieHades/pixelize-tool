@@ -4,6 +4,7 @@ import { S } from './state.js';
 import * as bus from './bus.js';
 import { toast } from './dom.js';
 import { dirtyAll } from './layer-cache.js';
+import { historyCap } from '../config/limits.js';
 
 export const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
 
@@ -13,7 +14,7 @@ function snapState() {
 }
 
 export function snapshot() { S.undoStack.push(snapState());
-  const cap = S.W * S.H > 90000 ? 8 : (S.W * S.H > 20000 ? 15 : 30); // большие холсты — короче история
+  const cap = historyCap(S.W * S.H); // глубина истории по площади холста (config)
   if (S.undoStack.length > cap) S.undoStack.splice(0, S.undoStack.length - cap);
   S.redoStack.length = 0; bus.emit('snapshot'); }
 

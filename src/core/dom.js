@@ -1,10 +1,12 @@
 // DOM-помощники: единая точка доступа к элементам, тосты, копирование в буфер.
 // Это сервис фундамента — им пользуются системы визуала, но не logic.
+import { TOAST_MS } from '../config/timings.js';
+
 export const $ = (id) => document.getElementById(id);
 
 let toastT = null;
 export function toast(m) { const t = $('toast'); if (!t) return; t.textContent = m; t.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2000); }
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), TOAST_MS); }
 
 export async function copyText(t) {
   try { await navigator.clipboard.writeText(t); return true; }

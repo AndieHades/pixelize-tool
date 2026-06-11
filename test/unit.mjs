@@ -9,6 +9,9 @@ import { sampleGrid } from '../src/logic/sample.js';
 import { medianCut, nearest, paletteFromGrid, dedupePal } from '../src/logic/quantize.js';
 import { despeckle, cropEmpty } from '../src/logic/cleanup.js';
 import { rotSprite } from '../src/logic/rotsprite.js';
+import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
+import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
+import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
@@ -58,5 +61,12 @@ t('rotsprite: поворот не теряет контент', () => {
   const r = rotSprite(src, 2, 2, 0, 1);
   assert.ok(r.w > 0 && r.h > 0); assert.ok(r.data.some((v) => v !== 0));
 });
+
+// --- конфигурация ---
+t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });
+t('config: historyCap не растёт с площадью', () => { assert.ok(historyCap(100) >= historyCap(50000) && historyCap(50000) >= historyCap(200000)); });
+t('config: пресеты размеров валидны', () => { assert.ok(SIZE_PRESETS.length > 0); for (const p of SIZE_PRESETS) assert.ok(p.w > 0 && p.h > 0 && p.label); assert.ok(DEFAULT_DOC.w > 0 && DEFAULT_DOC.h > 0); });
+t('config: палитра по умолчанию', () => { const p = defaultPalette(); assert.equal(p.length, DEFAULT_PALETTE_HEX.length); assert.ok(DEFAULT_ACTIVE < p.length); assert.deepEqual(p[0], [12, 12, 16]); });
+t('config: S берёт дефолты из config', () => { assert.equal(S.palette.length, DEFAULT_PALETTE_HEX.length); assert.deepEqual(S.active, defaultPalette()[DEFAULT_ACTIVE]); });
 
 console.log(`\nВсе ${n} юнит-тестов прошли ✓`);
