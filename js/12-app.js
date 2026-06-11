@@ -51,7 +51,21 @@
     function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); return; }
       const [h, s, v] = rgbToHsv(active[0], active[1], active[2]); colH = h; colS = s; colV = v;
       $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); syncColUI(); $('colpop').classList.add('on'); }
-    $('activewrap').onclick = openColPop;
+    // угловой кружок: тап — открыть пикер; перетащить на холст — залить активным цветом (как в Procreate)
+    let colDrop = null;
+    $('activewrap').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return;
+      colDrop = { x: e.clientX, y: e.clientY, moved: false }; try { $('activewrap').setPointerCapture(e.pointerId); } catch (err) {} });
+    $('activewrap').addEventListener('pointermove', (e) => { if (!colDrop) return;
+      if (!colDrop.moved && Math.hypot(e.clientX - colDrop.x, e.clientY - colDrop.y) > 8) {
+        colDrop.moved = true; $('swdrop').style.background = rgb(active); $('swdrop').classList.add('on'); }
+      if (colDrop.moved) { $('swdrop').style.left = e.clientX + 'px'; $('swdrop').style.top = e.clientY + 'px'; } });
+    $('activewrap').addEventListener('pointerup', (e) => { if (!colDrop) return; const moved = colDrop.moved; colDrop = null; $('swdrop').classList.remove('on');
+      if (!moved) { openColPop(); return; }
+      if (document.elementFromPoint(e.clientX, e.clientY) === cv) { const r = cv.getBoundingClientRect();
+        const gx = Math.floor((e.clientX - r.left - view.ox) / view.zoom), gy = Math.floor((e.clientY - r.top - view.oy) / view.zoom);
+        if (gx >= 0 && gy >= 0 && gx < W && gy < H) { snapshot(); flood(gx, gy); render(); afterStroke(); toast('Залито'); }
+        else toast('Мимо холста'); } });
+    $('activewrap').addEventListener('pointercancel', () => { if (colDrop) { colDrop = null; $('swdrop').classList.remove('on'); } });
     $('col-h').addEventListener('input', () => { colH = +$('col-h').value; syncColUI(); colApply(); });
     $('col-s').addEventListener('input', () => { colS = +$('col-s').value; syncColUI(); colApply(); });
     $('col-v').addEventListener('input', () => { colV = +$('col-v').value; syncColUI(); colApply(); });
@@ -100,6 +114,7 @@
     let spaceTool = null;
     window.addEventListener('keydown', (e) => {
       if (e.target.matches && e.target.matches('input, textarea')) return;
+      if (e.target.isContentEditable) return;
       if (document.querySelector('.ovl.on')) return;
       const mod = e.ctrlKey || e.metaKey, c = e.code;
       if (mod) {

@@ -26,13 +26,15 @@
           const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : '');
           car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
           const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = f.name;
+          nm.addEventListener('pointerdown', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
+          nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
           const eye = document.createElement('button'); eye.className = 'eye' + (f.visible ? '' : ' off'); eye.innerHTML = EYE;
           eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); render(); });
           fr.append(car, nm, eye);
-          fr.addEventListener('click', ((fld) => () => { if (layDragSquelch) return;
+          fr.addEventListener('click', ((fld, sp) => () => { if (layDragSquelch) return;
             const now = performance.now(), key = 'f' + fld.id;
-            if (lastLayClick.idx === key && now - lastLayClick.t < 350) { lastLayClick.idx = -1; openRename(fld); return; } // двойной клик — переименование папки
-            lastLayClick = { idx: key, t: now }; fld.open = !fld.open; layList(); })(f));
+            if (lastLayClick.idx === key && now - lastLayClick.t < 350) { lastLayClick.idx = -1; startInlineRename(sp, fld); return; } // двойной клик — правка имени в строке
+            lastLayClick = { idx: key, t: now }; fld.open = !fld.open; layList(); })(f, nm));
           longPress(fr, (x, y) => openLctx(x, y, 'folder', f));
           dragRow(fr, { kind: 'folder', fid: f.id });
           box.appendChild(fr); }
@@ -43,6 +45,8 @@
         chk.addEventListener('click', ((idx) => (ev) => { ev.stopPropagation();
           if (marked.has(idx)) marked.delete(idx); else marked.add(idx); layList(); })(i));
         const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = (L.clip ? '⤵ ' : '') + L.name;
+        nm.addEventListener('pointerdown', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
+        nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
         const eye = document.createElement('button'); eye.className = 'eye' + (L.visible ? '' : ' off'); eye.innerHTML = EYE;
         eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); render(); });
         row.append(chk, thumbFor(i), nm);
@@ -54,11 +58,11 @@
             toast(L.symLock ? 'Симметрия на слое отключена' : 'Симметрия на слое включена'); });
           row.append(sl); }
         row.append(eye);
-        row.addEventListener('click', ((idx, lay) => (ev) => { if (layDragSquelch) return;
+        row.addEventListener('click', ((idx, lay, sp) => (ev) => { if (layDragSquelch) return;
           if (ev.ctrlKey || ev.metaKey) { if (marked.has(idx)) marked.delete(idx); else marked.add(idx); layList(); return; } // Ctrl+клик — мультивыбор
           const now = performance.now();
-          if (lastLayClick.idx === idx && now - lastLayClick.t < 350) { lastLayClick.idx = -1; openRename(lay); return; } // двойной клик — переименование
-          lastLayClick = { idx, t: now }; cur = idx; layList(); })(i, L));
+          if (lastLayClick.idx === idx && now - lastLayClick.t < 350) { lastLayClick.idx = -1; startInlineRename(sp, lay); return; } // двойной клик — правка имени в строке
+          lastLayClick = { idx, t: now }; cur = idx; layList(); })(i, L, nm));
         longPress(row, (x, y) => openLctx(x, y, 'layer', L));
         dragRow(row, { kind: 'layer', idx: i });
         box.appendChild(row);
@@ -159,6 +163,20 @@
       cur = idx[0] + moved.length - 1; marked.clear(); dirtyAll(); layList(); render(); toast('Папка создана');
     }
     let renRef = null, lctxRef = null;
+    function startInlineRename(span, ref) { if (!span) return; // правка имени прямо в строке
+      span.contentEditable = 'true'; span.classList.add('editing'); span.textContent = ref.name; span.focus();
+      const r = document.createRange(); r.selectNodeContents(span); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      let done = false;
+      const finish = (save) => { if (done) return; done = true;
+        span.contentEditable = 'false'; span.classList.remove('editing');
+        span.removeEventListener('blur', onBlur); span.removeEventListener('keydown', onKey);
+        const v = span.textContent.trim().slice(0, 24); if (save && v && v !== ref.name) { snapshot(); ref.name = v; }
+        layList(); };
+      const onBlur = () => finish(true);
+      const onKey = (e) => { e.stopPropagation();
+        if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+        else if (e.key === 'Escape') { e.preventDefault(); finish(false); } };
+      span.addEventListener('blur', onBlur); span.addEventListener('keydown', onKey); }
     function openRename(ref) { renRef = ref; $('ren-name').value = ref.name; $('ren-ovl').classList.add('on');
       setTimeout(() => { $('ren-name').focus(); $('ren-name').select(); }, 80); }
     $('ren-ok').onclick = () => { if (renRef) { const v = $('ren-name').value.trim();
@@ -170,6 +188,7 @@
       $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
       $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-fill').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-bc').style.display = kind === 'layer' ? '' : 'none';
@@ -184,6 +203,11 @@
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
     $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
+    $('lctx-fill').onclick = () => { $('lctx').classList.remove('on');
+      if (!lctxRef || lctxRef.kind !== 'layer') return; const L = lctxRef.ref; snapshot();
+      const a = [active[0], active[1], active[2], 255];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) L.grid[y][x] = a.slice();
+      L.ext = new Map(); const i = layers.indexOf(L); if (i >= 0) markDirty(i); layList(); render(); toast('Слой залит'); };
     $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');
       if (lctxRef && lctxRef.kind === 'layer') monoLayer(lctxRef.ref); };
     $('lctx-bc').onclick = () => { $('lctx').classList.remove('on');

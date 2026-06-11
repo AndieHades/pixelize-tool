@@ -28,7 +28,7 @@
       return p; }
     function render() {
       const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
-      if (cv.width !== Math.round(cw * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
+      if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(chh * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = '#0d0d10'; ctx.fillRect(0, 0, cw, chh);
       const z = view.zoom, ox = view.ox, oy = view.oy;
