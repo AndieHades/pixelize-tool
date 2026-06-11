@@ -111,6 +111,14 @@
     <p class="hint" style="margin:0 2px">Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.</p>
   </div>
 
+  <div id="glowpop" class="toolpop">
+    <div class="bp-head">Свечение</div>
+    <div class="irow"><label>Диапазон</label><input id="glow-range" type="range" min="1" max="32" step="1" value="6" /><b id="glow-rangev">6</b></div>
+    <div class="irow"><label>Интенсивность</label><input id="glow-int" type="range" min="10" max="100" step="5" value="80" /><b id="glow-intv">80%</b></div>
+    <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="glow-col" type="color" value="#78d7ff" /><span id="glow-colsw" style="background:#78d7ff"></span></label></div>
+    <div class="iact"><button id="glow-apply" class="txtbtn primary">Добавить свечение</button></div>
+  </div>
+
   <div id="dspop" class="toolpop">
     <div class="bp-head">Тень (Drop Shadow)</div>
     <div class="irow"><label>Смещение X</label><input id="ds-x" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-xv">2</b></div>
@@ -231,6 +239,7 @@
     <button id="lctx-symm">Симметрировать слой</button>
     <button id="lctx-rotate">Свободный поворот…</button>
     <button id="lctx-shadow">Тень (Drop Shadow)…</button>
+    <button id="lctx-glow">Свечение…</button>
     <button id="lctx-mono">В монохром</button>
     <button id="lctx-bc">Яркость/контраст…</button>
     <button id="lctx-clip">Обтравочная маска</button>

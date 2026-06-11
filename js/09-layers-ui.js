@@ -195,6 +195,7 @@
       $('lctx-symm').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-rotate').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-shadow').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-glow').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-bc').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
@@ -221,6 +222,8 @@
       if (lctxRef && lctxRef.kind === 'layer') symmetrizeLayer(lctxRef.ref); };
     $('lctx-rotate').onclick = () => { $('lctx').classList.remove('on');
       if (lctxRef && lctxRef.kind === 'layer') enterRotMode(lctxRef.ref); };
+    $('lctx-glow').onclick = () => { $('lctx').classList.remove('on');
+      if (lctxRef && lctxRef.kind === 'layer') openGlowPop(lctxRef.ref); };
     $('lctx-shadow').onclick = () => { $('lctx').classList.remove('on');
       if (lctxRef && lctxRef.kind === 'layer') { const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); openDsPop(lctxRef.ref); } };
     $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');

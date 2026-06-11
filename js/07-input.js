@@ -52,7 +52,7 @@
     cv.addEventListener('pointerdown', (e) => {
       if (rotMode) { cv.setPointerCapture(e.pointerId); rotGrab(e); return; } // режим поворота — тянем угол
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('adjpop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('adjpop').classList.remove('on'); $('glowpop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });

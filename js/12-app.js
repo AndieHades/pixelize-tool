@@ -29,7 +29,7 @@
         el.style.transform = 'none'; el.style.right = 'auto'; el.style.bottom = 'auto'; });
       const dEnd2 = () => { d = null; };
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
-    makeDraggable($('outpop')); makeDraggable($('dspop'));
+    makeDraggable($('outpop')); makeDraggable($('dspop')); makeDraggable($('glowpop'));
     // ---- свободный поворот слоя прямо на холсте (Ctrl+T): тянешь — крутишь, Shift — по 45° ----
     let rotRAF = 0;
     function rotScale() { return Math.max(W, H) <= 96 ? 8 : Math.max(W, H) <= 192 ? 4 : 2; }
@@ -62,6 +62,19 @@
     $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; render(); });
     $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); dsPreview = null;
       if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
+    // ---- свечение ----
+    let glowRef = null, glowRAF = 0;
+    function computeGlowPreview() { if (!glowRef || !$('glowpop').classList.contains('on')) { glowPreview = null; render(); return; }
+      glowPreview = computeGlow(glowRef, +$('glow-range').value, +$('glow-int').value / 100); render(); }
+    function glowSoon() { cancelAnimationFrame(glowRAF); glowRAF = requestAnimationFrame(computeGlowPreview); }
+    function openGlowPop(L) { glowRef = L; const i = layers.indexOf(L); if (i >= 0) cur = i; layList();
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
+      const on = $('glowpop').classList.toggle('on'); if (on) computeGlowPreview(); else { glowPreview = null; render(); } }
+    $('glow-range').addEventListener('input', () => { $('glow-rangev').textContent = $('glow-range').value; glowSoon(); });
+    $('glow-int').addEventListener('input', () => { $('glow-intv').textContent = $('glow-int').value + '%'; glowSoon(); });
+    $('glow-col').addEventListener('input', () => { $('glow-colsw').style.background = $('glow-col').value; render(); });
+    $('glow-apply').onclick = () => { $('glowpop').classList.remove('on'); glowPreview = null;
+      if (glowRef && layers.includes(glowRef)) glowLayer(glowRef, +$('glow-range').value, hexToRgb($('glow-col').value), +$('glow-int').value / 100); };
     $('t-pencil').onclick = () => setTool('pencil');
     $('t-eraser').onclick = () => setTool('eraser');
     $('t-line').onclick = () => setTool('line');
@@ -193,7 +206,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } else if (rotMode) { e.preventDefault(); exitRotMode(true); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop(); else if (rotMode) exitRotMode(false);
         else { if (replaceMode) { replaceMode = null; render(); }
-          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop', 'adjpop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); glowPreview = null; for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop', 'adjpop', 'glowpop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
       else if (c === 'KeyF') { if (sel) fillSelection(); else setTool('fill'); }

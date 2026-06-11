@@ -205,6 +205,26 @@
       const li = layers.indexOf(L); layers.splice(li, 0, sh); cur = li + 1; // тень под исходным слоем
       marked.clear(); dirtyAll(); layList(); render(); toast('Тень создана');
     }
+    // ---- управляемое свечение (мягкий ореол): чамфер-расстояние пустых клеток до контента ----
+    function glowField(L) { const d = new Float32Array(W * H), INF = 1e9;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) d[y * W + x] = L.grid[y][x] ? 0 : INF;
+      const upd = (i, j, c) => { if (d[j] + c < d[i]) d[i] = d[j] + c; };
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x;
+        if (x > 0) upd(i, i - 1, 3); if (y > 0) upd(i, i - W, 3);
+        if (x > 0 && y > 0) upd(i, i - W - 1, 4); if (x < W - 1 && y > 0) upd(i, i - W + 1, 4); }
+      for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) { const i = y * W + x;
+        if (x < W - 1) upd(i, i + 1, 3); if (y < H - 1) upd(i, i + W, 3);
+        if (x < W - 1 && y < H - 1) upd(i, i + W + 1, 4); if (x > 0 && y < H - 1) upd(i, i + W - 1, 4); }
+      return d; }
+    function computeGlow(L, range, intensity) { const d = glowField(L), out = []; // [x, y, alpha]
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const dist = d[y * W + x] / 3;
+        if (dist > 0 && dist <= range) { const a = Math.round(255 * intensity * Math.pow(1 - dist / range, 1.5));
+          if (a > 0) out.push([x, y, a]); } }
+      return out; }
+    function glowLayer(L, range, col, intensity) { const cells = computeGlow(L, range, intensity);
+      if (!cells.length) { toast('Нечего подсветить'); return; }
+      snapshot(); const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
+      const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList(); toast('Свечение добавлено'); }
     function trimCanvas() { // обрезать пустые поля впритык к рисунку (по всем слоям)
       let x0 = W, y0 = H, x1 = -1, y1 = -1;
       for (const L of layers) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {

@@ -75,6 +75,10 @@
         const dc = hexToRgb($('ds-col').value); ctx.fillStyle = rgb(dc); ctx.globalAlpha = (+$('ds-op').value / 100) * .85;
         for (const p of dsPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z);
         ctx.globalAlpha = 1; }
+      if (glowPreview && $('glowpop').classList.contains('on')) { // призрак свечения (с попиксельной альфой)
+        const gc = hexToRgb($('glow-col').value); ctx.fillStyle = rgb(gc);
+        for (const p of glowPreview) { ctx.globalAlpha = p[2] / 255; ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z); }
+        ctx.globalAlpha = 1; }
       if (selFloat && selFloat.symItems) { const sdx = selFloat.dx, sdy = selFloat.dy; // зеркальный перенос
         for (const it of selFloat.symItems) { ctx.fillStyle = rgb(it.c);
           ctx.fillRect(ox + (it.ax + it.sgnx * sdx) * z, oy + (it.ay + it.sgny * sdy) * z, z, z); } }
