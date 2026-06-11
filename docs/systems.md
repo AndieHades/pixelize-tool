@@ -23,9 +23,10 @@
 |--------|-----------|:--:|----------|
 | `logic/color.js` | преобразует цвет между RGB/HEX/HSV | ✅ | 01-state |
 | `logic/raster.js` | оперирует пиксельной сеткой | ✅ | 00-util |
-| `logic/sample.js` | дискретизирует картинку в сетку клеток | 🔲 | 02-convert |
-| `logic/quantize.js` | сводит цвета к палитре (median-cut) | 🔲 | 02-convert |
-| `logic/rotsprite.js` | поворачивает спрайт с чистыми гранями | 🔲 | 02-convert |
+| `logic/sample.js` | дискретизирует картинку в сетку клеток | ✅ | 02-convert |
+| `logic/quantize.js` | сводит цвета к палитре (median-cut) | ✅ | 02-convert |
+| `logic/cleanup.js` | чистит импортированную сетку (мусор/симметрия/поля) | ✅ | 02-convert |
+| `logic/rotsprite.js` | поворачивает спрайт с чистыми гранями | ✅ | 02-convert |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
