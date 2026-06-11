@@ -76,7 +76,9 @@
       const a = c.length > 3 ? c[3] : 255; let [h, s, v] = rgbToHsv(c[0], c[1], c[2]);
       if (adjMode === 'dodge') v = Math.min(100, v + adjAmt);
       else if (adjMode === 'burn') v = Math.max(0, v - adjAmt);
-      else { h = (h + adjAmt) % 360; s = Math.min(100, s + adjAmt * 0.6); } // colorize: сдвиг тона + подъём насыщенности
+      else { const t = adjAmt / 100, th = rgbToHsv(active[0], active[1], active[2]); // colorize → в активный цвет (тон+насыщ.), яркость сохраняем
+        if (s < 5) h = th[0]; else { const dd = ((th[0] - h + 540) % 360) - 180; h = (h + dd * t + 360) % 360; }
+        s = s + (th[1] - s) * t; }
       const r = hsvToRgb(h, s, v); g[y][x] = [r[0], r[1], r[2], a]; markDirty(cur);
     }
     function adjustStamp(x, y) { const sz = brushes.pencil.size, off = sz >> 1, sa = symA(), sha = symHA();
