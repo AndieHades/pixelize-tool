@@ -1,6 +1,7 @@
 // Яркость/контраст с живым предпросмотром по ползункам (оригиналы — в backup).
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
 import { snapshot, cloneGrid } from '../core/history.js';
 import { bcAdjust, contrastFactor } from '../logic/bc.js';
 import { dirtyAll } from '../core/layer-cache.js';
@@ -29,3 +30,5 @@ export function bcApply() { if (!bcBackup) return;
   bcBackup = null; $('bcpop').classList.remove('on'); bus.emit('layers'); bus.emit('render'); }
 
 export function bcCancel() { if (bcBackup) { bcRestore(); bcBackup = null; } $('bcpop').classList.remove('on'); }
+
+actions.register('effect.bc', () => openBcPop(S.layers, 'Яркость/контраст — всё изображение'));

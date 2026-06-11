@@ -62,10 +62,10 @@ export function mount() {
   $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
   $('imp-asis').onclick = () => { if (impSrcImg) { $('imp-ovl').classList.remove('on'); insertPixelImage(impSrcImg); } };
   let depth = 0; const show = (on) => $('dropmask').classList.toggle('on', on);
-  addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
-  addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });
-  addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) show(false); });
-  addEventListener('drop', (e) => { e.preventDefault(); depth = 0; show(false);
+  window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+  window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });
+  window.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) show(false); });
+  window.addEventListener('drop', (e) => { e.preventDefault(); depth = 0; show(false);
     const f = e.dataTransfer && [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
     if (f) dropImage(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast('Это не картинка'); });
 }

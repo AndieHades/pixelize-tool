@@ -33,7 +33,7 @@ export function mount() {
     syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });
   $('bb-pick').onclick = () => setTool('pick');
   $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo;
-  addEventListener('resize', syncBars);
+  window.addEventListener('resize', syncBars);
   bus.on('tool', syncBars);
   syncBars();
 }

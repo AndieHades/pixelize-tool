@@ -70,8 +70,8 @@
 | `systems/documents.js` | держит несколько документов | 🔲 | 12-app |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
-| `systems/palette-manager.js` | сохраняет/грузит палитры | 🔲 | 12-app |
-| `systems/toolbars.js` | настраивает и перетаскивает кнопки панелей | 🔲 | 12-app |
+| `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
+| `systems/toolbars.js` | кнопки панелей: инструменты/тогглы/эффекты/экспорт | ✅ | 12-app |
 | `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
 | `app.js` | поднимает системы и инициализирует приложение | 🔲 | 12-app |
 

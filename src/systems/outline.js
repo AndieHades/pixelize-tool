@@ -1,8 +1,9 @@
 // Обводка контуром: толщина, свой цвет, прозрачность; у края раздвигает холст.
 import { S, G } from '../core/state.js';
 import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
 import { snapshot, restore, cloneGrid } from '../core/history.js';
-import { hexToRgb } from '../logic/color.js';
+import { hexToRgb, rgbToHex } from '../logic/color.js';
 import { N8, outlineRings } from '../logic/outline.js';
 import { expandCanvas } from '../core/document.js';
 import { markDirty } from '../core/layer-cache.js';
@@ -32,3 +33,22 @@ export function outlineLayer() {
   if (!added) { const s = S.undoStack.pop(); if (s) restore(s); toast('На слое нечего обводить'); return; }
   S.outPreview = null; $('outpop').classList.remove('on'); bus.emit('render'); bus.emit('layers'); toast('Обводка нанесена');
 }
+
+export function openOutlinePop() {
+  $('dspop').classList.remove('on'); $('glowpop').classList.remove('on'); S.dsPreview = null; S.glowPreview = null;
+  const v = rgbToHex(S.active); $('out-col').value = v; $('out-colsw').style.background = v;
+  $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
+  $('out-op').value = Math.round(outSet.op * 100); $('out-opv').textContent = Math.round(outSet.op * 100) + '%';
+  const on = $('outpop').classList.toggle('on');
+  if (on) computeOutlinePreview(); else S.outPreview = null;
+  bus.emit('render');
+}
+
+export function mount() {
+  $('out-apply').onclick = outlineLayer;
+  $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; computeOutlinePreview(); bus.emit('render'); });
+  $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; bus.emit('render'); });
+  $('out-col').addEventListener('input', () => { $('out-colsw').style.background = $('out-col').value; bus.emit('render'); });
+}
+
+actions.register('effect.outline', openOutlinePop);

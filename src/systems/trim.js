@@ -1,5 +1,6 @@
 // Trim — обрезать пустые поля впритык к рисунку (по всем слоям).
 import { S } from '../core/state.js';
+import * as actions from '../core/actions.js';
 import { gridBounds } from '../logic/raster.js';
 import { applyCropRect } from '../core/document.js';
 import { toast } from '../core/dom.js';
@@ -12,3 +13,5 @@ export function trimCanvas() {
   if (x0 === 0 && y0 === 0 && x1 === S.W - 1 && y1 === S.H - 1) { toast('Обрезать нечего'); return; }
   applyCropRect(x0, y0, x1, y1);
 }
+
+actions.register('canvas.trim', trimCanvas);

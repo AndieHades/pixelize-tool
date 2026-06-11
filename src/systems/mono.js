@@ -1,6 +1,7 @@
 // Монохром: оттенки серого по яркости (Rec. 601), альфа сохраняется.
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { toast } from '../core/dom.js';
@@ -14,3 +15,5 @@ export function toMono(L) { const g = L.grid;
 
 export function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast('Слой в монохроме'); }
 export function monoAll() { snapshot(); for (const L of S.layers) toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast('Изображение в монохроме'); }
+
+actions.register('effect.mono', monoAll);

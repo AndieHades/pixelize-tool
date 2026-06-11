@@ -3,9 +3,11 @@
 // (рамка трансформации) подмешиваются через событие 'overlay'.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { effVis, clipBase } from '../../core/layers.js';
 import { layerCanvas, clippedCanvas } from '../../core/layer-cache.js';
+import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { drawChecker } from './checker.js';
 import { drawOverlays } from './overlays.js';
 
@@ -48,6 +50,16 @@ export function fitView() {
   render();
 }
 
+export function zoomBy(f) { const cw = cv.clientWidth / 2, chh = cv.clientHeight / 2;
+  const wx = (cw - S.view.ox) / S.view.zoom, wy = (chh - S.view.oy) / S.view.zoom;
+  S.view.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, S.view.zoom * f));
+  S.view.ox = cw - wx * S.view.zoom; S.view.oy = chh - wy * S.view.zoom; render();
+}
+
 // система сама подписывается на сигналы (app.js только импортирует систему)
 bus.on('render', render);
 bus.on('fit', fitView);
+window.addEventListener('resize', fitView);
+actions.register('view.fit', fitView);
+actions.register('zoom.in', () => zoomBy(1.25));
+actions.register('zoom.out', () => zoomBy(0.8));
