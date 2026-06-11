@@ -84,10 +84,16 @@
         if (d.symX) { nw = Math.max(1, d.sw + 2 * Math.round((nw - d.sw) / 2)); nx0 = Math.round((W - nw) / 2); } // обе стороны от оси
         if (d.symY) { nh = Math.max(1, d.sh + 2 * Math.round((nh - d.sh) / 2)); ny0 = Math.round((H - nh) / 2); }
         if (nw > 640 || nh > 640) return;
-        const cells = new Map(); // ближайший сосед: пиксели не размазываются, край повторяется
+        let cells = new Map(); // ближайший сосед: пиксели не размазываются, край повторяется
         for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
           const sx2 = Math.min(d.sw - 1, Math.floor(x * d.sw / nw)), sy2 = Math.min(d.sh - 1, Math.floor(y * d.sh / nh));
           const c = d.src.get(sx2 + ',' + sy2); if (c) cells.set(x + ',' + y, c); }
+        if (d.symX || d.symY) { const sm = new Map(); // принудительная симметрия: половина зеркалится — растягивается одинаково
+          for (const [k, c] of cells) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+            if ((d.symX && x * 2 > nw - 1) || (d.symY && y * 2 > nh - 1)) continue; // берём только опорную половину
+            const xs = d.symX ? [x, nw - 1 - x] : [x], ys = d.symY ? [y, nh - 1 - y] : [y];
+            for (const xx of xs) for (const yy of ys) sm.set(xx + ',' + yy, c); }
+          cells = sm; }
         selFloat = { cells, w: nw, h: nh, x: nx0, y: ny0, ox: nx0, oy: ny0 };
         sel = { x0: nx0, y0: ny0, x1: nx0 + nw - 1, y1: ny0 + nh - 1 };
         syncSelbar(); render(); return; }
