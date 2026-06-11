@@ -13,6 +13,8 @@ for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'm
 const { S, blank } = await import('../src/core/state.js');
 const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
+const history = await import('../src/core/history.js');
+const bus = await import('../src/core/bus.js');
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
@@ -27,5 +29,18 @@ t('compositeAt: цвет точки по слоям', () => { assert.deepEqual(c
 t('compositeLayers: рисует видимые слои', () => { let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); assert.ok(drew >= 1); });
 t('compositeLayers: скрытый слой пропускается', () => { S.layers[0].visible = false; cache.dirtyAll(); let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); S.layers[0].visible = true; assert.equal(drew, 0); });
 t('io.gridToCanvas: фрагмент → canvas', () => { const c = io.gridToCanvas(S.layers[0].grid, 0, 0, 4, 4); assert.equal(c.width, 4); assert.equal(c.height, 4); });
+
+t('history: snapshot/undo откатывает', () => {
+  history.snapshot(); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+  history.doUndo(); assert.equal(S.layers[0].grid[0][0], null);
+});
+t('history: redo возвращает', () => { history.doRedo(); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); history.doUndo(); });
+t('history: snapshot шлёт событие', () => { let hit = 0; const off = bus.on('snapshot', () => hit++); history.snapshot(); off(); assert.equal(hit, 1); });
+t('history: undoGuard перехватывает отмену', () => {
+  let guarded = 0; history.setUndoGuard(() => { guarded++; return true; });
+  history.snapshot(); S.layers[0].grid[1][1] = [1, 1, 1, 255]; history.doUndo();
+  history.setUndoGuard(null);
+  assert.equal(guarded, 1); assert.deepEqual(S.layers[0].grid[1][1], [1, 1, 1, 255]); // не откатилось — перехвачено
+});
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

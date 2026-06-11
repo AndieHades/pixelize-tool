@@ -15,7 +15,7 @@
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
 | `core/layers.js` | отвечает на запросы видимости/обтравки слоёв | ✅ | 01-state |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
-| `core/history.js` | пишет и откатывает снимки документа | 🔲 | 04-history |
+| `core/history.js` | пишет и откатывает снимки документа | ✅ | 04-history |
 | `core/io.js` | сохраняет canvas/blob в файл | ✅ | 11-export |
 
 ## logic/ — чистые вычисления (без DOM и state)
