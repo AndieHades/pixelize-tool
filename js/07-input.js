@@ -1,6 +1,6 @@
     //      долгий тап — пипетка; перо/мышь рисуют сразу (палм-реджект для Apple Pencil) ----
     const ptrs = new Map();
-    let last = null, pinch = null, stroke = false, gMaxN = 0, gMoved = false, gT0 = 0, gDownX = 0, gDownY = 0, gHoldTimer = null, gHeld = false;
+    let last = null, pinch = null, stroke = false, gMaxN = 0, gRealN = 0, gMoved = false, gT0 = 0, gDownX = 0, gDownY = 0, gHoldTimer = null, gHeld = false;
     const toGrid = (e) => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - view.ox) / view.zoom), Math.floor((e.clientY - r.top - view.oy) / view.zoom)]; };
     function beginStroke() { snapshot(); stroke = true; ppPath = []; ppOrig = new Map(); }
     function cancelStroke() { if (!stroke) return; if (undoStack.length) restore(undoStack.pop()); stroke = false; last = null; }
@@ -54,7 +54,7 @@
       $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем — можно рисовать с открытой
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
-      cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
       gMaxN = Math.max(gMaxN, ptrs.size);
       if (ptrs.size === 1) {
         gT0 = performance.now(); gMoved = false; gHeld = false; gDownX = e.clientX; gDownY = e.clientY; last = null;
@@ -67,7 +67,7 @@
     cv.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'touch') { directMove(e); return; }
       if (penActive || !ptrs.has(e.pointerId)) return;
-      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      { const pi = ptrs.get(e.pointerId); if (pi) { pi.x = e.clientX; pi.y = e.clientY; } } // не теряем время касания
       if (ptrs.size >= 2) { doPinch(); return; }
       if (cropMode) { if (cropDrag) cropMovePt(e); return; }
       if (Math.hypot(e.clientX - gDownX, e.clientY - gDownY) > 6) { gMoved = true; clearTimeout(gHoldTimer); }
@@ -92,6 +92,7 @@
     function endPtr(e) {
       if (e.pointerType !== 'touch') { directUp(e); return; }
       if (!ptrs.has(e.pointerId)) return;
+      const _pi = ptrs.get(e.pointerId); if (_pi && performance.now() - _pi.t >= 30) gRealN++; // фантомные касания <30мс не считаем
       ptrs.delete(e.pointerId);
       clearTimeout(gHoldTimer);
       if (ptrs.size > 0) { if (ptrs.size < 2) pinch = null; return; }
@@ -104,14 +105,15 @@
       else if (stroke) { stroke = false; afterStroke(); }
       else if (gHeld) { /* цвет уже выбран удержанием */ }
       else if (!gMoved && dur < 350) {
-        if (gMaxN === 1) { const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY });
+        const n = gRealN || gMaxN; // число настоящих пальцев (фантомы отфильтрованы)
+        if (n <= 1) { const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY });
           if (tool === 'select') { if (!(sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1)) deselect(); }
           else if (tool === 'move') { /* тап — ничего */ }
           else if (tool === 'pick') { stamp(gx, gy); } else { snapshot(); stamp(gx, gy); render(); afterStroke(); } }
-        else if (gMaxN === 2) doUndo();
-        else if (gMaxN >= 3) doRedo();
+        else if (n === 2) doUndo();
+        else if (n >= 3) doRedo();
       }
-      gMaxN = 0; gMoved = false; gHeld = false; pinch = null; last = null;
+      gMaxN = 0; gRealN = 0; gMoved = false; gHeld = false; pinch = null; last = null;
     }
     cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
     cv.addEventListener('pointerleave', () => { if (hoverPx) { hoverPx = null; render(); } });
