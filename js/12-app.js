@@ -460,19 +460,18 @@
       el.classList.toggle('tool-hidden', toolHidden.has(el.id)); }
     try { toolHidden = new Set(JSON.parse(localStorage.getItem('toolhidden')) || []); } catch (err) {}
     let tDrag = null, tSup = null, tctxBtn = null;
-    function startToolDrag(b, e) { tDrag = { b, moved: false, rmb: e && e.button === 2 };
-      b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
+    function startToolDrag(b, x, y, rmb) { tDrag = { b, x, y, moved: false, rmb }; b.classList.add('dragging'); } // без setPointerCapture — иначе при переносе в другую панель захват слетает
     for (const boxId of TOOLBOXES) { const box = $(boxId);
       box.addEventListener('contextmenu', (e) => { if (e.target.closest('button')) e.preventDefault(); });
       box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (!b || b.parentElement !== box) return;
-        if (e.button === 2) { e.preventDefault(); startToolDrag(b, e); }
-        else if (e.pointerType === 'touch') { const x0 = e.clientX, y0 = e.clientY, pid = e.pointerId;
-          const t = setTimeout(() => startToolDrag(b, { pointerId: pid }), 520);
+        if (e.button === 2) { e.preventDefault(); startToolDrag(b, e.clientX, e.clientY, true); }
+        else if (e.pointerType === 'touch') { const x0 = e.clientX, y0 = e.clientY;
+          const t = setTimeout(() => startToolDrag(b, x0, y0, false), 520);
           const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 9) stop2(); };
           const stop2 = () => { clearTimeout(t); b.removeEventListener('pointermove', mv); b.removeEventListener('pointerup', stop2); b.removeEventListener('pointercancel', stop2); };
           b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } }); }
     document.addEventListener('pointermove', (e) => { if (!tDrag) return;
-      tDrag.moved = true;
+      if (!tDrag.moved) { if (Math.hypot(e.clientX - tDrag.x, e.clientY - tDrag.y) <= 7) return; tDrag.moved = true; }
       const el = document.elementFromPoint(e.clientX, e.clientY); if (!el) return;
       const box = el.closest('#tb-left, #tb-right, #sidebar'); if (!box) return;
       const row = el.closest('#tb-left > *, #tb-right > *, #sidebar > *');

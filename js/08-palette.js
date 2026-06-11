@@ -16,27 +16,13 @@
             $('out-col').value = v; $('out-colsw').style.background = v; return; }
           if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, c.slice()); return; }
           active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); });
-        b.addEventListener('contextmenu', (e) => e.preventDefault()); // меню открываем сами на ПКМ-тап (см. endSw)
-        b.addEventListener('pointerdown', (e) => {
+        b.addEventListener('contextmenu', (e) => e.preventDefault()); // меню открываем сами на ПКМ-тап
+        b.addEventListener('pointerdown', (e) => { // перетаскивание ведём на документ-уровне (надёжно и для ПКМ)
           if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY;
-            clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), 480); }
-          else if (e.button === 0) { b.setPointerCapture(e.pointerId); // ЛКМ-драг — перестановка
-            palDrag = { x: e.clientX, y: e.clientY, moved: false }; }
-          else if (e.button === 2) { e.preventDefault(); b.setPointerCapture(e.pointerId); // ПКМ: тап — меню, драг — перестановка
-            palDrag = { rmb: true, x: e.clientX, y: e.clientY, moved: false }; } });
-        b.addEventListener('pointermove', (e) => {
-          if (palDrag) { if (!palDrag.moved && Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) > 6) { palDrag.moved = true; b.classList.add('dragging'); }
-            if (!palDrag.moved) return;
-            const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest ? el.closest('#pal .sw:not(.plus)') : null;
-            if (t && t !== b) { const r = t.getBoundingClientRect();
-              box.insertBefore(b, (e.clientX < r.left + r.width / 2) ? t : t.nextSibling); } }
-          else if (swHold !== null && Math.hypot(e.clientX - swX, e.clientY - swY) > 8) clearTimeout(swHold); });
-        const endSw = (e) => { clearTimeout(swHold); if (!palDrag) return;
-          const moved = palDrag.moved, rmb = palDrag.rmb; palDrag = null; b.classList.remove('dragging');
-          if (moved) { if (!rmb) palSquelch = true; // новый порядок берём прямо из DOM
-            palette = [...box.querySelectorAll('.sw:not(.plus)')].map((el) => palette[+el.dataset.i]); buildPalette(); }
-          else if (rmb) openCtx(e.clientX, e.clientY, idx); }; // ПКМ без движения — меню
-        b.addEventListener('pointerup', endSw); b.addEventListener('pointercancel', endSw);
+            clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), 480);
+            palDrag = { b, idx, touch: true, x: e.clientX, y: e.clientY, moved: false }; }
+          else if (e.button === 0) palDrag = { b, idx, x: e.clientX, y: e.clientY, moved: false };
+          else if (e.button === 2) { e.preventDefault(); palDrag = { b, idx, rmb: true, x: e.clientX, y: e.clientY, moved: false }; } });
         box.appendChild(b); });
       const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый';
       add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
@@ -45,6 +31,22 @@
         palette.push(active.slice()); buildPalette(); toast('Цвет добавлен в палитру'); });
       add.addEventListener('contextmenu', (e) => { e.preventDefault(); $('picker').click(); }); // выбрать произвольный новый
       box.appendChild(add); }
+    function palDragMove(e) { if (!palDrag) return; const pal = $('pal'), chip = $('paldrag');
+      if (!palDrag.moved) { if (Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) <= 6) return;
+        palDrag.moved = true; palDrag.b.classList.add('dragging'); clearTimeout(swHold);
+        chip.style.background = palDrag.b.style.background; chip.classList.add('on'); }
+      chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px';
+      const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest ? el.closest('#pal .sw:not(.plus)') : null;
+      if (t && t !== palDrag.b) { const r = t.getBoundingClientRect();
+        pal.insertBefore(palDrag.b, (e.clientX < r.left + r.width / 2) ? t : t.nextSibling); } }
+    function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
+      const d = palDrag; palDrag = null; d.b.classList.remove('dragging'); $('paldrag').classList.remove('on');
+      if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0); // порядок берём из DOM
+        palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => palette[+el.dataset.i]); buildPalette(); }
+      else if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); } // ПКМ без движения — меню
+    document.addEventListener('pointermove', palDragMove);
+    document.addEventListener('pointerup', palDragEnd);
+    document.addEventListener('pointercancel', palDragEnd);
     function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
     function recolorAll(from, to) { // заменить цвет на всех слоях и в палитре
       snapshot(); let n = 0;
