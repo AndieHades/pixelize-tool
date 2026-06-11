@@ -56,7 +56,7 @@
 | `systems/selection-input.js` | тянет/тащит/растягивает выделение | 🔲 | 06-selection |
 | `systems/selection/clipboard.js` | копирует/вырезает/вставляет/удаляет | ✅ | 06-selection |
 | `systems/input.js` | разбирает указатель и жесты | 🔲 | 07-input |
-| `systems/palette.js` | показывает палитру и выбирает цвет | 🔲 | 08-palette |
+| `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
 | `systems/layers-list.js` | рисует список слоёв и папок | 🔲 | 09-layers-ui |
 | `systems/layers-drag.js` | перетаскивает слои и папки | 🔲 | 09-layers-ui |
