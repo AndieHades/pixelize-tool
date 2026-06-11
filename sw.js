@@ -1,6 +1,7 @@
 /* global self, caches, fetch */
-// Service worker: офлайн-кеш приложения (cache-first для статики, фолбэк на index.html).
-const CACHE = 'pixel-editor-v37';
+// Service worker: network-first (берём свежее из сети, кэш — только офлайн-фолбэк),
+// чтобы обновления приходили сразу без ручной очистки кэша.
+const CACHE = 'pixel-editor-v38';
 const ASSETS = ['./', './index.html', './style.css', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   './js/01-state.js', './js/02-convert.js', './js/03-render.js', './js/04-history.js', './js/05-draw.js',
   './js/06-selection.js', './js/07-input.js', './js/08-palette.js', './js/09-layers-ui.js', './js/10-import.js',
@@ -20,11 +21,12 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // network-first: онлайн — всегда свежая версия (и обновляем кэш), офлайн — из кэша
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
+    fetch(e.request).then((res) => {
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copy));
       return res;
-    }).catch(() => caches.match('./index.html'))),
+    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html'))),
   );
 });
