@@ -31,6 +31,9 @@ const { monoAll } = await import('../src/systems/mono.js');
 const { glowLayer } = await import('../src/systems/glow.js');
 const { outlineLayer } = await import('../src/systems/outline.js');
 const { dropShadow } = await import('../src/systems/shadow.js');
+const { recolorAll } = await import('../src/systems/recolor.js');
+const { freeRotateLayer } = await import('../src/systems/free-rotate.js');
+const bc = await import('../src/systems/brightness-contrast.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -122,5 +125,13 @@ t('outline: обводит контур слоя', () => { resetWH(8, 8); S.laye
   outlineLayer(); assert.ok(S.layers[0].grid[3][4]); });
 t('shadow: создаёт слой тени', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255];
   const m = S.layers.length; dropShadow(S.layers[0], 1, 1, [0, 0, 0], 0.6); assert.equal(S.layers.length, m + 1); });
+
+t('recolor: меняет цвет на слоях и в палитре', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.palette = [[9, 9, 9]]; cache.dirtyAll();
+  recolorAll([9, 9, 9, 255], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.palette[0], [200, 100, 50]); });
+t('free-rotate: поворачивает слой без ошибок', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
+  freeRotateLayer(S.layers[0], Math.PI / 4, 4); assert.ok(true); });
+t('bc: применение поднимает яркость', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
+  bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
+  bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

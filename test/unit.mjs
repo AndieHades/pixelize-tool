@@ -11,6 +11,7 @@ import { despeckle, cropEmpty } from '../src/logic/cleanup.js';
 import { rotSprite } from '../src/logic/rotsprite.js';
 import { computeGlow } from '../src/logic/glow.js';
 import { outlineRings } from '../src/logic/outline.js';
+import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -60,6 +61,8 @@ t('cleanup: despeckle убирает одиночку', () => {
 });
 t('glow: ореол вокруг пикселя непустой', () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(computeGlow(g, 8, 8, 3, 0.8).length > 0); });
 t('outline: кольцо включает соседа', () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(outlineRings(g, 8, 8, 1).some(([x, y]) => x === 4 && y === 3)); });
+t('bc: яркость поднимает значение', () => { const c = bcAdjust([100, 100, 100, 255], 50, 1); assert.equal(c[0], 150); assert.equal(c[3], 255); });
+t('bc: contrastFactor нейтрален при 0', () => { assert.ok(Math.abs(contrastFactor(0) - 1) < 1e-9); });
 t('rotsprite: поворот не теряет контент', () => {
   const src = new Int32Array([0, 0, 0, 0xff0000ff | 0]); // один непрозрачный пиксель 2×2
   const r = rotSprite(src, 2, 2, 0, 1);

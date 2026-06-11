@@ -34,6 +34,7 @@
 | `logic/rotsprite.js` | поворачивает спрайт с чистыми гранями | ✅ | 02-convert |
 | `logic/glow.js` | считает поле расстояний и ореол | ✅ | 05-draw |
 | `logic/outline.js` | считает кольца обводки | ✅ | 05-draw |
+| `logic/bc.js` | яркость/контраст клетки | ✅ | 05-draw |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -48,15 +49,15 @@
 | `systems/rotate-canvas.js` | поворачивает холст на 90° | ✅ | 05-draw |
 | `systems/flip.js` | отражает слой по осям | ✅ | 05-draw |
 | `systems/trim.js` | обрезает пустые поля до контура | ✅ | 05-draw |
-| `systems/brightness-contrast.js` | правит яркость/контраст | 🔲 | 05-draw |
-| `systems/free-rotate.js` | применяет чистый поворот к слою | 🔲 | 05-draw |
+| `systems/brightness-contrast.js` | правит яркость/контраст | ✅ | 05-draw |
+| `systems/free-rotate.js` | применяет чистый поворот к слою | ✅ | 05-draw |
 | `systems/crop.js` | интерактивно кадрирует холст | 🔲 | 05-draw |
 | `systems/selection-model.js` | держит выделение и плавающий фрагмент | 🔲 | 06-selection |
 | `systems/selection-input.js` | тянет/тащит/растягивает выделение | 🔲 | 06-selection |
 | `systems/clipboard.js` | копирует/вырезает/вставляет | 🔲 | 06-selection |
 | `systems/input.js` | разбирает указатель и жесты | 🔲 | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | 🔲 | 08-palette |
-| `systems/recolor.js` | заменяет цвет по всему документу | 🔲 | 08-palette |
+| `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
 | `systems/layers-list.js` | рисует список слоёв и папок | 🔲 | 09-layers-ui |
 | `systems/layers-drag.js` | перетаскивает слои и папки | 🔲 | 09-layers-ui |
 | `systems/layers-ops.js` | сливает/группирует/дублирует слои | 🔲 | 09-layers-ui |
