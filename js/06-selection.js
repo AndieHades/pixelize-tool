@@ -9,7 +9,7 @@
       const put = (x, y, c) => { const nx = x + dx, ny = y + dy;
         if (nx >= 0 && ny >= 0 && nx < W && ny < H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); }; // за краем — в запас
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; if (c) put(x, y, c.slice()); }
-      for (const [k, c] of L.ext) { const ci = k.indexOf(','); put(+k.slice(0, ci), +k.slice(ci + 1), c.slice()); }
+      for (const [k, c] of L.ext) { const [px, py] = parseKey(k); put(px, py, c.slice()); }
       L.grid = ng; L.ext = ne; }
     function commitMove() { if (!moveDrag) return; const { dx, dy, idxs } = moveDrag; moveDrag = null;
       if (!dx && !dy) { render(); return; }
@@ -22,7 +22,7 @@
         const c = g[sel.y0 + y][sel.x0 + x];
         if (c) { cells.set(x + ',' + y, c); g[sel.y0 + y][sel.x0 + x] = null; } }
       if (!selMask) for (const [k, c] of [...L.ext]) { // рамка у края — прихватываем пиксели, спрятанные за границей
-        const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1);
+        const [ax, ay] = parseKey(k);
         const grab = (sel.x1 === W - 1 && ax >= W && ay >= sel.y0 && ay <= sel.y1)
           || (sel.x0 === 0 && ax < 0 && ay >= sel.y0 && ay <= sel.y1)
           || (sel.y1 === H - 1 && ay >= H && ax >= sel.x0 && ax <= sel.x1)
@@ -32,7 +32,7 @@
       selFloat = { cells, w, h, x: sel.x0, y: sel.y0, ox: sel.x0, oy: sel.y0 }; markDirty(cur); }
     function liftSelectionSym(grabX, grabY) { // лифт симметричного выделения для зеркального переноса
       const L = layers[cur], g = L.grid, gL = grabX * 2 <= W - 1, gT = grabY * 2 <= H - 1, items = [];
-      for (const k of selMask) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+      for (const k of selMask) { const [x, y] = parseKey(k);
         const c = g[y] && g[y][x]; if (!c) continue; g[y][x] = null;
         const sgnx = symA() ? (x === W - 1 - x ? 0 : ((x * 2 <= W - 1) === gL ? 1 : -1)) : 1;
         const sgny = symHA() ? (y === H - 1 - y ? 0 : ((y * 2 <= H - 1) === gT ? 1 : -1)) : 1;
@@ -46,7 +46,7 @@
       const landed = new Set();
       if (selFloat.symItems) { for (const it of selFloat.symItems) { const xx = it.ax + it.sgnx * selFloat.dx, yy = it.ay + it.sgny * selFloat.dy;
         if (xx >= 0 && yy >= 0 && xx < W && yy < H) { g[yy][xx] = it.c; landed.add(xx + ',' + yy); } else L.ext.set(xx + ',' + yy, it.c); } }
-      else for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+      else for (const [k, c] of selFloat.cells) { const [dx, dy] = parseKey(k);
         const xx = selFloat.x + dx, yy = selFloat.y + dy;
         if (xx >= 0 && yy >= 0 && xx < W && yy < H) { g[yy][xx] = c; landed.add(xx + ',' + yy); }
         else L.ext.set(xx + ',' + yy, c); } // за границей — не теряем, можно перетащить обратно
@@ -89,7 +89,7 @@
           const sx2 = Math.min(d.sw - 1, Math.floor(x * d.sw / nw)), sy2 = Math.min(d.sh - 1, Math.floor(y * d.sh / nh));
           const c = d.src.get(sx2 + ',' + sy2); if (c) cells.set(x + ',' + y, c); }
         if (d.symX || d.symY) { const sm = new Map(); // принудительная симметрия: половина зеркалится — растягивается одинаково
-          for (const [k, c] of cells) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+          for (const [k, c] of cells) { const [x, y] = parseKey(k);
             if ((d.symX && x * 2 > nw - 1) || (d.symY && y * 2 > nh - 1)) continue; // берём только опорную половину
             const xs = d.symX ? [x, nw - 1 - x] : [x], ys = d.symY ? [y, nh - 1 - y] : [y];
             for (const xx of xs) for (const yy of ys) sm.set(xx + ',' + yy, c); }
@@ -112,7 +112,7 @@
       if (selMask) for (const k of selMask) base.add(k);
       else for (let y = sel.y0; y <= sel.y1; y++) for (let x = sel.x0; x <= sel.x1; x++) base.add(x + ',' + y);
       const out = new Set(base);
-      for (const k of base) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+      for (const k of base) { const [x, y] = parseKey(k);
         if (sa) out.add((W - 1 - x) + ',' + y);
         if (sha) out.add(x + ',' + (H - 1 - y));
         if (sa && sha) out.add((W - 1 - x) + ',' + (H - 1 - y)); }
@@ -143,7 +143,7 @@
       sel = { x0, y0, x1, y1 }; selMask = mask; symmetrizeSelection(); syncSelbar(); render();
       toast(`Выделено: ${n} пикс. — крась, тащи или жми заливку`); }
     function maskFromCells(set) { let x0 = W, y0 = H, x1 = -1, y1 = -1;
-      for (const k of set) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+      for (const k of set) { const [x, y] = parseKey(k);
         if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
       if (x1 < 0) { deselect(); return; } sel = { x0, y0, x1, y1 }; selMask = set; syncSelbar(); render(); }
     function selectLayerContent() { const g = G(), mask = new Set(); // всё непустое на активном слое
@@ -159,7 +159,7 @@
     function doCopy() { clip = sel ? fragFromSel() : cloneGrid(G()); toast(sel ? 'Выделение скопировано' : 'Слой скопирован'); }
     function doCut() { clip = sel ? fragFromSel() : cloneGrid(G()); toast((sel ? deleteSelContent() : clearLayer()) ? 'Вырезано' : 'Тут пусто'); }
     function doPaste() { if (!clip) { toast('Буфер пуст'); return; } snapshot();
-      const px = sel ? sel.x0 : 0, py = sel ? sel.y0 : 0, asNew = layers.length < 8;
+      const px = sel ? sel.x0 : 0, py = sel ? sel.y0 : 0, asNew = layers.length < MAX_LAYERS;
       let g;
       if (asNew) { const nl = newLayer('Вставка'); nl.fid = layers[cur].fid; // вставка — на новый слой
         layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); g = nl.grid; }

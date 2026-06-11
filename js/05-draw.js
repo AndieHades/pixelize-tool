@@ -51,10 +51,7 @@
       } else {
         const s = active;
         if (o >= 1) g[y][x] = [s[0], s[1], s[2], 255];
-        else if (!dst) g[y][x] = [s[0], s[1], s[2], Math.round(o * 255)];
-        else { const a0 = (dst.length > 3 ? dst[3] : 255) / 255, oa = o + a0 * (1 - o);
-          const f = (sc, dc) => Math.round((sc * o + dc * a0 * (1 - o)) / oa);
-          g[y][x] = [f(s[0], dst[0]), f(s[1], dst[1]), f(s[2], dst[2]), Math.round(oa * 255)]; }
+        else g[y][x] = blendOver(s, dst, o);
       }
       markDirty(cur);
     }
@@ -132,7 +129,7 @@
           const sy = y - pt; if (sy >= 0 && sy < g.length) for (let x = 0; x < g[sy].length; x++) row[x + pl] = g[sy][x];
           out.push(row); }
         const ne = new Map(); // запасные пиксели за краем: сдвигаем и впитываем попавшие в холст
-        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) + pl, ay = +k.slice(ci + 1) + pt;
+        for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx + pl, ay = ky + pt;
           if (ax >= 0 && ay >= 0 && ax < W && ay < H) out[ay][ax] = c; else ne.set(ax + ',' + ay, c); }
         L.grid = out; L.ext = ne; }
       view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
@@ -186,7 +183,7 @@
           const nx2 = x - x0, ny2 = y - y0;
           if (nx2 >= 0 && ny2 >= 0 && nx2 < nw && ny2 < nh) out[ny2][nx2] = c;
           else ne.set(nx2 + ',' + ny2, c); } // отрезанное не теряем
-        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci) - x0, ay = +k.slice(ci + 1) - y0;
+        for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx - x0, ay = ky - y0;
           if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; }
           else ne.set(ax + ',' + ay, c); }
         L.grid = out; L.ext = ne; }
@@ -197,7 +194,7 @@
       for (const L of targets) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { any = true;
         const sx = x + dx, sy = y + dy; if (sx < minx) minx = sx; if (sy < miny) miny = sy; if (sx > maxx) maxx = sx; if (sy > maxy) maxy = sy; }
       if (!any) { toast('Слой пуст'); return; }
-      if (layers.length + targets.length > 8) { toast('Максимум 8 слоёв — удали лишние'); return; }
+      if (layers.length + targets.length > MAX_LAYERS) { toast('Максимум 8 слоёв — удали лишние'); return; }
       snapshot();
       const pl = Math.max(0, -minx), pt = Math.max(0, -miny), pr = Math.max(0, maxx - (W - 1)), pb = Math.max(0, maxy - (H - 1));
       if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb); // не лезет — раздвигаем холст, как обводка
@@ -227,14 +224,7 @@
         if (dist > 0 && dist <= range) { const a = Math.round(255 * intensity * Math.pow(1 - dist / range, 1.5));
           if (a > 0) out.push([x, y, a]); } }
       return out; }
-    function layerBounds(L) {
-      let minx = W, miny = H, maxx = -1, maxy = -1;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {
-        if (x < minx) minx = x; if (x > maxx) maxx = x;
-        if (y < miny) miny = y; if (y > maxy) maxy = y;
-      }
-      return maxx < 0 ? null : { minx, miny, maxx, maxy };
-    }
+    const layerBounds = (L) => gridBounds(L.grid);
     function glowLayers(targets, range, col, intensity) {
       targets = targets.filter((L) => layers.includes(L)); let b = null;
       for (const L of targets) { const lb = layerBounds(L); if (!lb) continue;
@@ -302,7 +292,7 @@
       for (const L of layers) { const g = L.grid, out = [];
         for (let x = 0; x < W; x++) { const row = []; for (let y = H - 1; y >= 0; y--) row.push(g[y][x]); out.push(row); } L.grid = out;
         const ne = new Map();
-        for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1); ne.set((H - 1 - ay) + ',' + ax, c); }
+        for (const [k, c] of L.ext) { const [ax, ay] = parseKey(k); ne.set((H - 1 - ay) + ',' + ax, c); }
         L.ext = ne; }
       const t = W; W = H; H = t; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast('Поворот 90°');
     }
@@ -332,9 +322,7 @@
         const cx = tx + x, cy = ty + y; if (cx >= 0 && cy >= 0 && cx < W && cy < H) L.grid[cy][cx] = intCell(v); else L.ext.set(cx + ',' + cy, intCell(v)); }
       const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList(); toast('Слой повёрнут'); }
     function symmetrizeLayer(L) { // сделать слой симметричным: зеркалим первую половину на вторую
-      const v = sym || (!sym && !symH), h = symH; snapshot(); const g = L.grid;
-      if (v) for (let y = 0; y < H; y++) for (let x = 0; x < (W >> 1); x++) { const mx = W - 1 - x; g[y][mx] = g[y][x] ? g[y][x].slice() : null; }
-      if (h) for (let y = 0; y < (H >> 1); y++) for (let x = 0; x < W; x++) { const my = H - 1 - y; g[my][x] = g[y][x] ? g[y][x].slice() : null; }
+      const v = sym || (!sym && !symH), h = symH; snapshot(); symmetrizeGrid(L.grid, v, h);
       const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList();
       toast('Слой симметрирован' + (v && h ? ' (обе оси)' : v ? ' (лево→право)' : ' (верх→низ)')); }
     function monoAll() { snapshot(); for (const L of layers) toMono(L); dirtyAll(); layList(); render(); toast('Изображение в монохроме'); }
@@ -368,7 +356,7 @@
       snapshot(); const L = layers[cur], g = L.grid;
       if (horiz) for (const r of g) r.reverse(); else g.reverse();
       const ne = new Map();
-      for (const [k, c] of L.ext) { const ci = k.indexOf(','), ax = +k.slice(0, ci), ay = +k.slice(ci + 1);
+      for (const [k, c] of L.ext) { const [ax, ay] = parseKey(k);
         ne.set(horiz ? (W - 1 - ax) + ',' + ay : ax + ',' + (H - 1 - ay), c); }
       L.ext = ne;
       markDirty(cur); render(); afterStroke(); toast(horiz ? 'Отражено по горизонтали' : 'Отражено по вертикали');

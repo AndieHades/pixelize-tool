@@ -35,12 +35,8 @@
       snapshot();
       const nW = Math.max(W, iw), nH = Math.max(H, ih); // холст меньше картинки — расширяем (картинку не трогаем)
       if (nW !== W || nH !== H) { const pl = (nW - W) >> 1, pt = (nH - H) >> 1; expandCanvas(pl, pt, nW - W - pl, nH - H - pt); }
-      if (layers.length >= 8) { restore(undoStack.pop()); toast('Максимум 8 слоёв — удали лишние'); return; }
-      const nl = newLayer('Картинка'); nl.fid = layers[cur].fid;
-      const ox2 = (W - iw) >> 1, oy2 = (H - ih) >> 1; // по центру холста
-      for (let y = 0; y < ih; y++) for (let xx = 0; xx < iw; xx++) { const o = (y * iw + xx) * 4;
-        if (d[o + 3] < 8) continue; nl.grid[oy2 + y][ox2 + xx] = [d[o], d[o + 1], d[o + 2], d[o + 3]]; }
-      layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); fitView(); toast(`Вставлено ${iw}×${ih}`);
+      if (layers.length >= MAX_LAYERS) { restore(undoStack.pop()); toast('Максимум 8 слоёв — удали лишние'); return; }
+      placeImageLayer(iw, ih, d); layList(); fitView(); toast(`Вставлено ${iw}×${ih}`);
     }
     function dropImage(file) { if (!file) return;
       const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');

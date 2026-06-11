@@ -1,9 +1,7 @@
     function exportPng() {
       const c = document.createElement('canvas'); c.width = W; c.height = H;
       const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-        const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-        x.globalAlpha = L.opacity; x.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
+      compositeLayers(x);
       saveCanvas(c, `pixel_${W}x${H}.png`);
     }
     function gridToCanvas(grid, x0, y0, w, h) { // фрагмент слоя → canvas с попиксельной альфой
@@ -15,21 +13,10 @@
     function exportLayerPng(L, tight) { // tight=false — весь холст (для анимации), true — по контуру содержимого
       const safe = (L.name || 'layer').replace(/[^\wА-Яа-яЁё -]+/g, '_').trim() || 'layer';
       if (!tight) { saveCanvas(gridToCanvas(L.grid, 0, 0, W, H), `${safe}_${W}x${H}.png`); return; }
-      let x0 = W, y0 = H, x1 = -1, y1 = -1;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-      if (x1 < 0) { toast('Слой пустой'); return; }
-      const w = x1 - x0 + 1, h = y1 - y0 + 1;
-      saveCanvas(gridToCanvas(L.grid, x0, y0, w, h), `${safe}_${w}x${h}.png`); }
-    async function saveBlob(b, name, desc, mime) { // классический диалог → share → скачивание
-      if (window.showSaveFilePicker && !matchMedia('(pointer: coarse)').matches) {
-        try { const ext = '.' + name.split('.').pop();
-          const h = await showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [mime]: [ext] } }] });
-          const w2 = await h.createWritable(); await w2.write(b); await w2.close(); toast('Сохранено: ' + h.name); return; }
-        catch (e) { if (e && e.name === 'AbortError') return; } }
-      const file = new File([b], name, { type: mime });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
-      const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); }
+      const b = gridBounds(L.grid);
+      if (!b) { toast('Слой пустой'); return; }
+      const w = b.maxx - b.minx + 1, h = b.maxy - b.miny + 1;
+      saveCanvas(gridToCanvas(L.grid, b.minx, b.miny, w, h), `${safe}_${w}x${h}.png`); }
     function exportPsd() { // минимальный PSD: RGBA-слои без сжатия + композит
       const N = layers.length, chunks = [];
       const bytes = (a) => chunks.push(a);
@@ -66,24 +53,15 @@
       u32(0); // глобальная маска отсутствует
       const comp = document.createElement('canvas'); comp.width = W; comp.height = H;
       const cx2 = comp.getContext('2d'); cx2.imageSmoothingEnabled = false;
-      for (let i = 0; i < N; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-        const cb2 = clipBase(i); if (L.clip && (cb2 < 0 || !effVis(cb2))) continue;
-        cx2.globalAlpha = L.opacity; cx2.drawImage(cb2 >= 0 ? clippedCanvas(i, cb2) : layerCanvas(i), 0, 0); }
+      compositeLayers(cx2);
       const cd = cx2.getImageData(0, 0, W, H).data;
       u16(0);
       for (const off of [0, 1, 2, 3]) { const pl = new Uint8Array(W * H);
         for (let p = 0; p < W * H; p++) pl[p] = cd[p * 4 + off]; bytes(pl); }
-      saveBlob(new Blob(chunks, { type: 'image/vnd.adobe.photoshop' }), `pixel_${W}x${H}.psd`, 'Photoshop PSD', 'image/vnd.adobe.photoshop');
+      saveFile(new Blob(chunks, { type: 'image/vnd.adobe.photoshop' }), `pixel_${W}x${H}.psd`, 'image/vnd.adobe.photoshop', 'Photoshop PSD');
     }
     function showSaveOverlay(u) { $('ovlimg').src = u; $('ovl').classList.add('on'); }
-    function saveCanvas(c, name) { c.toBlob(async (b) => {
-      if (window.showSaveFilePicker && !matchMedia('(pointer: coarse)').matches) { // классический диалог «Сохранить как» с выбором папки
-        try { const h = await showSaveFilePicker({ suggestedName: name, types: [{ description: 'PNG-изображение', accept: { 'image/png': ['.png'] } }] });
-          const w = await h.createWritable(); await w.write(b); await w.close(); toast('Сохранено: ' + h.name); return; }
-        catch (e) { if (e && e.name === 'AbortError') return; } } // диалог недоступен — обычное скачивание
-      const file = new File([b], name, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
-      if (matchMedia('(pointer: coarse)').matches) { showSaveOverlay(c.toDataURL('image/png')); return; }
-      const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); }, 'image/png'); }
+    function saveCanvas(c, name) { c.toBlob((b) => // на тач-экранах без диалога/share показываем оверлей с картинкой
+      saveFile(b, name, 'image/png', 'PNG-изображение', matchMedia('(pointer: coarse)').matches ? c.toDataURL('image/png') : null), 'image/png'); }
 
     // ---- проводка UI ----

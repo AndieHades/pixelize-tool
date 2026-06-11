@@ -163,12 +163,7 @@
       marked.clear(); dirtyAll(); layList(); render();
     }
     function syncOp() { const v = Math.round(layers[cur].opacity * 100); $('lay-op').value = v; $('lay-opv').textContent = v + '%'; }
-    const mergeCells = (b, t, op) => { if (!t) return b ? b.slice() : null;
-      const ta = op * (t.length > 3 ? t[3] / 255 : 1);
-      if (!b) return [t[0], t[1], t[2], Math.round(ta * 255)];
-      const ba = b.length > 3 ? b[3] / 255 : 1, oa = ta + ba * (1 - ta);
-      const f = (sc, dc) => Math.round((sc * ta + dc * ba * (1 - ta)) / oa);
-      return [f(t[0], b[0]), f(t[1], b[1]), f(t[2], b[2]), Math.round(oa * 255)]; };
+    const mergeCells = (b, t, op) => t ? blendOver(t, b, op) : (b ? b.slice() : null);
     function doMerge() { // слить отмеченные (или активный с нижним)
       let idx = [...marked].sort((a, b) => a - b);
       if (idx.length < 2) { if (cur > 0) idx = [cur - 1, cur]; else { toast('Отметь 2+ слоя галочками'); return; } }
@@ -236,15 +231,11 @@
       $('lctx-clear').textContent = isFolder ? 'Очистить папку' : 'Очистить слой';
       $('lctx-rotate').textContent = isFolder ? 'Трансформировать папку…' : 'Трансформировать…';
       if (kind === 'layer') $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + 'Обтравочная маска';
-      const m = $('lctx'); m.style.visibility = 'hidden'; m.classList.add('on');
-      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
-        m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
-        m.style.visibility = ''; }); }
+      showMenuAt($('lctx'), x, y); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
     function lctxTargets() { return !lctxRef ? [] : lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref]; }
     function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.length) return;
-      if (layers.length + kids.length > 8) { toast('Максимум 8 слоёв'); return; }
+      if (layers.length + kids.length > MAX_LAYERS) { toast('Максимум 8 слоёв'); return; }
       snapshot(); const nf = { id: ++folderSeq, name: f.name + ' копия', open: true, visible: f.visible, symLock: !!f.symLock };
       folders.push(nf); const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: nf.id, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
       const dst = topOfFolder(f.id) + 1; layers.splice(dst, 0, ...copies); cur = dst + copies.length - 1; marked.clear(); dirtyAll(); layList(); render(); toast('Папка продублирована'); }
@@ -263,9 +254,7 @@
     $('lctx-symm').onclick = () => { $('lctx').classList.remove('on');
       const targets = lctxTargets().filter((L) => layers.includes(L)); if (!targets.length) return;
       snapshot(); const v = sym || (!sym && !symH), h = symH;
-      for (const L of targets) { const g = L.grid;
-        if (v) for (let y = 0; y < H; y++) for (let x = 0; x < (W >> 1); x++) { const mx = W - 1 - x; g[y][mx] = g[y][x] ? g[y][x].slice() : null; }
-        if (h) for (let y = 0; y < (H >> 1); y++) for (let x = 0; x < W; x++) { const my = H - 1 - y; g[my][x] = g[y][x] ? g[y][x].slice() : null; }
+      for (const L of targets) { symmetrizeGrid(L.grid, v, h);
         const i = layers.indexOf(L); if (i >= 0) markDirty(i); }
       render(); layList(); toast(targets.length > 1 ? 'Папка симметрирована' : 'Слой симметрирован'); };
     $('lctx-rotate').onclick = () => { $('lctx').classList.remove('on');
@@ -299,7 +288,7 @@
         folders = folders.filter((x) => x !== f); layList(); render(); toast('Папка расформирована'); } };
     $('layers').addEventListener('click', () => { const p = $('lay-pop'); const on = p.classList.toggle('on');
       $('layers').classList.toggle('on', on); if (on) layList(); });
-    function doAddLayer() { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
+    function doAddLayer() { if (layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; }
       snapshot(); const nl = newLayer('Слой ' + (++layerSeq)); nl.fid = layers[cur].fid;
       layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render(); }
     $('lay-add').addEventListener('click', doAddLayer);
@@ -328,23 +317,19 @@
         if (s && s.l != null) { p.style.left = Math.max(4, Math.min(s.l, innerWidth - 90)) + 'px'; p.style.top = Math.max(4, Math.min(s.t, innerHeight - 60)) + 'px'; p.style.right = 'auto'; applyLaySize(s.w, s.h); } } catch (err) {}
     })();
     const layImgInp = document.createElement('input'); layImgInp.type = 'file'; layImgInp.accept = 'image/*';
-    $('lay-img').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; } layImgInp.click(); });
+    $('lay-img').addEventListener('click', () => { if (layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; } layImgInp.click(); });
     layImgInp.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
       const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
-      im.onload = () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
+      im.onload = () => { if (layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; }
         const k = Math.min(W / im.naturalWidth, H / im.naturalHeight); // вписываем в холст
         const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
         const d = x.getImageData(0, 0, w, h).data;
-        snapshot(); const nl = newLayer('Картинка'); nl.fid = layers[cur].fid;
-        const ox2 = (W - w) >> 1, oy2 = (H - h) >> 1;
-        for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const o = (y * w + xx) * 4;
-          if (d[o + 3] < 8) continue; nl.grid[oy2 + y][ox2 + xx] = [d[o], d[o + 1], d[o + 2], d[o + 3]]; }
-        layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render();
+        snapshot(); placeImageLayer(w, h, d); layList(); render();
         toast('Картинка на новом слое'); };
       im.src = URL.createObjectURL(f); };
-    function duplicateLayer(L) { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
+    function duplicateLayer(L) { if (layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; }
       const idx = layers.indexOf(L); if (idx < 0) return; snapshot();
       layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
       cur = idx + 1; marked.clear(); dirtyAll(); layList(); render(); toast('Слой продублирован'); }

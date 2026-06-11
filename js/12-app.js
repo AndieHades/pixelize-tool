@@ -282,11 +282,7 @@
         b.textContent = layers[i].name; if (i === cur) b.classList.add('cur'); if (!effVis(i)) b.classList.add('dim');
         b.addEventListener('click', ((idx) => () => { cur = idx; layList(); m.classList.remove('on'); toast('Слой: ' + layers[idx].name); })(i));
         m.appendChild(b); }
-      m.style.visibility = 'hidden'; m.classList.add('on');
-      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-        m.style.left = Math.max(8, Math.min(px, innerWidth - r.width - 8)) + 'px';
-        m.style.top = Math.max(8, Math.min(py, innerHeight - r.height - 8)) + 'px';
-        m.style.visibility = ''; }); }
+      showMenuAt(m, px, py); }
 
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
     //      H/V — флипы, R — поворот холста, Ctrl+T — трансформация слоя, C — кроп, N — новый, +/−/0 — зум,
@@ -412,7 +408,7 @@
       else { const cd = docs[docCur]; docs.splice(i, 1); docCur = docs.indexOf(cd); }
       toast('Документ закрыт'); }
     function sendLayerToDoc(L, i) { const d = docs[i];
-      if (d.layers.length >= 8) { toast('В целевом документе уже 8 слоёв'); return; }
+      if (d.layers.length >= MAX_LAYERS) { toast('В целевом документе уже 8 слоёв'); return; }
       const copy = { name: L.name, opacity: L.opacity, visible: true, fid: null, clip: false, ext: new Map(),
         grid: Array.from({ length: d.H }, () => new Array(d.W).fill(null)) };
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; if (!c) continue;
@@ -519,10 +515,7 @@
     function prevComposite() { if (!prevComp) prevComp = document.createElement('canvas');
       if (prevComp.width !== W) prevComp.width = W; if (prevComp.height !== H) prevComp.height = H;
       const px = prevComp.getContext('2d'); px.clearRect(0, 0, W, H); px.imageSmoothingEnabled = false;
-      for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-        const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-        px.globalAlpha = L.opacity; px.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
-      px.globalAlpha = 1; return prevComp; }
+      compositeLayers(px); return prevComp; }
     function prevReset() { const cw = pcv2.clientWidth || 200, ch = pcv2.clientHeight || 200;
       prevView.z = 1; prevView.x = Math.round((cw - W) / 2); prevView.y = Math.round((ch - H) / 2); }
     function syncPrev() { if (!prevOn) return;
@@ -727,12 +720,7 @@
       if (d.moved) { tSup = d.b; saveOrder(); setTimeout(() => { tSup = null; }, 0); }
       else if (d.menu) { tSup = d.b; setTimeout(() => { tSup = null; }, 0); openTctx(e.clientX, e.clientY, d.b); } }); // ПКМ-тап/долгий тап — меню кнопки (клик подавляем)
     document.addEventListener('click', (e) => { if (tSup && e.target.closest('button') === tSup) { e.stopPropagation(); e.preventDefault(); } }, true);
-    function openTctx(x, y, b) { tctxBtn = b;
-      const m = $('tctx'); m.style.visibility = 'hidden'; m.classList.add('on');
-      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
-        m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
-        m.style.visibility = ''; }); }
+    function openTctx(x, y, b) { tctxBtn = b; showMenuAt($('tctx'), x, y); }
     $('tctx-hide').onclick = () => { $('tctx').classList.remove('on'); if (!tctxBtn) return;
       if (TOOL_PROTECTED.has(tctxBtn.id)) { toast('Эту кнопку скрыть нельзя'); return; }
       toolHidden.add(tctxBtn.id); applyHidden(); saveHidden();

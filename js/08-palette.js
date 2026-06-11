@@ -81,11 +81,7 @@
       if (eqc(active, from)) active = to.slice();
       refreshActive(); dirtyAll(); buildPalette(); render(); afterStroke(); toast(n ? `Перекрашено: ${n} пикс.` : 'Цвет заменён в палитре'); }
     function startReplace(from) { replaceMode = { from: from.slice() }; render(); toast('Пиксели подсвечены — тапни новый цвет в палитре'); }
-    function openCtx(x, y, idx) { ctxIdx = idx; const m = $('ctx'); m.style.visibility = 'hidden'; m.classList.add('on');
-      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
-        m.style.top = Math.max(8, Math.min(y - r.height - 10, innerHeight - r.height - 8)) + 'px';
-        m.style.visibility = ''; }); }
+    function openCtx(x, y, idx) { ctxIdx = idx; showMenuAt($('ctx'), x, y, true); }
     document.addEventListener('pointerdown', (e) => { // клик мимо меню закрывает его
       for (const id of ['ctx', 'lctx', 'cctx', 'dctx', 'tctx']) { const m = $(id);
         if (m.classList.contains('on') && !(e.target.closest && e.target.closest('#' + id))) m.classList.remove('on'); } }, true);

@@ -87,7 +87,7 @@
       if (selFloat && selFloat.symItems) { const sdx = selFloat.dx, sdy = selFloat.dy; // зеркальный перенос
         for (const it of selFloat.symItems) { ctx.fillStyle = rgb(it.c);
           ctx.fillRect(ox + (it.ax + it.sgnx * sdx) * z, oy + (it.ay + it.sgny * sdy) * z, z, z); } }
-      else if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
+      else if (selFloat) { for (const [k, c] of selFloat.cells) { const [dx, dy] = parseKey(k);
         ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }
       if (sel && !selMask) { const sx = ox + sel.x0 * z, sy = oy + sel.y0 * z, sw = (sel.x1 - sel.x0 + 1) * z, sh = (sel.y1 - sel.y0 + 1) * z;
         if (!selFloat) { ctx.fillStyle = 'rgba(0,0,0,.28)'; // затемнение вне выделения
@@ -97,7 +97,7 @@
         ctx.strokeRect(sx + .75, sy + .75, sw - 1.5, sh - 1.5); ctx.setLineDash([]); }
       if (sel && selMask && !selFloat) { // контур маски: пунктир по границе выделенных пикселей
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath();
-        for (const k of selMask) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+        for (const k of selMask) { const [x, y] = parseKey(k);
           const sx = ox + x * z, sy = oy + y * z;
           if (!selMask.has(x + ',' + (y - 1))) { ctx.moveTo(sx, sy); ctx.lineTo(sx + z, sy); }
           if (!selMask.has(x + ',' + (y + 1))) { ctx.moveTo(sx, sy + z); ctx.lineTo(sx + z, sy + z); }
