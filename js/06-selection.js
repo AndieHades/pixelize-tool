@@ -34,8 +34,8 @@
       const L = layers[cur], g = L.grid, gL = grabX * 2 <= W - 1, gT = grabY * 2 <= H - 1, items = [];
       for (const k of selMask) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
         const c = g[y] && g[y][x]; if (!c) continue; g[y][x] = null;
-        const sgnx = sym ? (x === W - 1 - x ? 0 : ((x * 2 <= W - 1) === gL ? 1 : -1)) : 1;
-        const sgny = symH ? (y === H - 1 - y ? 0 : ((y * 2 <= H - 1) === gT ? 1 : -1)) : 1;
+        const sgnx = symA() ? (x === W - 1 - x ? 0 : ((x * 2 <= W - 1) === gL ? 1 : -1)) : 1;
+        const sgny = symHA() ? (y === H - 1 - y ? 0 : ((y * 2 <= H - 1) === gT ? 1 : -1)) : 1;
         items.push({ ax: x, ay: y, c, sgnx, sgny }); }
       selMask = null; selFloat = { symItems: items, dx: 0, dy: 0 }; markDirty(cur); }
     function symFloatBounds() { let x0 = W, y0 = H, x1 = -1, y1 = -1;
@@ -62,12 +62,13 @@
       return (zn.l || zn.r || zn.t || zn.b) ? zn : null; }
     function selDown(gx, gy, ev) {
       if (sel && ev) { const zn = selZone(ev); // растяжение за ручку: NN-масштаб без размазывания
-        if (zn) { snapshot(); liftSelection();
+        if (zn) { const sX = !!(selMask && symA()), sY = !!(selMask && symHA()); // зеркальное растяжение от оси
+          snapshot(); liftSelection();
           selDrag = { mode: 'scale', zn, src: new Map(selFloat.cells), sw: selFloat.w, sh: selFloat.h,
-            x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, lifted: true, moved: true };
+            x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, lifted: true, moved: true, symX: sX, symY: sY };
           return; } }
       if (sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1 && (!selMask || selMask.has(gx + ',' + gy)))
-        selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false, sym: !!(selMask && (sym || symH)) };
+        selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false, sym: !!(selMask && (symA() || symHA())) };
       else { selMask = null; selDrag = { mode: 'new', sx: gx, sy: gy, moved: false }; } }
     function selMove(gx, gy) { if (!selDrag) return;
       if (selDrag.mode === 'scale') { const d = selDrag;
@@ -80,6 +81,8 @@
           const k = Math.max(nw / d.sw, nh / d.sh);
           nw = Math.max(1, Math.round(d.sw * k)); nh = Math.max(1, Math.round(d.sh * k));
           if (d.zn.l) nx0 = d.x1 + 1 - nw; if (d.zn.t) ny0 = d.y1 + 1 - nh; }
+        if (d.symX) { nw = Math.max(1, d.sw + 2 * Math.round((nw - d.sw) / 2)); nx0 = Math.round((W - nw) / 2); } // обе стороны от оси
+        if (d.symY) { nh = Math.max(1, d.sh + 2 * Math.round((nh - d.sh) / 2)); ny0 = Math.round((H - nh) / 2); }
         if (nw > 640 || nh > 640) return;
         const cells = new Map(); // ближайший сосед: пиксели не размазываются, край повторяется
         for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
@@ -96,16 +99,17 @@
           sel = { x0: selFloat.x, y0: selFloat.y, x1: selFloat.x + selFloat.w - 1, y1: selFloat.y + selFloat.h - 1 }; }
         selDrag.moved = true; }
       syncSelbar(); render(); }
-    function symmetrizeSelection() { // при включённой симметрии добавляем в выделение зеркальные клетки
-      if (!sel || (!sym && !symH)) return;
+    function symmetrizeSelection() { // зеркалим выделение по активным осям, уважая замок симметрии слоя
+      const sa = symA(), sha = symHA();
+      if (!sel || (!sa && !sha)) return;
       const base = new Set();
       if (selMask) for (const k of selMask) base.add(k);
       else for (let y = sel.y0; y <= sel.y1; y++) for (let x = sel.x0; x <= sel.x1; x++) base.add(x + ',' + y);
       const out = new Set(base);
       for (const k of base) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
-        if (sym) out.add((W - 1 - x) + ',' + y);
-        if (symH) out.add(x + ',' + (H - 1 - y));
-        if (sym && symH) out.add((W - 1 - x) + ',' + (H - 1 - y)); }
+        if (sa) out.add((W - 1 - x) + ',' + y);
+        if (sha) out.add(x + ',' + (H - 1 - y));
+        if (sa && sha) out.add((W - 1 - x) + ',' + (H - 1 - y)); }
       maskFromCells(out); }
     function selUp() { if (!selDrag) return;
       if (selDrag.mode === 'move' || selDrag.mode === 'scale') { if (selDrag.lifted) { commitFloat(); sel = sel ? normSel(sel.x0, sel.y0, sel.x1, sel.y1) : null; if (!sel) selMask = null; } }
