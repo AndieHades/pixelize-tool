@@ -38,6 +38,39 @@
     $('flip-v').onclick = () => flipLayer(false);
     $('rot').onclick = rotateCanvas;
     $('mono').onclick = monoAll;
+    // ---- кастомный HSV-пикер в углу ----
+    let colH = 0, colS = 0, colV = 100;
+    function syncColUI() { const c = hsvToRgb(colH, colS, colV), hex = rgbToHex(c).toUpperCase();
+      $('col-h').value = Math.round(colH); $('col-hv').textContent = Math.round(colH);
+      $('col-s').value = Math.round(colS); $('col-sv').textContent = Math.round(colS);
+      $('col-v').value = Math.round(colV); $('col-vv').textContent = Math.round(colV);
+      $('col-sw').style.background = hex; if (document.activeElement !== $('col-hex')) $('col-hex').value = hex;
+      $('col-s').style.background = 'linear-gradient(90deg,' + rgbToHex(hsvToRgb(colH, 0, colV)) + ',' + rgbToHex(hsvToRgb(colH, 100, colV)) + ')';
+      $('col-v').style.background = 'linear-gradient(90deg,#000,' + rgbToHex(hsvToRgb(colH, colS, 100)) + ')'; }
+    function colApply() { active = hsvToRgb(colH, colS, colV); refreshActive(); $('picker').value = rgbToHex(active); buildPalette(); render(); }
+    function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); return; }
+      const [h, s, v] = rgbToHsv(active[0], active[1], active[2]); colH = h; colS = s; colV = v;
+      $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); syncColUI(); $('colpop').classList.add('on'); }
+    $('activewrap').onclick = openColPop;
+    $('col-h').addEventListener('input', () => { colH = +$('col-h').value; syncColUI(); colApply(); });
+    $('col-s').addEventListener('input', () => { colS = +$('col-s').value; syncColUI(); colApply(); });
+    $('col-v').addEventListener('input', () => { colV = +$('col-v').value; syncColUI(); colApply(); });
+    $('col-hex').addEventListener('input', () => { const v = $('col-hex').value.trim().replace(/^#/, '');
+      if (/^[0-9a-fA-F]{6}$/.test(v)) { const [h, s, vv] = rgbToHsv(...hexToRgb(v)); colH = h; colS = s; colV = vv; syncColUI(); colApply(); } });
+    $('col-add').onclick = () => { const c = hsvToRgb(colH, colS, colV);
+      if (palette.some((p) => eqc(p, c))) { toast('Цвет уже в палитре'); return; }
+      palette.push(c.slice()); active = c.slice(); refreshActive(); buildPalette(); render(); toast('Цвет добавлен'); };
+    makeDraggable($('colpop'));
+    // ---- подсказка hex над свотчем (наведение мышью) + копирование ----
+    let swTipHide = null;
+    window.showSwTip = (el, hex) => { const t = $('swtip'); t.textContent = hex.toUpperCase(); t.dataset.hex = hex.toUpperCase();
+      clearTimeout(swTipHide); const r = el.getBoundingClientRect();
+      t.style.left = (r.left + r.width / 2) + 'px'; t.style.top = (r.top - 6) + 'px'; t.classList.add('on'); };
+    window.hideSwTipSoon = () => { swTipHide = setTimeout(() => $('swtip').classList.remove('on'), 180); };
+    $('swtip').addEventListener('pointerenter', () => clearTimeout(swTipHide));
+    $('swtip').addEventListener('pointerleave', () => $('swtip').classList.remove('on'));
+    $('swtip').addEventListener('click', async () => { const h = $('swtip').dataset.hex;
+      await copyText(h); $('swtip').classList.remove('on'); toast('Скопировано: ' + h); });
     $('bc').onclick = () => openBcPop(layers, 'Яркость/контраст — всё изображение');
     $('bc-bri').addEventListener('input', () => { $('bc-briv').textContent = $('bc-bri').value; bcPreview(); });
     $('bc-con').addEventListener('input', () => { $('bc-conv').textContent = $('bc-con').value; bcPreview(); });
@@ -88,7 +121,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
-          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop', 'colpop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');

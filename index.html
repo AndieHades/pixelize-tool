@@ -31,7 +31,7 @@
       <button id="t-select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
       <div class="tb-sep" id="tb-sep1"></div>
       <button id="layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
-      <label id="activewrap" title="Цвет"><input id="picker" type="color" value="#ff7a18" /><span id="active"></span></label>
+      <button id="activewrap" title="Цвет (HSV)"><span id="active"></span></button>
     </div>
   </header>
 
@@ -155,9 +155,21 @@
   </div>
 
   <div id="ctx">
+    <button data-act="copy">Копировать HEX</button>
     <button data-act="replace">Заменить цвет…</button>
     <button data-act="select">Выбрать все пиксели</button>
     <button data-act="delete">Удалить из палитры</button>
+  </div>
+  <div id="swtip"></div>
+  <input id="picker" type="color" value="#ff7a18" style="position:fixed;left:-100px;top:-100px;width:1px;height:1px;opacity:0" />
+
+  <div id="colpop" class="toolpop">
+    <div class="bp-head">Цвет</div>
+    <div class="col-row"><span id="col-sw"></span><input id="col-hex" type="text" maxlength="7" spellcheck="false" /></div>
+    <div class="irow"><label>Тон</label><input id="col-h" type="range" min="0" max="360" step="1" class="hue" /><b id="col-hv">0</b></div>
+    <div class="irow"><label>Насыщенность</label><input id="col-s" type="range" min="0" max="100" step="1" /><b id="col-sv">0</b></div>
+    <div class="irow"><label>Яркость</label><input id="col-v" type="range" min="0" max="100" step="1" /><b id="col-vv">0</b></div>
+    <div class="iact"><button id="col-add" class="txtbtn primary">Добавить в палитру</button></div>
   </div>
   <div id="lctx">
     <button id="lctx-ren">Переименовать…</button>

@@ -5,7 +5,10 @@
       $('palgrip').textContent = 'Палитра · ' + palette.length;
       let activeShown = false;
       palette.forEach((c, idx) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;
+        const hex = rgbToHex(c); b.title = hex.toUpperCase();
         if (!activeShown && eqc(c, active)) { b.classList.add('on'); activeShown = true; } // только первый совпавший — не дублируем подсветку
+        b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') showSwTip(b, hex); });
+        b.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hideSwTipSoon(); });
         b.addEventListener('click', () => { clearTimeout(swHold);
           if (palSquelch) { palSquelch = false; return; } // клик после перетаскивания не выбирает цвет
           if ($('outpop').classList.contains('on')) { // окно обводки открыто — палитра задаёт его цвет
@@ -63,7 +66,8 @@
         if (m.classList.contains('on') && !(e.target.closest && e.target.closest('#' + id))) m.classList.remove('on'); } }, true);
     $('ctx').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (!btn) return;
       const col = palette[ctxIdx]; $('ctx').classList.remove('on'); if (!col) return;
-      if (btn.dataset.act === 'delete') { palette.splice(ctxIdx, 1); buildPalette(); toast('Цвет удалён из палитры'); }
+      if (btn.dataset.act === 'copy') { const h = rgbToHex(col).toUpperCase(); copyText(h).then(() => toast('Скопировано: ' + h)); }
+      else if (btn.dataset.act === 'delete') { palette.splice(ctxIdx, 1); buildPalette(); toast('Цвет удалён из палитры'); }
       else if (btn.dataset.act === 'select') selectColorPixels(col);
       else if (btn.dataset.act === 'replace') { const r = $('repl'); replFrom = col.slice();
         r.value = '#' + col.map((v) => v.toString(16).padStart(2, '0')).join(''); r.click(); } });
