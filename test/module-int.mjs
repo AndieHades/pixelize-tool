@@ -9,6 +9,8 @@ const { window } = makeDom();
 for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'matchMedia', 'HTMLCanvasElement', 'Blob', 'File', 'Image', 'window']) {
   try { Object.defineProperty(globalThis, k, { value: k === 'window' ? window : window[k], configurable: true, writable: true }); } catch (e) {}
 }
+globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL не принимает jsdom-Blob
+globalThis.URL.revokeObjectURL = () => {};
 
 const { S, blank } = await import('../src/core/state.js');
 const cache = await import('../src/core/layer-cache.js');
@@ -36,6 +38,7 @@ const { freeRotateLayer } = await import('../src/systems/free-rotate.js');
 const bc = await import('../src/systems/brightness-contrast.js');
 const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
+const xport = await import('../src/systems/export.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -147,5 +150,8 @@ t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); });
+
+t('export: PNG без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPng(); assert.ok(true); });
+t('export: PSD без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPsd(); assert.ok(true); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

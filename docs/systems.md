@@ -63,7 +63,7 @@
 | `systems/layers-ops.js` | сливает/группирует/дублирует слои | 🔲 | 09-layers-ui |
 | `systems/layers-menu.js` | контекстное меню слоя/папки | 🔲 | 09-layers-ui |
 | `systems/import.js` | импортирует картинку в пиксель-арт | 🔲 | 10-import |
-| `systems/export.js` | выгружает PNG/PSD | 🔲 | 11-export |
+| `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform.js` | свободно трансформирует слой рамкой | 🔲 | 12-app |
 | `systems/color-picker.js` | подбирает цвет в HSV | 🔲 | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | 🔲 | 12-app |
