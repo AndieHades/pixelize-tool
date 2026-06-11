@@ -32,6 +32,8 @@
 | `logic/quantize.js` | сводит цвета к палитре (median-cut) | ✅ | 02-convert |
 | `logic/cleanup.js` | чистит импортированную сетку (мусор/симметрия/поля) | ✅ | 02-convert |
 | `logic/rotsprite.js` | поворачивает спрайт с чистыми гранями | ✅ | 02-convert |
+| `logic/glow.js` | считает поле расстояний и ореол | ✅ | 05-draw |
+| `logic/outline.js` | считает кольца обводки | ✅ | 05-draw |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -39,9 +41,9 @@
 |--------|-----------|:--:|----------|
 | `systems/render/*` | рисует видимый холст (index+overlays+checker) | ✅ | 03-render |
 | `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка/пипетка | ✅ | 05-draw |
-| `systems/outline.js` | обводит контур слоя | 🔲 | 05-draw |
-| `systems/shadow.js` | строит drop-shadow слоя | 🔲 | 05-draw |
-| `systems/glow.js` | строит ореол слоя | 🔲 | 05-draw |
+| `systems/outline.js` | обводит контур слоя | ✅ | 05-draw |
+| `systems/shadow.js` | строит drop-shadow слоя | ✅ | 05-draw |
+| `systems/glow.js` | строит ореол слоя | ✅ | 05-draw |
 | `systems/mono.js` | переводит слой/изображение в монохром | ✅ | 05-draw |
 | `systems/rotate-canvas.js` | поворачивает холст на 90° | ✅ | 05-draw |
 | `systems/flip.js` | отражает слой по осям | ✅ | 05-draw |

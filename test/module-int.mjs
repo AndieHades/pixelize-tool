@@ -28,6 +28,9 @@ const { rotateCanvas } = await import('../src/systems/rotate-canvas.js');
 const { flipLayer } = await import('../src/systems/flip.js');
 const { trimCanvas } = await import('../src/systems/trim.js');
 const { monoAll } = await import('../src/systems/mono.js');
+const { glowLayer } = await import('../src/systems/glow.js');
+const { outlineLayer } = await import('../src/systems/outline.js');
+const { dropShadow } = await import('../src/systems/shadow.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -111,5 +114,13 @@ t('rotate-canvas: меняет W/H местами', () => { resetWH(4, 6); rotat
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
 t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); });
 t('mono: переводит в серый', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [200, 50, 10, 255]; monoAll(); const c = S.layers[0].grid[1][1]; assert.ok(c[0] === c[1] && c[1] === c[2]); });
+
+t('glow: добавляет ореол в слой', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  glowLayer(S.layers[0], 3, [120, 215, 255], 0.8); assert.ok(S.layers[0].grid[4][3]); });
+t('outline: обводит контур слоя', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  document.getElementById('out-size').value = '1'; document.getElementById('out-op').value = '100'; document.getElementById('out-col').value = '#ff7a18';
+  outlineLayer(); assert.ok(S.layers[0].grid[3][4]); });
+t('shadow: создаёт слой тени', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255];
+  const m = S.layers.length; dropShadow(S.layers[0], 1, 1, [0, 0, 0], 0.6); assert.equal(S.layers.length, m + 1); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
