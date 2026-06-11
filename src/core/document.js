@@ -1,6 +1,6 @@
 // Структурные операции над холстом-документом (примитив для многих систем).
 // Меняет размеры/слои, сдвигает запасные пиксели, сбрасывает выделение.
-import { S, blank } from './state.js';
+import { S, blank, newLayer } from './state.js';
 import * as bus from './bus.js';
 import { parseKey } from '../logic/raster.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
@@ -39,6 +39,15 @@ export function applyCropRect(x0, y0, x1, y1) {
   S.W = nw; S.H = nh; S.sel = null;
   bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit');
   toast(`Холст: ${S.W}×${S.H}`);
+}
+
+// вставить RGBA-картинку w×h новым слоем по центру холста (без snapshot/UI)
+export function placeImageLayer(w, h, d) {
+  const nl = newLayer('Картинка', S.W, S.H); nl.fid = S.layers[S.cur].fid;
+  const ox = (S.W - w) >> 1, oy = (S.H - h) >> 1;
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const o = (y * w + xx) * 4;
+    if (d[o + 3] < 8) continue; nl.grid[oy + y][ox + xx] = [d[o], d[o + 1], d[o + 2], d[o + 3]]; }
+  S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); return nl;
 }
 
 // очистить текущий слой; false — если уже пуст

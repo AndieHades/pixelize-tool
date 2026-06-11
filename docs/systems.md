@@ -14,7 +14,7 @@
 | `core/bus.js` | разносит синхронные события между системами | ✅ | (новое) |
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
 | `core/layers.js` | отвечает на запросы видимости/обтравки/симметрии слоёв | ✅ | 01-state |
-| `core/document.js` | структурно меняет холст (expand/crop/clearLayer) | ✅ | 05-draw |
+| `core/document.js` | структурно меняет холст (expand/crop/clearLayer/placeImage) | ✅ | 05-draw |
 | `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
 | `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
@@ -62,7 +62,7 @@
 | `systems/layers-drag.js` | перетаскивает слои и папки | 🔲 | 09-layers-ui |
 | `systems/layers-ops.js` | сливает/группирует/дублирует слои | 🔲 | 09-layers-ui |
 | `systems/layers-menu.js` | контекстное меню слоя/папки | 🔲 | 09-layers-ui |
-| `systems/import.js` | импортирует картинку в пиксель-арт | 🔲 | 10-import |
+| `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform.js` | свободно трансформирует слой рамкой | 🔲 | 12-app |
 | `systems/color-picker.js` | подбирает цвет в HSV | 🔲 | 12-app |

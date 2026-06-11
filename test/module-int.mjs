@@ -39,6 +39,7 @@ const bc = await import('../src/systems/brightness-contrast.js');
 const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
 const xport = await import('../src/systems/export.js');
+const imp = await import('../src/systems/import/convert.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -153,5 +154,13 @@ t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.lay
 
 t('export: PNG без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPng(); assert.ok(true); });
 t('export: PSD без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPsd(); assert.ok(true); });
+
+t('import: ImageData → пиксель-документ', () => {
+  const data = new Uint8ClampedArray(4 * 4 * 4); // 2×2 красный блок в центре 4×4
+  for (const [px, py] of [[1, 1], [2, 1], [1, 2], [2, 2]]) { const o = (py * 4 + px) * 4; data[o] = 200; data[o + 1] = 30; data[o + 2] = 30; data[o + 3] = 255; }
+  imp.setImpData({ width: 4, height: 4, data });
+  imp.impConvert(); imp.applyImport();
+  assert.equal(S.layers.length, 1); assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
+});
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
