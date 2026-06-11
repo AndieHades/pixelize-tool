@@ -56,6 +56,7 @@ const crop = await import('../src/systems/crop.js');
 await import('../src/systems/draw/tools.js');
 await import('../src/systems/move-tool.js');
 const { toolHandler } = await import('../src/core/canvas-handlers.js');
+const input = await import('../src/systems/input/index.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -214,5 +215,10 @@ t('canvas-handlers: pencil рисует через обработчик', () => 
 t('canvas-handlers: move сдвигает слой', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [5, 5, 5, 255]; S.tool = 'move'; S.marked = new Set();
   const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 1, gy: 1, e: {} }); h.up({});
   assert.deepEqual(S.layers[0].grid[3][3], [5, 5, 5, 255]); });
+
+t('input: mount + диспетч pencil рисует', () => { resetWH(8, 8); S.active = [3, 4, 5]; S.tool = 'pencil'; input.mount();
+  input.down({ pointerType: 'mouse', button: 0, clientX: 2, clientY: 2 }); input.up({ pointerType: 'mouse', button: 0 });
+  // координаты зависят от view; проверяем, что хоть одна клетка закрашена
+  assert.ok(S.layers[0].grid.some((r) => r.some((c) => c))); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
