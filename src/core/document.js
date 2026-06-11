@@ -50,6 +50,13 @@ export function placeImageLayer(w, h, d) {
   S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); return nl;
 }
 
+// сдвинуть содержимое слоя на (dx,dy); ушедшее за край — в запас ext
+export function shiftLayerGrid(L, dx, dy) { const ng = blank(S.W, S.H), ne = new Map();
+  const put = (x, y, c) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); };
+  for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = L.grid[y][x]; if (c) put(x, y, c.slice()); }
+  for (const [k, c] of L.ext) { const [px, py] = parseKey(k); put(px, py, c.slice()); }
+  L.grid = ng; L.ext = ne; }
+
 // очистить текущий слой; false — если уже пуст
 export function clearLayer() {
   const L = S.layers[S.cur]; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;

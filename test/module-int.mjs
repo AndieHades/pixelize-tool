@@ -53,6 +53,9 @@ const shadow = await import('../src/systems/shadow.js');
 const glow = await import('../src/systems/glow.js');
 const adjust = await import('../src/systems/draw/adjust.js');
 const crop = await import('../src/systems/crop.js');
+await import('../src/systems/draw/tools.js');
+await import('../src/systems/move-tool.js');
+const { toolHandler } = await import('../src/core/canvas-handlers.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -204,5 +207,12 @@ t('shadow/glow: popup открывается и копит превью', () => 
 
 t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
+
+t('canvas-handlers: pencil рисует через обработчик', () => { resetWH(8, 8); S.active = [1, 2, 3]; S.tool = 'pencil';
+  const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2, e: {} }); h.move({ gx: 4, gy: 2, e: {} }); h.up({});
+  assert.deepEqual(S.layers[0].grid[2][2], [1, 2, 3, 255]); assert.ok(S.layers[0].grid[2][4]); });
+t('canvas-handlers: move сдвигает слой', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [5, 5, 5, 255]; S.tool = 'move'; S.marked = new Set();
+  const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 1, gy: 1, e: {} }); h.up({});
+  assert.deepEqual(S.layers[0].grid[3][3], [5, 5, 5, 255]); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
