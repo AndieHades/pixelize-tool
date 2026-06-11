@@ -3,6 +3,18 @@
       return (x1 < x0 || y1 < y0) ? null : { x0, y0, x1, y1 }; }
     function syncSelbar() { $('selbar').classList.toggle('on', !!sel); }
     function deselect() { sel = null; selMask = null; syncSelbar(); render(); }
+    // ---- перемещение слоя(ёв) инструментом Move: один или все отмеченные ----
+    function moveTargets() { return (marked.size > 1) ? [...marked].filter((i) => i < layers.length).sort((a, b) => a - b) : [cur]; }
+    function shiftLayerGrid(L, dx, dy) { const ng = blank(W, H), ne = new Map();
+      const put = (x, y, c) => { const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); }; // за краем — в запас
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = L.grid[y][x]; if (c) put(x, y, c.slice()); }
+      for (const [k, c] of L.ext) { const ci = k.indexOf(','); put(+k.slice(0, ci), +k.slice(ci + 1), c.slice()); }
+      L.grid = ng; L.ext = ne; }
+    function commitMove() { if (!moveDrag) return; const { dx, dy, idxs } = moveDrag; moveDrag = null;
+      if (!dx && !dy) { render(); return; }
+      snapshot(); for (const i of idxs) if (layers[i]) { shiftLayerGrid(layers[i], dx, dy); markDirty(i); }
+      render(); afterStroke(); }
     function liftSelection() { const L = layers[cur], g = L.grid, w = sel.x1 - sel.x0 + 1, h = sel.y1 - sel.y0 + 1;
       const cells = new Map();
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -92,6 +104,19 @@
       if (!n) { toast('На активном слое нет этого цвета'); return; }
       sel = { x0, y0, x1, y1 }; selMask = mask; syncSelbar(); render();
       toast(`Выделено: ${n} пикс. — крась, тащи или жми заливку`); }
+    function maskFromCells(set) { let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (const k of set) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) { deselect(); return; } sel = { x0, y0, x1, y1 }; selMask = set; syncSelbar(); render(); }
+    function selectLayerContent() { const g = G(), mask = new Set(); // всё непустое на активном слое
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y][x]) mask.add(x + ',' + y);
+      if (!mask.size) { deselect(); toast('Слой пуст'); return; }
+      maskFromCells(mask); toast('Выделено всё на слое: ' + mask.size + ' пикс.'); }
+    function invertSelection() { const inSelNow = (x, y) => selMask ? selMask.has(x + ',' + y) : (sel && x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1);
+      const mask = new Set();
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!inSelNow(x, y)) mask.add(x + ',' + y);
+      if (!mask.size) { deselect(); toast('Инверсия: выделено всё → ничего'); return; }
+      maskFromCells(mask); toast('Выделение инвертировано'); }
     let clip = null;
     function doCopy() { clip = sel ? fragFromSel() : cloneGrid(G()); toast(sel ? 'Выделение скопировано' : 'Слой скопирован'); }
     function doCut() { clip = sel ? fragFromSel() : cloneGrid(G()); toast((sel ? deleteSelContent() : clearLayer()) ? 'Вырезано' : 'Тут пусто'); }

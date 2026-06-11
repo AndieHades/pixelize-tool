@@ -40,7 +40,9 @@
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue; // обтравка без базы не видна
         ctx.globalAlpha = L.opacity;
-        ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox, oy + ioy, W * z, H * z); }
+        const mdx = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dx * z : 0; // живой сдвиг слоя инструментом Move
+        const mdy = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dy * z : 0;
+        ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
       ctx.globalAlpha = 1;
       if (z >= 7) {
         ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1; ctx.beginPath();

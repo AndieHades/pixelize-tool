@@ -8,6 +8,9 @@
 
     let penActive = false, directDrawing = false, directLast = null, rdrag = null;
     function directDown(e) {
+      if (e.pointerType === 'mouse' && e.button === 2 && tool === 'move') { // Move работает и правой кнопкой
+        cv.setPointerCapture(e.pointerId); const [mgx, mgy] = toGrid(e);
+        moveDrag = { sx: mgx, sy: mgy, dx: 0, dy: 0, idxs: moveTargets() }; return; }
       if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) { // ПКМ/СКМ: драг — пан, тап ПКМ — меню слоёв
         cv.setPointerCapture(e.pointerId);
         rdrag = { x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy, moved: false, btn: e.button }; return; }
@@ -16,7 +19,7 @@
       const [gx, gy] = toGrid(e);
       if (cropMode) { cropDown(e); return; }
       if (e.altKey) { pickAt(gx, gy); return; } // Alt+клик — пипетка, инструмент не меняется
-      if (tool === 'move') { sel = { x0: 0, y0: 0, x1: W - 1, y1: H - 1 }; selMask = null; selDown(gx, gy, e); selDirect = true; return; } // двигаем весь слой
+      if (tool === 'move') { moveDrag = { sx: gx, sy: gy, dx: 0, dy: 0, idxs: moveTargets() }; return; } // двигаем слой(и) целиком
       if (tool === 'select') { selDown(gx, gy, e); selDirect = true; return; }
       if (tool === 'pick') { pickAt(gx, gy); setTool('pencil'); return; }
       if (tool === 'fill') { snapshot(); stamp(gx, gy); render(); afterStroke(); return; }
@@ -29,6 +32,7 @@
         if (Math.hypot(dx, dy) > 6) rdrag.moved = true;
         if (rdrag.moved) { view.ox = rdrag.ox + dx; view.oy = rdrag.oy + dy; render(); } return; }
       if (cropDrag) { cropMovePt(e); return; }
+      if (moveDrag) { const [gx, gy] = toGrid(e); moveDrag.dx = gx - moveDrag.sx; moveDrag.dy = gy - moveDrag.sy; render(); return; }
       if (cropMode) { if (e.pointerType === 'mouse') cv.style.cursor = cropCursor(cropZone(e)); return; } // курсор-подсказка на гранях
       if (!selDirect && tool === 'select' && sel && !selFloat && e.pointerType === 'mouse' && !directDrawing) {
         const zn = selZone(e); cv.style.cursor = zn ? cropCursor(zn) : ''; }
@@ -40,7 +44,8 @@
     function directUp(e) { if (e.pointerType === 'pen') penActive = false; stabPt = null;
       if (rdrag) { if (!rdrag.moved && rdrag.btn === 2) openLayerMenu(e.clientX, e.clientY); rdrag = null; return; }
       cropDrag = null;
-      if (selDirect) { selUp(); selDirect = false; if (tool === 'move') deselect(); }
+      if (moveDrag) { commitMove(); return; }
+      if (selDirect) { selUp(); selDirect = false; }
       if (directDrawing && (tool === 'line' || tool === 'rect') && linePrev) commitLine();
       directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
@@ -66,9 +71,12 @@
       if (ptrs.size >= 2) { doPinch(); return; }
       if (cropMode) { if (cropDrag) cropMovePt(e); return; }
       if (Math.hypot(e.clientX - gDownX, e.clientY - gDownY) > 6) { gMoved = true; clearTimeout(gHoldTimer); }
-      if (gMoved && !gHeld && (tool === 'select' || tool === 'move')) {
-        if (!selDrag) { if (tool === 'move') { sel = { x0: 0, y0: 0, x1: W - 1, y1: H - 1 }; selMask = null; }
-          const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); selDown(sx0, sy0, { clientX: gDownX, clientY: gDownY }); }
+      if (gMoved && !gHeld && tool === 'move') {
+        if (!moveDrag) { const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); moveDrag = { sx: sx0, sy: sy0, dx: 0, dy: 0, idxs: moveTargets() }; }
+        const [gx, gy] = toGrid(e); moveDrag.dx = gx - moveDrag.sx; moveDrag.dy = gy - moveDrag.sy; render(); return;
+      }
+      if (gMoved && !gHeld && tool === 'select') {
+        if (!selDrag) { const [sx0, sy0] = toGrid({ clientX: gDownX, clientY: gDownY }); selDown(sx0, sy0, { clientX: gDownX, clientY: gDownY }); }
         const [gx, gy] = toGrid(e); selMove(gx, gy); return;
       }
       if (gMoved && !gHeld && (tool === 'line' || tool === 'rect')) {
@@ -90,14 +98,15 @@
       const dur = performance.now() - gT0;
       stabPt = null;
       if (cropMode) { cropDrag = null; }
-      else if (selDrag) { selUp(); if (tool === 'move') deselect(); }
+      else if (moveDrag) commitMove();
+      else if (selDrag) selUp();
       else if (linePrev) commitLine();
       else if (stroke) { stroke = false; afterStroke(); }
       else if (gHeld) { /* цвет уже выбран удержанием */ }
       else if (!gMoved && dur < 350) {
         if (gMaxN === 1) { const [gx, gy] = toGrid({ clientX: gDownX, clientY: gDownY });
           if (tool === 'select') { if (!(sel && gx >= sel.x0 && gx <= sel.x1 && gy >= sel.y0 && gy <= sel.y1)) deselect(); }
-          else if (tool === 'move') { deselect(); }
+          else if (tool === 'move') { /* тап — ничего */ }
           else if (tool === 'pick') { stamp(gx, gy); } else { snapshot(); stamp(gx, gy); render(); afterStroke(); } }
         else if (gMaxN === 2) doUndo();
         else if (gMaxN >= 3) doRedo();

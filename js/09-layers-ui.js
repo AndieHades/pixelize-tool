@@ -188,6 +188,8 @@
       $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
       $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-select').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-invert').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-fill').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
@@ -203,6 +205,10 @@
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
     $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
+    $('lctx-select').onclick = () => { $('lctx').classList.remove('on');
+      if (!lctxRef || lctxRef.kind !== 'layer') return; const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); selectLayerContent(); };
+    $('lctx-invert').onclick = () => { $('lctx').classList.remove('on');
+      if (!lctxRef || lctxRef.kind !== 'layer') return; const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); invertSelection(); };
     $('lctx-fill').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return; const L = lctxRef.ref; snapshot();
       const a = [active[0], active[1], active[2], 255];

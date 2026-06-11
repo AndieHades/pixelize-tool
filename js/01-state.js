@@ -19,7 +19,7 @@
     let palette = defaultPalette();
     let active = palette[4];
     let tool = 'pencil', sym = false, symH = false, outPreview = null;
-    let sel = null, selMask = null, selFloat = null, selDrag = null, selDirect = false, selHinted = false;
+    let sel = null, selMask = null, selFloat = null, selDrag = null, selDirect = false, selHinted = false, moveDrag = null;
     let replaceMode = null, palDrag = null, palSquelch = false, swHold = null, swX = 0, swY = 0, ctxIdx = -1, replFrom = null;
     let ppOn = true, ppPath = [], ppOrig = new Map(); // пиксель-перфект: чистим Г-образные уголки штриха
     let hoverPx = null; // позиция курсора в клетках — для контура кисти
