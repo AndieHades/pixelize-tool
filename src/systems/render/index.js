@@ -47,3 +47,7 @@ export function fitView() {
   S.view.oy = Math.round((chh - S.H * S.view.zoom) / 2);
   render();
 }
+
+// система сама подписывается на сигналы (app.js только импортирует систему)
+bus.on('render', render);
+bus.on('fit', fitView);

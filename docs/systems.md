@@ -14,7 +14,7 @@
 | `core/bus.js` | разносит синхронные события между системами | ✅ | (новое) |
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
 | `core/layers.js` | отвечает на запросы видимости/обтравки/симметрии слоёв | ✅ | 01-state |
-| `core/document.js` | структурно меняет холст (expandCanvas) | ✅ | 05-draw |
+| `core/document.js` | структурно меняет холст (expandCanvas/applyCropRect) | ✅ | 05-draw |
 | `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
 | `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
@@ -42,7 +42,10 @@
 | `systems/outline.js` | обводит контур слоя | 🔲 | 05-draw |
 | `systems/shadow.js` | строит drop-shadow слоя | 🔲 | 05-draw |
 | `systems/glow.js` | строит ореол слоя | 🔲 | 05-draw |
-| `systems/recolor-mono.js` | переводит слой в монохром | 🔲 | 05-draw |
+| `systems/mono.js` | переводит слой/изображение в монохром | ✅ | 05-draw |
+| `systems/rotate-canvas.js` | поворачивает холст на 90° | ✅ | 05-draw |
+| `systems/flip.js` | отражает слой по осям | ✅ | 05-draw |
+| `systems/trim.js` | обрезает пустые поля до контура | ✅ | 05-draw |
 | `systems/brightness-contrast.js` | правит яркость/контраст | 🔲 | 05-draw |
 | `systems/free-rotate.js` | применяет чистый поворот к слою | 🔲 | 05-draw |
 | `systems/crop.js` | интерактивно кадрирует холст | 🔲 | 05-draw |
