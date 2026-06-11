@@ -66,7 +66,7 @@
   </div>
 
   <div id="tools-ovl" class="ovl"><div class="sheet">
-    <h3>Кнопки панелей</h3>
+    <h3 data-i18n="dialog.panels">Кнопки панелей</h3>
     <p class="hint" style="margin:0 2px">Включай и выключай кнопки. Перетащить между панелями: зажми ПКМ (или долгий тап) и тащи.</p>
     <div id="tools-list"></div>
     <div class="iact"><button id="tools-reset" class="txtbtn">Сбросить панели</button><button id="tools-close" class="txtbtn primary">Готово</button></div>
@@ -103,9 +103,9 @@
   <div id="adjpop" class="toolpop">
     <div class="bp-head">Кисть-коррекция</div>
     <div class="chips" id="adj-modes">
-      <button data-m="dodge" class="on">Осветлить</button>
-      <button data-m="burn">Затемнить</button>
-      <button data-m="colorize">В активный цвет</button>
+      <button data-m="dodge" class="on" data-i18n="adj.dodge">Осветлить</button>
+      <button data-m="burn" data-i18n="adj.burn">Затемнить</button>
+      <button data-m="colorize" data-i18n="adj.colorize">В активный цвет</button>
     </div>
     <div class="irow"><label>Сила за штрих</label><input id="adj-amt" type="range" min="2" max="30" step="1" value="8" /><b id="adj-amtv">8</b></div>
     <p class="hint" style="margin:0 2px">Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.</p>
@@ -166,7 +166,7 @@
   </div>
 
   <div id="exp-ovl" class="ovl"><div class="sheet">
-    <h3>Сохранить</h3>
+    <h3 data-i18n="dialog.save">Сохранить</h3>
     <div style="display:flex; flex-direction:column; gap:10px">
       <button id="exp-png" class="txtbtn primary" style="width:100%">PNG — картинка с прозрачным фоном</button>
       <button id="exp-psd" class="txtbtn" style="width:100%">PSD — со слоями (Photoshop, Krita)</button>
@@ -174,7 +174,7 @@
   </div></div>
 
   <div id="pal-ovl" class="ovl"><div class="sheet">
-    <h3>Палитры</h3>
+    <h3 data-i18n="dialog.palettes">Палитры</h3>
     <div class="irow"><label>Текущая</label><input id="pal-name" type="text" maxlength="20" placeholder="Имя палитры" style="flex:1" /><button id="pal-save" class="txtbtn" style="height:40px">Сохранить</button></div>
     <div class="iact" style="margin-top:6px"><button id="pal-from-img" class="txtbtn">Палитра из изображения…</button></div>
     <div id="pal-list"></div>
@@ -211,10 +211,10 @@
   </div>
 
   <div id="ctx">
-    <button data-act="copy">Копировать HEX</button>
-    <button data-act="replace">Заменить цвет…</button>
-    <button data-act="select">Выбрать все пиксели</button>
-    <button data-act="delete">Удалить из палитры</button>
+    <button data-act="copy" data-i18n="menu.copyHex">Копировать HEX</button>
+    <button data-act="replace" data-i18n="menu.replace">Заменить цвет…</button>
+    <button data-act="select" data-i18n="menu.selectColor">Выбрать все пиксели</button>
+    <button data-act="delete" data-i18n="menu.deleteColor">Удалить из палитры</button>
   </div>
   <div id="swtip"></div>
   <div id="swdrop"></div>
@@ -231,36 +231,36 @@
     <div class="iact"><button id="col-add" class="txtbtn primary">Добавить в палитру</button></div>
   </div>
   <div id="lctx">
-    <button id="lctx-ren">Переименовать…</button>
+    <button id="lctx-ren" data-i18n="menu.rename">Переименовать…</button>
     <button id="lctx-dup">Дублировать слой</button>
-    <button id="lctx-select">Выбрать всё на слое</button>
-    <button id="lctx-invert">Инверсия выделения</button>
-    <button id="lctx-fill">Залить активным цветом</button>
+    <button id="lctx-select" data-i18n="menu.selectAll">Выбрать всё на слое</button>
+    <button id="lctx-invert" data-i18n="menu.invert">Инверсия выделения</button>
+    <button id="lctx-fill" data-i18n="menu.fill">Залить активным цветом</button>
     <button id="lctx-clear">Очистить слой</button>
-    <button id="lctx-symm">Симметрировать слой</button>
+    <button id="lctx-symm" data-i18n="menu.symm">Симметрировать слой</button>
     <button id="lctx-rotate">Трансформировать…</button>
-    <button id="lctx-shadow">Тень (Drop Shadow)…</button>
-    <button id="lctx-glow">Свечение…</button>
-    <button id="lctx-mono">В монохром</button>
-    <button id="lctx-bc">Яркость/контраст…</button>
+    <button id="lctx-shadow" data-i18n="menu.shadow">Тень (Drop Shadow)…</button>
+    <button id="lctx-glow" data-i18n="menu.glow">Свечение…</button>
+    <button id="lctx-mono" data-i18n="menu.mono">В монохром</button>
+    <button id="lctx-bc" data-i18n="menu.bc">Яркость/контраст…</button>
     <button id="lctx-clip">Обтравочная маска</button>
-    <button id="lctx-png-full">Сохранить PNG (весь холст)</button>
-    <button id="lctx-png-tight">Сохранить PNG (по контуру)</button>
-    <button id="lctx-send">Копировать в документ →</button>
-    <button id="lctx-ung">Расформировать папку</button>
+    <button id="lctx-png-full" data-i18n="menu.pngFull">Сохранить PNG (весь холст)</button>
+    <button id="lctx-png-tight" data-i18n="menu.pngTight">Сохранить PNG (по контуру)</button>
+    <button id="lctx-send" data-i18n="menu.send">Копировать в документ →</button>
+    <button id="lctx-ung" data-i18n="menu.ungroup">Расформировать папку</button>
   </div>
   <div id="cctx"></div>
   <div id="dctx"></div>
   <input id="repl" type="color" style="position:fixed; left:-100px; top:-100px; width:1px; height:1px; opacity:0" />
 
   <div id="ren-ovl" class="ovl"><div class="sheet">
-    <h3>Переименовать</h3>
+    <h3 data-i18n="dialog.rename">Переименовать</h3>
     <div class="irow"><input id="ren-name" type="text" maxlength="24" style="flex:1" /></div>
     <div class="iact"><button id="ren-cancel" class="txtbtn">Отмена</button><button id="ren-ok" class="txtbtn primary">Сохранить</button></div>
   </div></div>
 
   <div id="imp-ovl" class="ovl"><div id="imp-box" class="sheet">
-    <h3>Импорт в пиксель-арт</h3>
+    <h3 data-i18n="dialog.import">Импорт в пиксель-арт</h3>
     <canvas id="imp-prev"></canvas>
     <div class="irow"><label>Поворот</label><button id="imp-rot" class="txtbtn" style="height:40px">⟳ 90°</button><span class="hint">до симметрии</span></div>
     <div class="irow"><label>Цвета палитры</label><input id="imp-colors" type="range" min="0" max="48" step="1" value="24" /><b id="imp-colorsv">24</b></div>
@@ -272,7 +272,7 @@
   </div></div>
 
   <div id="new-ovl" class="ovl"><div class="sheet">
-    <h3>Новый документ</h3>
+    <h3 data-i18n="dialog.new">Новый документ</h3>
     <div class="chips" id="new-chips">
       <button data-w="16" data-h="16">16²</button><button data-w="32" data-h="32" class="on">32²</button>
       <button data-w="64" data-h="64">64²</button><button data-w="128" data-h="128">128²</button>
@@ -287,7 +287,7 @@
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">
-    <h3>Готово</h3>
+    <h3 data-i18n="dialog.done">Готово</h3>
     <p>Зажми картинку → «Сохранить изображение», и она появится в Фото</p>
     <img id="ovlimg" alt="результат" />
     <div><button id="ovlclose" class="txtbtn primary">Закрыть</button></div>

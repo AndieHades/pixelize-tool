@@ -9,6 +9,7 @@ import { dedupePal } from '../logic/quantize.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../config/presets.js';
 import { MAX_SIZE, MAX_LAYERS } from '../config/limits.js';
+import { t, getLocale, locales, setLocale } from '../i18n/index.js';
 
 let docs = [{ name: 'Документ 1' }], docCur = 0, docSeq = 1, dblTimer = null, dblIdx = -1;
 export const docList = () => docs; export const curDoc = () => docCur;
@@ -61,6 +62,9 @@ function openDocsMenu() { const m = $('dctx'); m.innerHTML = '';
     m.appendChild(row); });
   const add = document.createElement('button'); add.textContent = '＋ Новый документ…';
   add.onclick = () => { m.classList.remove('on'); $('new-ovl').classList.add('on'); }; m.appendChild(add);
+  const others = locales().filter((l) => l !== getLocale());
+  const lang = document.createElement('button'); lang.textContent = t('ui.language') + ': ' + getLocale().toUpperCase() + (others[0] ? ' → ' + others[0].toUpperCase() : '');
+  lang.onclick = () => { m.classList.remove('on'); if (others[0]) setLocale(others[0]); }; m.appendChild(lang);
   showMenuAt(m, $('docsbtn').getBoundingClientRect().left, $('docsbtn').getBoundingClientRect().bottom + 6); }
 
 export function mount() {

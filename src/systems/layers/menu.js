@@ -7,6 +7,7 @@ import { $, showMenuAt } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
 import { symmetrizeGrid } from '../../logic/raster.js';
 import { markDirty } from '../../core/layer-cache.js';
+import { t } from '../../i18n/index.js';
 import { folderLayers } from './helpers.js';
 import { duplicateLayer, duplicateFolder } from './ops.js';
 
@@ -19,10 +20,10 @@ export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   const isFolder = kind === 'folder', isLayer = kind === 'layer';
   $('lctx-ung').style.display = isFolder ? '' : 'none'; $('lctx-clip').style.display = isLayer ? '' : 'none';
   for (const id of ['lctx-select', 'lctx-invert', 'lctx-send', 'lctx-png-full', 'lctx-png-tight']) $(id).style.display = isLayer ? '' : 'none';
-  $('lctx-dup').textContent = isFolder ? 'Дублировать папку' : 'Дублировать слой';
-  $('lctx-clear').textContent = isFolder ? 'Очистить папку' : 'Очистить слой';
-  $('lctx-rotate').textContent = isFolder ? 'Трансформировать папку…' : 'Трансформировать…';
-  if (isLayer) $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + 'Обтравочная маска';
+  $('lctx-dup').textContent = t(isFolder ? 'menu.dupFolder' : 'menu.dupLayer');
+  $('lctx-clear').textContent = t(isFolder ? 'menu.clearFolder' : 'menu.clearLayer');
+  $('lctx-rotate').textContent = t(isFolder ? 'menu.transformFolder' : 'menu.transform');
+  if (isLayer) $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + t('menu.clip');
   showMenuAt($('lctx'), x, y); }
 
 export function openRename(ref) { renRef = ref; $('ren-name').value = ref.name; $('ren-ovl').classList.add('on'); setTimeout(() => { $('ren-name').focus(); $('ren-name').select(); }, 80); }

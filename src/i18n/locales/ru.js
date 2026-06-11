@@ -42,5 +42,6 @@ export const ru = {
   'menu.glow': 'Свечение…', 'menu.mono': 'В монохром', 'menu.bc': 'Яркость/контраст…', 'menu.clip': 'Обтравочная маска',
   'menu.pngFull': 'Сохранить PNG (весь холст)', 'menu.pngTight': 'Сохранить PNG (по контуру)', 'menu.send': 'Копировать в документ →',
   'menu.ungroup': 'Расформировать папку',
+  'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…', 'ui.language': 'Язык',
   'menu.copyHex': 'Копировать HEX', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
 };
