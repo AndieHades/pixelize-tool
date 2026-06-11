@@ -72,6 +72,26 @@
 > [utilities.md](utilities.md), а не отдельные системы: preview/reference/палитра
 > используют их, не дублируя обвязку.
 
+## Кросс-срезы и продуктовые подсистемы
+
+| Модуль | Одна фраза | Статус | Док |
+|--------|-----------|:--:|-----|
+| `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` | 🔲 | [i18n.md](i18n.md) |
+| `styles/tokens.css` | задаёт дизайн-токены темы | 🔲 | [theming.md](theming.md) |
+| `systems/settings.js` | переключает язык и тему | 🔲 | i18n/theming |
+| `core/storage.js` | хранит документы в IndexedDB | 🔲 | [roadmap.md](roadmap.md) §5 |
+| `systems/gallery.js` | показывает галерею работ и открывает их | 🔲 | roadmap §5 |
+| `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
+
+## Инфраструктура
+
+| Файл | Назначение | Статус |
+|------|-----------|:--:|
+| `vite.config.js` | конфиг сборки (base для Pages) | ✅ |
+| `package.json` scripts | `dev`/`build`/`preview`/`test` | ✅ |
+| `.github/workflows/deploy.yml` | сборка и публикация на Pages | ✅ (ждёт §1) |
+| `src/app.js` | модульная точка входа (включает Vite-сборку) | 🔲 |
+
 ## Тесты
 
 - `test/unit.mjs` — `logic/*`, `core/state`, `core/bus` в чистом node.
