@@ -234,6 +234,9 @@
       const add = document.createElement('button'); add.textContent = '＋ Новый документ…';
       add.onclick = () => { m.classList.remove('on'); $('new-ovl').classList.add('on'); };
       m.appendChild(add);
+      const conf = document.createElement('button'); conf.textContent = '⚙ Настроить панели…';
+      conf.onclick = () => { m.classList.remove('on'); openToolsConf(); };
+      m.appendChild(conf);
       m.style.visibility = 'hidden'; m.classList.add('on');
       requestAnimationFrame(() => { const r2 = m.getBoundingClientRect(), br = $('docsbtn').getBoundingClientRect();
         m.style.left = Math.max(8, Math.min(br.left, innerWidth - r2.width - 8)) + 'px';
@@ -253,7 +256,7 @@
         m.style.top = Math.round(innerHeight * 0.35) + 'px'; m.style.visibility = ''; }); };
     $('new-cancel').onclick = () => $('new-ovl').classList.remove('on');
 
-    for (const id of ['ovl', 'imp-ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); });
+    for (const id of ['ovl', 'imp-ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); });
     window.addEventListener('resize', fitView);
 
     // ---- плавающее окно палитры: перетаскивание за шапку, размер за уголок ----
@@ -427,34 +430,77 @@
         refreshActive(); buildPalette(); $('pal-ovl').classList.remove('on'); toast('Палитра из изображения: 16 цветов'); };
       im.src = URL.createObjectURL(f); };
 
-    // ---- перестановка кнопок на панелях: ПКМ-перетаскивание или долгий тап ----
+    // ---- кнопки панелей: перетаскивание между панелями (ПКМ/долгий тап), скрытие, настройка ----
+    const TOOLBOXES = ['tb-left', 'tb-right', 'sidebar'];
+    const TOOL_PROTECTED = new Set(['docsbtn']); // вход в настройки должен остаться доступным
+    let toolHidden = new Set();
     function saveOrder() { const o = {};
-      for (const id of ['tb-left', 'tb-right', 'sidebar']) o[id] = [...$(id).children].map((c) => c.id).filter(Boolean);
-      try { localStorage.setItem('toolorder', JSON.stringify(o)); } catch (err) {} }
-    function restoreOrder() { try { const o = JSON.parse(localStorage.getItem('toolorder')); if (!o) return;
-      for (const id of ['tb-left', 'tb-right', 'sidebar']) { const box = $(id); if (!o[id]) continue;
-        for (const cid of o[id]) { const el = document.getElementById(cid); if (el && el.parentElement === box) box.appendChild(el); } } } catch (err) {} }
-    function makeArrangeable(boxId) { const box = $(boxId); let drag = null, sup = null, moved = false;
+      for (const id of TOOLBOXES) o[id] = [...$(id).children].map((c) => c.id).filter(Boolean);
+      try { localStorage.setItem('toolorder2', JSON.stringify(o)); } catch (err) {} }
+    function restoreOrder() { try { const o = JSON.parse(localStorage.getItem('toolorder2')); if (!o) return;
+      for (const id of TOOLBOXES) { const box = $(id); if (!o[id]) continue;
+        for (const cid of o[id]) { const el = document.getElementById(cid); if (el) box.appendChild(el); } } } catch (err) {} } // без проверки родителя — кнопки кочуют между панелями
+    function saveHidden() { try { localStorage.setItem('toolhidden', JSON.stringify([...toolHidden])); } catch (err) {} }
+    function applyHidden() { for (const id of TOOLBOXES) for (const el of $(id).children)
+      el.classList.toggle('tool-hidden', toolHidden.has(el.id)); }
+    try { toolHidden = new Set(JSON.parse(localStorage.getItem('toolhidden')) || []); } catch (err) {}
+    let tDrag = null, tSup = null, tctxBtn = null;
+    function startToolDrag(b, e) { tDrag = { b, moved: false, rmb: e && e.button === 2 };
+      b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
+    for (const boxId of TOOLBOXES) { const box = $(boxId);
       box.addEventListener('contextmenu', (e) => { if (e.target.closest('button')) e.preventDefault(); });
       box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (!b || b.parentElement !== box) return;
-        if (e.button === 2) { e.preventDefault(); start(b, e); }
+        if (e.button === 2) { e.preventDefault(); startToolDrag(b, e); }
         else if (e.pointerType === 'touch') { const x0 = e.clientX, y0 = e.clientY, pid = e.pointerId;
-          const t = setTimeout(() => start(b, { pointerId: pid }), 520);
+          const t = setTimeout(() => startToolDrag(b, { pointerId: pid }), 520);
           const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 9) stop2(); };
           const stop2 = () => { clearTimeout(t); b.removeEventListener('pointermove', mv); b.removeEventListener('pointerup', stop2); b.removeEventListener('pointercancel', stop2); };
-          b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } });
-      function start(b, e) { drag = b; moved = false; b.classList.add('dragging'); try { b.setPointerCapture(e.pointerId); } catch (err) {} }
-      box.addEventListener('pointermove', (e) => { if (!drag) return;
-        const el = document.elementFromPoint(e.clientX, e.clientY); const t = el ? el.closest('#' + boxId + ' > *') : null;
-        if (t && t !== drag) { const r = t.getBoundingClientRect();
-          const before = boxId === 'sidebar' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
-          box.insertBefore(drag, before ? t : t.nextSibling); moved = true; } });
-      const end = () => { if (!drag) return; drag.classList.remove('dragging'); if (moved) { sup = drag; saveOrder(); } drag = null;
-        setTimeout(() => { sup = null; }, 0); }; // клик глушим только если реально переставили — иначе тап-тоггл (симметрия) срабатывает
-      box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
-      box.addEventListener('click', (e) => { if (sup && e.target.closest('button') === sup) { e.stopPropagation(); e.preventDefault(); } }, true); }
-    restoreOrder();
-    for (const id of ['tb-left', 'tb-right', 'sidebar']) makeArrangeable(id);
+          b.addEventListener('pointermove', mv); b.addEventListener('pointerup', stop2); b.addEventListener('pointercancel', stop2); } }); }
+    document.addEventListener('pointermove', (e) => { if (!tDrag) return;
+      tDrag.moved = true;
+      const el = document.elementFromPoint(e.clientX, e.clientY); if (!el) return;
+      const box = el.closest('#tb-left, #tb-right, #sidebar'); if (!box) return;
+      const row = el.closest('#tb-left > *, #tb-right > *, #sidebar > *');
+      if (row && row !== tDrag.b) { const r = row.getBoundingClientRect();
+        const before = box.id === 'sidebar' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
+        box.insertBefore(tDrag.b, before ? row : row.nextSibling); }
+      else if (!row && tDrag.b.parentElement !== box) box.appendChild(tDrag.b); }); // пустое место панели — в конец
+    document.addEventListener('pointerup', (e) => { if (!tDrag) return;
+      const d = tDrag; tDrag = null; d.b.classList.remove('dragging');
+      if (d.moved) { tSup = d.b; saveOrder(); setTimeout(() => { tSup = null; }, 0); }
+      else if (d.rmb) openTctx(e.clientX, e.clientY, d.b); }); // ПКМ-тап без движения — меню кнопки
+    document.addEventListener('click', (e) => { if (tSup && e.target.closest('button') === tSup) { e.stopPropagation(); e.preventDefault(); } }, true);
+    function openTctx(x, y, b) { tctxBtn = b;
+      const m = $('tctx'); m.style.visibility = 'hidden'; m.classList.add('on');
+      requestAnimationFrame(() => { const r = m.getBoundingClientRect();
+        m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
+        m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
+        m.style.visibility = ''; }); }
+    $('tctx-hide').onclick = () => { $('tctx').classList.remove('on'); if (!tctxBtn) return;
+      if (TOOL_PROTECTED.has(tctxBtn.id)) { toast('Эту кнопку скрыть нельзя'); return; }
+      toolHidden.add(tctxBtn.id); applyHidden(); saveHidden();
+      toast('Скрыто. Вернуть: ПКМ по кнопке → Настроить панели'); };
+    $('tctx-conf').onclick = () => { $('tctx').classList.remove('on'); openToolsConf(); };
+    function openToolsConf() { const box = $('tools-list'); box.innerHTML = '';
+      const names = { 'tb-left': 'Верхняя панель — слева', 'tb-right': 'Верхняя панель — справа', sidebar: 'Боковая панель' };
+      for (const id of TOOLBOXES) { const h = document.createElement('p'); h.className = 'hint'; h.style.margin = '12px 2px 2px';
+        h.textContent = names[id]; box.appendChild(h);
+        for (const el of $(id).children) { if (!el.id || el.tagName !== 'BUTTON') continue;
+          const row = document.createElement('div'); row.className = 'irow'; row.style.minHeight = '40px';
+          const lb = document.createElement('label'); lb.style.flex = '1'; lb.style.minWidth = '0';
+          lb.textContent = (el.title || el.id).split(' (')[0];
+          const sw = document.createElement('label'); sw.className = 'switch';
+          const inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = !toolHidden.has(el.id);
+          inp.disabled = TOOL_PROTECTED.has(el.id);
+          inp.addEventListener('change', ((bid) => () => { if (inp.checked) toolHidden.delete(bid); else toolHidden.add(bid);
+            applyHidden(); saveHidden(); })(el.id));
+          const knob = document.createElement('span');
+          sw.append(inp, knob); row.append(lb, sw); box.appendChild(row); } }
+      $('tools-ovl').classList.add('on'); }
+    $('tools-close').onclick = () => $('tools-ovl').classList.remove('on');
+    $('tools-reset').onclick = () => { try { localStorage.removeItem('toolorder2'); localStorage.removeItem('toolhidden'); } catch (err) {}
+      location.reload(); };
+    restoreOrder(); applyHidden();
 
     refreshActive(); buildPalette(); layList();
     requestAnimationFrame(() => { fitView(); toast('Долгий тап — пипетка · тап 2 пальцами — отмена'); });

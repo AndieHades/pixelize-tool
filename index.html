@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>Pixel Editor</title>
+  <title>Pixel Heart</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -20,6 +20,14 @@
       <button id="new" title="Новый документ (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
       <button id="imp" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
       <button id="exp" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
+      <div class="tb-sep" id="tb-sep-l"></div>
+      <button id="prev" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
+      <button id="refbtn" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
+      <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
+      <button id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
+      <button id="redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
+      <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+      <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
     </div>
     <div class="tb-group" id="tb-right">
       <button id="t-pencil" class="on" title="Карандаш (B)"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
@@ -36,13 +44,6 @@
   </header>
 
   <aside id="sidebar">
-    <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-    <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
-    <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
-    <div class="sb-sep" id="sb-sep1"></div>
-    <button id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
-    <button id="redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
-    <div class="sb-sep" id="sb-sep2"></div>
     <button id="sym" title="Симметрия лево-право (S)"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
     <button id="sym-h" title="Симметрия верх-низ (Shift+S)"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg></button>
     <button id="pp" class="on" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
@@ -54,10 +55,19 @@
     <button id="mono" title="Монохром (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg></button>
     <button id="bc" title="Яркость/контраст (всё изображение)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></button>
     <button id="crop" title="Кроп (C): рамка → Enter"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
-    <div class="sb-sep" id="sb-sep3"></div>
-    <button id="prev" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
-    <button id="refbtn" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
   </aside>
+
+  <div id="tctx">
+    <button id="tctx-hide">Скрыть кнопку</button>
+    <button id="tctx-conf">Настроить панели…</button>
+  </div>
+
+  <div id="tools-ovl" class="ovl"><div class="sheet">
+    <h3>Кнопки панелей</h3>
+    <p class="hint" style="margin:0 2px">Включай и выключай кнопки. Перетащить между панелями: зажми ПКМ (или долгий тап) и тащи.</p>
+    <div id="tools-list"></div>
+    <div class="iact"><button id="tools-reset" class="txtbtn">Сбросить панели</button><button id="tools-close" class="txtbtn primary">Готово</button></div>
+  </div></div>
 
   <div id="cropbar">
     <button id="crop-sym" title="От центра (или зажми Shift)"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>

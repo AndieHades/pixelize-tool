@@ -62,7 +62,7 @@
         m.style.top = Math.max(8, Math.min(y - r.height - 10, innerHeight - r.height - 8)) + 'px';
         m.style.visibility = ''; }); }
     document.addEventListener('pointerdown', (e) => { // клик мимо меню закрывает его
-      for (const id of ['ctx', 'lctx', 'cctx', 'dctx']) { const m = $(id);
+      for (const id of ['ctx', 'lctx', 'cctx', 'dctx', 'tctx']) { const m = $(id);
         if (m.classList.contains('on') && !(e.target.closest && e.target.closest('#' + id))) m.classList.remove('on'); } }, true);
     $('ctx').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (!btn) return;
       const col = palette[ctxIdx]; $('ctx').classList.remove('on'); if (!col) return;
