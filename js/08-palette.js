@@ -13,12 +13,14 @@
             $('out-col').value = v; $('out-colsw').style.background = v; return; }
           if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, c.slice()); return; }
           active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); });
-        b.addEventListener('contextmenu', (e) => { e.preventDefault(); openCtx(e.clientX, e.clientY, idx); }); // ПКМ — меню
+        b.addEventListener('contextmenu', (e) => e.preventDefault()); // меню открываем сами на ПКМ-тап (см. endSw)
         b.addEventListener('pointerdown', (e) => {
           if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY;
             clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), 480); }
-          else if (e.button === 0) { b.setPointerCapture(e.pointerId); // ЛКМ-драг — свободная перестановка
-            palDrag = { x: e.clientX, y: e.clientY, moved: false }; } });
+          else if (e.button === 0) { b.setPointerCapture(e.pointerId); // ЛКМ-драг — перестановка
+            palDrag = { x: e.clientX, y: e.clientY, moved: false }; }
+          else if (e.button === 2) { e.preventDefault(); b.setPointerCapture(e.pointerId); // ПКМ: тап — меню, драг — перестановка
+            palDrag = { rmb: true, x: e.clientX, y: e.clientY, moved: false }; } });
         b.addEventListener('pointermove', (e) => {
           if (palDrag) { if (!palDrag.moved && Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) > 6) { palDrag.moved = true; b.classList.add('dragging'); }
             if (!palDrag.moved) return;
@@ -26,11 +28,11 @@
             if (t && t !== b) { const r = t.getBoundingClientRect();
               box.insertBefore(b, (e.clientX < r.left + r.width / 2) ? t : t.nextSibling); } }
           else if (swHold !== null && Math.hypot(e.clientX - swX, e.clientY - swY) > 8) clearTimeout(swHold); });
-        const endSw = () => { clearTimeout(swHold); if (!palDrag) return;
-          const moved = palDrag.moved; palDrag = null; b.classList.remove('dragging');
-          if (moved) { palSquelch = true; // новый порядок берём прямо из DOM
-            palette = [...box.querySelectorAll('.sw:not(.plus)')].map((el) => palette[+el.dataset.i]);
-            buildPalette(); } };
+        const endSw = (e) => { clearTimeout(swHold); if (!palDrag) return;
+          const moved = palDrag.moved, rmb = palDrag.rmb; palDrag = null; b.classList.remove('dragging');
+          if (moved) { if (!rmb) palSquelch = true; // новый порядок берём прямо из DOM
+            palette = [...box.querySelectorAll('.sw:not(.plus)')].map((el) => palette[+el.dataset.i]); buildPalette(); }
+          else if (rmb) openCtx(e.clientX, e.clientY, idx); }; // ПКМ без движения — меню
         b.addEventListener('pointerup', endSw); b.addEventListener('pointercancel', endSw);
         box.appendChild(b); });
       const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый';
