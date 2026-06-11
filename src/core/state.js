@@ -14,7 +14,7 @@ export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, 
 const pal0 = defaultPalette();
 // единый контейнер изменяемого состояния
 export const S = {
-  W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1,
+  W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1, docName: '',
   layers: [newLayer('Слой 1', DEFAULT_DOC.w, DEFAULT_DOC.h)], cur: 0,
   folders: [], folderSeq: 0, marked: new Set(),
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),

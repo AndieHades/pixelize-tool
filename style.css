@@ -373,3 +373,19 @@
       button { width: 32px; height: 32px; }
       button svg { width: 18px; height: 18px; }
     }
+
+/* ---- галерея работ (Procreate-стиль) ---- */
+#gallery { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
+#gallery.on { display: flex; }
+#gal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+#gal-title { font-weight: 700; font-size: 18px; color: var(--txt); }
+.gal-actions { display: flex; gap: 6px; align-items: center; }
+.gal-actions button { width: auto; height: 34px; padding: 0 12px; border-radius: var(--radius); color: var(--txt); font-size: 14px; }
+.gal-actions button:hover { background: var(--accent-soft); }
+#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; padding: 22px; align-content: start; }
+.gal-tile { cursor: pointer; }
+.gal-tile img { width: 100%; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; background: var(--surface); border-radius: 8px; border: 1px solid var(--line); }
+.gal-tile:hover img { border-color: var(--accent); }
+.gal-cap { padding: 6px 2px; }
+.gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; }
+.gal-cap small { color: var(--txt2); font-size: 12px; }

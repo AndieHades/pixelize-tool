@@ -35,5 +35,11 @@ export const en = {
   'menu.pngFull': 'Save PNG (whole canvas)', 'menu.pngTight': 'Save PNG (cropped)', 'menu.send': 'Copy to document →',
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…', 'ui.theme': 'Theme', 'ui.language': 'Language',
+  'gallery.untitled': 'Untitled',
+  'gallery.select': 'Select',
+  'gallery.import': 'Import',
+  'gallery.convert': 'Converter',
+  'gallery.deleteAsk': 'Delete artwork',
+  'gallery.new': 'New document',
   'menu.copyHex': 'Copy HEX', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
 };

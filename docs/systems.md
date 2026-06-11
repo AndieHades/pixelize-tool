@@ -84,8 +84,8 @@
 | `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` | 🔲 | [i18n.md](i18n.md) |
 | `styles/tokens.css` | задаёт дизайн-токены темы | 🔲 | [theming.md](theming.md) |
 | `systems/settings.js` | переключает язык и тему | 🔲 | i18n/theming |
-| `core/storage.js` | хранит документы в IndexedDB | 🔲 | [roadmap.md](roadmap.md) §5 |
-| `systems/gallery.js` | показывает галерею работ и открывает их | 🔲 | roadmap §5 |
+| `core/storage.js` | хранит документы в IndexedDB | ✅ | roadmap §5 |
+| `systems/gallery.js` | показывает галерею работ и открывает их | ✅ | roadmap §5 |
 | `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
 
 ## Конфигурация (`src/config/`)

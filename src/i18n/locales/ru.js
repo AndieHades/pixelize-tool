@@ -43,5 +43,11 @@ export const ru = {
   'menu.pngFull': 'Сохранить PNG (весь холст)', 'menu.pngTight': 'Сохранить PNG (по контуру)', 'menu.send': 'Копировать в документ →',
   'menu.ungroup': 'Расформировать папку',
   'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…', 'ui.theme': 'Тема', 'ui.language': 'Язык',
+  'gallery.untitled': 'Без названия',
+  'gallery.select': 'Выбрать',
+  'gallery.import': 'Импорт',
+  'gallery.convert': 'Конвертер',
+  'gallery.deleteAsk': 'Удалить работу',
+  'gallery.new': 'Новый документ',
   'menu.copyHex': 'Копировать HEX', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
 };

@@ -27,6 +27,7 @@ import * as shadow from './systems/shadow.js';
 import * as glow from './systems/glow.js';
 import * as bc from './systems/brightness-contrast.js';
 import * as adjust from './systems/draw/adjust.js';
+import * as gallery from './systems/gallery.js';
 
 // системы-эффекты без mount: импорт регистрирует инструменты/действия/тулы
 import './systems/draw/tools.js';
@@ -42,7 +43,7 @@ import './systems/free-rotate.js';
 import './systems/export.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, documents, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, documents, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust, gallery];
 
 export function start() {
   detect(); applyTheme();
