@@ -41,6 +41,8 @@ export const en = {
   'gallery.convert': 'Converter',
   'gallery.deleteAsk': 'Delete artwork',
   'gallery.new': 'New document',
+  'gallery.delete': 'Delete',
+  'gallery.done': 'Done',
   // тосты
   'toast.bufferEmpty': 'Clipboard empty',
   'toast.mono': 'To monochrome',

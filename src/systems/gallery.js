@@ -39,12 +39,21 @@ export function newWork(w, h) { curId = uid();
 
 async function openWork(id) { const rec = await getDoc(id); if (!rec) return; await saveCurrent(); curId = id; apply(rec); hide(); }
 
+let selecting = false; const selected = new Set();
+function updateDel() { const b = $('gal-del'); b.style.display = selecting ? '' : 'none';
+  b.textContent = t('gallery.delete') + (selected.size ? ' (' + selected.size + ')' : ''); b.disabled = !selected.size; }
+function toggleSelect() { selecting = !selecting; selected.clear();
+  $('gal-select').classList.toggle('on', selecting); $('gal-select').textContent = t(selecting ? 'gallery.done' : 'gallery.select');
+  updateDel(); renderTiles(); }
+async function delSelected() { if (!selected.size) return; for (const id of selected) await removeDoc(id); selected.clear(); updateDel(); renderTiles(); }
+
 async function renderTiles() { const grid = $('gal-grid'); grid.innerHTML = '';
   const docs = (await listDocs()).sort((a, b) => b.updated - a.updated);
-  for (const d of docs) { const tile = document.createElement('div'); tile.className = 'gal-tile';
+  for (const d of docs) { const tile = document.createElement('div'); tile.className = 'gal-tile' + (selected.has(d.id) ? ' sel' : '');
     const img = document.createElement('img'); img.src = d.preview || ''; img.alt = d.name;
     const cap = document.createElement('div'); cap.className = 'gal-cap'; cap.innerHTML = `<b>${d.name}</b><small>${d.W}×${d.H} px</small>`;
-    tile.append(img, cap); tile.onclick = () => openWork(d.id);
+    tile.append(img, cap);
+    tile.onclick = () => { if (selecting) { if (selected.has(d.id)) selected.delete(d.id); else selected.add(d.id); tile.classList.toggle('sel'); updateDel(); } else openWork(d.id); };
     tile.oncontextmenu = (e) => { e.preventDefault(); if (confirm(t('gallery.deleteAsk') + ' «' + d.name + '»?')) removeDoc(d.id).then(renderTiles); };
     grid.appendChild(tile); } }
 
@@ -55,6 +64,7 @@ export async function mount() {
   $('gal-new').onclick = () => $('new-ovl').classList.add('on');
   $('gal-import').onclick = () => { hide(); actions.run('file.import'); };
   $('gal-convert').onclick = () => { hide(); actions.run('file.import'); };
+  $('gal-select').onclick = toggleSelect; $('gal-del').onclick = delSelected;
   $('new-create').onclick = () => { const w = parseInt($('new-w').value, 10), h = parseInt($('new-h').value, 10);
     if (w >= 2 && h >= 2 && w <= 640 && h <= 640) { $('new-ovl').classList.remove('on'); newWork(w, h); } };
   $('docsbtn').onclick = show;

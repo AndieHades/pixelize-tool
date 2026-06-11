@@ -389,3 +389,7 @@
 .gal-cap { padding: 6px 2px; }
 .gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; }
 .gal-cap small { color: var(--txt2); font-size: 12px; }
+.gal-tile.sel img { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+#gal-del { color: var(--danger); }
+#gal-del:disabled { opacity: .4; }
+.gal-actions button.on { background: var(--accent); color: #fff; }

@@ -49,6 +49,8 @@ export const ru = {
   'gallery.convert': 'Конвертер',
   'gallery.deleteAsk': 'Удалить работу',
   'gallery.new': 'Новый документ',
+  'gallery.delete': 'Удалить',
+  'gallery.done': 'Готово',
   // тосты
   'toast.bufferEmpty': 'Буфер пуст',
   'toast.mono': 'В монохроме',
