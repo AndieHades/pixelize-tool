@@ -17,6 +17,7 @@
 | `core/document.js` | структурно меняет холст (expandCanvas) | ✅ | 05-draw |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
 | `core/history.js` | пишет и откатывает снимки документа | ✅ | 04-history |
+| `core/actions.js` | реестр именованных действий (для хоткеев/кнопок/меню) | ✅ | (новое) |
 | `core/io.js` | сохраняет canvas/blob в файл | ✅ | 11-export |
 
 ## logic/ — чистые вычисления (без DOM и state)
@@ -67,7 +68,7 @@
 | `systems/reference-window.js` | показывает окно референса | 🔲 | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | 🔲 | 12-app |
 | `systems/toolbars.js` | настраивает и перетаскивает кнопки панелей | 🔲 | 12-app |
-| `systems/keyboard.js` | раскладывает горячие клавиши | 🔲 | 12-app |
+| `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
 | `app.js` | поднимает системы и инициализирует приложение | 🔲 | 12-app |
 
 > «Окна» (`floatingWindow`, `pinchZoom`) — общие помощники из

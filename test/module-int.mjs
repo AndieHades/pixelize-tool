@@ -17,6 +17,8 @@ const history = await import('../src/core/history.js');
 const bus = await import('../src/core/bus.js');
 const doc = await import('../src/core/document.js');
 const render = await import('../src/systems/render/index.js');
+const actions = await import('../src/core/actions.js');
+const kbd = await import('../src/systems/keyboard/index.js');
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
@@ -67,5 +69,19 @@ t('render: с выделением и кропом не падает', () => { r
   S.cropMode = null; assert.ok(true);
 });
 t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
+
+const ev = (code, mods = {}) => ({ code, target: document.body, preventDefault() {}, ...mods });
+t('keyboard: комбо из события', () => {
+  assert.equal(kbd.comboOf({ code: 'KeyB' }), 'b');
+  assert.equal(kbd.comboOf({ code: 'KeyZ', ctrlKey: true }), 'mod+z');
+  assert.equal(kbd.comboOf({ code: 'KeyS', shiftKey: true }), 'shift+s');
+  assert.equal(kbd.comboOf({ code: 'Equal' }), '='); assert.equal(kbd.comboOf({ code: 'Digit0' }), '0');
+});
+t('keyboard: хоткей запускает действие', () => { let ran = 0; actions.register('tool.pencil', () => ran++);
+  assert.ok(kbd.handle(ev('KeyB'))); assert.equal(ran, 1); });
+t('keyboard: незарегистрированное действие игнорится', () => { assert.equal(kbd.handle(ev('KeyK')), false); });
+t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
+  kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap(); });
+t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
