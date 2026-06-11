@@ -1,0 +1,33 @@
+/* Дизайн-токены темы — единственное место для цветов/размеров. Стили ссылаются
+   только на var(--…). Тема — другой набор значений этих же токенов. */
+:root {
+  color-scheme: dark;
+  /* цвета */
+  --bg: #0d0d10;
+  --panel: rgba(26, 26, 31, .82);
+  --panel-solid: #1a1a1f;
+  --surface: #101014;
+  --line: rgba(255, 255, 255, .08);
+  --txt: #f2f2f5;
+  --txt2: #9a9aa3;
+  --accent: #3d8bfd;
+  --accent-soft: rgba(61, 139, 253, .18);
+  --danger: #f00;
+  /* размеры */
+  --btn: 40px;
+  --radius: 12px;
+  --gap: 8px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef0f3;
+  --panel: rgba(250, 250, 252, .85);
+  --panel-solid: #ffffff;
+  --surface: #e4e6ea;
+  --line: rgba(0, 0, 0, .1);
+  --txt: #15161a;
+  --txt2: #5b5f6b;
+  --accent: #2b6fe0;
+  --accent-soft: rgba(43, 111, 224, .16);
+}

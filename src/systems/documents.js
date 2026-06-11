@@ -10,6 +10,7 @@ import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../config/presets.js';
 import { MAX_SIZE, MAX_LAYERS } from '../config/limits.js';
 import { t, getLocale, locales, setLocale } from '../i18n/index.js';
+import { toggleTheme, getTheme } from '../styles/theme.js';
 
 let docs = [{ name: 'Документ 1' }], docCur = 0, docSeq = 1, dblTimer = null, dblIdx = -1;
 export const docList = () => docs; export const curDoc = () => docCur;
@@ -65,6 +66,8 @@ function openDocsMenu() { const m = $('dctx'); m.innerHTML = '';
   const others = locales().filter((l) => l !== getLocale());
   const lang = document.createElement('button'); lang.textContent = t('ui.language') + ': ' + getLocale().toUpperCase() + (others[0] ? ' → ' + others[0].toUpperCase() : '');
   lang.onclick = () => { m.classList.remove('on'); if (others[0]) setLocale(others[0]); }; m.appendChild(lang);
+  const theme = document.createElement('button'); theme.textContent = t('ui.theme') + ': ' + (getTheme() === 'light' ? '☀' : '🌙');
+  theme.onclick = () => { m.classList.remove('on'); toggleTheme(); }; m.appendChild(theme);
   showMenuAt(m, $('docsbtn').getBoundingClientRect().left, $('docsbtn').getBoundingClientRect().bottom + 6); }
 
 export function mount() {
