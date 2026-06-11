@@ -2,7 +2,8 @@
     function openBrushPop(t) { bpTool = t; $('bp-title').textContent = t === 'eraser' ? 'Ластик' : 'Кисть';
       const br = brushes[bpTool]; $('bp-size').value = br.size; $('bp-sizev').textContent = br.size;
       $('bp-op').value = Math.round(br.op * 100); $('bp-opv').textContent = Math.round(br.op * 100) + '%';
-      $('outpop').classList.remove('on'); if (outPreview) { outPreview = null; render(); } $('brushpop').classList.toggle('on'); }
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
+      if (outPreview || dsPreview) { outPreview = null; dsPreview = null; render(); } $('brushpop').classList.toggle('on'); }
     function makeDraggable(el) { let d = null; // окошко настроек можно отодвинуть и поставить рядом
       el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button')) return;
         el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
@@ -14,13 +15,17 @@
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
     makeDraggable($('brushpop')); makeDraggable($('outpop')); makeDraggable($('dspop'));
     let dsRef = null;
+    function computeDsPreview() { if (!dsRef || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
+      const dx = +$('ds-x').value, dy = +$('ds-y').value, pre = [];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (dsRef.grid[y][x]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) pre.push([nx, ny]); }
+      dsPreview = pre; render(); }
     function openDsPop(L) { dsRef = L; $('brushpop').classList.remove('on'); $('outpop').classList.remove('on');
-      $('dspop').classList.toggle('on'); }
-    $('ds-x').addEventListener('input', () => { $('ds-xv').textContent = $('ds-x').value; });
-    $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; });
-    $('ds-op').addEventListener('input', () => { $('ds-opv').textContent = $('ds-op').value + '%'; });
-    $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; });
-    $('ds-apply').onclick = () => { $('dspop').classList.remove('on');
+      const on = $('dspop').classList.toggle('on'); if (on) computeDsPreview(); else { dsPreview = null; render(); } }
+    $('ds-x').addEventListener('input', () => { $('ds-xv').textContent = $('ds-x').value; computeDsPreview(); });
+    $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; computeDsPreview(); });
+    $('ds-op').addEventListener('input', () => { $('ds-opv').textContent = $('ds-op').value + '%'; render(); });
+    $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; render(); });
+    $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); dsPreview = null;
       if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
     $('bp-size').addEventListener('input', () => { brushes[bpTool].size = +$('bp-size').value; $('bp-sizev').textContent = $('bp-size').value; });
     $('bp-op').addEventListener('input', () => { brushes[bpTool].op = +$('bp-op').value / 100; $('bp-opv').textContent = $('bp-op').value + '%'; });

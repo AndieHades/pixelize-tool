@@ -79,10 +79,21 @@
         selFloat.x = selFloat.ox + (gx - selDrag.sx); selFloat.y = selFloat.oy + (gy - selDrag.sy);
         sel = { x0: selFloat.x, y0: selFloat.y, x1: selFloat.x + selFloat.w - 1, y1: selFloat.y + selFloat.h - 1 }; selDrag.moved = true; }
       syncSelbar(); render(); }
+    function symmetrizeSelection() { // при включённой симметрии добавляем в выделение зеркальные клетки
+      if (!sel || (!sym && !symH)) return;
+      const base = new Set();
+      if (selMask) for (const k of selMask) base.add(k);
+      else for (let y = sel.y0; y <= sel.y1; y++) for (let x = sel.x0; x <= sel.x1; x++) base.add(x + ',' + y);
+      const out = new Set(base);
+      for (const k of base) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
+        if (sym) out.add((W - 1 - x) + ',' + y);
+        if (symH) out.add(x + ',' + (H - 1 - y));
+        if (sym && symH) out.add((W - 1 - x) + ',' + (H - 1 - y)); }
+      maskFromCells(out); }
     function selUp() { if (!selDrag) return;
       if (selDrag.mode === 'move' || selDrag.mode === 'scale') { if (selDrag.lifted) { commitFloat(); sel = sel ? normSel(sel.x0, sel.y0, sel.x1, sel.y1) : null; if (!sel) selMask = null; } }
       else if (!selDrag.moved) sel = null;
-      else if (sel && !selHinted) { selHinted = true; toast('Рисование теперь только внутри рамки'); }
+      else { symmetrizeSelection(); if (sel && !selHinted) { selHinted = true; toast('Рисование теперь только внутри рамки'); } }
       selDrag = null; syncSelbar(); render(); }
     const inMask = (x, y) => !selMask || selMask.has(x + ',' + y);
     function fragFromSel() { const g = G(), f = [];
@@ -102,7 +113,7 @@
         if (c && eqc(c, col)) { mask.add(x + ',' + y); n++;
           if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
       if (!n) { toast('На активном слое нет этого цвета'); return; }
-      sel = { x0, y0, x1, y1 }; selMask = mask; syncSelbar(); render();
+      sel = { x0, y0, x1, y1 }; selMask = mask; symmetrizeSelection(); syncSelbar(); render();
       toast(`Выделено: ${n} пикс. — крась, тащи или жми заливку`); }
     function maskFromCells(set) { let x0 = W, y0 = H, x1 = -1, y1 = -1;
       for (const k of set) { const ci = k.indexOf(','), x = +k.slice(0, ci), y = +k.slice(ci + 1);
@@ -111,7 +122,7 @@
     function selectLayerContent() { const g = G(), mask = new Set(); // всё непустое на активном слое
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y][x]) mask.add(x + ',' + y);
       if (!mask.size) { deselect(); toast('Слой пуст'); return; }
-      maskFromCells(mask); toast('Выделено всё на слое: ' + mask.size + ' пикс.'); }
+      maskFromCells(mask); symmetrizeSelection(); toast('Выделено всё на слое: ' + mask.size + ' пикс.'); }
     function invertSelection() { const inSelNow = (x, y) => selMask ? selMask.has(x + ',' + y) : (sel && x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1);
       const mask = new Set();
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!inSelNow(x, y)) mask.add(x + ',' + y);

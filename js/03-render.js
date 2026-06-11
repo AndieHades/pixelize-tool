@@ -70,6 +70,10 @@
         const oc = hexToRgb($('out-col').value); ctx.fillStyle = rgb(oc); ctx.globalAlpha = (+$('out-op').value / 100) * .8;
         for (const p of outPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z);
         ctx.globalAlpha = 1; }
+      if (dsPreview && $('dspop').classList.contains('on')) { // призрак будущей тени
+        const dc = hexToRgb($('ds-col').value); ctx.fillStyle = rgb(dc); ctx.globalAlpha = (+$('ds-op').value / 100) * .85;
+        for (const p of dsPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z);
+        ctx.globalAlpha = 1; }
       if (selFloat) { for (const [k, c] of selFloat.cells) { const ci = k.indexOf(','), dx = +k.slice(0, ci), dy = +k.slice(ci + 1);
         ctx.fillStyle = rgb(c); ctx.fillRect(ox + (selFloat.x + dx) * z, oy + (selFloat.y + dy) * z, z, z); } }
       if (sel && !selMask) { const sx = ox + sel.x0 * z, sy = oy + sel.y0 * z, sw = (sel.x1 - sel.x0 + 1) * z, sh = (sel.y1 - sel.y0 + 1) * z;

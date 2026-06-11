@@ -117,7 +117,7 @@
         L.grid = out; L.ext = ne; }
       view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
       sel = null; syncSelbar(); dirtyAll(); }
-    function openOutlinePop() { $('brushpop').classList.remove('on');
+    function openOutlinePop() { $('brushpop').classList.remove('on'); $('dspop').classList.remove('on'); dsPreview = null;
       const v = '#' + active.map((q) => q.toString(16).padStart(2, '0')).join('');
       $('out-col').value = v; $('out-colsw').style.background = v;
       $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
@@ -249,6 +249,12 @@
         const v = lum(c); g[y][x] = c.length > 3 ? [v, v, v, c[3]] : [v, v, v]; }
       for (const [k, c] of L.ext) { const v = lum(c); L.ext.set(k, c.length > 3 ? [v, v, v, c[3]] : [v, v, v]); } }
     function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); layList(); render(); toast('Слой в монохроме'); }
+    function symmetrizeLayer(L) { // сделать слой симметричным: зеркалим первую половину на вторую
+      const v = sym || (!sym && !symH), h = symH; snapshot(); const g = L.grid;
+      if (v) for (let y = 0; y < H; y++) for (let x = 0; x < (W >> 1); x++) { const mx = W - 1 - x; g[y][mx] = g[y][x] ? g[y][x].slice() : null; }
+      if (h) for (let y = 0; y < (H >> 1); y++) for (let x = 0; x < W; x++) { const my = H - 1 - y; g[my][x] = g[y][x] ? g[y][x].slice() : null; }
+      const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList();
+      toast('Слой симметрирован' + (v && h ? ' (обе оси)' : v ? ' (лево→право)' : ' (верх→низ)')); }
     function monoAll() { snapshot(); for (const L of layers) toMono(L); dirtyAll(); layList(); render(); toast('Изображение в монохроме'); }
     // ---- яркость/контраст с живым предпросмотром ----
     let bcBackup = null; // [{L, grid, ext}] — оригиналы на время подгонки
