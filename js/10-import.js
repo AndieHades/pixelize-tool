@@ -13,6 +13,47 @@
       };
       im.src = URL.createObjectURL(file);
     }
+    function looksPixelArt(im) { // эвристика: мало цветов и/или маленький размер → это уже пиксель-арт
+      const w = im.naturalWidth, h = im.naturalHeight;
+      if (Math.max(w, h) <= 96) return true;
+      const SAMP = 220, k = Math.min(1, SAMP / Math.max(w, h));
+      const sw = Math.max(1, Math.round(w * k)), sh = Math.max(1, Math.round(h * k));
+      const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(im, 0, 0, sw, sh);
+      const d = x.getImageData(0, 0, sw, sh).data, colors = new Set();
+      for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) continue;
+        colors.add((d[i] >> 2) + ',' + (d[i + 1] >> 2) + ',' + (d[i + 2] >> 2));
+        if (colors.size > 180) return false; } // много цветов (фото/градиенты) — не пиксель-арт
+      return true;
+    }
+    function insertPixelImage(im) { // вставить как есть в натуральном размере, не уменьшая
+      const iw = im.naturalWidth, ih = im.naturalHeight;
+      const c = document.createElement('canvas'); c.width = iw; c.height = ih;
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(im, 0, 0);
+      const d = x.getImageData(0, 0, iw, ih).data;
+      snapshot();
+      const nW = Math.max(W, iw), nH = Math.max(H, ih); // холст меньше картинки — расширяем (картинку не трогаем)
+      if (nW !== W || nH !== H) { const pl = (nW - W) >> 1, pt = (nH - H) >> 1; expandCanvas(pl, pt, nW - W - pl, nH - H - pt); }
+      if (layers.length >= 8) { restore(undoStack.pop()); toast('Максимум 8 слоёв — удали лишние'); return; }
+      const nl = newLayer('Картинка'); nl.fid = layers[cur].fid;
+      const ox2 = (W - iw) >> 1, oy2 = (H - ih) >> 1; // по центру холста
+      for (let y = 0; y < ih; y++) for (let xx = 0; xx < iw; xx++) { const o = (y * iw + xx) * 4;
+        if (d[o + 3] < 8) continue; nl.grid[oy2 + y][ox2 + xx] = [d[o], d[o + 1], d[o + 2], d[o + 3]]; }
+      layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); fitView(); toast(`Вставлено ${iw}×${ih}`);
+    }
+    function dropImage(file) { if (!file) return;
+      const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
+      im.onload = () => { if (looksPixelArt(im)) insertPixelImage(im); else openImport(file); }; // пиксель — вставить, иначе пикселизатор
+      im.src = URL.createObjectURL(file); }
+    (function dropWire() { let depth = 0;
+      const show = (on) => $('dropmask').classList.toggle('on', on);
+      window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+      window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });
+      window.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) show(false); });
+      window.addEventListener('drop', (e) => { e.preventDefault(); depth = 0; show(false);
+        const f = e.dataTransfer && [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
+        if (f) dropImage(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast('Это не картинка'); });
+    })();
     function impConvert() {
       if (!impData) return;
       const colors = +$('imp-colors').value, detail = +$('imp-cell').value, bgtol = +$('imp-bgtol').value;

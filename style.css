@@ -53,6 +53,13 @@
     #paldrag { position: fixed; z-index: 95; display: none; width: 32px; height: 32px; border-radius: 8px;
       transform: translate(-50%, -50%) scale(1.15); border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .55); pointer-events: none; }
     #paldrag.on { display: block; }
+    #dropmask { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center;
+      background: rgba(13, 13, 16, .72); backdrop-filter: blur(2px); pointer-events: none; }
+    #dropmask.on { display: flex; }
+    #dropmask > div { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--txt);
+      font-size: 20px; font-weight: 700; padding: 28px 40px; border-radius: 18px;
+      border: 2px dashed var(--accent); background: rgba(26, 26, 31, .9); }
+    #dropmask small { color: var(--txt2); font-size: 13px; font-weight: 400; }
 
     /* ---- кастомный HSV-пикер ---- */
     .col-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
