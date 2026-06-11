@@ -409,7 +409,9 @@
 /* кнопка Stack «загорается», когда выбрано 2+ */
 .gal-actions button.lit { background: var(--accent); color: #fff; }
 /* кнопка подтверждения выбора (галочка) */
-.gal-actions button.confirm { background: var(--accent); color: #fff; font-size: 17px; }
+.gal-actions button.confirm { background: var(--accent); color: #fff; }
+/* круглые иконочные кнопки (＋, ✓) */
+.gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
 .gal-cap { padding: 8px 2px 0; }
 .gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; outline: none; }
 .gal-cap b.editing { background: var(--panel-solid); border-radius: 4px; padding: 1px 4px; }

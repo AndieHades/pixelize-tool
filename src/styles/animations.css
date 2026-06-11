@@ -2,14 +2,17 @@
    Все тайминги, кривые и масштабы берутся из токенов (tokens.css);
    правь значения там, а сами движения — здесь. */
 
-/* Тактильное нажатие: кнопка слегка вдавливается. */
-.gal-actions button,
+/* Тактильное нажатие текстовых кнопок: слегка вдавливаются, пока нажаты. */
+.gal-actions button:not(.gal-round),
 .press { transition: transform var(--anim-fast) var(--ease-out); }
-.gal-actions button:active,
+.gal-actions button:not(.gal-round):active,
 .press:active { transform: scale(var(--press-scale)); }
 
-/* Кнопка подтверждения (галочка) — выраженная отдача. */
-.gal-actions button.confirm:active { transform: scale(calc(var(--press-scale) - .04)); }
+/* Круглые иконочные кнопки (＋, ✓) — единая отдача: сжаться → вырасти и
+   удержаться увеличенными, пока кнопка нажата; отпустил — плавно к исходному. */
+@keyframes btn-recoil { 0% { transform: scale(1); } 40% { transform: scale(var(--press-scale)); } 100% { transform: scale(var(--lift-scale)); } }
+.gal-round { transition: transform var(--anim-fast) var(--ease-out); }
+.gal-round:active { animation: btn-recoil var(--anim-pop) var(--ease-pop) forwards; }
 
 /* Появление чек-кружка при входе в режим выбора. */
 @keyframes pop-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }

@@ -12,7 +12,8 @@ const gridEl = () => $('gal-grid');
 export const isSelecting = () => selecting;
 
 export function setSelecting(v) { selecting = v; selected.clear();
-  const sb = $('gal-select'); sb.textContent = v ? '✓' : t('gallery.select'); sb.classList.toggle('confirm', v); sb.title = v ? t('gallery.done') : '';
+  const sb = $('gal-select'); sb.textContent = v ? '✓' : t('gallery.select');
+  sb.classList.toggle('confirm', v); sb.classList.toggle('gal-round', v); sb.title = v ? t('gallery.done') : '';
   for (const id of ['gal-stack', 'gal-dup', 'gal-del']) $(id).style.display = v ? '' : 'none';
   for (const id of ['gal-convert', 'gal-import', 'gal-photo', 'gal-new']) $(id).style.display = v ? 'none' : '';
   gridEl().classList.toggle('selecting', v); updateSel(); render(); }
