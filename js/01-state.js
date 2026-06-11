@@ -14,6 +14,8 @@
     let folders = [], folderSeq = 0; const marked = new Set(); // папки слоёв и мультивыбор
     const effVis = (i) => { const L = layers[i]; if (!L.visible) return false; if (L.fid == null) return true;
       const f = folders.find((x) => x.id === L.fid); return !f || f.visible; };
+    const layerFolder = (L) => L && L.fid != null ? folders.find((x) => x.id === L.fid) : null;
+    const layerSymLocked = (L) => !!(L && (L.symLock || (layerFolder(L) && layerFolder(L).symLock)));
     const G = () => layers[cur].grid;
     const defaultPalette = () => ['#0c0c10', '#202733', '#cbd3dc', '#e9edf0', '#ff7a18', '#c74a00', '#78d7ff'].map(hexToRgb);
     let palette = defaultPalette();

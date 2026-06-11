@@ -59,7 +59,7 @@
     function rotScreen(p) { return { x: view.ox + p.x * view.zoom, y: view.oy + p.y * view.zoom }; }
     function rotPointer(e) { const r = cv.getBoundingClientRect();
       return { sx: e.clientX - r.left, sy: e.clientY - r.top, x: (e.clientX - r.left - view.ox) / view.zoom, y: (e.clientY - r.top - view.oy) / view.zoom }; }
-    function rotBuildCells(m) {
+    function rotBuildCells(m, src = m.src) {
       const f = rotFrame(m), xs = f.p.map((p) => p.x), ys = f.p.map((p) => p.y);
       const x0 = Math.floor(Math.min(...xs)) - 1, x1 = Math.ceil(Math.max(...xs)) + 1;
       const y0 = Math.floor(Math.min(...ys)) - 1, y1 = Math.ceil(Math.max(...ys)) + 1;
@@ -67,13 +67,15 @@
       for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
         const q = rotWorldToLocal(m, x + .5, y + .5), sx = Math.floor(q.x), sy = Math.floor(q.y);
         if (sx < 0 || sy < 0 || sx >= m.b.w || sy >= m.b.h) continue;
-        const c = m.src[sy][sx]; if (!c) continue;
+        const c = src[sy][sx]; if (!c) continue;
         cells.push([x, y, c]); if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
       }
       return cells.length ? { cells, minx, miny, maxx, maxy } : null;
     }
     function rotRebuild() { if (!rotMode) return;
-      const res = rotBuildCells(rotMode);
+      let res = null, all = [];
+      for (const s of rotMode.sources) { const r = rotBuildCells(rotMode, s.src); if (!r) continue;
+        all = all.concat(r.cells); res = res ? { cells: all, minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : { ...r, cells: all }; }
       if (!res) { rotPrev = { idx: rotMode.idx, canvas: null }; render(); return; }
       const c = document.createElement('canvas'), w2 = res.maxx - res.minx + 1, h2 = res.maxy - res.miny + 1;
       c.width = w2; c.height = h2; const x2 = c.getContext('2d'), id = x2.createImageData(w2, h2);
@@ -81,26 +83,36 @@
         id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
       x2.putImageData(id, 0, 0); rotPrev = { idx: rotMode.idx, canvas: c, px: res.minx, py: res.miny, ow: w2, oh: h2 }; render(); }
     function rotRebuildSoon() { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); }
-    function enterRotMode(L) { const i = layers.indexOf(L); if (i < 0) return; const b0 = layerBounds(L);
+    function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => layers.includes(L));
+      if (!targets.length) return; let b0 = null;
+      for (const L of targets) { const lb = layerBounds(L); if (!lb) continue;
+        b0 = b0 ? { minx: Math.min(b0.minx, lb.minx), miny: Math.min(b0.miny, lb.miny), maxx: Math.max(b0.maxx, lb.maxx), maxy: Math.max(b0.maxy, lb.maxy) } : lb; }
       if (!b0) { toast('Слой пуст'); return; }
+      const idxs = targets.map((L) => layers.indexOf(L)).sort((a, b) => a - b), i = idxs[idxs.length - 1];
       cur = i; $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('glowpop').classList.remove('on');
-      const src = []; for (let y = b0.miny; y <= b0.maxy; y++) {
-        const row = []; for (let x = b0.minx; x <= b0.maxx; x++) row.push(L.grid[y][x] ? L.grid[y][x].slice() : null); src.push(row); }
-      rotMode = { idx: i, src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 },
+      const sources = targets.slice().sort((a, b) => layers.indexOf(a) - layers.indexOf(b)).map((L) => {
+        const src = []; for (let y = b0.miny; y <= b0.maxy; y++) {
+          const row = []; for (let x = b0.minx; x <= b0.maxx; x++) row.push(L.grid[y][x] ? L.grid[y][x].slice() : null); src.push(row); }
+        return { L, idx: layers.indexOf(L), src };
+      });
+      rotMode = { idx: i, idxs, sources, src: sources[0].src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 },
         ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [] };
       layList(); $('rotbar').classList.add('on'); rotRebuild();
       toast('Углы — поворот · стороны — растяжение · Enter/ПКМ — применить'); }
     function applyRotMode(m) {
-      const res = rotBuildCells(m);
+      let res = null, per = [];
+      for (const s of m.sources) { const r = rotBuildCells(m, s.src); per.push({ s, r }); if (!r) continue;
+        res = res ? { minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : r; }
       if (!res) { toast('Трансформация пустая'); return false; }
       snapshot();
       const pl = Math.max(0, -res.minx), pt = Math.max(0, -res.miny);
       const pr = Math.max(0, res.maxx - (W - 1)), pb = Math.max(0, res.maxy - (H - 1));
       if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
-      const L = layers[m.idx]; if (!L) return false;
-      const g = blank(W, H); for (const [x, y, c] of res.cells) {
-        const nx = x + pl, ny = y + pt; if (nx >= 0 && ny >= 0 && nx < W && ny < H) g[ny][nx] = c.slice(); }
-      L.grid = g; L.ext = new Map(); markDirty(m.idx); dirtyAll(); layList(); render(); return true;
+      for (const { s, r } of per) { const L = s.L; if (!layers.includes(L)) continue;
+        const g = blank(W, H); if (r) for (const [x, y, c] of r.cells) {
+          const nx = x + pl, ny = y + pt; if (nx >= 0 && ny >= 0 && nx < W && ny < H) g[ny][nx] = c.slice(); }
+        L.grid = g; L.ext = new Map(); const idx = layers.indexOf(L); if (idx >= 0) markDirty(idx); }
+      dirtyAll(); layList(); render(); return true;
     }
     function undoRotStep() { if (!rotMode) return false;
       if (!rotMode.hist.length) { toast('В трансформации нечего отменять'); return true; }
@@ -146,9 +158,10 @@
       ctx.restore();
     }
     let dsRef = null;
-    function computeDsPreview() { if (!dsRef || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
+    const effectTargets = (ref) => Array.isArray(ref) ? ref.filter((L) => layers.includes(L)) : (ref && layers.includes(ref) ? [ref] : []);
+    function computeDsPreview() { const targets = effectTargets(dsRef); if (!targets.length || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
       const dx = +$('ds-x').value, dy = +$('ds-y').value, pre = [];
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (dsRef.grid[y][x]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) pre.push([nx, ny]); }
+      for (const L of targets) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) pre.push([nx, ny]); }
       dsPreview = pre; render(); }
     function openDsPop(L) { dsRef = L; $('outpop').classList.remove('on'); $('glowpop').classList.remove('on'); outPreview = null; glowPreview = null;
       const on = $('dspop').classList.toggle('on'); if (on) computeDsPreview(); else { dsPreview = null; render(); } }
@@ -157,20 +170,20 @@
     $('ds-op').addEventListener('input', () => { $('ds-opv').textContent = $('ds-op').value + '%'; render(); });
     $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; render(); });
     $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); dsPreview = null;
-      if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
+      const targets = effectTargets(dsRef); if (targets.length) dropShadowLayers(targets, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
     // ---- свечение ----
     let glowRef = null, glowRAF = 0;
-    function computeGlowPreview() { if (!glowRef || !$('glowpop').classList.contains('on')) { glowPreview = null; render(); return; }
-      glowPreview = computeGlow(glowRef, +$('glow-range').value, +$('glow-int').value / 100); render(); }
+    function computeGlowPreview() { const targets = effectTargets(glowRef); if (!targets.length || !$('glowpop').classList.contains('on')) { glowPreview = null; render(); return; }
+      glowPreview = []; for (const L of targets) glowPreview = glowPreview.concat(computeGlow(L, +$('glow-range').value, +$('glow-int').value / 100)); render(); }
     function glowSoon() { cancelAnimationFrame(glowRAF); glowRAF = requestAnimationFrame(computeGlowPreview); }
-    function openGlowPop(L) { glowRef = L; const i = layers.indexOf(L); if (i >= 0) cur = i; layList();
+    function openGlowPop(L) { glowRef = L; const targets = effectTargets(L), i = targets.length ? layers.indexOf(targets[targets.length - 1]) : -1; if (i >= 0) cur = i; layList();
       $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); outPreview = null; dsPreview = null;
       const on = $('glowpop').classList.toggle('on'); if (on) computeGlowPreview(); else { glowPreview = null; render(); } }
     $('glow-range').addEventListener('input', () => { $('glow-rangev').textContent = $('glow-range').value; glowSoon(); });
     $('glow-int').addEventListener('input', () => { $('glow-intv').textContent = $('glow-int').value + '%'; glowSoon(); });
     $('glow-col').addEventListener('input', () => { $('glow-colsw').style.background = $('glow-col').value; render(); });
     $('glow-apply').onclick = () => { $('glowpop').classList.remove('on'); glowPreview = null;
-      if (glowRef && layers.includes(glowRef)) glowLayer(glowRef, +$('glow-range').value, hexToRgb($('glow-col').value), +$('glow-int').value / 100); };
+      const targets = effectTargets(glowRef); if (targets.length) glowLayers(targets, +$('glow-range').value, hexToRgb($('glow-col').value), +$('glow-int').value / 100); };
     $('t-pencil').onclick = () => setTool('pencil');
     $('t-eraser').onclick = () => setTool('eraser');
     $('t-line').onclick = () => setTool('line');

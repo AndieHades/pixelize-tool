@@ -1,6 +1,6 @@
     const inSel = (x, y) => !sel || (x >= sel.x0 && x <= sel.x1 && y >= sel.y0 && y <= sel.y1 && (!selMask || selMask.has(x + ',' + y)));
-    const symA = () => sym && !layers[cur].symLock;   // симметрия лево-право активна на текущем слое?
-    const symHA = () => symH && !layers[cur].symLock; // верх-низ
+    const symA = () => sym && !layerSymLocked(layers[cur]);   // симметрия лево-право активна на текущем слое?
+    const symHA = () => symH && !layerSymLocked(layers[cur]); // верх-низ
     function setCell(x, y, c) {
       if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return; // выделение работает как маска
       const g = G(); g[y][x] = c ? c.slice() : null;
@@ -192,21 +192,25 @@
         L.grid = out; L.ext = ne; }
       W = nw; H = nh; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Холст: ${W}×${H}`);
     }
-    function dropShadow(L, dx, dy, col, op) { // силуэт слоя отдельным слоем под ним, со смещением
-      let any = false, minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { any = true;
+    function dropShadowLayers(targets, dx, dy, col, op) { // силуэт каждого слоя отдельным слоем под ним, со смещением
+      targets = targets.filter((L) => layers.includes(L)); let any = false, minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+      for (const L of targets) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { any = true;
         const sx = x + dx, sy = y + dy; if (sx < minx) minx = sx; if (sy < miny) miny = sy; if (sx > maxx) maxx = sx; if (sy > maxy) maxy = sy; }
       if (!any) { toast('Слой пуст'); return; }
-      if (layers.length >= 8) { toast('Максимум 8 слоёв — удали лишние'); return; }
+      if (layers.length + targets.length > 8) { toast('Максимум 8 слоёв — удали лишние'); return; }
       snapshot();
       const pl = Math.max(0, -minx), pt = Math.max(0, -miny), pr = Math.max(0, maxx - (W - 1)), pb = Math.max(0, maxy - (H - 1));
       if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb); // не лезет — раздвигаем холст, как обводка
-      const a = Math.round(op * 255), sh = newLayer('Тень'); sh.fid = L.fid;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { // силуэт берём из уже расширенного слоя
-        const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) sh.grid[ny][nx] = [col[0], col[1], col[2], a]; }
-      const li = layers.indexOf(L); layers.splice(li, 0, sh); cur = li + 1; // тень под исходным слоем
-      marked.clear(); dirtyAll(); layList(); render(); toast('Тень создана');
+      const a = Math.round(op * 255);
+      for (const L of targets.slice().sort((a2, b2) => layers.indexOf(a2) - layers.indexOf(b2))) {
+        const sh = newLayer('Тень'); sh.fid = L.fid;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { // силуэт берём из уже расширенного слоя
+          const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) sh.grid[ny][nx] = [col[0], col[1], col[2], a]; }
+        const li = layers.indexOf(L); layers.splice(li, 0, sh); cur = li + 1; // тень под исходным слоем
+      }
+      marked.clear(); dirtyAll(); layList(); render(); toast(targets.length > 1 ? 'Тень создана для папки' : 'Тень создана');
     }
+    function dropShadow(L, dx, dy, col, op) { dropShadowLayers([L], dx, dy, col, op); }
     // ---- управляемое свечение (мягкий ореол): чамфер-расстояние пустых клеток до контента ----
     function glowField(L) { const d = new Float32Array(W * H), INF = 1e9;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) d[y * W + x] = L.grid[y][x] ? 0 : INF;
@@ -231,17 +235,22 @@
       }
       return maxx < 0 ? null : { minx, miny, maxx, maxy };
     }
-    function glowLayer(L, range, col, intensity) {
-      const b = layerBounds(L);
+    function glowLayers(targets, range, col, intensity) {
+      targets = targets.filter((L) => layers.includes(L)); let b = null;
+      for (const L of targets) { const lb = layerBounds(L); if (!lb) continue;
+        b = b ? { minx: Math.min(b.minx, lb.minx), miny: Math.min(b.miny, lb.miny), maxx: Math.max(b.maxx, lb.maxx), maxy: Math.max(b.maxy, lb.maxy) } : lb; }
       if (!b) { toast('Слой пуст'); return; }
       snapshot();
       const pl = Math.max(0, Math.ceil(range - b.minx)), pt = Math.max(0, Math.ceil(range - b.miny));
       const pr = Math.max(0, Math.ceil(range - (W - 1 - b.maxx))), pb = Math.max(0, Math.ceil(range - (H - 1 - b.maxy)));
       if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
-      const cells = computeGlow(L, range, intensity);
-      if (!cells.length) { const s = undoStack.pop(); if (s) restore(s); toast('Нечего подсветить'); return; }
-      const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
-      const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList(); toast('Свечение добавлено'); }
+      let n = 0;
+      for (const L of targets) { const cells = computeGlow(L, range, intensity); n += cells.length;
+        const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
+        const i = layers.indexOf(L); if (i >= 0) markDirty(i); }
+      if (!n) { const s = undoStack.pop(); if (s) restore(s); toast('Нечего подсветить'); return; }
+      render(); layList(); toast(targets.length > 1 ? 'Свечение добавлено для папки' : 'Свечение добавлено'); }
+    function glowLayer(L, range, col, intensity) { glowLayers([L], range, col, intensity); }
     function trimCanvas() { // обрезать пустые поля впритык к рисунку (по всем слоям)
       let x0 = W, y0 = H, x1 = -1, y1 = -1;
       for (const L of layers) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {

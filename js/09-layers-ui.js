@@ -30,7 +30,16 @@
           nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
           const eye = document.createElement('button'); eye.className = 'eye' + (f.visible ? '' : ' off'); eye.innerHTML = EYE;
           eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); render(); });
-          fr.append(car, nm, eye);
+          fr.append(car, nm);
+          if (sym || symH) {
+            const sl = document.createElement('button'); sl.className = 'symlock' + (f.symLock ? ' off' : '');
+            sl.title = f.symLock ? 'Симметрия отключена в папке — включить' : 'Симметрия активна в папке — отключить';
+            sl.innerHTML = SYMLOCK;
+            sl.addEventListener('click', (ev) => { ev.stopPropagation(); f.symLock = !f.symLock; layList(); render();
+              toast(f.symLock ? 'Симметрия в папке отключена' : 'Симметрия в папке включена'); });
+            fr.append(sl);
+          }
+          fr.append(eye);
           fr.addEventListener('click', ((fld, sp) => () => { if (layDragSquelch) return;
             const now = performance.now(), key = 'f' + fld.id;
             if (lastLayClick.idx === key && now - lastLayClick.t < 350) { lastLayClick.idx = -1; startInlineRename(sp, fld); return; } // двойной клик — правка имени в строке
@@ -51,10 +60,12 @@
         eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); render(); });
         row.append(chk, thumbFor(i), nm);
         if (sym || symH) { // замок симметрии виден только когда симметрия включена
-          const sl = document.createElement('button'); sl.className = 'symlock' + (L.symLock ? ' off' : '');
-          sl.title = L.symLock ? 'Симметрия отключена на слое — включить' : 'Симметрия активна на слое — отключить';
+          const sl = document.createElement('button'); sl.className = 'symlock' + (layerSymLocked(L) ? ' off' : '');
+          sl.title = layerSymLocked(L) ? 'Симметрия отключена на слое — включить' : 'Симметрия активна на слое — отключить';
           sl.innerHTML = SYMLOCK;
-          sl.addEventListener('click', (ev) => { ev.stopPropagation(); L.symLock = !L.symLock; layList(); render();
+          sl.addEventListener('click', (ev) => { ev.stopPropagation(); const f2 = layerFolder(L);
+            if (f2 && f2.symLock) { toast('Симметрия отключена на папке'); return; }
+            L.symLock = !L.symLock; layList(); render();
             toast(L.symLock ? 'Симметрия на слое отключена' : 'Симметрия на слое включена'); });
           row.append(sl); }
         row.append(eye);
@@ -71,26 +82,35 @@
     }
     // ---- перетаскивание слоёв/папок: между собой, внутрь папки и наружу ----
     let layDragSquelch = false;
+    const folderLayers = (f) => layers.filter((L) => L.fid === f.id);
     function topOfFolder(fid) { let t = -1; for (let i = 0; i < layers.length; i++) if (layers[i].fid === fid) t = i; return t; }
+    function makeLayerGhost(label) { const g = document.createElement('div'); g.className = 'lay-drag-ghost';
+      const dot = document.createElement('i'), text = document.createElement('span'); text.textContent = label; g.append(dot, text); document.body.appendChild(g); return g; }
+    function placeLayerGhost(g, x, y) { if (!g) return; g.style.left = (x + 14) + 'px'; g.style.top = (y + 12) + 'px'; }
     function dragRow(el, info) {
       el.addEventListener('pointerdown', (e) => {
         if (e.target.closest('button')) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false;
+        const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false, ghost = null;
         const move = (ev) => {
           if (!started && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 7) { started = true;
             el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
+            const label = info.kind === 'folder' ? el.querySelector('.lname').textContent : (marked.size > 1 && marked.has(info.idx) ? marked.size + ' слоя' : layers[info.idx].name);
+            ghost = makeLayerGhost(label); placeLayerGhost(ghost, ev.clientX, ev.clientY);
             if (info.kind === 'layer' && marked.size > 1 && marked.has(info.idx)) // тащим всю отмеченную группу
               box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (marked.has(+r.dataset.li)) r.classList.add('dragging'); }); }
           if (!started) return;
+          placeLayerGhost(ghost, ev.clientX, ev.clientY);
           box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
           const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;
           if (!row || row === el) return;
           const r = row.getBoundingClientRect();
-          if (row.classList.contains('frow') && info.kind === 'layer' && ev.clientY > r.top + r.height / 2) row.classList.add('drop-into');
+          if (info.kind === 'layer' && row.dataset.li && ev.clientY > r.top + r.height * .28 && ev.clientY < r.bottom - r.height * .28) row.classList.add('drop-into');
+          else if (row.classList.contains('frow') && info.kind === 'layer' && ev.clientY > r.top + r.height / 2) row.classList.add('drop-into');
           else row.classList.add('drop-above'); };
         const up = () => {
           el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+          if (ghost) ghost.remove();
           box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
           const into = $('lay-list').querySelector('.drop-into'), above = $('lay-list').querySelector('.drop-above');
           const target = into || above;
@@ -101,6 +121,15 @@
         el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
       });
     }
+    function folderFromLayers(block, target) {
+      const members = [...new Set([target, ...block])].filter(Boolean), idxs = members.map((L) => layers.indexOf(L)).filter((i) => i >= 0).sort((a, b) => a - b);
+      if (idxs.length < 2) return false;
+      snapshot(); const f = { id: ++folderSeq, name: 'Папка ' + folderSeq, open: true, visible: true, symLock: false };
+      folders.push(f); const moved = idxs.map((i) => layers[i]);
+      for (let j = idxs.length - 1; j >= 0; j--) layers.splice(idxs[j], 1);
+      moved.forEach((L) => { L.fid = f.id; }); layers.splice(idxs[0], 0, ...moved);
+      cur = idxs[0] + moved.length - 1; marked.clear(); dirtyAll(); layList(); render(); toast('Слои собраны в папку'); return true;
+    }
     function layDrop(src, row, into) {
       const tIsFolder = row.classList.contains('frow');
       if (src.kind === 'layer') {
@@ -109,6 +138,7 @@
         // если тащим отмеченный слой — переносим всю группу отмеченных, иначе один
         const block = (marked.size > 1 && marked.has(src.idx)) ? [...marked].sort((a, b) => a - b).map((i) => layers[i]) : [layers[src.idx]];
         if (tL && block.includes(tL)) return; // не бросаем на самих себя
+        if (into && tL) { folderFromLayers(block, tL); return; }
         snapshot();
         for (const L of block) { const i = layers.indexOf(L); if (i >= 0) layers.splice(i, 1); }
         const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
@@ -154,7 +184,7 @@
     function doGroup() { // папка из отмеченных (или активного)
       let idx = [...marked].sort((a, b) => a - b); if (!idx.length) idx = [cur];
       snapshot();
-      const f = { id: ++folderSeq, name: 'Папка ' + folderSeq, open: true, visible: true };
+      const f = { id: ++folderSeq, name: 'Папка ' + folderSeq, open: true, visible: true, symLock: false };
       folders.push(f);
       const moved = [];
       for (let j = idx.length - 1; j >= 0; j--) moved.unshift(layers.splice(idx[j], 1)[0]);
@@ -185,22 +215,26 @@
     $('ren-cancel').onclick = () => { renRef = null; $('ren-ovl').classList.remove('on'); };
     $('ren-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ren-ok').click(); });
     function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
+      const isFolder = kind === 'folder', isLayer = kind === 'layer';
       $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
-      $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-select').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-invert').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-fill').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-symm').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-rotate').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-shadow').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-glow').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-bc').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-png-full').style.display = kind === 'layer' ? '' : 'none';
-      $('lctx-png-tight').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-clip').style.display = isLayer ? '' : 'none';
+      $('lctx-dup').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-select').style.display = isLayer ? '' : 'none';
+      $('lctx-invert').style.display = isLayer ? '' : 'none';
+      $('lctx-fill').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-clear').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-symm').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-rotate').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-shadow').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-glow').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-mono').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-bc').style.display = isLayer || isFolder ? '' : 'none';
+      $('lctx-send').style.display = isLayer ? '' : 'none';
+      $('lctx-png-full').style.display = isLayer ? '' : 'none';
+      $('lctx-png-tight').style.display = isLayer ? '' : 'none';
+      $('lctx-dup').textContent = isFolder ? 'Дублировать папку' : 'Дублировать слой';
+      $('lctx-clear').textContent = isFolder ? 'Очистить папку' : 'Очистить слой';
+      $('lctx-rotate').textContent = isFolder ? 'Трансформировать папку…' : 'Трансформировать…';
       if (kind === 'layer') $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + 'Обтравочная маска';
       const m = $('lctx'); m.style.visibility = 'hidden'; m.classList.add('on');
       requestAnimationFrame(() => { const r = m.getBoundingClientRect();
@@ -208,31 +242,51 @@
         m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
-    $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
+    function lctxTargets() { return !lctxRef ? [] : lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref]; }
+    function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.length) return;
+      if (layers.length + kids.length > 8) { toast('Максимум 8 слоёв'); return; }
+      snapshot(); const nf = { id: ++folderSeq, name: f.name + ' копия', open: true, visible: f.visible, symLock: !!f.symLock };
+      folders.push(nf); const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: nf.id, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
+      const dst = topOfFolder(f.id) + 1; layers.splice(dst, 0, ...copies); cur = dst + copies.length - 1; marked.clear(); dirtyAll(); layList(); render(); toast('Папка продублирована'); }
+    $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (!lctxRef) return;
+      if (lctxRef.kind === 'folder') duplicateFolder(lctxRef.ref); else duplicateLayer(lctxRef.ref); };
     $('lctx-select').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return; const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); selectLayerContent(); };
     $('lctx-invert').onclick = () => { $('lctx').classList.remove('on');
       if (!lctxRef || lctxRef.kind !== 'layer') return; const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); invertSelection(); };
     $('lctx-fill').onclick = () => { $('lctx').classList.remove('on');
-      if (!lctxRef || lctxRef.kind !== 'layer') return; const L = lctxRef.ref; snapshot();
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (!targets.length) return; snapshot();
       const a = [active[0], active[1], active[2], 255];
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) L.grid[y][x] = a.slice();
-      L.ext = new Map(); const i = layers.indexOf(L); if (i >= 0) markDirty(i); layList(); render(); toast('Слой залит'); };
+      for (const L of targets) { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) L.grid[y][x] = a.slice();
+        L.ext = new Map(); const i = layers.indexOf(L); if (i >= 0) markDirty(i); }
+      layList(); render(); toast(targets.length > 1 ? 'Папка залита' : 'Слой залит'); };
     $('lctx-symm').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') symmetrizeLayer(lctxRef.ref); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (!targets.length) return;
+      snapshot(); const v = sym || (!sym && !symH), h = symH;
+      for (const L of targets) { const g = L.grid;
+        if (v) for (let y = 0; y < H; y++) for (let x = 0; x < (W >> 1); x++) { const mx = W - 1 - x; g[y][mx] = g[y][x] ? g[y][x].slice() : null; }
+        if (h) for (let y = 0; y < (H >> 1); y++) for (let x = 0; x < W; x++) { const my = H - 1 - y; g[my][x] = g[y][x] ? g[y][x].slice() : null; }
+        const i = layers.indexOf(L); if (i >= 0) markDirty(i); }
+      render(); layList(); toast(targets.length > 1 ? 'Папка симметрирована' : 'Слой симметрирован'); };
     $('lctx-rotate').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') enterRotMode(lctxRef.ref); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (targets.length) enterRotMode(targets); };
     $('lctx-glow').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') openGlowPop(lctxRef.ref); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (targets.length) openGlowPop(targets.length > 1 ? targets : targets[0]); };
     $('lctx-shadow').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') { const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); openDsPop(lctxRef.ref); } };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (targets.length) { const i = layers.indexOf(targets[targets.length - 1]); if (i >= 0) cur = i; layList(); openDsPop(targets.length > 1 ? targets : targets[0]); } };
     $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') monoLayer(lctxRef.ref); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (!targets.length) return;
+      snapshot(); targets.forEach(toMono); dirtyAll(); layList(); render(); toast(targets.length > 1 ? 'Папка в монохроме' : 'Слой в монохроме'); };
     $('lctx-bc').onclick = () => { $('lctx').classList.remove('on');
-      if (lctxRef && lctxRef.kind === 'layer') openBcPop([lctxRef.ref], 'Яркость/контраст — ' + lctxRef.ref.name); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (targets.length) openBcPop(targets, 'Яркость/контраст — ' + (lctxRef.kind === 'folder' ? lctxRef.ref.name : lctxRef.ref.name)); };
     $('lctx-clear').onclick = () => { $('lctx').classList.remove('on');
-      if (!lctxRef || lctxRef.kind !== 'layer') return; const idx = layers.indexOf(lctxRef.ref); if (idx < 0) return;
-      cur = idx; if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); };
+      const targets = lctxTargets().filter((L) => layers.includes(L)); if (!targets.length) return;
+      let any = false; for (const L of targets) {
+        if (L.grid.some((r) => r.some((c) => c)) || L.ext.size) { any = true; break; } }
+      if (!any) { toast(targets.length > 1 ? 'Папка и так пустая' : 'Слой и так пуст'); return; }
+      snapshot(); for (const L of targets) {
+        L.grid = blank(W, H); L.ext = new Map(); const i = layers.indexOf(L); if (i >= 0) markDirty(i); }
+      render(); layList(); toast(targets.length > 1 ? 'Папка очищена' : 'Слой очищен'); };
     $('lctx-png-full').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, false); };
     $('lctx-png-tight').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, true); };
     $('lctx-clip').onclick = () => { $('lctx').classList.remove('on');
@@ -249,18 +303,29 @@
       snapshot(); const nl = newLayer('Слой ' + (++layerSeq)); nl.fid = layers[cur].fid;
       layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render(); }
     $('lay-add').addEventListener('click', doAddLayer);
-    (function layWin() { // панель слоёв можно перетащить за шапку и оставить открытой
-      const p = $('lay-pop'), head = $('lay-head'); let d = null;
+    (function layWin() { // панель слоёв можно перетащить за шапку, растянуть и оставить открытой
+      const p = $('lay-pop'), head = $('lay-head'), rz = $('lay-rsz'); let d = null, rs = null;
+      function applyLaySize(w, h) {
+        if (w) p.style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';
+        if (h) { p.style.height = Math.max(220, Math.min(innerHeight - 12, h)) + 'px';
+          $('lay-list').style.maxHeight = Math.max(80, p.getBoundingClientRect().height - 156) + 'px'; }
+      }
       head.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
         head.setPointerCapture(e.pointerId); const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
       head.addEventListener('pointermove', (e) => { if (!d) return;
         p.style.left = Math.max(4, Math.min(e.clientX - d.dx, innerWidth - 90)) + 'px';
         p.style.top = Math.max(4, Math.min(e.clientY - d.dy, innerHeight - 60)) + 'px'; p.style.right = 'auto'; });
       const end = () => { if (!d) return; d = null;
-        const r = p.getBoundingClientRect(); try { localStorage.setItem('laywin', JSON.stringify({ l: r.left, t: r.top })); } catch (err) {} };
+        const r = p.getBoundingClientRect(); try { localStorage.setItem('laywin', JSON.stringify({ l: r.left, t: r.top, w: r.width, h: r.height })); } catch (err) {} };
       head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
+      rz.addEventListener('pointerdown', (e) => { e.preventDefault(); rz.setPointerCapture(e.pointerId);
+        const r = p.getBoundingClientRect(); rs = { w: r.width, h: r.height, x: e.clientX, y: e.clientY }; });
+      rz.addEventListener('pointermove', (e) => { if (!rs) return; applyLaySize(rs.w + e.clientX - rs.x, rs.h + e.clientY - rs.y); });
+      const rzEnd = () => { if (!rs) return; rs = null; const r = p.getBoundingClientRect();
+        try { localStorage.setItem('laywin', JSON.stringify({ l: r.left, t: r.top, w: r.width, h: r.height })); } catch (err) {} };
+      rz.addEventListener('pointerup', rzEnd); rz.addEventListener('pointercancel', rzEnd);
       try { const s = JSON.parse(localStorage.getItem('laywin'));
-        if (s && s.l != null) { p.style.left = Math.max(4, Math.min(s.l, innerWidth - 90)) + 'px'; p.style.top = Math.max(4, Math.min(s.t, innerHeight - 60)) + 'px'; p.style.right = 'auto'; } } catch (err) {}
+        if (s && s.l != null) { p.style.left = Math.max(4, Math.min(s.l, innerWidth - 90)) + 'px'; p.style.top = Math.max(4, Math.min(s.t, innerHeight - 60)) + 'px'; p.style.right = 'auto'; applyLaySize(s.w, s.h); } } catch (err) {}
     })();
     const layImgInp = document.createElement('input'); layImgInp.type = 'file'; layImgInp.accept = 'image/*';
     $('lay-img').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; } layImgInp.click(); });

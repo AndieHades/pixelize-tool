@@ -41,8 +41,8 @@
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue; // обтравка без базы не видна
         ctx.globalAlpha = L.opacity;
-        if (rotMode && rotMode.idx === i) { // живое превью трансформации вместо исходного слоя
-          if (rotPrev && rotPrev.canvas) ctx.drawImage(rotPrev.canvas, ox + rotPrev.px * z, oy + rotPrev.py * z, rotPrev.ow * z, rotPrev.oh * z);
+        if (rotMode && rotMode.idxs && rotMode.idxs.includes(i)) { // живое превью трансформации вместо исходных слоёв
+          if (i === rotMode.idx && rotPrev && rotPrev.canvas) ctx.drawImage(rotPrev.canvas, ox + rotPrev.px * z, oy + rotPrev.py * z, rotPrev.ow * z, rotPrev.oh * z);
           continue;
         }
         const mdx = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dx * z : 0; // живой сдвиг слоя инструментом Move
