@@ -2,6 +2,7 @@
 // Drag/перенос — в selection-input; здесь логика, не жесты.
 import { S, G } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { parseKey } from '../../logic/raster.js';
 import { eqc } from '../../logic/color.js';
 import { symA, symHA } from '../../core/layers.js';
@@ -63,3 +64,8 @@ export function deleteSelContent() { const g = G(); let any = false;
 export function fillSelection() { if (!S.sel) return; snapshot(); const g = G(); let nn = 0;
   for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) { if (!inMask(x, y)) continue; g[y][x] = [S.active[0], S.active[1], S.active[2], 255]; nn++; }
   markDirty(S.cur); bus.emit('render'); bus.emit('layers'); toast('Залито: ' + nn + ' пикс.'); }
+
+actions.register('selection.byColor', selectColorPixels);
+actions.register('selection.layer', selectLayerContent);
+actions.register('selection.invert', invertSelection);
+actions.register('selection.fill', fillSelection);

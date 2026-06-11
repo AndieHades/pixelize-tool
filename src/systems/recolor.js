@@ -1,6 +1,7 @@
 // Замена цвета по всему документу (на всех слоях и в палитре).
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { eqc } from '../logic/color.js';
 import { dirtyAll } from '../core/layer-cache.js';
@@ -19,3 +20,6 @@ export function recolorAll(from, to) {
 }
 
 export function startReplace(from) { S.replaceMode = { from: from.slice() }; bus.emit('render'); toast('Пиксели подсвечены — тапни новый цвет в палитре'); }
+
+actions.register('recolor.all', recolorAll);
+actions.register('recolor.start', startReplace);

@@ -40,6 +40,7 @@ const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
 const xport = await import('../src/systems/export.js');
 const imp = await import('../src/systems/import/convert.js');
+const pal = await import('../src/systems/palette.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -162,5 +163,9 @@ t('import: ImageData → пиксель-документ', () => {
   imp.impConvert(); imp.applyImport();
   assert.equal(S.layers.length, 1); assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
 });
+
+t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.palette = [[1, 1, 1], [2, 2, 2]]; S.active = [1, 1, 1];
+  pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .sw:not(.plus)').length, 2); });
+t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
