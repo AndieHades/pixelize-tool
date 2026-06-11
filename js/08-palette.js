@@ -33,9 +33,12 @@
             buildPalette(); } };
         b.addEventListener('pointerup', endSw); b.addEventListener('pointercancel', endSw);
         box.appendChild(b); });
-      const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить цвет';
+      const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый';
       add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
-      add.addEventListener('click', () => $('picker').click());
+      add.addEventListener('click', () => { // плюсик кладёт текущий активный цвет в палитру
+        if (palette.some((p) => eqc(p, active))) { toast('Этот цвет уже в палитре'); return; }
+        palette.push(active.slice()); buildPalette(); toast('Цвет добавлен в палитру'); });
+      add.addEventListener('contextmenu', (e) => { e.preventDefault(); $('picker').click(); }); // выбрать произвольный новый
       box.appendChild(add); }
     function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
     function recolorAll(from, to) { // заменить цвет на всех слоях и в палитре

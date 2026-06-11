@@ -54,7 +54,8 @@
             toast(L.symLock ? 'Симметрия на слое отключена' : 'Симметрия на слое включена'); });
           row.append(sl); }
         row.append(eye);
-        row.addEventListener('click', ((idx, lay) => () => { if (layDragSquelch) return;
+        row.addEventListener('click', ((idx, lay) => (ev) => { if (layDragSquelch) return;
+          if (ev.ctrlKey || ev.metaKey) { if (marked.has(idx)) marked.delete(idx); else marked.add(idx); layList(); return; } // Ctrl+клик — мультивыбор
           const now = performance.now();
           if (lastLayClick.idx === idx && now - lastLayClick.t < 350) { lastLayClick.idx = -1; openRename(lay); return; } // двойной клик — переименование
           lastLayClick = { idx, t: now }; cur = idx; layList(); })(i, L));
@@ -74,7 +75,9 @@
         const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false;
         const move = (ev) => {
           if (!started && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 7) { started = true;
-            el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {} }
+            el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
+            if (info.kind === 'layer' && marked.size > 1 && marked.has(info.idx)) // тащим всю отмеченную группу
+              box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (marked.has(+r.dataset.li)) r.classList.add('dragging'); }); }
           if (!started) return;
           box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
           const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;
@@ -84,7 +87,7 @@
           else row.classList.add('drop-above'); };
         const up = () => {
           el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
-          el.classList.remove('dragging');
+          box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
           const into = $('lay-list').querySelector('.drop-into'), above = $('lay-list').querySelector('.drop-above');
           const target = into || above;
           $('lay-list').querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
@@ -99,11 +102,16 @@
       if (src.kind === 'layer') {
         const tL = tIsFolder ? null : layers[+row.dataset.li];
         const tFid = tIsFolder ? +row.dataset.fid : null;
-        snapshot(); const [L] = layers.splice(src.idx, 1);
-        let dstIdx, dstFid;
-        if (tIsFolder) { dstFid = into ? tFid : null; dstIdx = topOfFolder(tFid) + 1; }
-        else { dstFid = tL ? tL.fid : null; dstIdx = layers.indexOf(tL) + 1; }
-        L.fid = dstFid; layers.splice(dstIdx, 0, L); cur = dstIdx;
+        // если тащим отмеченный слой — переносим всю группу отмеченных, иначе один
+        const block = (marked.size > 1 && marked.has(src.idx)) ? [...marked].sort((a, b) => a - b).map((i) => layers[i]) : [layers[src.idx]];
+        if (tL && block.includes(tL)) return; // не бросаем на самих себя
+        snapshot();
+        for (const L of block) { const i = layers.indexOf(L); if (i >= 0) layers.splice(i, 1); }
+        const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
+        for (const L of block) L.fid = dstFid;
+        let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : layers.indexOf(tL) + 1;
+        if (dstIdx < 0) dstIdx = layers.length;
+        layers.splice(dstIdx, 0, ...block); cur = dstIdx + block.length - 1;
       } else {
         if (tIsFolder && +row.dataset.fid === src.fid) return;
         const tL = tIsFolder ? null : layers[+row.dataset.li];
@@ -161,6 +169,8 @@
     function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
       $('lctx-ung').style.display = kind === 'folder' ? '' : 'none';
       $('lctx-clip').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-dup').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-full').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-png-tight').style.display = kind === 'layer' ? '' : 'none';
@@ -171,6 +181,10 @@
         m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
         m.style.visibility = ''; }); }
     $('lctx-ren').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef) openRename(lctxRef.ref); };
+    $('lctx-dup').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') duplicateLayer(lctxRef.ref); };
+    $('lctx-clear').onclick = () => { $('lctx').classList.remove('on');
+      if (!lctxRef || lctxRef.kind !== 'layer') return; const idx = layers.indexOf(lctxRef.ref); if (idx < 0) return;
+      cur = idx; if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); };
     $('lctx-png-full').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, false); };
     $('lctx-png-tight').onclick = () => { $('lctx').classList.remove('on'); if (lctxRef && lctxRef.kind === 'layer') exportLayerPng(lctxRef.ref, true); };
     $('lctx-clip').onclick = () => { $('lctx').classList.remove('on');
@@ -217,21 +231,14 @@
         layers.splice(cur + 1, 0, nl); cur++; marked.clear(); dirtyAll(); layList(); render();
         toast('Картинка на новом слое'); };
       im.src = URL.createObjectURL(f); };
-    $('lay-dup').addEventListener('click', () => { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
-      snapshot(); const L = layers[cur];
-      layers.splice(cur + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
-      cur++; marked.clear(); dirtyAll(); layList(); render(); });
+    function duplicateLayer(L) { if (layers.length >= 8) { toast('Максимум 8 слоёв'); return; }
+      const idx = layers.indexOf(L); if (idx < 0) return; snapshot();
+      layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
+      cur = idx + 1; marked.clear(); dirtyAll(); layList(); render(); toast('Слой продублирован'); }
     $('lay-del').addEventListener('click', () => { if (layers.length < 2) { toast('Это единственный слой'); return; }
       snapshot(); layers.splice(cur, 1); cur = Math.max(0, cur - 1); marked.clear(); dirtyAll(); layList(); render(); });
-    $('lay-up').addEventListener('click', () => { if (cur >= layers.length - 1) return;
-      snapshot(); const a = layers[cur], b = layers[cur + 1]; const tf = a.fid; a.fid = b.fid; b.fid = tf; // папка прикреплена к месту
-      [layers[cur], layers[cur + 1]] = [b, a]; cur++; marked.clear(); dirtyAll(); layList(); render(); });
-    $('lay-down').addEventListener('click', () => { if (cur <= 0) return;
-      snapshot(); const a = layers[cur], b = layers[cur - 1]; const tf = a.fid; a.fid = b.fid; b.fid = tf;
-      [layers[cur], layers[cur - 1]] = [b, a]; cur--; marked.clear(); dirtyAll(); layList(); render(); });
     $('lay-merge').addEventListener('click', doMerge);
     $('lay-group').addEventListener('click', doGroup);
-    $('lay-clear').addEventListener('click', () => { if (clearLayer()) { layList(); toast('Слой очищен'); } else toast('Слой и так пуст'); });
     $('lay-op').addEventListener('pointerdown', () => snapshot());
     $('lay-op').addEventListener('input', () => { layers[cur].opacity = +$('lay-op').value / 100; syncOp(); render(); });
 

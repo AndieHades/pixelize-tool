@@ -337,9 +337,9 @@
       const cvEnd = (e) => { rp.delete(e.pointerId); if (rp.size < 2) pinch0 = null;
         if (p && !p.moved && refSrc) { const dpr = window.devicePixelRatio || 1, r = rcv2.getBoundingClientRect();
           try { const px = rctx2.getImageData(Math.round((e.clientX - r.left) * dpr), Math.round((e.clientY - r.top) * dpr), 1, 1).data;
-            if (px[3] > 10) { active = [px[0], px[1], px[2]]; refreshActive(); buildPalette();
-              $('picker').value = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
-              toast('Цвет взят из референса'); } } catch (err) {} }
+            if (px[3] > 10) { const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+              addColor(hex); $('picker').value = hex; // добавляем цвет в палитру и делаем активным
+              toast('Цвет из референса добавлен в палитру'); } } catch (err) {} }
         p = null; };
       rcv2.addEventListener('pointerup', cvEnd); rcv2.addEventListener('pointercancel', cvEnd);
       rcv2.addEventListener('wheel', (e) => { e.preventDefault(); const r = rcv2.getBoundingClientRect(),
