@@ -57,9 +57,11 @@ await import('../src/systems/draw/tools.js');
 await import('../src/systems/move-tool.js');
 const { toolHandler } = await import('../src/core/canvas-handlers.js');
 const input = await import('../src/systems/input/index.js');
+await import('../src/systems/selection/input.js');
+const sfloat = await import('../src/systems/selection/float.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
@@ -120,7 +122,7 @@ t('keyboard: комбо из события', () => {
 });
 t('keyboard: хоткей запускает действие', () => { let ran = 0; actions.register('tool.pencil', () => ran++);
   assert.ok(kbd.handle(ev('KeyB'))); assert.equal(ran, 1); });
-t('keyboard: незарегистрированное действие игнорится', () => { assert.equal(kbd.handle(ev('KeyK')), false); });
+t('keyboard: несвязанная клавиша игнорится', () => { assert.equal(kbd.handle(ev('KeyQ')), false); });
 t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
   kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap(); });
 t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
@@ -220,5 +222,12 @@ t('input: mount + диспетч pencil рисует', () => { resetWH(8, 8); S.
   input.down({ pointerType: 'mouse', button: 0, clientX: 2, clientY: 2 }); input.up({ pointerType: 'mouse', button: 0 });
   // координаты зависят от view; проверяем, что хоть одна клетка закрашена
   assert.ok(S.layers[0].grid.some((r) => r.some((c) => c))); });
+
+t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+  const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
+  assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
+t('selection-float: lift + commit переносит фрагмент', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
+  sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
+  assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

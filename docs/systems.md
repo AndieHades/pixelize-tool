@@ -54,7 +54,7 @@
 | `systems/free-rotate.js` | применяет чистый поворот к слою | ✅ | 05-draw |
 | `systems/crop.js` | интерактивно кадрирует холст | ✅ | 05-draw |
 | `systems/selection/model.js` | держит выделение, маски, операции содержимого | ✅ | 06-selection |
-| `systems/selection-input.js` | тянет/тащит/растягивает выделение | 🔲 | 06-selection |
+| `systems/selection/input.js` + `float.js` | тянет/тащит/растягивает выделение | ✅ | 06-selection |
 | `systems/selection/clipboard.js` | копирует/вырезает/вставляет/удаляет | ✅ | 06-selection |
 | `systems/input/*` | разбирает указатель и тач-жесты, диспетчеризует в обработчики | ✅ | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
