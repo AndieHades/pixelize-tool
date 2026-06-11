@@ -70,7 +70,7 @@
         if (sa && sha && mx !== xx && my !== yy) paintCell(mx, my, erase); }
     }
     function stamp(x, y) {
-      if (tool === 'select') return;
+      if (tool === 'select' || tool === 'move') return;
       if (tool === 'pencil' || tool === 'line') brushStamp(x, y, false);
       else if (tool === 'eraser') brushStamp(x, y, true);
       else if (tool === 'pick') { pickAt(x, y); setTool('pencil'); }

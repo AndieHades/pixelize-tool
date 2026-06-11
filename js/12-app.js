@@ -22,6 +22,7 @@
     $('t-pick').onclick = () => setTool('pick');
     $('t-fill').onclick = () => { if (sel) fillSelection(); else setTool('fill'); }; // с выделением — мгновенная заливка
     $('t-select').onclick = () => setTool('select');
+    $('t-move').onclick = () => setTool('move');
     $('out-apply').onclick = outlineLayer;
     $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; computeOutlinePreview(); render(); });
     $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; render(); });

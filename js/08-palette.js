@@ -1,5 +1,6 @@
     function setTool(t) { tool = t; lineStart = null; linePrev = null;
-      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect']) $('t-' + id).classList.toggle('on', id === t); render(); }
+      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect', 'move']) $('t-' + id).classList.toggle('on', id === t);
+      cv.style.cursor = t === 'move' ? 'move' : ''; render(); }
     function refreshActive() { $('active').style.background = rgb(active); }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
       $('palgrip').textContent = 'Палитра · ' + palette.length;
