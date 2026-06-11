@@ -153,7 +153,7 @@
           if (near) { out[y][x] = [col[0], col[1], col[2], a]; added++; } }
         layers[cur].grid = out; markDirty(cur);
       }
-      if (!added) { restore(undoStack.pop()); toast('На слое нечего обводить'); return; }
+      if (!added) { const s = undoStack.pop(); if (s) restore(s); toast('На слое нечего обводить'); return; }
       outPreview = null; $('outpop').classList.remove('on'); render(); layList(); toast('Обводка нанесена');
     }
     let cropMode = null, cropDrag = null; // интерактивный кроп: рамка с маркерами

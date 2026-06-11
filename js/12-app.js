@@ -154,7 +154,7 @@
       else if (c === 'KeyU') setTool('line');
       else if (c === 'KeyK') setTool('rect');
       else if (c === 'KeyT') $('stab').click();
-      else if (c === 'KeyO') openOutlinePop();
+      else if (c === 'KeyO') { if ($('outpop').classList.contains('on')) outlineLayer(); else openOutlinePop(); } // 1-е O — превью, 2-е — применить
       else if (c === 'KeyH') flipLayer(true);
       else if (c === 'KeyV') flipLayer(false);
       else if (c === 'KeyR') rotateCanvas();
