@@ -17,6 +17,12 @@
   --btn: 40px;
   --radius: 12px;
   --gap: 8px;
+  /* цвета холста (читаются JS-рендером) */
+  --cv-bg: #0d0d10;
+  --cv-doc: #141419;
+  --cv-check1: #1a1a20;
+  --cv-check2: #222228;
+  --cv-grid: rgba(255, 255, 255, .05);
 }
 
 :root[data-theme="light"] {
@@ -30,4 +36,9 @@
   --txt2: #5b5f6b;
   --accent: #2b6fe0;
   --accent-soft: rgba(43, 111, 224, .16);
+  --cv-bg: #d6d8dd;
+  --cv-doc: #c8cbd2;
+  --cv-check1: #cfd2d8;
+  --cv-check2: #bfc3cb;
+  --cv-grid: rgba(0, 0, 0, .06);
 }

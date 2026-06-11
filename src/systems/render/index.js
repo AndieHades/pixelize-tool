@@ -8,6 +8,7 @@ import { $ } from '../../core/dom.js';
 import { effVis, clipBase } from '../../core/layers.js';
 import { layerCanvas, clippedCanvas } from '../../core/layer-cache.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
+import { C } from '../../styles/canvas-colors.js';
 import { drawChecker } from './checker.js';
 import { drawOverlays } from './overlays.js';
 
@@ -18,10 +19,10 @@ export function render() {
   const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
   if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(chh * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#0d0d10'; ctx.fillRect(0, 0, cw, chh);
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, cw, chh);
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
-  ctx.fillStyle = '#141419'; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
+  ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
   drawChecker(ctx, ox, oy, z, cw, chh);
   const iox = S.cropMode ? S.cropMode.idx * z : 0, ioy = S.cropMode ? S.cropMode.idy * z : 0; // сдвиг рисунка в кропе
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
@@ -34,7 +35,7 @@ export function render() {
     const mdy = (S.moveDrag && S.moveDrag.idxs.includes(i)) ? S.moveDrag.dy * z : 0;
     ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
   ctx.globalAlpha = 1;
-  if (z >= 7) { ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1; ctx.beginPath();
+  if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
     for (let x = 0; x <= W; x++) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
     for (let y = 0; y <= H; y++) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
     ctx.stroke(); }
