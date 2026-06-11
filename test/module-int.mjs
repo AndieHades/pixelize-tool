@@ -52,6 +52,7 @@ const outline = await import('../src/systems/outline.js');
 const shadow = await import('../src/systems/shadow.js');
 const glow = await import('../src/systems/glow.js');
 const adjust = await import('../src/systems/draw/adjust.js');
+const crop = await import('../src/systems/crop.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; cache.dirtyAll(); };
@@ -200,5 +201,8 @@ t('shadow/glow: popup открывается и копит превью', () => 
   shadow.mount(); glow.mount(); adjust.mount();
   actions.run('effect.shadow', S.layers[0]); assert.ok(document.getElementById('dspop').classList.contains('on'));
   actions.run('effect.glow', S.layers[0]); assert.ok(document.getElementById('glowpop').classList.contains('on')); assert.ok(S.glowPreview && S.glowPreview.length > 0); });
+
+t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
+  crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

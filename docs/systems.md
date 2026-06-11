@@ -17,6 +17,7 @@
 | `core/document.js` | структурно меняет холст (expand/crop/clearLayer/placeImage) | ✅ | 05-draw |
 | `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
 | `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
+| `core/canvas-handlers.js` | реестр обработчиков холста (инструменты/режимы) | ✅ | 07-input |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
 | `core/history.js` | пишет и откатывает снимки документа | ✅ | 04-history |
 | `core/actions.js` | реестр именованных действий (для хоткеев/кнопок/меню) | ✅ | (новое) |
@@ -51,7 +52,7 @@
 | `systems/trim.js` | обрезает пустые поля до контура | ✅ | 05-draw |
 | `systems/brightness-contrast.js` | правит яркость/контраст | ✅ | 05-draw |
 | `systems/free-rotate.js` | применяет чистый поворот к слою | ✅ | 05-draw |
-| `systems/crop.js` | интерактивно кадрирует холст | 🔲 | 05-draw |
+| `systems/crop.js` | интерактивно кадрирует холст | ✅ | 05-draw |
 | `systems/selection/model.js` | держит выделение, маски, операции содержимого | ✅ | 06-selection |
 | `systems/selection-input.js` | тянет/тащит/растягивает выделение | 🔲 | 06-selection |
 | `systems/selection/clipboard.js` | копирует/вырезает/вставляет/удаляет | ✅ | 06-selection |
