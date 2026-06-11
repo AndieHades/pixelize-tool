@@ -12,7 +12,16 @@
         el.style.transform = 'none'; el.style.right = 'auto'; el.style.bottom = 'auto'; });
       const dEnd2 = () => { d = null; };
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
-    makeDraggable($('brushpop')); makeDraggable($('outpop'));
+    makeDraggable($('brushpop')); makeDraggable($('outpop')); makeDraggable($('dspop'));
+    let dsRef = null;
+    function openDsPop(L) { dsRef = L; $('brushpop').classList.remove('on'); $('outpop').classList.remove('on');
+      $('dspop').classList.toggle('on'); }
+    $('ds-x').addEventListener('input', () => { $('ds-xv').textContent = $('ds-x').value; });
+    $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; });
+    $('ds-op').addEventListener('input', () => { $('ds-opv').textContent = $('ds-op').value + '%'; });
+    $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; });
+    $('ds-apply').onclick = () => { $('dspop').classList.remove('on');
+      if (dsRef && layers.includes(dsRef)) dropShadow(dsRef, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
     $('bp-size').addEventListener('input', () => { brushes[bpTool].size = +$('bp-size').value; $('bp-sizev').textContent = $('bp-size').value; });
     $('bp-op').addEventListener('input', () => { brushes[bpTool].op = +$('bp-op').value / 100; $('bp-opv').textContent = $('bp-op').value + '%'; });
     $('t-pencil').onclick = () => { if (tool === 'pencil') openBrushPop('pencil'); else setTool('pencil'); };
@@ -138,7 +147,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
-          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop', 'colpop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'brushpop', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');

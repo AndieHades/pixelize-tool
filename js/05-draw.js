@@ -172,6 +172,21 @@
         L.grid = out; L.ext = ne; }
       W = nw; H = nh; sel = null; syncSelbar(); dirtyAll(); layList(); fitView(); toast(`Холст: ${W}×${H}`);
     }
+    function dropShadow(L, dx, dy, col, op) { // силуэт слоя отдельным слоем под ним, со смещением
+      let any = false, minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { any = true;
+        const sx = x + dx, sy = y + dy; if (sx < minx) minx = sx; if (sy < miny) miny = sy; if (sx > maxx) maxx = sx; if (sy > maxy) maxy = sy; }
+      if (!any) { toast('Слой пуст'); return; }
+      if (layers.length >= 8) { toast('Максимум 8 слоёв — удали лишние'); return; }
+      snapshot();
+      const pl = Math.max(0, -minx), pt = Math.max(0, -miny), pr = Math.max(0, maxx - (W - 1)), pb = Math.max(0, maxy - (H - 1));
+      if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb); // не лезет — раздвигаем холст, как обводка
+      const a = Math.round(op * 255), sh = newLayer('Тень'); sh.fid = L.fid;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) { // силуэт берём из уже расширенного слоя
+        const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) sh.grid[ny][nx] = [col[0], col[1], col[2], a]; }
+      const li = layers.indexOf(L); layers.splice(li, 0, sh); cur = li + 1; // тень под исходным слоем
+      marked.clear(); dirtyAll(); layList(); render(); toast('Тень создана');
+    }
     function trimCanvas() { // обрезать пустые поля впритык к рисунку (по всем слоям)
       let x0 = W, y0 = H, x1 = -1, y1 = -1;
       for (const L of layers) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {

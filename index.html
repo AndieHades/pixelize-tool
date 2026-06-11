@@ -89,6 +89,15 @@
     <div class="iact"><button id="bc-cancel" class="txtbtn">Отмена</button><button id="bc-apply" class="txtbtn primary">Применить</button></div>
   </div>
 
+  <div id="dspop" class="toolpop">
+    <div class="bp-head">Тень (Drop Shadow)</div>
+    <div class="irow"><label>Смещение X</label><input id="ds-x" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-xv">2</b></div>
+    <div class="irow"><label>Смещение Y</label><input id="ds-y" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-yv">2</b></div>
+    <div class="irow"><label>Непрозр.</label><input id="ds-op" type="range" min="10" max="100" step="5" value="60" /><b id="ds-opv">60%</b></div>
+    <div class="irow"><label>Цвет</label><label class="outcolwrap"><input id="ds-col" type="color" value="#000000" /><span id="ds-colsw" style="background:#000"></span></label></div>
+    <div class="iact"><button id="ds-apply" class="txtbtn primary">Создать тень</button></div>
+  </div>
+
   <div id="outpop" class="toolpop">
     <div class="bp-head">Обводка</div>
     <div class="irow"><label>Толщина</label><input id="out-size" type="range" min="1" max="4" step="1" value="1" /><b id="out-sizev">1</b></div>
@@ -197,6 +206,7 @@
     <button id="lctx-invert">Инверсия выделения</button>
     <button id="lctx-fill">Залить активным цветом</button>
     <button id="lctx-clear">Очистить слой</button>
+    <button id="lctx-shadow">Тень (Drop Shadow)…</button>
     <button id="lctx-mono">В монохром</button>
     <button id="lctx-bc">Яркость/контраст…</button>
     <button id="lctx-clip">Обтравочная маска</button>

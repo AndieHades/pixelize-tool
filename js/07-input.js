@@ -51,7 +51,7 @@
 
     cv.addEventListener('pointerdown', (e) => {
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
-      $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем — можно рисовать с открытой
+      $('brushpop').classList.remove('on'); $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем — можно рисовать с открытой
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });

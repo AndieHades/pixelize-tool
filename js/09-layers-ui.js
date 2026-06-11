@@ -192,6 +192,7 @@
       $('lctx-invert').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-fill').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-clear').style.display = kind === 'layer' ? '' : 'none';
+      $('lctx-shadow').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-mono').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-bc').style.display = kind === 'layer' ? '' : 'none';
       $('lctx-send').style.display = kind === 'layer' ? '' : 'none';
@@ -214,6 +215,8 @@
       const a = [active[0], active[1], active[2], 255];
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) L.grid[y][x] = a.slice();
       L.ext = new Map(); const i = layers.indexOf(L); if (i >= 0) markDirty(i); layList(); render(); toast('Слой залит'); };
+    $('lctx-shadow').onclick = () => { $('lctx').classList.remove('on');
+      if (lctxRef && lctxRef.kind === 'layer') { const i = layers.indexOf(lctxRef.ref); if (i >= 0) cur = i; layList(); openDsPop(lctxRef.ref); } };
     $('lctx-mono').onclick = () => { $('lctx').classList.remove('on');
       if (lctxRef && lctxRef.kind === 'layer') monoLayer(lctxRef.ref); };
     $('lctx-bc').onclick = () => { $('lctx').classList.remove('on');
