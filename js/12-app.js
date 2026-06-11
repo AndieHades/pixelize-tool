@@ -343,7 +343,7 @@
       grip.addEventListener('pointerdown', (e) => { grip.setPointerCapture(e.pointerId);
         const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
       grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
-      const dEnd = () => { if (d) { d = null; save(); fitView(); } };
+      const dEnd = () => { if (d) { d = null; save(); } }; // холст не трогаем — панель плавает поверх
       grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
       let rz = null;
       rs.addEventListener('pointerdown', (e) => { e.preventDefault(); rs.setPointerCapture(e.pointerId);
@@ -352,7 +352,7 @@
       rs.addEventListener('pointermove', (e) => { if (!rz) return;
         p.style.width = Math.max(48, Math.min(innerWidth - 12, rz.w + e.clientX - rz.x)) + 'px';
         p.style.maxHeight = Math.max(80, Math.min(innerHeight - 12, rz.h + e.clientY - rz.y)) + 'px'; });
-      const rEnd = () => { if (rz) { rz = null; save(); fitView(); } };
+      const rEnd = () => { if (rz) { rz = null; save(); } };
       rs.addEventListener('pointerup', rEnd); rs.addEventListener('pointercancel', rEnd);
     })();
 
