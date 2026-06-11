@@ -51,3 +51,8 @@ export function mount() {
   $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn);
   bus.on('tool', syncToolButtons); syncToolButtons();
 }
+
+actions.register('toggle.symV', () => $('sym').click());
+actions.register('toggle.symH', () => $('sym-h').click());
+actions.register('toggle.pixelPerfect', () => $('pp').click());
+actions.register('toggle.stabilize', () => $('stab').click());
