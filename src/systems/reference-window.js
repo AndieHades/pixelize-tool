@@ -1,6 +1,6 @@
 // Окно референса: открыть картинку, пан/зум, поворот, отражение, пипетка по клику.
 import * as actions from '../core/actions.js';
-import { $, toast } from '../core/dom.js';
+import { $, toast, t } from '../core/dom.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
 
@@ -30,7 +30,7 @@ function flipRef() { if (!refSrc) return; const c = document.createElement('canv
 function pickFromRef(e) { if (!refSrc) return; const cv = rcv(), dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
   try { const px = cv.getContext('2d').getImageData(Math.round((e.clientX - r.left) * dpr), Math.round((e.clientY - r.top) * dpr), 1, 1).data;
     if (px[3] > 10) { const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
-      actions.run('palette.add', hex); $('picker').value = hex; toast('Цвет из референса добавлен в палитру'); } } catch (err) {} }
+      actions.run('palette.add', hex); $('picker').value = hex; toast(t('toast.colorFromRef')); } } catch (err) {} }
 
 export function mount() {
   $('refbtn').onclick = () => toggleRef(); $('ref-x').onclick = () => toggleRef(false);
@@ -38,7 +38,7 @@ export function mount() {
   const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*';
   $('ref-open').onclick = () => file.click();
   file.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
+    const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
     im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       c.getContext('2d').drawImage(im, 0, 0); refSrc = c; refFit(); }; im.src = URL.createObjectURL(f); };
   floatingWindow($('refwin'), { grip: $('refgrip'), handle: $('refrsz'), clampRight: 70,

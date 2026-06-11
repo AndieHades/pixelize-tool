@@ -1,7 +1,7 @@
 // Сохранение файла на устройство: системный диалог → share → (на тач — оверлей
 // с картинкой) → скачивание. Низкоуровневый сервис; что и как назвать — решают
 // системы экспорта.
-import { $, toast } from './dom.js';
+import { $, toast, t } from './dom.js';
 
 export function showSaveOverlay(u) { $('ovlimg').src = u; $('ovl').classList.add('on'); }
 
@@ -9,7 +9,7 @@ export async function saveFile(b, name, mime, desc, overlayUrl = null) {
   if (window.showSaveFilePicker && !matchMedia('(pointer: coarse)').matches) {
     try { const ext = '.' + name.split('.').pop();
       const h = await showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [mime]: [ext] } }] });
-      const w = await h.createWritable(); await w.write(b); await w.close(); toast('Сохранено: ' + h.name); return; }
+      const w = await h.createWritable(); await w.write(b); await w.close(); toast(t('toast.savedAs', { name: h.name })); return; }
     catch (e) { if (e && e.name === 'AbortError') return; } }
   const file = new File([b], name, { type: mime });
   if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }

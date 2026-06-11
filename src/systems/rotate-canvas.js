@@ -5,7 +5,7 @@ import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { parseKey } from '../logic/raster.js';
 import { dirtyAll } from '../core/layer-cache.js';
-import { toast } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 
 export function rotateCanvas() {
   snapshot();
@@ -14,8 +14,8 @@ export function rotateCanvas() {
     const ne = new Map();
     for (const [k, c] of L.ext) { const [ax, ay] = parseKey(k); ne.set((S.H - 1 - ay) + ',' + ax, c); }
     L.ext = ne; }
-  const t = S.W; S.W = S.H; S.H = t; S.sel = null;
-  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit'); toast('Поворот 90°');
+  const tw = S.W; S.W = S.H; S.H = tw; S.sel = null;
+  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit'); toast(t('toast.rotated90'));
 }
 
 actions.register('canvas.rotate', rotateCanvas);

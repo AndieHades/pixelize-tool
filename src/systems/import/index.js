@@ -6,7 +6,7 @@ import * as actions from '../../core/actions.js';
 import { snapshot, restore } from '../../core/history.js';
 import { expandCanvas, placeImageLayer } from '../../core/document.js';
 import { MAX_LAYERS } from '../../config/limits.js';
-import { $, toast } from '../../core/dom.js';
+import { $, toast, t } from '../../core/dom.js';
 import { setImpData, impConvert, applyImport, rotateImp } from './convert.js';
 
 let impSrcImg = null;
@@ -18,8 +18,8 @@ export function insertPixelImage(im) { // вставить как есть в н
   snapshot();
   const nW = Math.max(S.W, iw), nH = Math.max(S.H, ih);
   if (nW !== S.W || nH !== S.H) { const pl = (nW - S.W) >> 1, pt = (nH - S.H) >> 1; expandCanvas(pl, pt, nW - S.W - pl, nH - S.H - pt); }
-  if (S.layers.length >= MAX_LAYERS) { restore(S.undoStack.pop()); toast('Максимум 8 слоёв — удали лишние'); return; }
-  placeImageLayer(iw, ih, d); bus.emit('layers'); bus.emit('fit'); toast(`Вставлено ${iw}×${ih}`);
+  if (S.layers.length >= MAX_LAYERS) { restore(S.undoStack.pop()); toast(t('toast.maxLayersDel')); return; }
+  placeImageLayer(iw, ih, d); bus.emit('layers'); bus.emit('fit'); toast(t('toast.inserted', { w: iw, h: ih }));
 }
 
 export function looksPixelArt(im) { // эвристика: мало цветов и/или маленький размер
@@ -35,7 +35,7 @@ export function looksPixelArt(im) { // эвристика: мало цветов
 
 export function openImport(file) {
   if (!file) return;
-  const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
+  const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
   im.onload = () => { impSrcImg = im;
     const MAX = 600, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
     const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
@@ -44,7 +44,7 @@ export function openImport(file) {
 }
 
 export function dropImage(file) { if (!file) return;
-  const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
+  const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
   im.onload = () => { if (looksPixelArt(im)) insertPixelImage(im); else openImport(file); };
   im.src = URL.createObjectURL(file); }
 
@@ -67,5 +67,5 @@ export function mount() {
   window.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) show(false); });
   window.addEventListener('drop', (e) => { e.preventDefault(); depth = 0; show(false);
     const f = e.dataTransfer && [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
-    if (f) dropImage(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast('Это не картинка'); });
+    if (f) dropImage(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast(t('toast.notImage')); });
 }

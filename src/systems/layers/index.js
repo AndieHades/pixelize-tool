@@ -3,7 +3,7 @@
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { $, showMenuAt, toast } from '../../core/dom.js';
+import { $, showMenuAt, toast, t } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
 import { effVis } from '../../core/layers.js';
 import { placeImageLayer } from '../../core/document.js';
@@ -29,13 +29,13 @@ export function mount() {
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
-  $('lay-img').addEventListener('click', () => { if (S.layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; } inp.click(); });
+  $('lay-img').addEventListener('click', () => { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; } inp.click(); });
   inp.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    const im = new Image(); im.onerror = () => toast('Не удалось открыть картинку');
-    im.onload = () => { if (S.layers.length >= MAX_LAYERS) { toast('Максимум 8 слоёв'); return; }
+    const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
+    im.onload = () => { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
       const k = Math.min(S.W / im.naturalWidth, S.H / im.naturalHeight), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
       const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(im, 0, 0, w, h);
-      const d = c.getContext('2d').getImageData(0, 0, w, h).data; snapshot(); placeImageLayer(w, h, d); layList(); bus.emit('render'); toast('Картинка на новом слое'); };
+      const d = c.getContext('2d').getImageData(0, 0, w, h).data; snapshot(); placeImageLayer(w, h, d); layList(); bus.emit('render'); toast(t('toast.imgToLayer')); };
     im.src = URL.createObjectURL(f); };
   floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220,
     onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';

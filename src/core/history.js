@@ -2,7 +2,7 @@
 // шлёт события 'layers'/'render' — история не знает про системы визуала.
 import { S } from './state.js';
 import * as bus from './bus.js';
-import { toast } from './dom.js';
+import { toast, t } from './dom.js';
 import { dirtyAll } from './layer-cache.js';
 import { historyCap } from '../config/limits.js';
 
@@ -26,8 +26,8 @@ let undoGuard = null;
 export const setUndoGuard = (fn) => { undoGuard = fn; };
 
 export function doUndo() { if (undoGuard && undoGuard()) return;
-  if (!S.undoStack.length) { toast('Нечего отменять'); return; }
-  S.redoStack.push(snapState()); restore(S.undoStack.pop()); toast('Отменено'); }
+  if (!S.undoStack.length) { toast(t('toast.nothingUndo')); return; }
+  S.redoStack.push(snapState()); restore(S.undoStack.pop()); toast(t('toast.undone')); }
 
 export function doRedo() { if (!S.redoStack.length) return;
-  S.undoStack.push(snapState()); restore(S.redoStack.pop()); toast('Возвращено'); }
+  S.undoStack.push(snapState()); restore(S.redoStack.pop()); toast(t('toast.redone')); }

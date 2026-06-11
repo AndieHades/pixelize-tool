@@ -7,7 +7,7 @@ import { hexToRgb, rgbToHex } from '../logic/color.js';
 import { N8, outlineRings } from '../logic/outline.js';
 import { expandCanvas } from '../core/document.js';
 import { markDirty } from '../core/layer-cache.js';
-import { $, toast } from '../core/dom.js';
+import { $, toast, t } from '../core/dom.js';
 import { OUTLINE_DEFAULT } from '../config/defaults.js';
 
 const outSet = { ...OUTLINE_DEFAULT };
@@ -30,8 +30,8 @@ export function outlineLayer() {
       if (near) { out[y][x] = [col[0], col[1], col[2], a]; added++; } }
     S.layers[S.cur].grid = out; markDirty(S.cur);
   }
-  if (!added) { const s = S.undoStack.pop(); if (s) restore(s); toast('На слое нечего обводить'); return; }
-  S.outPreview = null; $('outpop').classList.remove('on'); bus.emit('render'); bus.emit('layers'); toast('Обводка нанесена');
+  if (!added) { const s = S.undoStack.pop(); if (s) restore(s); toast(t('toast.nothingOutline')); return; }
+  S.outPreview = null; $('outpop').classList.remove('on'); bus.emit('render'); bus.emit('layers'); toast(t('toast.outlined'));
 }
 
 export function openOutlinePop() {

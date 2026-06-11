@@ -7,7 +7,7 @@ import { gridBounds } from '../logic/raster.js';
 import { computeGlow } from '../logic/glow.js';
 import { expandCanvas } from '../core/document.js';
 import { markDirty } from '../core/layer-cache.js';
-import { $, toast } from '../core/dom.js';
+import { $, toast, t } from '../core/dom.js';
 import { hexToRgb } from '../logic/color.js';
 
 let glowRef = null;
@@ -17,7 +17,7 @@ export function glowLayers(targets, range, col, intensity) {
   targets = targets.filter((L) => S.layers.includes(L)); let b = null;
   for (const L of targets) { const lb = gridBounds(L.grid); if (!lb) continue;
     b = b ? { minx: Math.min(b.minx, lb.minx), miny: Math.min(b.miny, lb.miny), maxx: Math.max(b.maxx, lb.maxx), maxy: Math.max(b.maxy, lb.maxy) } : lb; }
-  if (!b) { toast('Слой пуст'); return; }
+  if (!b) { toast(t('toast.layerEmpty')); return; }
   snapshot();
   const pl = Math.max(0, Math.ceil(range - b.minx)), pt = Math.max(0, Math.ceil(range - b.miny));
   const pr = Math.max(0, Math.ceil(range - (S.W - 1 - b.maxx))), pb = Math.max(0, Math.ceil(range - (S.H - 1 - b.maxy)));
@@ -26,8 +26,8 @@ export function glowLayers(targets, range, col, intensity) {
   for (const L of targets) { const cells = computeGlow(L.grid, S.W, S.H, range, intensity); n += cells.length;
     const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
     const i = S.layers.indexOf(L); if (i >= 0) markDirty(i); }
-  if (!n) { const s = S.undoStack.pop(); if (s) restore(s); toast('Нечего подсветить'); return; }
-  bus.emit('render'); bus.emit('layers'); toast(targets.length > 1 ? 'Свечение добавлено для папки' : 'Свечение добавлено');
+  if (!n) { const s = S.undoStack.pop(); if (s) restore(s); toast(t('toast.nothingGlow')); return; }
+  bus.emit('render'); bus.emit('layers'); toast(targets.length > 1 ? t('toast.glowFolder') : t('toast.glow'));
 }
 
 export const glowLayer = (L, range, col, intensity) => glowLayers([L], range, col, intensity);

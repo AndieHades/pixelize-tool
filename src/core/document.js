@@ -5,7 +5,7 @@ import * as bus from './bus.js';
 import { parseKey } from '../logic/raster.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
-import { toast } from './dom.js';
+import { toast, t } from './dom.js';
 
 // добавить пустые ряды/колонки по краям (во все слои); рисунок визуально на месте
 export function expandCanvas(pl, pt, pr, pb) {
@@ -38,7 +38,7 @@ export function applyCropRect(x0, y0, x1, y1) {
     L.grid = out; L.ext = ne; }
   S.W = nw; S.H = nh; S.sel = null;
   bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit');
-  toast(`Холст: ${S.W}×${S.H}`);
+  toast(t('toast.canvasSize', { w: S.W, h: S.H }));
 }
 
 // вставить RGBA-картинку w×h новым слоем по центру холста (без snapshot/UI)

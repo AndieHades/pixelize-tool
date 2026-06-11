@@ -4,7 +4,7 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
-import { $, toast, copyText, showMenuAt } from '../core/dom.js';
+import { $, toast, t, copyText, showMenuAt } from '../core/dom.js';
 import { rgb, rgbToHex, hexToRgb, eqc } from '../logic/color.js';
 import { setTool } from '../core/tools.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
@@ -61,8 +61,8 @@ export function buildPalette() {
   });
   const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый';
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
-  add.addEventListener('click', () => { if (S.palette.some((p) => eqc(p, S.active))) { toast('Этот цвет уже в палитре'); return; }
-    S.palette.push(S.active.slice()); buildPalette(); toast('Цвет добавлен в палитру'); });
+  add.addEventListener('click', () => { if (S.palette.some((p) => eqc(p, S.active))) { toast(t('toast.colorExists')); return; }
+    S.palette.push(S.active.slice()); buildPalette(); toast(t('toast.colorAdded')); });
   add.addEventListener('contextmenu', (e) => { e.preventDefault(); $('picker').click(); });
   box.appendChild(add);
 }
@@ -88,8 +88,8 @@ export function mount() {
   $('ctx').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (!btn) return;
     const col = S.palette[ctxIdx]; $('ctx').classList.remove('on'); if (!col) return;
     const act = btn.dataset.act;
-    if (act === 'copy') { const h = rgbToHex(col).toUpperCase(); copyText(h).then(() => toast('Скопировано: ' + h)); }
-    else if (act === 'delete') { S.palette.splice(ctxIdx, 1); buildPalette(); toast('Цвет удалён из палитры'); }
+    if (act === 'copy') { const h = rgbToHex(col).toUpperCase(); copyText(h).then(() => toast(t('toast.copied', { s: h }))); }
+    else if (act === 'delete') { S.palette.splice(ctxIdx, 1); buildPalette(); toast(t('toast.colorRemoved')); }
     else if (act === 'select') actions.run('selection.byColor', col);
     else if (act === 'replace') { const r = $('repl'); replFrom = col.slice(); r.value = rgbToHex(col); r.click(); } });
   $('repl').addEventListener('change', (e) => { if (!replFrom) return; const from = replFrom; replFrom = null; actions.run('recolor.all', from, hexToRgb(e.target.value)); });

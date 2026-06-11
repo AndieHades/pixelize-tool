@@ -3,7 +3,7 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
-import { $, toast } from '../core/dom.js';
+import { $, toast, t } from '../core/dom.js';
 import { applyCropRect } from '../core/document.js';
 import { registerMode } from '../core/canvas-handlers.js';
 import { MAX_SIZE } from '../config/limits.js';
@@ -14,13 +14,13 @@ export function toggleCrop() { if (S.cropMode) { cancelCrop(); return; }
   const b = S.sel ? { x0: S.sel.x0, y0: S.sel.y0, x1: S.sel.x1, y1: S.sel.y1 } : { x0: 0, y0: 0, x1: S.W - 1, y1: S.H - 1 };
   S.cropMode = { ...b, idx: 0, idy: 0, b }; S.sel = null; S.selMask = null; bus.emit('selection');
   $('crop').classList.add('on'); $('cropbar').classList.add('on'); bus.emit('render');
-  toast('Грани наружу — расширить · внутри — сдвиг рисунка · ✓/Enter'); }
+  toast(t('toast.cropHint')); }
 
 export function cancelCrop() { S.cropMode = null; cropDrag = null; $('cv').style.cursor = '';
   $('crop').classList.remove('on'); $('cropbar').classList.remove('on'); bus.emit('render'); }
 
 export function applyCrop() { if (!S.cropMode) return; const c = S.cropMode; cancelCrop();
-  if (c.x0 === 0 && c.y0 === 0 && c.x1 === S.W - 1 && c.y1 === S.H - 1 && !c.idx && !c.idy) { toast('Размер не менялся'); return; }
+  if (c.x0 === 0 && c.y0 === 0 && c.x1 === S.W - 1 && c.y1 === S.H - 1 && !c.idx && !c.idy) { toast(t('toast.sizeUnchanged')); return; }
   applyCropRect(c.x0 - c.idx, c.y0 - c.idy, c.x1 - c.idx, c.y1 - c.idy); }
 
 function cropZone(e) { const r = $('cv').getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
@@ -50,7 +50,7 @@ function cropMovePt({ e }) { if (!cropDrag || !S.cropMode) return; const r = $('
 
 export function mount() {
   $('crop').onclick = toggleCrop; $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
-  $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? 'Кроп от центра' : 'Кроп от грани'); };
+  $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   registerMode('crop', { down: cropDown, move: cropMovePt, up: () => { cropDrag = null; }, hover: ({ e }) => { $('cv').style.cursor = cropCursor(cropZone(e)); } });
   window.addEventListener('keydown', (e) => { if (!S.cropMode) return;
     if (e.key === 'Enter') { e.preventDefault(); applyCrop(); } else if (e.key === 'Escape') { e.preventDefault(); cancelCrop(); } });

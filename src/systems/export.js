@@ -4,7 +4,7 @@ import * as actions from '../core/actions.js';
 import { compositeLayers, layerCanvas } from '../core/layer-cache.js';
 import { gridBounds } from '../logic/raster.js';
 import { saveCanvas, gridToCanvas, saveFile } from '../core/io.js';
-import { toast } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 
 export function exportPng() {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
@@ -15,7 +15,7 @@ export function exportPng() {
 export function exportLayerPng(L, tight) { // tight — по контуру содержимого
   const safe = (L.name || 'layer').replace(/[^\wА-Яа-яЁё -]+/g, '_').trim() || 'layer';
   if (!tight) { saveCanvas(gridToCanvas(L.grid, 0, 0, S.W, S.H), `${safe}_${S.W}x${S.H}.png`); return; }
-  const b = gridBounds(L.grid); if (!b) { toast('Слой пустой'); return; }
+  const b = gridBounds(L.grid); if (!b) { toast(t('toast.layerEmpty')); return; }
   const w = b.maxx - b.minx + 1, h = b.maxy - b.miny + 1;
   saveCanvas(gridToCanvas(L.grid, b.minx, b.miny, w, h), `${safe}_${w}x${h}.png`);
 }

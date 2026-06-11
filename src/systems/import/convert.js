@@ -8,7 +8,7 @@ import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
 import { symmetrizeV, despeckle, cropEmpty } from '../../logic/cleanup.js';
 import { setTool } from '../../core/tools.js';
 import { dirtyAll } from '../../core/layer-cache.js';
-import { $, toast } from '../../core/dom.js';
+import { $, toast, t } from '../../core/dom.js';
 
 let impData = null, impGrid = null;
 export const setImpData = (d) => { impData = d; };
@@ -55,5 +55,5 @@ export function applyImport() {
   S.undoStack.length = S.redoStack.length = 0; dirtyAll();
   bus.emit('palette'); setTool('pencil'); bus.emit('layers');
   $('imp-ovl').classList.remove('on'); bus.emit('fit');
-  toast(`Готово: ${S.W}×${S.H} — рисуй!`);
+  toast(t('toast.importReady', { w: S.W, h: S.H }));
 }

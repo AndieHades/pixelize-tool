@@ -3,7 +3,7 @@
 import { S, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { $, toast } from '../../core/dom.js';
+import { $, toast, t } from '../../core/dom.js';
 import { snapshot, setUndoGuard } from '../../core/history.js';
 import { expandCanvas } from '../../core/document.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
@@ -27,18 +27,18 @@ const rotRebuildSoon = () => { cancelAnimationFrame(rotRAF); rotRAF = requestAni
 export function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => S.layers.includes(L));
   if (!targets.length) return; let b0 = null;
   for (const L of targets) { const lb = gridBounds(L.grid); if (!lb) continue; b0 = b0 ? { minx: Math.min(b0.minx, lb.minx), miny: Math.min(b0.miny, lb.miny), maxx: Math.max(b0.maxx, lb.maxx), maxy: Math.max(b0.maxy, lb.maxy) } : lb; }
-  if (!b0) { toast('Слой пуст'); return; }
+  if (!b0) { toast(t('toast.layerEmpty')); return; }
   const idxs = targets.map((L) => S.layers.indexOf(L)).sort((a, b) => a - b), i = idxs[idxs.length - 1]; S.cur = i;
   const sources = targets.slice().sort((a, b) => S.layers.indexOf(a) - S.layers.indexOf(b)).map((L) => { const src = [];
     for (let y = b0.miny; y <= b0.maxy; y++) { const row = []; for (let x = b0.minx; x <= b0.maxx; x++) row.push(L.grid[y][x] ? L.grid[y][x].slice() : null); src.push(row); } return { L, idx: S.layers.indexOf(L), src }; });
   S.rotMode = { idx: i, idxs, sources, src: sources[0].src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [] };
   bus.emit('layers'); $('rotbar').classList.add('on'); rotRebuild();
-  toast('Углы — поворот · стороны — растяжение · Enter/ПКМ — применить'); }
+  toast(t('toast.transformHint')); }
 
 function applyRotMode(m) { let res = null, per = [];
   for (const s of m.sources) { const r = rotBuildCells(m, s.src); per.push({ s, r }); if (!r) continue;
     res = res ? { minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : r; }
-  if (!res) { toast('Трансформация пустая'); return false; }
+  if (!res) { toast(t('toast.transformEmpty')); return false; }
   snapshot();
   const pl = Math.max(0, -res.minx), pt = Math.max(0, -res.miny), pr = Math.max(0, res.maxx - (S.W - 1)), pb = Math.max(0, res.maxy - (S.H - 1));
   if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
@@ -48,13 +48,13 @@ function applyRotMode(m) { let res = null, per = [];
   dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
 
 export function undoRotStep() { if (!S.rotMode) return false;
-  if (!S.rotMode.hist.length) { toast('В трансформации нечего отменять'); return true; }
-  rotRestoreState(S.rotMode, S.rotMode.hist.pop()); rotRebuild(); toast('Шаг трансформации отменён'); return true; }
+  if (!S.rotMode.hist.length) { toast(t('toast.noTransformUndo')); return true; }
+  rotRestoreState(S.rotMode, S.rotMode.hist.pop()); rotRebuild(); toast(t('toast.transformStepUndone')); return true; }
 
 export function exitRotMode(apply) { if (!S.rotMode) return; const m = S.rotMode, changed = rotHasChanges(m);
   S.rotMode = null; S.rotPrev = null; $('rotbar').classList.remove('on'); $('cv').style.cursor = '';
-  if (apply && changed) { if (applyRotMode(m)) toast('Трансформация применена'); }
-  else { bus.emit('render'); if (!apply && changed) toast('Трансформация отменена'); } }
+  if (apply && changed) { if (applyRotMode(m)) toast(t('toast.transformApplied')); }
+  else { bus.emit('render'); if (!apply && changed) toast(t('toast.transformCancelled')); } }
 
 export function mount() {
   $('rot-ok').onclick = () => exitRotMode(true); $('rot-x').onclick = () => exitRotMode(false);

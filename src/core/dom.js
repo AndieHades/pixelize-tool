@@ -1,6 +1,7 @@
 // DOM-помощники: единая точка доступа к элементам, тосты, копирование в буфер.
 // Это сервис фундамента — им пользуются системы визуала, но не logic.
 import { TOAST_MS } from '../config/timings.js';
+export { t } from '../i18n/index.js'; // реэкспорт для удобства (toast(t('ключ')))
 
 export const $ = (id) => document.getElementById(id);
 

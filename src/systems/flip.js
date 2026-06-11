@@ -5,7 +5,7 @@ import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { parseKey } from '../logic/raster.js';
 import { markDirty } from '../core/layer-cache.js';
-import { toast } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 
 export function flipLayer(horiz) {
   snapshot(); const L = S.layers[S.cur], g = L.grid;
@@ -14,7 +14,7 @@ export function flipLayer(horiz) {
   for (const [k, c] of L.ext) { const [ax, ay] = parseKey(k);
     ne.set(horiz ? (S.W - 1 - ax) + ',' + ay : ax + ',' + (S.H - 1 - ay), c); }
   L.ext = ne; markDirty(S.cur);
-  bus.emit('render'); bus.emit('layers'); toast(horiz ? 'Отражено по горизонтали' : 'Отражено по вертикали');
+  bus.emit('render'); bus.emit('layers'); toast(horiz ? t('toast.flippedH') : t('toast.flippedV'));
 }
 
 actions.register('layer.flipH', () => flipLayer(true));

@@ -26,7 +26,7 @@ function applyDoc(d) { S.W = d.W; S.H = d.H; S.layers = d.layers; S.folders = d.
   S.sel = null; S.selMask = null; S.selFloat = null; S.cropMode = null;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('render'); }
 
-export function loadDoc(i) { if (i === docCur) return; saveDocState(); docCur = i; applyDoc(docs[i]); toast('→ ' + docs[i].name); }
+export function loadDoc(i) { if (i === docCur) return; saveDocState(); docCur = i; applyDoc(docs[i]); toast(t('toast.switchedTo', { name: docs[i].name })); }
 
 export function newDocument(w, h) { saveDocState();
   docCur = docs.length; docs.push({ name: 'Документ ' + (++docSeq) });
@@ -35,20 +35,20 @@ export function newDocument(w, h) { saveDocState();
   S.palette = defaultPalette(); S.active = S.palette[DEFAULT_ACTIVE].slice();
   S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = null; S.selMask = null; S.selFloat = null; S.cropMode = null;
-  dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); toast(`${docs[docCur].name}: ${w}×${h}`); }
+  dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); toast(t('toast.docCreated', { name: docs[docCur].name, w, h })); }
 
-function closeDoc(i) { if (docs.length < 2) { toast('Это единственный документ'); return; }
+function closeDoc(i) { if (docs.length < 2) { toast(t('toast.onlyDoc')); return; }
   if (i === docCur) { saveDocState(); const t = docs[i === 0 ? 1 : i - 1]; docs.splice(i, 1); docCur = docs.indexOf(t); applyDoc(t); }
-  else { const cd = docs[docCur]; docs.splice(i, 1); docCur = docs.indexOf(cd); } toast('Документ закрыт'); }
+  else { const cd = docs[docCur]; docs.splice(i, 1); docCur = docs.indexOf(cd); } toast(t('toast.docClosed')); }
 
 export function sendLayerToDoc(L, i) { const d = docs[i];
-  if (d.layers.length >= MAX_LAYERS) { toast('В целевом документе уже 8 слоёв'); return; }
+  if (d.layers.length >= MAX_LAYERS) { toast(t('toast.targetDocFull')); return; }
   const copy = { name: L.name, opacity: L.opacity, visible: true, fid: null, clip: false, ext: new Map(),
     grid: Array.from({ length: d.H }, () => new Array(d.W).fill(null)) };
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = L.grid[y][x]; if (!c) continue;
     if (x < d.W && y < d.H) copy.grid[y][x] = c.slice(); else copy.ext.set(x + ',' + y, c.slice()); }
   for (const [k, c] of L.ext) copy.ext.set(k, c.slice());
-  d.layers.push(copy); toast('Слой скопирован в ' + d.name); }
+  d.layers.push(copy); toast(t('toast.layerSentTo', { name: d.name })); }
 
 function openDocsMenu() { const m = $('dctx'); m.innerHTML = '';
   const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Документы'; m.appendChild(head);
@@ -80,10 +80,10 @@ export function mount() {
   $('new-cancel').onclick = () => $('new-ovl').classList.remove('on');
   actions.register('doc.new', () => $('new-ovl').classList.add('on'));
   $('new-create').onclick = () => { const w = parseInt($('new-w').value, 10), h = parseInt($('new-h').value, 10);
-    if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) { toast(`Размеры от 2 до ${MAX_SIZE}`); return; }
+    if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) { toast(t('toast.sizeRange', { max: MAX_SIZE })); return; }
     $('new-ovl').classList.remove('on'); newDocument(w, h); };
   $('docsbtn').onclick = openDocsMenu;
-  bus.on('send-layer', (L) => { if (docs.length < 2) { toast('Создай второй документ — кнопка слева сверху'); return; }
+  bus.on('send-layer', (L) => { if (docs.length < 2) { toast(t('toast.createSecondDoc')); return; }
     saveDocState(); const m = $('cctx'); m.innerHTML = '';
     const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Куда копировать:'; m.appendChild(head);
     docs.forEach((d, i) => { if (i === docCur) return; const b = document.createElement('button'); b.textContent = (d.name || 'Документ') + ` · ${d.W}×${d.H}`;

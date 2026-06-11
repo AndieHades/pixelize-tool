@@ -5,7 +5,7 @@ import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { eqc } from '../logic/color.js';
 import { dirtyAll } from '../core/layer-cache.js';
-import { toast } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 
 export function recolorAll(from, to) {
   snapshot(); let n = 0;
@@ -16,10 +16,10 @@ export function recolorAll(from, to) {
   if (pi >= 0) { if (S.palette.some((p, i) => i !== pi && eqc(p, to))) S.palette.splice(pi, 1); else S.palette[pi] = to.slice(); }
   if (eqc(S.active, from)) S.active = to.slice();
   dirtyAll(); bus.emit('palette'); bus.emit('render'); bus.emit('layers');
-  toast(n ? `Перекрашено: ${n} пикс.` : 'Цвет заменён в палитре');
+  toast(n ? t('toast.recoloredN', { n }) : t('toast.paletteReplaced'));
 }
 
-export function startReplace(from) { S.replaceMode = { from: from.slice() }; bus.emit('render'); toast('Пиксели подсвечены — тапни новый цвет в палитре'); }
+export function startReplace(from) { S.replaceMode = { from: from.slice() }; bus.emit('render'); toast(t('toast.replaceHint')); }
 
 actions.register('recolor.all', recolorAll);
 actions.register('recolor.start', startReplace);
