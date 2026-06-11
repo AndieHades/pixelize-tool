@@ -123,7 +123,7 @@
     $('crop').onclick = toggleCrop;
     $('trim').onclick = trimCanvas;
     $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
-    $('undo').onclick = doUndo; $('redo').onclick = doRedo;
+    $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo;
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
     function openLayerMenu(px, py) { // тап ПКМ по холсту — выбор слоя
       const m = $('cctx'); m.innerHTML = '';
@@ -141,7 +141,7 @@
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
     //      H/V — флипы, R или Ctrl+T — поворот, C — кроп, N — новый, +/−/0 — зум,
     //      Ctrl+Z/Y/C/X/V/D/E/G/O/S, Del — удалить, Enter/Esc — кроп, пробел — пипетка ----
-    let spaceTool = null, altPick = null;
+    let altPick = null;
     window.addEventListener('keydown', (e) => {
       if ((e.code === 'AltLeft' || e.code === 'AltRight') && altPick === null && tool !== 'pick' && !document.querySelector('.ovl.on')) {
         e.preventDefault(); altPick = tool; setTool('pick'); return; } // Alt — пипетка пока держишь, отпустил → прежний инструмент
@@ -169,7 +169,6 @@
       else if (e.key === 'Escape') { if (cropMode) cancelCrop();
         else { if (replaceMode) { replaceMode = null; render(); }
           bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
-      else if (c === 'Space') { e.preventDefault(); if (!e.repeat && spaceTool === null) { spaceTool = tool; setTool('pick'); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
       else if (c === 'KeyF') { if (sel) fillSelection(); else setTool('fill'); }
@@ -196,7 +195,6 @@
       else if (c === 'Digit0') fitView();
     });
     window.addEventListener('keyup', (e) => {
-      if (e.code === 'Space' && spaceTool !== null) { setTool(spaceTool === 'pick' ? 'pencil' : spaceTool); spaceTool = null; }
       if ((e.code === 'AltLeft' || e.code === 'AltRight') && altPick !== null) { setTool(altPick === 'pick' ? 'pencil' : altPick); altPick = null; }
     });
     window.addEventListener('blur', () => { if (altPick !== null) { setTool(altPick === 'pick' ? 'pencil' : altPick); altPick = null; } }); // потеря фокуса с зажатым Alt

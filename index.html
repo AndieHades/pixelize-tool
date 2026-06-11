@@ -24,8 +24,6 @@
       <button id="prev" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
       <button id="refbtn" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
       <button id="fit" title="Вписать (0)"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
-      <button id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
-      <button id="redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
       <button id="zin" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
       <button id="zout" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
     </div>
@@ -83,7 +81,11 @@
     <div class="vsl bb-size" id="bp-size-sl"><div class="vsl-fill" id="bp-size-fill"></div><div class="vsl-knob" id="bp-size-knob"></div></div>
     <button id="bb-pick" title="Пипетка"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg></button>
     <div class="vsl bb-op" id="bp-op-sl"><div class="vsl-fill" id="bp-op-fill"></div><div class="vsl-knob" id="bp-op-knob"></div></div>
+    <div class="bb-sep"></div>
+    <button id="bb-undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M4.5 9H12a5.5 5.5 0 1 1 0 11H9"/><path d="M8 5.5L4.5 9 8 12.5"/></svg></button>
+    <button id="bb-redo" title="Вернуть (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M19.5 9H12a5.5 5.5 0 1 0 0 11h-3"/><path d="M16 5.5L19.5 9 16 12.5"/></svg></button>
   </div>
+  <div id="pickflag"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg>Пипетка</div>
   <div id="bb-val"></div>
   <div id="bcpop" class="toolpop">
     <div class="bp-head" id="bc-title">Яркость/контраст</div>
