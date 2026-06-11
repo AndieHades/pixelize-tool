@@ -22,6 +22,19 @@ export function gridBounds(g) {
   return maxx < 0 ? null : { minx, miny, maxx, maxy };
 }
 
+// Брезенхем — обход линии без дырок; cb(x,y) на каждой клетке
+export function bres(x0, y0, x1, y1, cb) {
+  let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+  for (;;) { cb(x0, y0); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+
+// контур прямоугольника по углам; cb(x,y) на каждой клетке рамки
+export function rectEdges(x0, y0, x1, y1, cb) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1), ay = Math.min(y0, y1), by = Math.max(y0, y1);
+  for (let x = ax; x <= bx; x++) { cb(x, ay); if (by !== ay) cb(x, by); }
+  for (let y = ay + 1; y < by; y++) { cb(ax, y); if (bx !== ax) cb(bx, y); }
+}
+
 // сделать сетку симметричной: зеркалим опорную половину на вторую по осям
 export function symmetrizeGrid(g, v, h) {
   const H = g.length, W = g[0].length;

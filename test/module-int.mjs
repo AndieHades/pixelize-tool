@@ -15,6 +15,13 @@ const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
 const history = await import('../src/core/history.js');
 const bus = await import('../src/core/bus.js');
+const doc = await import('../src/core/document.js');
+const render = await import('../src/systems/render/index.js');
+
+const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set();
+  S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil';
+  cache.dirtyAll(); };
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
@@ -42,5 +49,23 @@ t('history: undoGuard перехватывает отмену', () => {
   history.setUndoGuard(null);
   assert.equal(guarded, 1); assert.deepEqual(S.layers[0].grid[1][1], [1, 1, 1, 255]); // не откатилось — перехвачено
 });
+
+t('document: expandCanvas растит холст и сдвигает пиксель', () => { reset4();
+  S.layers[0].grid[1][1] = [5, 5, 5, 255];
+  doc.expandCanvas(1, 1, 0, 0); // +1 слева, +1 сверху
+  assert.equal(S.W, 5); assert.equal(S.H, 5);
+  assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
+});
+t('render: рисует и шлёт событие overlay', () => { reset4();
+  S.layers[0].grid[1][2] = [10, 20, 30, 255]; cache.dirtyAll();
+  let ov = 0; const off = bus.on('overlay', () => ov++); render.render(); off();
+  assert.equal(ov, 1);
+});
+t('render: с выделением и кропом не падает', () => { reset4();
+  S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.tool = 'select'; render.render();
+  S.sel = null; S.cropMode = { x0: 0, y0: 0, x1: 2, y1: 2, idx: 0, idy: 0 }; render.render();
+  S.cropMode = null; assert.ok(true);
+});
+t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

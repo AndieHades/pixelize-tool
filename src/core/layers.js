@@ -12,3 +12,7 @@ export const layerSymLocked = (L) => !!(L && (L.symLock || (layerFolder(L) && la
 // база обтравки: ближайший необтравочный слой ниже (или -1)
 export function clipBase(i) { if (!S.layers[i].clip) return -1;
   let j = i - 1; while (j >= 0 && S.layers[j].clip) j--; return j; }
+
+// активна ли симметрия на текущем слое (с учётом замка слоя/папки)
+export const symA = () => S.sym && !layerSymLocked(S.layers[S.cur]);   // лево-право
+export const symHA = () => S.symH && !layerSymLocked(S.layers[S.cur]); // верх-низ

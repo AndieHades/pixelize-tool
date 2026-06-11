@@ -15,9 +15,15 @@ export const S = {
   folders: [], folderSeq: 0, marked: new Set(),
   palette: [], active: [255, 122, 24],
   tool: 'pencil', sym: false, symH: false,
+  brushes: { pencil: { size: 1, op: 1 }, eraser: { size: 1, op: 1 } },
   sel: null, selMask: null, selFloat: null,
   view: { zoom: 12, ox: 0, oy: 0 },
   undoStack: [], redoStack: [],
+  // общая интерактивная/превью-стейт, которую читает рендер и пишут системы
+  // (system-private мелочь вроде ppPath/strokeSeen живёт внутри своих систем)
+  cropMode: null, rotMode: null, rotPrev: null, moveDrag: null,
+  hoverPx: null, lineStart: null, linePrev: null,
+  outPreview: null, dsPreview: null, glowPreview: null, replaceMode: null,
 };
 
 // активная сетка текущего слоя
