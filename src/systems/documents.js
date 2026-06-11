@@ -76,4 +76,11 @@ export function mount() {
     if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) { toast(`Размеры от 2 до ${MAX_SIZE}`); return; }
     $('new-ovl').classList.remove('on'); newDocument(w, h); };
   $('docsbtn').onclick = openDocsMenu;
+  bus.on('send-layer', (L) => { if (docs.length < 2) { toast('Создай второй документ — кнопка слева сверху'); return; }
+    saveDocState(); const m = $('cctx'); m.innerHTML = '';
+    const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = 'Куда копировать:'; m.appendChild(head);
+    docs.forEach((d, i) => { if (i === docCur) return; const b = document.createElement('button'); b.textContent = (d.name || 'Документ') + ` · ${d.W}×${d.H}`;
+      b.onclick = () => { m.classList.remove('on'); sendLayerToDoc(L, i); }; m.appendChild(b); });
+    m.style.visibility = 'hidden'; m.classList.add('on');
+    requestAnimationFrame(() => { const r = m.getBoundingClientRect(); m.style.left = Math.round((innerWidth - r.width) / 2) + 'px'; m.style.top = Math.round(innerHeight * 0.35) + 'px'; m.style.visibility = ''; }); });
 }
