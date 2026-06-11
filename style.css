@@ -294,7 +294,7 @@
     .vsl-knob { position: absolute; left: 50%; bottom: 0; width: 32px; height: 18px; border-radius: 999px;
       background: rgba(244, 243, 255, .92);
       box-shadow: 0 2px 8px rgba(0, 0, 0, .48), inset 0 0 0 1px rgba(255, 255, 255, .48);
-      transform: translate(-50%, 50%); pointer-events: none; }
+      transform: translateX(-50%); pointer-events: none; }
     .vsl-knob::after { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 4px; transform: translateY(-50%);
       border-radius: 999px; background: var(--accent); box-shadow: 0 0 0 1px rgba(61, 139, 253, .15); }
     .bb-op .vsl-knob::after { background: rgba(114, 116, 132, .58); box-shadow: none; }

@@ -1,8 +1,8 @@
     // ---- левая полоса кисти (как в Procreate): размер сверху, пипетка по центру, прозрачность снизу ----
     const BP_SMAX = 8;
     const curBrush = () => (tool === 'eraser' ? 'eraser' : 'pencil'); // полоса правит активную кисть/ластик
-    function vslPos(fillId, knobId, frac) { const p = Math.max(0, Math.min(1, frac)) * 100;
-      $(fillId).style.height = p + '%'; $(knobId).style.bottom = p + '%'; }
+    function vslPos(fillId, knobId, frac) { const f = Math.max(0, Math.min(1, frac)), p = f * 100, knob = $(knobId), sl = knob.parentElement;
+      $(fillId).style.height = p + '%'; knob.style.bottom = Math.max(0, (sl.clientHeight - knob.offsetHeight) * f) + 'px'; }
     function syncBars() { const b = brushes[curBrush()];
       vslPos('bp-size-fill', 'bp-size-knob', (b.size - 1) / (BP_SMAX - 1));
       vslPos('bp-op-fill', 'bp-op-knob', b.op); }
@@ -19,6 +19,7 @@
       syncBars(); showBbVal('bp-size-sl', brushes[curBrush()].size + ' px'); render(); });
     vslDrag('bp-op-sl', (f) => { brushes[curBrush()].op = Math.max(0, Math.min(1, f));
       syncBars(); showBbVal('bp-op-sl', Math.round(brushes[curBrush()].op * 100) + '%'); });
+    addEventListener('resize', syncBars);
     $('bb-pick').onclick = () => setTool('pick');
     function makeDraggable(el) { let d = null; // окошко настроек можно отодвинуть и поставить рядом
       el.addEventListener('pointerdown', (e) => { if (e.target.closest('input, button, .vsl')) return;
