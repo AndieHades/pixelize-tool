@@ -50,7 +50,11 @@
       directDrawing = false; directLast = null; stroke = false; afterStroke(); }
 
     cv.addEventListener('pointerdown', (e) => {
-      if (rotMode) { cv.setPointerCapture(e.pointerId); rotGrab(e); return; } // режим поворота — тянем угол
+      if (rotMode) {
+        if (e.pointerType === 'mouse' && e.button === 2) { e.preventDefault(); exitRotMode(true); return; }
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        cv.setPointerCapture(e.pointerId); rotGrab(e); return;
+      }
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
       $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('adjpop').classList.remove('on'); $('glowpop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
       if (e.pointerType !== 'touch') { directDown(e); return; }
@@ -66,7 +70,7 @@
         if (selDrag) { if (selDrag.lifted) commitFloat(); selDrag = null; syncSelbar(); } startPinch(); }
     });
     cv.addEventListener('pointermove', (e) => {
-      if (rotMode) { if (rotMode.grab !== null) rotDrag(e); return; }
+      if (rotMode) { if (rotMode.grab) rotDrag(e); else if (e.pointerType === 'mouse') rotHover(e); return; }
       if (e.pointerType !== 'touch') { directMove(e); return; }
       if (penActive || !ptrs.has(e.pointerId)) return;
       { const pi = ptrs.get(e.pointerId); if (pi) { pi.x = e.clientX; pi.y = e.clientY; } } // не теряем время касания

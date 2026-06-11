@@ -137,7 +137,7 @@
         L.grid = out; L.ext = ne; }
       view.ox -= pl * view.zoom; view.oy -= pt * view.zoom; // рисунок визуально остаётся на месте
       sel = null; syncSelbar(); dirtyAll(); }
-    function openOutlinePop() { $('dspop').classList.remove('on'); dsPreview = null;
+    function openOutlinePop() { $('dspop').classList.remove('on'); $('glowpop').classList.remove('on'); dsPreview = null; glowPreview = null;
       const v = '#' + active.map((q) => q.toString(16).padStart(2, '0')).join('');
       $('out-col').value = v; $('out-colsw').style.background = v;
       $('out-size').value = outSet.size; $('out-sizev').textContent = outSet.size;
@@ -223,9 +223,24 @@
         if (dist > 0 && dist <= range) { const a = Math.round(255 * intensity * Math.pow(1 - dist / range, 1.5));
           if (a > 0) out.push([x, y, a]); } }
       return out; }
-    function glowLayer(L, range, col, intensity) { const cells = computeGlow(L, range, intensity);
-      if (!cells.length) { toast('Нечего подсветить'); return; }
-      snapshot(); const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
+    function layerBounds(L) {
+      let minx = W, miny = H, maxx = -1, maxy = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.grid[y][x]) {
+        if (x < minx) minx = x; if (x > maxx) maxx = x;
+        if (y < miny) miny = y; if (y > maxy) maxy = y;
+      }
+      return maxx < 0 ? null : { minx, miny, maxx, maxy };
+    }
+    function glowLayer(L, range, col, intensity) {
+      const b = layerBounds(L);
+      if (!b) { toast('Слой пуст'); return; }
+      snapshot();
+      const pl = Math.max(0, Math.ceil(range - b.minx)), pt = Math.max(0, Math.ceil(range - b.miny));
+      const pr = Math.max(0, Math.ceil(range - (W - 1 - b.maxx))), pb = Math.max(0, Math.ceil(range - (H - 1 - b.maxy)));
+      if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
+      const cells = computeGlow(L, range, intensity);
+      if (!cells.length) { const s = undoStack.pop(); if (s) restore(s); toast('Нечего подсветить'); return; }
+      const g = L.grid; for (const [x, y, a] of cells) g[y][x] = [col[0], col[1], col[2], a];
       const i = layers.indexOf(L); if (i >= 0) markDirty(i); render(); layList(); toast('Свечение добавлено'); }
     function trimCanvas() { // обрезать пустые поля впритык к рисунку (по всем слоям)
       let x0 = W, y0 = H, x1 = -1, y1 = -1;

@@ -17,15 +17,17 @@
         r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
       return a > 0.02 ? [Math.round(r), Math.round(g), Math.round(b)] : null; }
 
-    let chkTile = null;
-    function checkerPattern() { // 2×2 тайл по 1px, масштабируется паттерном до z — клетки точно ложатся на сетку при любом зуме
-      if (!chkTile) { chkTile = document.createElement('canvas'); chkTile.width = chkTile.height = 2;
-        const x = chkTile.getContext('2d');
-        x.fillStyle = '#1a1a20'; x.fillRect(0, 0, 2, 2);
-        x.fillStyle = '#222228'; x.fillRect(1, 0, 1, 1); x.fillRect(0, 1, 1, 1); }
-      const p = ctx.createPattern(chkTile, 'repeat');
-      if (p && p.setTransform) p.setTransform(new DOMMatrix([view.zoom, 0, 0, view.zoom, 0, 0]));
-      return p; }
+    function drawChecker(ox, oy, z, cw, chh) { // без CanvasPattern: iPad/Safari не сглаживает клетки градиентом
+      ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip();
+      ctx.fillStyle = '#1a1a20'; ctx.fillRect(ox, oy, W * z, H * z);
+      ctx.fillStyle = '#222228';
+      const x0 = Math.max(0, Math.floor((0 - ox) / z)), y0 = Math.max(0, Math.floor((0 - oy) / z));
+      const x1 = Math.min(W - 1, Math.ceil((cw - ox) / z)), y1 = Math.min(H - 1, Math.ceil((chh - oy) / z));
+      for (let y = y0; y <= y1; y++) {
+        let x = x0; if (((x + y) & 1) === 0) x++;
+        for (; x <= x1; x += 2) ctx.fillRect(ox + x * z, oy + y * z, z, z);
+      }
+      ctx.restore(); }
     function render() {
       const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
       if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(chh * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
@@ -34,13 +36,15 @@
       const z = view.zoom, ox = view.ox, oy = view.oy;
       ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
       ctx.fillStyle = '#141419'; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
-      ctx.save(); ctx.translate(ox, oy); ctx.fillStyle = checkerPattern();
-      ctx.fillRect(0, 0, W * z, H * z); ctx.restore();
+      drawChecker(ox, oy, z, cw, chh);
       const iox = cropMode ? cropMode.idx * z : 0, ioy = cropMode ? cropMode.idy * z : 0; // сдвиг рисунка в кроп-режиме
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue; // обтравка без базы не видна
         ctx.globalAlpha = L.opacity;
-        if (rotPrev && rotMode && rotPrev.idx === i) { ctx.drawImage(rotPrev.canvas, ox + rotPrev.px * z, oy + rotPrev.py * z, rotPrev.ow * z, rotPrev.oh * z); continue; } // живое превью поворота вместо слоя
+        if (rotMode && rotMode.idx === i) { // живое превью трансформации вместо исходного слоя
+          if (rotPrev && rotPrev.canvas) ctx.drawImage(rotPrev.canvas, ox + rotPrev.px * z, oy + rotPrev.py * z, rotPrev.ow * z, rotPrev.oh * z);
+          continue;
+        }
         const mdx = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dx * z : 0; // живой сдвиг слоя инструментом Move
         const mdy = (moveDrag && moveDrag.idxs.includes(i)) ? moveDrag.dy * z : 0;
         ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
@@ -51,6 +55,7 @@
         for (let y = 0; y <= H; y++) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
         ctx.stroke();
       }
+      if (rotMode && typeof drawTransformFrame === 'function') drawTransformFrame();
       if (sym) { const ax = ox + (W / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
       if (symH) { const ay = oy + (H / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
@@ -130,7 +135,8 @@
       syncStatus(); syncPrev();
     }
     function syncStatus() { let s = W + '×' + H + ' px';
-      if (rotMode) s += ' · поворот ' + (Math.round(rotMode.ang * 180 / Math.PI * 10) / 10) + '°';
+      if (rotMode) s += ' · трансформация ' + (Math.round(rotMode.ang * 180 / Math.PI * 10) / 10) + '° ' +
+        Math.round(rotMode.sx * 100) + '×' + Math.round(rotMode.sy * 100) + '%';
       else if (cropMode) { const c = cropMode, b = c.b || c;
         s += ' · кроп ' + (c.x1 - c.x0 + 1) + '×' + (c.y1 - c.y0 + 1);
         const fmt = (d) => (d > 0 ? '+' + d : d), parts = []; // + наружу (расширил), − внутрь (обрезал)

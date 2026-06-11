@@ -30,31 +30,120 @@
       const dEnd2 = () => { d = null; };
       el.addEventListener('pointerup', dEnd2); el.addEventListener('pointercancel', dEnd2); }
     makeDraggable($('outpop')); makeDraggable($('dspop')); makeDraggable($('glowpop'));
-    // ---- свободный поворот слоя прямо на холсте (Ctrl+T): тянешь — крутишь, Shift — по 45° ----
+    // ---- трансформация слоя: рамка, угловое вращение, боковое растяжение ----
     let rotRAF = 0;
-    function rotScale() { return Math.max(W, H) <= 96 ? 8 : Math.max(W, H) <= 192 ? 4 : 2; }
+    const ROT_MIN_SCALE = .15;
+    function rotCenter(m) { return { x: m.b.x0 + m.b.w / 2 + m.tx, y: m.b.y0 + m.b.h / 2 + m.ty }; }
+    function rotLocalToWorld(m, lx, ly) {
+      const c = rotCenter(m), ca = Math.cos(m.ang), sa = Math.sin(m.ang);
+      const x = (lx - m.b.w / 2) * m.sx, y = (ly - m.b.h / 2) * m.sy;
+      return { x: c.x + x * ca - y * sa, y: c.y + x * sa + y * ca };
+    }
+    function rotWorldToLocal(m, x, y) {
+      const c = rotCenter(m), ca = Math.cos(m.ang), sa = Math.sin(m.ang);
+      const dx = x - c.x, dy = y - c.y;
+      return { x: (dx * ca + dy * sa) / m.sx + m.b.w / 2, y: (-dx * sa + dy * ca) / m.sy + m.b.h / 2 };
+    }
+    function rotFrame(m = rotMode) {
+      if (!m) return null;
+      const p = [rotLocalToWorld(m, 0, 0), rotLocalToWorld(m, m.b.w, 0), rotLocalToWorld(m, m.b.w, m.b.h), rotLocalToWorld(m, 0, m.b.h)];
+      return { p, sides: [
+        { kind: 'scale-y', sign: -1, p: { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 } },
+        { kind: 'scale-x', sign: 1, p: { x: (p[1].x + p[2].x) / 2, y: (p[1].y + p[2].y) / 2 } },
+        { kind: 'scale-y', sign: 1, p: { x: (p[2].x + p[3].x) / 2, y: (p[2].y + p[3].y) / 2 } },
+        { kind: 'scale-x', sign: -1, p: { x: (p[3].x + p[0].x) / 2, y: (p[3].y + p[0].y) / 2 } }
+      ] }; }
+    function rotScreen(p) { return { x: view.ox + p.x * view.zoom, y: view.oy + p.y * view.zoom }; }
+    function rotPointer(e) { const r = cv.getBoundingClientRect();
+      return { sx: e.clientX - r.left, sy: e.clientY - r.top, x: (e.clientX - r.left - view.ox) / view.zoom, y: (e.clientY - r.top - view.oy) / view.zoom }; }
+    function rotBuildCells(m) {
+      const f = rotFrame(m), xs = f.p.map((p) => p.x), ys = f.p.map((p) => p.y);
+      const x0 = Math.floor(Math.min(...xs)) - 1, x1 = Math.ceil(Math.max(...xs)) + 1;
+      const y0 = Math.floor(Math.min(...ys)) - 1, y1 = Math.ceil(Math.max(...ys)) + 1;
+      const cells = []; let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const q = rotWorldToLocal(m, x + .5, y + .5), sx = Math.floor(q.x), sy = Math.floor(q.y);
+        if (sx < 0 || sy < 0 || sx >= m.b.w || sy >= m.b.h) continue;
+        const c = m.src[sy][sx]; if (!c) continue;
+        cells.push([x, y, c]); if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      }
+      return cells.length ? { cells, minx, miny, maxx, maxy } : null;
+    }
     function rotRebuild() { if (!rotMode) return;
-      const pv = buildRotPreview(layers[rotMode.idx], rotMode.ang, rotScale()); pv.idx = rotMode.idx; rotPrev = pv; render(); }
+      const res = rotBuildCells(rotMode);
+      if (!res) { rotPrev = { idx: rotMode.idx, canvas: null }; render(); return; }
+      const c = document.createElement('canvas'), w2 = res.maxx - res.minx + 1, h2 = res.maxy - res.miny + 1;
+      c.width = w2; c.height = h2; const x2 = c.getContext('2d'), id = x2.createImageData(w2, h2);
+      for (const [x, y, cc] of res.cells) { const o = ((y - res.miny) * w2 + (x - res.minx)) * 4;
+        id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
+      x2.putImageData(id, 0, 0); rotPrev = { idx: rotMode.idx, canvas: c, px: res.minx, py: res.miny, ow: w2, oh: h2 }; render(); }
     function rotRebuildSoon() { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); }
-    function enterRotMode(L) { const i = layers.indexOf(L); if (i < 0) return; cur = i;
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
-      rotMode = { idx: i, ang: 0, grab: null, base: 0 }; layList(); $('rotbar').classList.add('on'); rotRebuild();
-      toast('Тяни по холсту — поворот · Shift — по 45° · ✓/Enter — применить'); }
-    function exitRotMode(apply) { if (!rotMode) return; const m = rotMode; rotMode = null; rotPrev = null; $('rotbar').classList.remove('on');
-      if (apply && layers[m.idx] && Math.abs(m.ang) > 1e-3) freeRotateLayer(layers[m.idx], m.ang, rotScale()); else render(); }
+    function enterRotMode(L) { const i = layers.indexOf(L); if (i < 0) return; const b0 = layerBounds(L);
+      if (!b0) { toast('Слой пуст'); return; }
+      cur = i; $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('glowpop').classList.remove('on');
+      const src = []; for (let y = b0.miny; y <= b0.maxy; y++) {
+        const row = []; for (let x = b0.minx; x <= b0.maxx; x++) row.push(L.grid[y][x] ? L.grid[y][x].slice() : null); src.push(row); }
+      rotMode = { idx: i, src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 },
+        ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false };
+      layList(); $('rotbar').classList.add('on'); rotRebuild();
+      toast('Углы — поворот · стороны — растяжение · Enter/ПКМ — применить'); }
+    function applyRotMode(m) {
+      const res = rotBuildCells(m);
+      if (!res) { toast('Трансформация пустая'); return false; }
+      snapshot();
+      const pl = Math.max(0, -res.minx), pt = Math.max(0, -res.miny);
+      const pr = Math.max(0, res.maxx - (W - 1)), pb = Math.max(0, res.maxy - (H - 1));
+      if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
+      const L = layers[m.idx]; if (!L) return false;
+      const g = blank(W, H); for (const [x, y, c] of res.cells) {
+        const nx = x + pl, ny = y + pt; if (nx >= 0 && ny >= 0 && nx < W && ny < H) g[ny][nx] = c.slice(); }
+      L.grid = g; L.ext = new Map(); markDirty(m.idx); dirtyAll(); layList(); render(); return true;
+    }
+    function exitRotMode(apply) { if (!rotMode) return; const m = rotMode, changed = m.changed;
+      rotMode = null; rotPrev = null; $('rotbar').classList.remove('on'); cv.style.cursor = '';
+      if (apply && changed) { if (applyRotMode(m)) toast('Трансформация применена'); }
+      else { render(); if (!apply && changed) toast('Трансформация отменена'); } }
     $('rot-ok').onclick = () => exitRotMode(true);
     $('rot-x').onclick = () => exitRotMode(false);
-    function rotPt(e) { const r = cv.getBoundingClientRect();
-      return Math.atan2((e.clientY - r.top - view.oy) / view.zoom - H / 2, (e.clientX - r.left - view.ox) / view.zoom - W / 2); }
-    function rotGrab(e) { rotMode.grab = rotPt(e); rotMode.base = rotMode.ang; }
-    function rotDrag(e) { if (rotMode.grab === null) return; let ang = rotMode.base + (rotPt(e) - rotMode.grab);
-      if (e.shiftKey) ang = Math.round(ang / (Math.PI / 4)) * (Math.PI / 4); rotMode.ang = ang; rotRebuildSoon(); }
+    function rotHit(e) {
+      const m = rotMode, p = rotPointer(e), f = rotFrame(m), hit = 14;
+      for (let i = 0; i < f.p.length; i++) { const s = rotScreen(f.p[i]); if (Math.hypot(p.sx - s.x, p.sy - s.y) <= hit) return { kind: 'rotate', corner: i }; }
+      for (const side of f.sides) { const s = rotScreen(side.p); if (Math.hypot(p.sx - s.x, p.sy - s.y) <= hit) return side; }
+      const q = rotWorldToLocal(m, p.x, p.y); if (q.x >= 0 && q.y >= 0 && q.x <= m.b.w && q.y <= m.b.h) return { kind: 'move' };
+      return null;
+    }
+    function rotGrab(e) { const hit = rotHit(e); if (!hit) { rotMode.grab = null; return; }
+      const p = rotPointer(e), c = rotCenter(rotMode);
+      rotMode.grab = { ...hit, start: p, sx: rotMode.sx, sy: rotMode.sy, tx: rotMode.tx, ty: rotMode.ty,
+        ang: rotMode.ang, cx: c.x, cy: c.y, a0: Math.atan2(p.y - c.y, p.x - c.x),
+        w0: rotMode.b.w * rotMode.sx, h0: rotMode.b.h * rotMode.sy }; }
+    function rotDrag(e) { const g = rotMode && rotMode.grab; if (!g) return; const p = rotPointer(e);
+      if (g.kind === 'rotate') { let a = g.ang + Math.atan2(p.y - g.cy, p.x - g.cx) - g.a0;
+        if (e.shiftKey) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12); rotMode.ang = a; }
+      else if (g.kind === 'scale-x') { const ax = { x: Math.cos(g.ang), y: Math.sin(g.ang) };
+        const d = ((p.x - g.start.x) * ax.x + (p.y - g.start.y) * ax.y) * g.sign;
+        rotMode.sx = Math.max(ROT_MIN_SCALE, (g.w0 + d * 2) / rotMode.b.w); }
+      else if (g.kind === 'scale-y') { const ay = { x: -Math.sin(g.ang), y: Math.cos(g.ang) };
+        const d = ((p.x - g.start.x) * ay.x + (p.y - g.start.y) * ay.y) * g.sign;
+        rotMode.sy = Math.max(ROT_MIN_SCALE, (g.h0 + d * 2) / rotMode.b.h); }
+      else if (g.kind === 'move') { rotMode.tx = g.tx + p.x - g.start.x; rotMode.ty = g.ty + p.y - g.start.y; }
+      rotMode.changed = true; rotRebuildSoon(); }
+    function rotHover(e) { const h = rotHit(e); cv.style.cursor = !h ? '' : h.kind === 'move' ? 'move' : h.kind === 'rotate' ? 'grab' : h.kind === 'scale-x' ? 'ew-resize' : 'ns-resize'; }
+    function drawTransformFrame() {
+      if (!rotMode) return; const f = rotFrame(rotMode), pts = f.p.map(rotScreen);
+      ctx.save(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+      const drawSquare = (p, s) => { ctx.fillStyle = '#0d0d10'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s); ctx.strokeRect(p.x - s / 2, p.y - s / 2, s, s); };
+      for (const p of pts) { ctx.beginPath(); ctx.fillStyle = '#0d0d10'; ctx.strokeStyle = '#6fdb8b'; ctx.lineWidth = 2; ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+      for (const s of f.sides) drawSquare(rotScreen(s.p), 9);
+      ctx.restore();
+    }
     let dsRef = null;
     function computeDsPreview() { if (!dsRef || !$('dspop').classList.contains('on')) { dsPreview = null; render(); return; }
       const dx = +$('ds-x').value, dy = +$('ds-y').value, pre = [];
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (dsRef.grid[y][x]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) pre.push([nx, ny]); }
       dsPreview = pre; render(); }
-    function openDsPop(L) { dsRef = L; $('outpop').classList.remove('on');
+    function openDsPop(L) { dsRef = L; $('outpop').classList.remove('on'); $('glowpop').classList.remove('on'); outPreview = null; glowPreview = null;
       const on = $('dspop').classList.toggle('on'); if (on) computeDsPreview(); else { dsPreview = null; render(); } }
     $('ds-x').addEventListener('input', () => { $('ds-xv').textContent = $('ds-x').value; computeDsPreview(); });
     $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; computeDsPreview(); });
@@ -68,7 +157,7 @@
       glowPreview = computeGlow(glowRef, +$('glow-range').value, +$('glow-int').value / 100); render(); }
     function glowSoon() { cancelAnimationFrame(glowRAF); glowRAF = requestAnimationFrame(computeGlowPreview); }
     function openGlowPop(L) { glowRef = L; const i = layers.indexOf(L); if (i >= 0) cur = i; layList();
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on');
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); outPreview = null; dsPreview = null;
       const on = $('glowpop').classList.toggle('on'); if (on) computeGlowPreview(); else { glowPreview = null; render(); } }
     $('glow-range').addEventListener('input', () => { $('glow-rangev').textContent = $('glow-range').value; glowSoon(); });
     $('glow-int').addEventListener('input', () => { $('glow-intv').textContent = $('glow-int').value + '%'; glowSoon(); });
@@ -103,7 +192,7 @@
     $('outline').onclick = openOutlinePop;
     $('flip-h').onclick = () => flipLayer(true);
     $('flip-v').onclick = () => flipLayer(false);
-    $('rot').onclick = rotateCanvas;
+    $('rot').onclick = () => enterRotMode(layers[cur]);
     $('mono').onclick = monoAll;
     // ---- кастомный HSV-пикер в углу ----
     let colH = 0, colS = 0, colV = 100;
@@ -115,9 +204,11 @@
       $('col-s').style.background = 'linear-gradient(90deg,' + rgbToHex(hsvToRgb(colH, 0, colV)) + ',' + rgbToHex(hsvToRgb(colH, 100, colV)) + ')';
       $('col-v').style.background = 'linear-gradient(90deg,#000,' + rgbToHex(hsvToRgb(colH, colS, 100)) + ')'; }
     function colApply() { active = hsvToRgb(colH, colS, colV); refreshActive(); $('picker').value = rgbToHex(active); buildPalette(); render(); }
+    function syncColFromActive() {
+      const [h, s, v] = rgbToHsv(active[0], active[1], active[2]); colH = h; colS = s; colV = v; syncColUI();
+    }
     function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); return; }
-      const [h, s, v] = rgbToHsv(active[0], active[1], active[2]); colH = h; colS = s; colV = v;
-      $('outpop').classList.remove('on'); syncColUI(); $('colpop').classList.add('on'); }
+      $('outpop').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
     // угловой кружок: тап — открыть пикер; перетащить на холст — залить активным цветом (как в Procreate)
     let colDrop = null;
     $('activewrap').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -177,16 +268,21 @@
         m.style.visibility = ''; }); }
 
     // ---- клавиатура: B/E/F/I/M — инструменты, L — слои, S — симметрия, P — перфект, O — обводка,
-    //      H/V — флипы, R или Ctrl+T — поворот, C — кроп, N — новый, +/−/0 — зум,
+    //      H/V — флипы, R или Ctrl+T — трансформация, C — кроп, N — новый, +/−/0 — зум,
     //      Ctrl+Z/Y/C/X/V/D/E/G/O/S, Del — удалить, Enter/Esc — кроп, пробел — пипетка ----
     let altPick = null;
     window.addEventListener('keydown', (e) => {
       if ((e.code === 'AltLeft' || e.code === 'AltRight') && altPick === null && tool !== 'pick' && !document.querySelector('.ovl.on')) {
         e.preventDefault(); altPick = tool; setTool('pick'); return; } // Alt — пипетка пока держишь, отпустил → прежний инструмент
+      const mod = e.ctrlKey || e.metaKey, c = e.code;
+      if (rotMode) {
+        if (mod && c === 'KeyZ') { e.preventDefault(); exitRotMode(false); return; }
+        if (e.key === 'Enter') { e.preventDefault(); exitRotMode(true); return; }
+        if (e.key === 'Escape') { e.preventDefault(); exitRotMode(false); return; }
+      }
       if (e.target.matches && e.target.matches('input, textarea')) return;
       if (e.target.isContentEditable) return;
       if (document.querySelector('.ovl.on')) return;
-      const mod = e.ctrlKey || e.metaKey, c = e.code;
       if (mod) {
         if (c === 'KeyZ') { e.preventDefault(); if (e.shiftKey) doRedo(); else doUndo(); }
         else if (c === 'KeyY') { e.preventDefault(); doRedo(); }
@@ -225,7 +321,7 @@
       else if (c === 'KeyO') { if ($('outpop').classList.contains('on')) outlineLayer(); else openOutlinePop(); } // 1-е O — превью, 2-е — применить
       else if (c === 'KeyH') flipLayer(true);
       else if (c === 'KeyV') flipLayer(false);
-      else if (c === 'KeyR') rotateCanvas();
+      else if (c === 'KeyR') enterRotMode(layers[cur]);
       else if (c === 'KeyC') toggleCrop();
       else if (c === 'KeyN') $('new-ovl').classList.add('on');
       else if (c === 'Equal' || c === 'NumpadAdd') zoomBy(1.25);

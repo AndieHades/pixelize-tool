@@ -5,6 +5,26 @@
       if (typeof syncBars === 'function') syncBars();
       cv.style.cursor = t === 'move' ? 'move' : ''; render(); }
     function refreshActive() { $('active').style.background = rgb(active); }
+    const paletteColorTargets = [
+      { pop: 'outpop', input: 'out-col', sw: 'out-colsw' },
+      { pop: 'dspop', input: 'ds-col', sw: 'ds-colsw' },
+      { pop: 'glowpop', input: 'glow-col', sw: 'glow-colsw' }
+    ];
+    function setActiveColor(c, pickTool = true) {
+      active = c.slice(); $('picker').value = rgbToHex(active);
+      refreshActive();
+      if ($('colpop').classList.contains('on') && typeof syncColFromActive === 'function') syncColFromActive();
+      buildPalette();
+      if (pickTool) setTool('pencil');
+    }
+    function setOpenPanelColor(c) {
+      const target = paletteColorTargets.find((t) => $(t.pop).classList.contains('on'));
+      if (!target) return false;
+      const v = rgbToHex(c), input = $(target.input);
+      input.value = v; $(target.sw).style.background = v;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    }
     function buildPalette() { const box = $('pal'); box.innerHTML = '';
       $('palgrip').textContent = 'Палитра · ' + palette.length;
       let activeShown = false;
@@ -13,13 +33,12 @@
         if (!activeShown && eqc(c, active)) { b.classList.add('on'); activeShown = true; } // только первый совпавший — не дублируем подсветку
         b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') showSwTip(b, hex); });
         b.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hideSwTipSoon(); });
-        b.addEventListener('click', () => { clearTimeout(swHold);
+        b.addEventListener('click', (e) => { clearTimeout(swHold);
           if (palSquelch) { palSquelch = false; return; } // клик после перетаскивания не выбирает цвет
-          if ($('outpop').classList.contains('on')) { // окно обводки открыто — палитра задаёт его цвет
-            const v = '#' + c.map((q) => q.toString(16).padStart(2, '0')).join('');
-            $('out-col').value = v; $('out-colsw').style.background = v; return; }
+          if (e.detail > 1) { setActiveColor(c); return; }
+          if (setOpenPanelColor(c)) return;
           if (replaceMode) { const from = replaceMode.from; replaceMode = null; recolorAll(from, c.slice()); return; }
-          active = c.slice(); refreshActive(); buildPalette(); setTool('pencil'); });
+          setActiveColor(c); });
         b.addEventListener('contextmenu', (e) => e.preventDefault()); // меню открываем сами на ПКМ-тап
         b.addEventListener('pointerdown', (e) => { // перетаскивание ведём на документ-уровне (надёжно и для ПКМ)
           if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY;
@@ -51,7 +70,7 @@
     document.addEventListener('pointermove', palDragMove);
     document.addEventListener('pointerup', palDragEnd);
     document.addEventListener('pointercancel', palDragEnd);
-    function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); active = c; refreshActive(); buildPalette(); setTool('pencil'); }
+    function addColor(hex) { const c = hexToRgb(hex); if (!palette.some((p) => eqc(p, c))) palette.push(c); setActiveColor(c); }
     function recolorAll(from, to) { // заменить цвет на всех слоях и в палитре
       snapshot(); let n = 0;
       for (const L of layers) { const g = L.grid;
