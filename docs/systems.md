@@ -13,9 +13,10 @@
 | `core/state.js` | хранит изменяемое состояние документа | ✅ | 01-state |
 | `core/bus.js` | разносит синхронные события между системами | ✅ | (новое) |
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
-| `core/layer-cache.js` | кеширует слой в canvas и собирает композит | 🔲 | 03-render |
+| `core/layers.js` | отвечает на запросы видимости/обтравки слоёв | ✅ | 01-state |
+| `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
 | `core/history.js` | пишет и откатывает снимки документа | 🔲 | 04-history |
-| `core/io.js` | сохраняет canvas/blob в файл | 🔲 | 11-export |
+| `core/io.js` | сохраняет canvas/blob в файл | ✅ | 11-export |
 
 ## logic/ — чистые вычисления (без DOM и state)
 

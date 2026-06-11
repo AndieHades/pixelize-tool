@@ -1,0 +1,33 @@
+// Сохранение файла на устройство: системный диалог → share → (на тач — оверлей
+// с картинкой) → скачивание. Низкоуровневый сервис; что и как назвать — решают
+// системы экспорта.
+import { $, toast } from './dom.js';
+
+export function showSaveOverlay(u) { $('ovlimg').src = u; $('ovl').classList.add('on'); }
+
+export async function saveFile(b, name, mime, desc, overlayUrl = null) {
+  if (window.showSaveFilePicker && !matchMedia('(pointer: coarse)').matches) {
+    try { const ext = '.' + name.split('.').pop();
+      const h = await showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [mime]: [ext] } }] });
+      const w = await h.createWritable(); await w.write(b); await w.close(); toast('Сохранено: ' + h.name); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; } }
+  const file = new File([b], name, { type: mime });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  if (overlayUrl) { showSaveOverlay(overlayUrl); return; }
+  const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// фрагмент сетки → canvas с попиксельной альфой
+export function gridToCanvas(grid, x0, y0, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), id = x.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const cc = grid[y0 + y][x0 + xx]; if (!cc) continue;
+    const o = (y * w + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
+  x.putImageData(id, 0, 0); return c;
+}
+
+export function saveCanvas(c, name) {
+  c.toBlob((b) => saveFile(b, name, 'image/png', 'PNG-изображение',
+    matchMedia('(pointer: coarse)').matches ? c.toDataURL('image/png') : null), 'image/png');
+}
