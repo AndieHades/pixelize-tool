@@ -331,6 +331,31 @@
       rs.addEventListener('pointerup', rEnd); rs.addEventListener('pointercancel', rEnd);
     })();
 
+    // ---- панель инструментов: перенос за грип и ресайз за уголок (как палитра) ----
+    (function sideWin() { const p = $('sidebar'), grip = $('sb-grip'), rs = $('sb-rsz');
+      function place(l, t) { p.style.left = Math.max(2, Math.min(l, innerWidth - 46)) + 'px';
+        p.style.top = Math.max(2, Math.min(t, innerHeight - 60)) + 'px'; p.style.transform = 'none'; }
+      function save() { const r = p.getBoundingClientRect();
+        try { localStorage.setItem('sbwin', JSON.stringify({ l: r.left, t: r.top, w: p.style.width, h: p.style.maxHeight })); } catch (err) {} }
+      try { const s = JSON.parse(localStorage.getItem('sbwin'));
+        if (s && s.l != null) { place(s.l, s.t); if (s.w) p.style.width = s.w; if (s.h) p.style.maxHeight = s.h; } } catch (err) {}
+      let d = null;
+      grip.addEventListener('pointerdown', (e) => { grip.setPointerCapture(e.pointerId);
+        const r = p.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+      grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
+      const dEnd = () => { if (d) { d = null; save(); fitView(); } };
+      grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
+      let rz = null;
+      rs.addEventListener('pointerdown', (e) => { e.preventDefault(); rs.setPointerCapture(e.pointerId);
+        const r = p.getBoundingClientRect(); if (!p.style.top) place(r.left, r.top);
+        rz = { w: r.width, h: r.height, x: e.clientX, y: e.clientY }; });
+      rs.addEventListener('pointermove', (e) => { if (!rz) return;
+        p.style.width = Math.max(48, Math.min(innerWidth - 12, rz.w + e.clientX - rz.x)) + 'px';
+        p.style.maxHeight = Math.max(80, Math.min(innerHeight - 12, rz.h + e.clientY - rz.y)) + 'px'; });
+      const rEnd = () => { if (rz) { rz = null; save(); fitView(); } };
+      rs.addEventListener('pointerup', rEnd); rs.addEventListener('pointercancel', rEnd);
+    })();
+
     // ---- окно 1:1: живой предпросмотр в реальном размере ----
     let prevOn = false; const pcv2 = $('prevcv'), pctx2 = pcv2.getContext('2d');
     const prevView = { z: 0, x: 0, y: 0 }; let prevComp = null;
@@ -511,7 +536,7 @@
     const TOOL_PROTECTED = new Set(['docsbtn']); // вход в настройки должен остаться доступным
     let toolHidden = new Set();
     function saveOrder() { const o = {};
-      for (const id of TOOLBOXES) o[id] = [...$(id).children].map((c) => c.id).filter(Boolean);
+      for (const id of TOOLBOXES) o[id] = [...$(id).children].filter((c) => c.tagName === 'BUTTON' && c.id).map((c) => c.id);
       try { localStorage.setItem('toolorder2', JSON.stringify(o)); } catch (err) {} }
     function restoreOrder() { try { const o = JSON.parse(localStorage.getItem('toolorder2')); if (!o) return;
       for (const id of TOOLBOXES) { const box = $(id); if (!o[id]) continue;
@@ -535,7 +560,7 @@
       if (!tDrag.moved) { if (Math.hypot(e.clientX - tDrag.x, e.clientY - tDrag.y) <= 7) return; tDrag.moved = true; }
       const el = document.elementFromPoint(e.clientX, e.clientY); if (!el) return;
       const box = el.closest('#tb-left, #tb-right, #sidebar'); if (!box) return;
-      const row = el.closest('#tb-left > *, #tb-right > *, #sidebar > *');
+      const row = el.closest('#tb-left > button, #tb-right > button, #sidebar > button');
       if (row && row !== tDrag.b) { const r = row.getBoundingClientRect();
         const before = box.id === 'sidebar' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
         box.insertBefore(tDrag.b, before ? row : row.nextSibling); }
