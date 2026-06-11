@@ -69,10 +69,28 @@
         if (sha && my !== yy) paintCell(xx, my, erase);
         if (sa && sha && mx !== xx && my !== yy) paintCell(mx, my, erase); }
     }
+    function adjustCell(x, y) { // кисть-коррекция: +1 уровень за штрих (strokeSeen не даёт копить, пока не отпустишь)
+      if (x < 0 || y < 0 || x >= W || y >= H || !inSel(x, y)) return;
+      const key = y * W + x; if (strokeSeen.has(key)) return; strokeSeen.add(key);
+      const g = G(), c = g[y][x]; if (!c) return; // только непустые пиксели
+      const a = c.length > 3 ? c[3] : 255; let [h, s, v] = rgbToHsv(c[0], c[1], c[2]);
+      if (adjMode === 'dodge') v = Math.min(100, v + adjAmt);
+      else if (adjMode === 'burn') v = Math.max(0, v - adjAmt);
+      else { h = (h + adjAmt) % 360; s = Math.min(100, s + adjAmt * 0.6); } // colorize: сдвиг тона + подъём насыщенности
+      const r = hsvToRgb(h, s, v); g[y][x] = [r[0], r[1], r[2], a]; markDirty(cur);
+    }
+    function adjustStamp(x, y) { const sz = brushes.pencil.size, off = sz >> 1, sa = symA(), sha = symHA();
+      for (let dy = 0; dy < sz; dy++) for (let dx = 0; dx < sz; dx++) { const xx = x - off + dx, yy = y - off + dy;
+        adjustCell(xx, yy); const mx = W - 1 - xx, my = H - 1 - yy;
+        if (sa && mx !== xx) adjustCell(mx, yy);
+        if (sha && my !== yy) adjustCell(xx, my);
+        if (sa && sha && mx !== xx && my !== yy) adjustCell(mx, my); }
+    }
     function stamp(x, y) {
       if (tool === 'select' || tool === 'move') return;
       if (tool === 'pencil' || tool === 'line') brushStamp(x, y, false);
       else if (tool === 'eraser') brushStamp(x, y, true);
+      else if (tool === 'adjust') adjustStamp(x, y);
       else if (tool === 'pick') { pickAt(x, y); setTool('pencil'); }
       else if (tool === 'fill') flood(x, y);
     }

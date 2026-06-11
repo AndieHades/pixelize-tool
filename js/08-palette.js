@@ -1,5 +1,5 @@
     function setTool(t) { tool = t; lineStart = null; linePrev = null;
-      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect', 'move']) $('t-' + id).classList.toggle('on', id === t);
+      for (const id of ['pencil', 'eraser', 'pick', 'fill', 'select', 'line', 'rect', 'move', 'adjust']) $('t-' + id).classList.toggle('on', id === t);
       $('bb-pick').classList.toggle('on', t === 'pick'); // полоса кисти: пипетка
       document.body.classList.toggle('picking', t === 'pick'); // очевидный режим пипетки
       if (typeof syncBars === 'function') syncBars();

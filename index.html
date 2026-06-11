@@ -35,6 +35,7 @@
       <button id="t-line" title="Линия (U)"><svg viewBox="0 0 24 24"><path d="M5.5 18.5L18.5 5.5"/><circle cx="5.5" cy="18.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="5.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
       <button id="t-rect" title="Прямоугольник (K)"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg></button>
       <button id="t-move" title="Перемещение слоя (ЛКМ-перетаскивание)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></svg></button>
+      <button id="t-adjust" title="Кисть-коррекция: осветлить / затемнить / тон"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
       <button id="t-select" title="Выделение (M)"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
       <div class="tb-sep" id="tb-sep1"></div>
       <button id="layers" title="Слои (L) · ПКМ по холсту — выбор слоя"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
@@ -97,6 +98,17 @@
     <div class="irow"><label>Яркость</label><input id="bc-bri" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-briv">0</b></div>
     <div class="irow"><label>Контраст</label><input id="bc-con" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-conv">0</b></div>
     <div class="iact"><button id="bc-cancel" class="txtbtn">Отмена</button><button id="bc-apply" class="txtbtn primary">Применить</button></div>
+  </div>
+
+  <div id="adjpop" class="toolpop">
+    <div class="bp-head">Кисть-коррекция</div>
+    <div class="chips" id="adj-modes">
+      <button data-m="dodge" class="on">Осветлить</button>
+      <button data-m="burn">Затемнить</button>
+      <button data-m="colorize">Тон (hue)</button>
+    </div>
+    <div class="irow"><label>Сила за штрих</label><input id="adj-amt" type="range" min="2" max="30" step="1" value="8" /><b id="adj-amtv">8</b></div>
+    <p class="hint" style="margin:0 2px">Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.</p>
   </div>
 
   <div id="dspop" class="toolpop">

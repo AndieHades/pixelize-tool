@@ -27,6 +27,7 @@
     let lineStart = null, linePrev = null; // инструмент «линия»
     const brushes = { pencil: { size: 1, op: 1 }, eraser: { size: 1, op: 1 } };
     const outSet = { size: 1, op: 1 };
+    let adjMode = 'dodge', adjAmt = 8; // кисть-коррекция: режим (dodge/burn/colorize) и шаг за штрих
     const strokeSeen = new Set(); // чтобы полупрозрачная кисть не красила клетку дважды за штрих
     const view = { zoom: 12, ox: 0, oy: 0 };
     const undoStack = [], redoStack = [];

@@ -70,6 +70,12 @@
     $('t-fill').onclick = () => { if (sel) fillSelection(); else setTool('fill'); }; // с выделением — мгновенная заливка
     $('t-select').onclick = () => setTool('select');
     $('t-move').onclick = () => setTool('move');
+    $('t-adjust').onclick = () => { if (tool === 'adjust') openAdjPop(); else setTool('adjust'); };
+    function openAdjPop() { $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('adjpop').classList.toggle('on'); }
+    makeDraggable($('adjpop'));
+    document.querySelectorAll('#adj-modes button').forEach((b) => { b.onclick = () => { adjMode = b.dataset.m;
+      document.querySelectorAll('#adj-modes button').forEach((x) => x.classList.toggle('on', x === b)); }; });
+    $('adj-amt').addEventListener('input', () => { adjAmt = +$('adj-amt').value; $('adj-amtv').textContent = adjAmt; });
     $('out-apply').onclick = outlineLayer;
     $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; computeOutlinePreview(); render(); });
     $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; render(); });
@@ -187,7 +193,7 @@
       else if (e.key === 'Enter') { if (cropMode) { e.preventDefault(); applyCrop(); } else if (rotMode) { e.preventDefault(); exitRotMode(true); } }
       else if (e.key === 'Escape') { if (cropMode) cancelCrop(); else if (rotMode) exitRotMode(false);
         else { if (replaceMode) { replaceMode = null; render(); }
-          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop']) $(id).classList.remove('on'); deselect(); } }
+          bcCancel(); for (const id of ['ctx', 'lctx', 'cctx', 'outpop', 'colpop', 'dspop', 'adjpop']) $(id).classList.remove('on'); deselect(); } }
       else if (c === 'KeyB') setTool('pencil');
       else if (c === 'KeyE') setTool('eraser');
       else if (c === 'KeyF') { if (sel) fillSelection(); else setTool('fill'); }

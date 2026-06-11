@@ -52,7 +52,7 @@
     cv.addEventListener('pointerdown', (e) => {
       if (rotMode) { cv.setPointerCapture(e.pointerId); rotGrab(e); return; } // режим поворота — тянем угол
       if (replaceMode) { replaceMode = null; render(); toast('Перекраска отменена'); return; }
-      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
+      $('outpop').classList.remove('on'); $('dspop').classList.remove('on'); $('adjpop').classList.remove('on'); bcCancel(); // панель слоёв НЕ закрываем; режим поворота перехвачен выше
       if (e.pointerType !== 'touch') { directDown(e); return; }
       if (penActive) return;
       cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
@@ -85,7 +85,7 @@
         if (!lineStart) lineStart = toGrid({ clientX: gDownX, clientY: gDownY });
         const [gx, gy] = toGrid(e); linePrev = [lineStart[0], lineStart[1], gx, gy]; render(); return;
       }
-      if (gMoved && !gHeld && (tool === 'pencil' || tool === 'eraser')) {
+      if (gMoved && !gHeld && (tool === 'pencil' || tool === 'eraser' || tool === 'adjust')) {
         if (!stroke) { beginStroke(); stabPt = { x: gDownX, y: gDownY }; const [sx, sy] = toGrid({ clientX: gDownX, clientY: gDownY }); stamp(sx, sy); last = [sx, sy]; }
         const [px2, py2] = smoothPt(e);
         const [gx, gy] = toGrid({ clientX: px2, clientY: py2 }); if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; render();

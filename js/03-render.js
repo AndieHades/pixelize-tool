@@ -117,7 +117,7 @@
         ctx.fillRect(x + w / 2 - ws / 2, y - hw / 2, ws, hw); ctx.fillRect(x + w / 2 - ws / 2, y + h - hw / 2, ws, hw);
         for (const p of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) ctx.fillRect(p[0] - cs / 2, p[1] - cs / 2, cs, cs);
       }
-      if (hoverPx && !cropMode && !selFloat && (tool === 'pencil' || tool === 'eraser' || tool === 'line')) {
+      if (hoverPx && !cropMode && !selFloat && (tool === 'pencil' || tool === 'eraser' || tool === 'line' || tool === 'adjust')) {
         const s = brushes[tool === 'eraser' ? 'eraser' : 'pencil'].size, off2 = s >> 1; // контур кисти
         const bx = ox + (hoverPx[0] - off2) * z, by2 = oy + (hoverPx[1] - off2) * z;
         ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.lineWidth = 3; ctx.strokeRect(bx - .5, by2 - .5, s * z + 1, s * z + 1);
