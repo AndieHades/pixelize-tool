@@ -1,9 +1,10 @@
-    let impData = null, impGrid = null, impTimer = null;
+    let impData = null, impGrid = null, impTimer = null, impSrcImg = null;
     function openImport(file) {
       if (!file) return;
       const im = new Image();
       im.onerror = () => toast('Не удалось открыть картинку');
       im.onload = () => {
+        impSrcImg = im; // оригинал в натуральном размере — для «вставить как есть»
         const MAX = 600, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
         const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
         const c = document.createElement('canvas'); c.width = w; c.height = h;

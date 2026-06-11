@@ -187,6 +187,7 @@
     $('imp-apply').onclick = applyImport;
     $('imp-rot').onclick = rotateImp;
     $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
+    $('imp-asis').onclick = () => { if (impSrcImg) { $('imp-ovl').classList.remove('on'); insertPixelImage(impSrcImg); } };
 
     $('new').onclick = () => $('new-ovl').classList.add('on');
     document.querySelectorAll('#new-chips button').forEach((b) => b.addEventListener('click', () => {
@@ -303,28 +304,59 @@
     })();
 
     // ---- окно 1:1: живой предпросмотр в реальном размере ----
-    let prevOn = false;
-    const pcv2 = $('prevcv'), pctx2 = pcv2.getContext('2d');
-    function syncPrev() { if (!prevOn) return;
-      if (pcv2.width !== W) pcv2.width = W; if (pcv2.height !== H) pcv2.height = H;
-      pcv2.style.width = W + 'px'; pcv2.style.height = H + 'px';
-      pctx2.clearRect(0, 0, W, H); pctx2.imageSmoothingEnabled = false;
+    let prevOn = false; const pcv2 = $('prevcv'), pctx2 = pcv2.getContext('2d');
+    const prevView = { z: 0, x: 0, y: 0 }; let prevComp = null;
+    function prevComposite() { if (!prevComp) prevComp = document.createElement('canvas');
+      if (prevComp.width !== W) prevComp.width = W; if (prevComp.height !== H) prevComp.height = H;
+      const px = prevComp.getContext('2d'); px.clearRect(0, 0, W, H); px.imageSmoothingEnabled = false;
       for (let i = 0; i < layers.length; i++) { const L = layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
         const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-        pctx2.globalAlpha = L.opacity; pctx2.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
-      pctx2.globalAlpha = 1; }
+        px.globalAlpha = L.opacity; px.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
+      px.globalAlpha = 1; return prevComp; }
+    function prevReset() { const cw = pcv2.clientWidth || 200, ch = pcv2.clientHeight || 200;
+      prevView.z = 1; prevView.x = Math.round((cw - W) / 2); prevView.y = Math.round((ch - H) / 2); }
+    function syncPrev() { if (!prevOn) return;
+      const dpr = window.devicePixelRatio || 1, cw = pcv2.clientWidth, ch = pcv2.clientHeight;
+      if (pcv2.width !== Math.round(cw * dpr) || pcv2.height !== Math.round(ch * dpr)) { pcv2.width = Math.round(cw * dpr); pcv2.height = Math.round(ch * dpr); }
+      if (prevView.z <= 0) prevReset();
+      pctx2.setTransform(dpr, 0, 0, dpr, 0, 0); pctx2.clearRect(0, 0, cw, ch); pctx2.imageSmoothingEnabled = false;
+      pctx2.drawImage(prevComposite(), prevView.x, prevView.y, W * prevView.z, H * prevView.z); }
     function togglePrev(on) { prevOn = on === undefined ? !prevOn : on;
-      $('prevwin').classList.toggle('on', prevOn); $('prev').classList.toggle('on', prevOn); if (prevOn) syncPrev(); }
+      $('prevwin').classList.toggle('on', prevOn); $('prev').classList.toggle('on', prevOn);
+      if (prevOn) requestAnimationFrame(() => { prevReset(); syncPrev(); }); }
     $('prev').onclick = () => togglePrev();
     $('prev-x').onclick = () => togglePrev(false);
-    (function prevDrag() { const w = $('prevwin'), g = $('prevgrip'); let d = null;
+    $('prev-1to1').onclick = () => { prevReset(); syncPrev(); };
+    (function prevCtl() { const w = $('prevwin'), g = $('prevgrip'), rz = $('prevrsz');
+      let d = null, rsz = null, p = null; const pp = new Map(); let pinch0 = null;
       g.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
         g.setPointerCapture(e.pointerId); const r = w.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
       g.addEventListener('pointermove', (e) => { if (!d) return;
-        w.style.left = Math.max(4, Math.min(e.clientX - d.dx, innerWidth - 60)) + 'px';
-        w.style.top = Math.max(4, Math.min(e.clientY - d.dy, innerHeight - 40)) + 'px'; w.style.right = 'auto'; });
-      const end = () => { d = null; };
-      g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end); })();
+        w.style.left = Math.max(4, Math.min(e.clientX - d.dx, innerWidth - 70)) + 'px';
+        w.style.top = Math.max(4, Math.min(e.clientY - d.dy, innerHeight - 50)) + 'px'; w.style.right = 'auto'; });
+      const gEnd = () => { d = null; }; g.addEventListener('pointerup', gEnd); g.addEventListener('pointercancel', gEnd);
+      rz.addEventListener('pointerdown', (e) => { e.preventDefault(); rz.setPointerCapture(e.pointerId);
+        const r = w.getBoundingClientRect(); rsz = { w: r.width, h: r.height, x: e.clientX, y: e.clientY }; });
+      rz.addEventListener('pointermove', (e) => { if (!rsz) return;
+        w.style.width = Math.max(120, Math.min(innerWidth - 12, rsz.w + e.clientX - rsz.x)) + 'px';
+        w.style.height = Math.max(110, Math.min(innerHeight - 12, rsz.h + e.clientY - rsz.y)) + 'px'; syncPrev(); });
+      const rzEnd = () => { rsz = null; }; rz.addEventListener('pointerup', rzEnd); rz.addEventListener('pointercancel', rzEnd);
+      pcv2.addEventListener('pointerdown', (e) => { pcv2.setPointerCapture(e.pointerId); pp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pp.size === 2) { const a = [...pp.values()]; pinch0 = { d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), z: prevView.z }; p = null; return; }
+        p = { x: e.clientX, y: e.clientY, vx: prevView.x, vy: prevView.y }; });
+      pcv2.addEventListener('pointermove', (e) => { if (!pp.has(e.pointerId)) return; pp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pp.size >= 2 && pinch0) { const a = [...pp.values()], dd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+          const mid = { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 }, r = pcv2.getBoundingClientRect();
+          const wx = (mid.x - r.left - prevView.x) / prevView.z, wy = (mid.y - r.top - prevView.y) / prevView.z;
+          prevView.z = Math.max(.1, Math.min(40, pinch0.z * (dd / pinch0.d)));
+          prevView.x = (mid.x - r.left) - wx * prevView.z; prevView.y = (mid.y - r.top) - wy * prevView.z; syncPrev(); return; }
+        if (!p) return; prevView.x = p.vx + (e.clientX - p.x); prevView.y = p.vy + (e.clientY - p.y); syncPrev(); });
+      const cvEnd = (e) => { pp.delete(e.pointerId); if (pp.size < 2) pinch0 = null; p = null; };
+      pcv2.addEventListener('pointerup', cvEnd); pcv2.addEventListener('pointercancel', cvEnd);
+      pcv2.addEventListener('wheel', (e) => { e.preventDefault(); const r = pcv2.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+        const wx = (mx - prevView.x) / prevView.z, wy = (my - prevView.y) / prevView.z;
+        prevView.z = Math.max(.1, Math.min(40, prevView.z * (e.deltaY < 0 ? 1.12 : 0.89)));
+        prevView.x = mx - wx * prevView.z; prevView.y = my - wy * prevView.z; syncPrev(); }, { passive: false }); })();
 
     // ---- окно референса: открыть картинку, зум/пан, поворот, флип, пипетка по клику ----
     let refOn = false, refSrc = null; const refView = { z: 1, x: 0, y: 0 };

@@ -266,16 +266,23 @@
 
     /* ---- окно 1:1 ---- */
     #prevwin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px));
-      top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 13; display: none;
-      background: var(--panel-solid); border: 1px solid var(--line); border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .5); padding: 0 6px 6px; }
-    #prevwin.on { display: block; }
-    #prevgrip { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      height: 26px; cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; }
+      top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 13; width: 220px; height: 220px;
+      display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
+      border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); padding: 0 6px 6px; }
+    #prevwin.on { display: flex; }
+    #prevgrip { display: flex; align-items: center; gap: 6px; height: 28px; flex: none;
+      cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; }
+    #prevgrip > span { flex: 1; }
     #prevgrip button, #refgrip button { width: 24px; height: 24px; color: var(--txt2); flex: none; }
     #prevgrip button svg, #refgrip button svg { width: 14px; height: 14px; }
-    #prevcv { display: block; image-rendering: pixelated; border-radius: 6px;
+    #prev-1to1 { width: auto !important; padding: 0 8px; height: 22px !important; font-size: 11px; font-weight: 700;
+      background: rgba(255, 255, 255, .08) !important; border-radius: 6px; color: var(--txt) !important; }
+    #prevcv { flex: 1; min-height: 0; width: 100%; image-rendering: pixelated; border-radius: 6px;
+      touch-action: none; display: block; cursor: grab;
       background: repeating-conic-gradient(#1d1d23 0% 25%, #26262c 0% 50%) 0 0 / 12px 12px; }
+    #prevrsz { position: absolute; right: 1px; bottom: 1px; width: 18px; height: 18px;
+      cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
+    #prevrsz svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
     /* ---- окно референса ---- */
     #refwin { position: fixed; left: 60%; top: 26%; z-index: 13; width: 270px; height: 250px;

@@ -106,8 +106,12 @@
   </footer>
 
   <div id="prevwin">
-    <div id="prevgrip"><span>1:1</span><button id="prev-x" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="prevgrip"><span>Превью</span>
+      <button id="prev-1to1" title="Реальный размер 1:1">1:1</button>
+      <button id="prev-x" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
     <canvas id="prevcv"></canvas>
+    <div id="prevrsz" title="Размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </div>
 
   <div id="refwin">
@@ -219,7 +223,7 @@
     <div class="irow"><label>Отсечение фона</label><input id="imp-bgtol" type="range" min="0" max="120" step="2" value="30" /><b id="imp-bgtolv">30</b></div>
     <div class="irow"><label>Чистка мусора</label><span class="hint">битые пиксели и дырки</span><label class="switch"><input id="imp-clean" type="checkbox" /><span></span></label></div>
     <div class="irow"><label>Симметрия</label><span class="hint">останется при рисовании</span><label class="switch"><input id="imp-sym" type="checkbox" /><span></span></label></div>
-    <div class="iact"><button id="imp-cancel" class="txtbtn">Отмена</button><button id="imp-apply" class="txtbtn primary">Применить</button></div>
+    <div class="iact"><button id="imp-cancel" class="txtbtn">Отмена</button><button id="imp-asis" class="txtbtn">Вставить как есть</button><button id="imp-apply" class="txtbtn primary">Применить</button></div>
   </div></div>
 
   <div id="new-ovl" class="ovl"><div class="sheet">
