@@ -92,6 +92,6 @@ export function mount() {
     else if (act === 'replace') { const r = $('repl'); replFrom = col.slice(); r.value = rgbToHex(col); r.click(); } });
   $('repl').addEventListener('change', (e) => { if (!replFrom) return; const from = replFrom; replFrom = null; actions.run('recolor.all', from, hexToRgb(e.target.value)); });
   $('picker').onchange = (e) => { if (S.replaceMode) { const from = S.replaceMode.from; S.replaceMode = null; actions.run('recolor.all', from, hexToRgb(e.target.value)); } else addColor(e.target.value); };
-  bus.on('palette', buildPalette);
+  bus.on('palette', () => { buildPalette(); refreshActive(); });
   refreshActive(); buildPalette();
 }

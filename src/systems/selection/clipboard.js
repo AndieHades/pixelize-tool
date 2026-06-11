@@ -2,7 +2,7 @@
 import { S, G, newLayer } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { snapshot, cloneGrid } from '../../core/history.js';
+import { snapshot, cloneGrid, doUndo, doRedo } from '../../core/history.js';
 import { clearLayer } from '../../core/document.js';
 import { markDirty, dirtyAll } from '../../core/layer-cache.js';
 import { toast } from '../../core/dom.js';
@@ -30,3 +30,5 @@ export function doDelete() { if (S.sel ? deleteSelContent() : clearLayer()) toas
 actions.register('edit.copy', doCopy); actions.register('edit.cut', doCut);
 actions.register('edit.paste', doPaste); actions.register('edit.delete', doDelete);
 actions.register('select.none', deselect);
+actions.register('edit.undo', doUndo);
+actions.register('edit.redo', doRedo);
