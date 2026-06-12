@@ -55,6 +55,12 @@ t('sample: сетка из картинки', () => {
   assert.equal(r.nx, 2); assert.equal(r.ny, 2); assert.equal(r.samples.length, 4);
   assert.deepEqual(r.grid[0][0], [10, 20, 30]);
 });
+t('sample: прозрачные пиксели → прозрачная клетка (вырез по альфе)', () => {
+  // 2×1: слева непрозрачный красный, справа полностью прозрачный
+  const data = new Uint8ClampedArray([200, 10, 10, 255, 0, 0, 0, 0]);
+  const r = sampleGrid({ w: 2, h: 1, ch: 4, data }, 1, 0);
+  assert.deepEqual(r.grid[0][0], [200, 10, 10]); assert.equal(r.grid[0][1], null);
+});
 t('quantize: medianCut/nearest', () => {
   const pal = medianCut([[0, 0, 0], [255, 255, 255]], 2);
   assert.equal(pal.length, 2); assert.deepEqual(nearest([20, 20, 20], pal), [0, 0, 0]);

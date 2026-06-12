@@ -5,7 +5,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot, restore } from '../../core/history.js';
 import { expandCanvas, placeImageLayer } from '../../core/document.js';
-import { MAX_LAYERS } from '../../config/limits.js';
+import { MAX_LAYERS, IMPORT_MAX_SIDE } from '../../config/limits.js';
 import { $, toast, t } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { imageData, looksPixelArt } from '../../core/image.js';
@@ -27,9 +27,11 @@ export function openImport(file) {
   if (!file) return;
   const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
   im.onload = () => { impSrcImg = im;
-    const MAX = 600, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
+    // исходник держим в максимальном разрешении: даунскейл (со сглаживанием) — только
+    // у гигантских файлов, иначе размывается родная сетка пиксель-арта
+    const k = Math.min(1, IMPORT_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
     const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
-    setImpData(imageData(im, w, h, true)); $('imp-ovl').classList.add('on'); impConvert(); };
+    setImpData(imageData(im, w, h, k < 1)); $('imp-ovl').classList.add('on'); impConvert(); };
   im.src = URL.createObjectURL(file);
 }
 

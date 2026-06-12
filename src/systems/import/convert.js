@@ -38,7 +38,7 @@ export function rotateImp() { // поворот исходника на 90° д�
 
 export function drawTo(cvp, g, nx, ny) {
   const dpr = window.devicePixelRatio || 1, cw = cvp.clientWidth, chh = cvp.clientHeight;
-  if (cvp.width !== Math.round(cw * dpr)) { cvp.width = Math.round(cw * dpr); cvp.height = Math.round(chh * dpr); }
+  if (cvp.width !== Math.round(cw * dpr) || cvp.height !== Math.round(chh * dpr)) { cvp.width = Math.round(cw * dpr); cvp.height = Math.round(chh * dpr); }
   const c = cvp.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.imageSmoothingEnabled = false;
   c.fillStyle = '#101014'; c.fillRect(0, 0, cw, chh);
   const z = Math.max(1, Math.floor(Math.min((cw - 8) / nx, (chh - 8) / ny))), ox = Math.floor((cw - nx * z) / 2), oy = Math.floor((chh - ny * z) / 2);
