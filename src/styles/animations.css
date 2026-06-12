@@ -12,8 +12,8 @@
    плитки галереи, строки слоёв. Сжать → вырасти и удержаться увеличенными,
    пока нажато (ЛКМ/палец); отпустил — плавно к исходному. */
 @keyframes btn-recoil { 0% { transform: scale(1); } 40% { transform: scale(var(--press-scale)); } 100% { transform: scale(var(--lift-scale)); } }
-.gal-round, .gal-tile, .lrow { transition: transform var(--anim-fast) var(--ease-out); }
-.gal-round:active, .gal-tile:not(.dragging):active, .lrow:not(.dragging):active { animation: btn-recoil var(--anim-pop) var(--ease-pop) forwards; }
+.gal-round, .gal-tile, .lrow, #gal-back { transition: transform var(--anim-fast) var(--ease-out); }
+.gal-round:active, .gal-tile:not(.dragging):active, .lrow:not(.dragging):active, #gal-back:not(.lift):active { animation: btn-recoil var(--anim-pop) var(--ease-pop) forwards; }
 
 /* Появление чек-кружка при входе в режим выбора. */
 @keyframes pop-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }

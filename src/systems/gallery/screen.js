@@ -77,10 +77,10 @@ async function tileEl(d) {
 }
 
 export async function render() { const grid = gridEl(); grid.innerHTML = '';
-  $('gal-back').style.display = viewFolder ? '' : 'none';
-  const f = viewFolder ? await getItem(viewFolder) : null; // внутри папки — её имя в заголовке + назад
-  $('gal-title').textContent = f ? f.name : rootTitle;
-  $('gal-title').onclick = viewFolder ? goBack : null; $('gal-title').style.cursor = viewFolder ? 'pointer' : '';
+  const f = viewFolder ? await getItem(viewFolder) : null; // внутри папки — имя папки прямо в кнопке «назад»
+  const back = $('gal-back'); back.style.display = viewFolder ? '' : 'none';
+  back.textContent = viewFolder ? '‹ ' + (f ? f.name : '') : '‹';
+  $('gal-title').style.display = viewFolder ? 'none' : ''; $('gal-title').textContent = rootTitle;
   const items = (await childrenOf(viewFolder)).sort((a, b) => (b.order || b.updated) - (a.order || a.updated));
   for (const d of items) grid.appendChild(await tileEl(d)); }
 

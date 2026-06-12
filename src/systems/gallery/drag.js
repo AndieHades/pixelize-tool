@@ -13,14 +13,15 @@ export function attachDrag(tile, id, ctx) {
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
     const hold = setTimeout(() => begin(sx, sy), e.pointerType === 'touch' ? 250 : 1e9); // тач: долгий тап; мышь: по сдвигу
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
-      tile.classList.add('dragging'); ghost = dragGhost(tile, 120); ghost.move(x, y); }
-    const clearMarks = () => { grid.querySelectorAll('.drop-into,.drop-before').forEach((n) => n.classList.remove('drop-into', 'drop-before')); back.classList.remove('drop-up'); };
+      tile.classList.add('dragging'); ghost = dragGhost(tile, 120); ghost.move(x, y);
+      if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
+    const clearMarks = () => { grid.querySelectorAll('.drop-into,.drop-before').forEach((n) => n.classList.remove('drop-into', 'drop-before')); back.classList.remove('over'); };
     const move = (ev) => {
       if (!started) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > DRAG_THRESHOLD) { clearTimeout(hold); begin(ev.clientX, ev.clientY); } else return; }
       ghost.move(ev.clientX, ev.clientY);
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const overBack = back.style.display !== 'none' && el && el.closest && el.closest('#gal-back'); // бросок на «назад» — на уровень выше
-      if (overBack) { if (!onBack) { onBack = true; clearTimeout(dwell); stackTo = null; clearMarks(); back.classList.add('drop-up'); } return; }
+      if (overBack) { if (!onBack) { onBack = true; clearTimeout(dwell); stackTo = null; clearMarks(); back.classList.add('over'); } return; }
       onBack = false;
       const tg = el && el.closest ? el.closest('.gal-tile') : null;
       const tid = tg && tg !== tile ? tg.dataset.id : null;
@@ -31,7 +32,7 @@ export function attachDrag(tile, id, ctx) {
     };
     const up = (ev) => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up);
-      if (ghost) ghost.remove(); tile.classList.remove('dragging', 'lifting');
+      if (ghost) ghost.remove(); tile.classList.remove('dragging', 'lifting'); back.classList.remove('lift', 'over');
       const target = stackTo, toBack = onBack; clearMarks();
       if (!started) return;
       if (toBack) ctx.onBack(id);
