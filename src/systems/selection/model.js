@@ -26,24 +26,23 @@ export function symmetrizeSelection() { const sa = symA(), sha = symHA(); if (!S
   const base = new Set();
   if (S.selMask) for (const k of S.selMask) base.add(k);
   else for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) base.add(x + ',' + y);
-  const out = new Set(base);
+  const out = new Set(base), g = G();
+  const add = (xx, yy) => { if (g[yy] && g[yy][xx]) out.add(xx + ',' + yy); }; // зеркалим только по существующим пикселям — не выделяем пустоту
   for (const k of base) { const [x, y] = parseKey(k);
-    if (sa) out.add((S.W - 1 - x) + ',' + y);
-    if (sha) out.add(x + ',' + (S.H - 1 - y));
-    if (sa && sha) out.add((S.W - 1 - x) + ',' + (S.H - 1 - y)); }
+    if (sa) add(S.W - 1 - x, y); if (sha) add(x, S.H - 1 - y); if (sa && sha) add(S.W - 1 - x, S.H - 1 - y); }
   maskFromCells(out); }
 
 export function selectColorPixels(col) { const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = g[y][x];
     if (c && eqc(c, col)) { mask.add(x + ',' + y); nn++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
   if (!nn) { toast(t('toast.noColorOnLayer')); return; }
-  S.sel = { x0, y0, x1, y1 }; S.selMask = mask; symmetrizeSelection(); bus.emit('selection'); bus.emit('render');
+  S.sel = { x0, y0, x1, y1 }; S.selMask = mask; bus.emit('selection'); bus.emit('render'); // по цвету уже выбрано всё совпадающее — зеркалить не нужно
   toast(t('toast.selectedColorN', { n: nn })); }
 
 export function selectLayerContent() { const g = G(), mask = new Set();
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (g[y][x]) mask.add(x + ',' + y);
   if (!mask.size) { deselect(); toast(t('toast.layerEmpty')); return; }
-  maskFromCells(mask); symmetrizeSelection(); toast(t('toast.selectedLayerN', { n: mask.size })); }
+  maskFromCells(mask); toast(t('toast.selectedLayerN', { n: mask.size })); } // содержимое слоя уже выбрано полностью
 
 export function invertSelection() { const inNow = (x, y) => (S.selMask ? S.selMask.has(x + ',' + y) : (S.sel && x >= S.sel.x0 && x <= S.sel.x1 && y >= S.sel.y0 && y <= S.sel.y1));
   const mask = new Set();
