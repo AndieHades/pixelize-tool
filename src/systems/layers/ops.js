@@ -1,10 +1,10 @@
 // Операции над слоями: добавить, слить отмеченные, сгруппировать, дублировать.
-import { S, newLayer, cloneFx } from '../../core/state.js';
+import { S, newLayer, cloneFx, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot, cloneGrid } from '../../core/history.js';
 import { mergeCells } from '../../logic/raster.js';
-import { dirtyAll } from '../../core/layer-cache.js';
+import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
@@ -48,6 +48,8 @@ export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t
 export function toggleLock(L) { snapshot(); L.lock = !L.lock; bus.emit('layers'); }
 export function toggleAlphaLock(L) { snapshot(); L.alphaLock = !L.alphaLock; bus.emit('layers'); }
 export function toggleClip(L) { snapshot(); L.clip = !L.clip; bus.emit('layers'); bus.emit('render'); }
+export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
+  L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerCleared')); }
 export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot(); S.layers.splice(idx, 1);
   S.cur = Math.min(S.cur, S.layers.length - 1); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
