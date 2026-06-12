@@ -64,6 +64,8 @@ async function tileEl(d) {
   nm.onclick = (e) => e.stopPropagation();
   nm.ondblclick = (e) => { e.stopPropagation(); renameInline(nm, d); };
   attachDrag(tile, d.id, { gridEl, selecting: isSelecting,
+    onBack: async (dragId) => { const f = viewFolder ? await getItem(viewFolder) : null; // бросок на «назад» — на уровень выше
+      await moveToFolder([dragId], f ? (f.folder ?? null) : null); render(); },
     onStack: async (dragId, targetId, kind) => {
       if (kind === 'folder') { await moveToFolder([dragId], targetId); await render(); }
       else { const fid = await createFolder(t('gallery.folderName'), [targetId, dragId], viewFolder); await render(); editName(fid); } },

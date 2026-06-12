@@ -148,11 +148,9 @@
     .frow .lname { font-weight: 600; }
     .lrow.drop-above { box-shadow: 0 -2px 0 0 var(--accent); }
     .lrow.drop-into { outline: 2px dashed var(--accent); outline-offset: -2px; background: rgba(61, 139, 253, .14); }
-    .lay-drag-ghost { position: fixed; z-index: 120; pointer-events: none; display: flex; align-items: center; gap: 8px;
-      min-width: 150px; max-width: 230px; padding: 8px 10px; border-radius: 10px;
-      background: rgba(24, 24, 30, .96); border: 1px solid rgba(255, 255, 255, .18);
-      box-shadow: 0 12px 34px rgba(0, 0, 0, .45); color: var(--txt); font-size: 13px; font-weight: 600; }
-    .lay-drag-ghost i { width: 20px; height: 20px; border-radius: 6px; background: var(--accent); flex: none; }
+    /* Единый призрак перетаскивания (плитки, слои) — клон объекта под курсором. */
+    .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: .92;
+      transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 14px 38px rgba(0, 0, 0, .5); border-radius: 12px; }
 
     /* ---- слайдеры ---- */
     input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 28px; background: transparent; }
@@ -249,7 +247,8 @@
     #ctx, #lctx, #cctx, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
       box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
-    #rowctx { z-index: 140; min-width: 170px; } /* над «Новым холстом» (z-index 130) */
+    #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
+    #rowctx { min-width: 170px; }
     #ctx.on, #lctx.on, #cctx.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
     #ctx button, #lctx button, #cctx button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
@@ -436,7 +435,7 @@
 /* иконка папки, когда внутри нет превью */
 .gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.gal-ghost { position: fixed; z-index: 200; width: 120px; pointer-events: none; opacity: .85; transform: translate(-50%,-50%); }
+#gal-back.drop-up { background: var(--accent); color: #fff; } /* бросок на «назад» — на уровень выше */
 .gal-tile.dragging { opacity: .35; }
 .gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
 .gal-tile.drop-before .gal-thumb { box-shadow: -4px 0 0 var(--accent); }

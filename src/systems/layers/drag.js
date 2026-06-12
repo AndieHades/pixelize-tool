@@ -4,13 +4,10 @@ import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
 import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
+import { dragGhost } from '../../core/drag-ghost.js';
 import { topOfFolder } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
-
-function makeGhost(label) { const g = document.createElement('div'); g.className = 'lay-drag-ghost';
-  const dot = document.createElement('i'), text = document.createElement('span'); text.textContent = label; g.append(dot, text); document.body.appendChild(g); return g; }
-const place = (g, x, y) => { if (g) { g.style.left = (x + 14) + 'px'; g.style.top = (y + 12) + 'px'; } };
 
 function folderFromLayers(block, target) {
   const members = [...new Set([target, ...block])].filter(Boolean), idxs = members.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0).sort((a, b) => a - b);
@@ -48,10 +45,9 @@ export function dragRow(el, info) {
       if (pinchActive()) return; // два пальца — это щипок-слияние, не перетаскивание
       const ddx = ev.clientX - sx, ddy = ev.clientY - sy; // перетаскивание — по вертикали; горизонталь отдаём свайпу
       if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
-        const label = info.kind === 'folder' ? el.querySelector('.lname').textContent : (S.marked.size > 1 && S.marked.has(info.idx) ? S.marked.size + ' слоя' : S.layers[info.idx].name);
-        ghost = makeGhost(label); place(ghost, ev.clientX, ev.clientY);
+        ghost = dragGhost(el, el.getBoundingClientRect().width); ghost.move(ev.clientX, ev.clientY);
         if (info.kind === 'layer' && S.marked.size > 1 && S.marked.has(info.idx)) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (S.marked.has(+r.dataset.li)) r.classList.add('dragging'); }); }
-      if (!started) return; place(ghost, ev.clientX, ev.clientY);
+      if (!started) return; ghost.move(ev.clientX, ev.clientY);
       box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
       const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;
       if (!row || row === el) return; const r = row.getBoundingClientRect();
