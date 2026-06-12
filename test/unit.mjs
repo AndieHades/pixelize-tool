@@ -85,6 +85,16 @@ t('quantize: medianCut сливает почти-дубли, бережёт ре
   const reds = pal.filter((c) => c[0] > 150);
   assert.equal(reds.length, 1, 'почти одинаковые красные — один цвет');
 });
+t('quantize: medianCut поглощает редкие переходные тона, бережёт уникальные', () => {
+  // крем ×500, чёрный ×500, редкий «анти-алиасный» крем ×5 (тот же тон, чуть темнее)
+  // и редкий зелёный ×5 (уникальный тон): AA-тон должен влиться в крем, зелёный — остаться
+  const cols = [];
+  for (let i = 0; i < 500; i++) cols.push([240, 230, 220], [20, 20, 20]);
+  for (let i = 0; i < 5; i++) cols.push([228, 216, 204], [40, 160, 50]);
+  const pal = medianCut(cols, 16);
+  assert.ok(pal.some((c) => c[1] > c[0] + 50), 'зелёный должен остаться');
+  assert.equal(pal.filter((c) => c[0] > 180).length, 1, 'AA-крем поглощён основным кремом');
+});
 t('quantize: paletteFromGrid по частоте', () => {
   const g = [[[1, 1, 1, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], null]];
   assert.deepEqual(paletteFromGrid(g)[0], [1, 1, 1]);

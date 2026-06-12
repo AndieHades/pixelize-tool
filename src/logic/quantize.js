@@ -1,6 +1,26 @@
 // Сведение набора цветов к палитре (median-cut) и подбор ближайшего. Чисто.
 const CUBE_SHIFT = 4;  // дедупликация входа по кубам 16×16×16: почти одинаковые оттенки — один голос
 const MERGE_TOL = 14;  // итоговые цвета ближе этого (по макс. каналу) сливаются — в палитре нет почти-дублей
+const DROP_COST = 2;   // порог цены ошибки (usage·d²/пиксель): дешевле — цвет поглощается соседом
+
+// цветностное расстояние²: разница тона (R−G, G−B) дороже разницы яркости —
+// анти-алиасные переходы того же тона близко, уникальный тон (зелёные глаза) далеко
+const chromaD2 = (a, b) => { const rg = (a[0] - a[1]) - (b[0] - b[1]), gb = (a[1] - a[2]) - (b[1] - b[2]),
+  l = (a[0] + a[1] + a[2] - b[0] - b[1] - b[2]) / 3; return 4 * (rg * rg + gb * gb) + l * l; };
+
+// выкинуть цвета, чьё исчезновение почти не видно: мало пикселей и есть близкая
+// замена. Съедает хвост анти-алиасных переходов, не трогая редкие уникальные тона.
+function dropRare(cols, all) {
+  const usage = new Map(cols.map((c) => [c.join(','), 0]));
+  for (const s of all) { const k = nearest(s, cols).join(','); usage.set(k, usage.get(k) + 1); }
+  for (;;) { let bi = -1, bc = Infinity, bn = -1;
+    for (let i = 0; i < cols.length; i++) { let nd = Infinity, nj = -1;
+      for (let j = 0; j < cols.length; j++) if (j !== i) { const d = chromaD2(cols[i], cols[j]); if (d < nd) { nd = d; nj = j; } }
+      const cost = usage.get(cols[i].join(',')) * nd; if (cost < bc) { bc = cost; bi = i; bn = nj; } }
+    if (bi < 0 || bc >= all.length * DROP_COST) return cols;
+    usage.set(cols[bn].join(','), usage.get(cols[bn].join(',')) + usage.get(cols[bi].join(',')));
+    cols.splice(bi, 1); }
+}
 
 export function medianCut(cols, n) {
   // Один представитель на куб RGB-пространства: сотни почти одинаковых оттенков
@@ -18,7 +38,7 @@ export function medianCut(cols, n) {
       const a = avg[i], b = avg[j], d = Math.max(Math.abs(a.c[0] - b.c[0]), Math.abs(a.c[1] - b.c[1]), Math.abs(a.c[2] - b.c[2]));
       if (d < MERGE_TOL) { const w = a.w + b.w; avg[i] = { c: a.c.map((v, k) => Math.round((v * a.w + b.c[k] * b.w) / w)), w };
         avg.splice(j, 1); merged = true; break outer; } } }
-  return avg.map((e) => e.c);
+  return dropRare(avg.map((e) => e.c), cols);
 }
 
 export const nearest = (c, pal) => { let best = pal[0], bd = Infinity; for (const p of pal) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } } return best; };
