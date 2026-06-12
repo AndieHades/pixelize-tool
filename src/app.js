@@ -62,6 +62,9 @@ export function start() {
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
     for (const id of ['ctx', 'lctx', 'cctx', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
+  window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
+    document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());
+    document.querySelectorAll('.dragging, .lift, .lifting, .over, .drop-into, .drop-before, .drop-above').forEach((n) => n.classList.remove('dragging', 'lift', 'lifting', 'over', 'drop-into', 'drop-before', 'drop-above')); });
 
   requestAnimationFrame(() => { fitView(); });
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});
