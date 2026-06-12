@@ -152,7 +152,15 @@
     .caret svg { width: 16px; height: 16px; transition: transform .15s; }
     .caret.open svg { transform: rotate(90deg); }
     .frow .lname { font-weight: 600; }
-    .lrow.drop-into { outline: 2px dashed var(--accent); outline-offset: -2px; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+    /* папки ниже слоёв и слегка подсвечены — чтобы не сливаться со строками слоёв */
+    .frow { padding-top: 2px; padding-bottom: 2px; gap: 6px; }
+    .frow:not(.on):not(.marked):not(.drop-into) { background: color-mix(in srgb, var(--panel-solid) 50%, transparent); }
+    /* drop-into — только для папок, появляется по выдержке: насыщенный синий */
+    .lrow.drop-into { margin-top: 0; background: var(--accent); color: #fff; outline: 2px solid var(--accent); outline-offset: -2px;
+      animation: into-pop 160ms var(--ease-out); }
+    .lrow.drop-into::before { display: none; }
+    .lrow.drop-into .lname, .lrow.drop-into .eye, .lrow.drop-into .caret { color: #fff; }
+    @keyframes into-pop { from { background: color-mix(in srgb, var(--accent) 30%, transparent); } to { background: var(--accent); } }
     /* Procreate-стиль: строки раздвигаются, открывая слот — анимируется через transition на .lrow */
     .lrow.drop-above { margin-top: 52px; }
     .lrow.drop-above::before { content: ''; position: absolute; left: 6px; right: 6px; top: -48px; height: 44px;
