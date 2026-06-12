@@ -43,6 +43,22 @@ grep -RnE "#[0-9a-fA-F]{3,8}|rgba?\(" src/styles --include='*.css' \
   | grep -v tokens.css && echo "вынеси в токен" || echo "ok"
 ```
 
+## Тумблеры (switch)
+
+Переключатели во всём приложении — один компонент `.switch`
+(`<label class="switch"><input type="checkbox"><span></span></label>`), вид
+iOS/Procreate. Цвета вынесены в токены — перекрасить все тумблеры разом
+можно одной правкой:
+
+```css
+--toggle-on:   var(--accent);          /* включён */
+--toggle-off:  rgba(120,122,134,.5);   /* выключен */
+--toggle-knob: #fff;                   /* кружок */
+```
+
+Никаких самописных переключателей — переиспользуй `.switch`, иначе вид
+разъедется.
+
 ## Анимации
 
 Движения интерфейса вынесены в **отдельный** файл `src/styles/animations.css`

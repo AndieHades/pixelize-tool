@@ -15,8 +15,8 @@ export function setSelecting(v) { selecting = v; selected.clear();
   const sb = $('gal-select'); sb.textContent = v ? '✓' : t('gallery.select');
   sb.classList.toggle('confirm', v); sb.classList.toggle('gal-round', v); sb.title = v ? t('gallery.done') : '';
   for (const id of ['gal-stack', 'gal-dup', 'gal-del']) $(id).style.display = v ? '' : 'none';
-  for (const id of ['gal-convert', 'gal-import', 'gal-photo', 'gal-new']) $(id).style.display = v ? 'none' : '';
-  gridEl().classList.toggle('selecting', v); updateSel(); render(); }
+  for (const id of ['gal-convert', 'gal-import', 'gal-photo', 'gal-new', 'gal-settings']) $(id).style.display = v ? 'none' : '';
+  gridEl().classList.toggle('selecting', v); updateSel(); return render(); }
 function updateSel() { const n = selected.size;
   setBtn('gal-stack', 'gallery.stack', n, n < 2); setBtn('gal-dup', 'gallery.duplicate', n, !n); setBtn('gal-del', 'gallery.delete', n, !n);
   $('gal-stack').classList.toggle('lit', n >= 2); }
@@ -24,6 +24,10 @@ function setBtn(id, key, n, dis) { const b = $(id); if (!b) return; b.textConten
 
 async function openItem(id) { if (await openWork(id) && onOpen) onOpen(); }
 export function goBack() { viewFolder = null; render(); }
+
+// начать переименование плитки по id (после создания папки сразу даём ввести имя)
+function editName(id) { const tile = gridEl().querySelector(`.gal-tile[data-id="${id}"]`); if (!tile) return;
+  const nm = tile.querySelector('.gal-cap b'); if (nm) renameInline(nm, { id, name: nm.textContent }); }
 
 function renameInline(nm, item) { nm.contentEditable = 'true'; nm.classList.add('editing'); nm.focus();
   const r = document.createRange(); r.selectNodeContents(nm); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
@@ -48,7 +52,9 @@ async function tileEl(d) {
   nm.onclick = (e) => e.stopPropagation();
   nm.ondblclick = (e) => { e.stopPropagation(); renameInline(nm, d); };
   attachDrag(tile, d.id, { gridEl, selecting: isSelecting,
-    onStack: async (dragId, targetId, kind) => { if (kind === 'folder') await moveToFolder([dragId], targetId); else await createFolder(t('gallery.folderName'), [targetId, dragId], viewFolder); render(); },
+    onStack: async (dragId, targetId, kind) => {
+      if (kind === 'folder') { await moveToFolder([dragId], targetId); await render(); }
+      else { const fid = await createFolder(t('gallery.folderName'), [targetId, dragId], viewFolder); await render(); editName(fid); } },
     onReorder: async (dragId, beforeId) => { const items = (await childrenOf(viewFolder)).filter((x) => x.id !== dragId).sort((a, b) => (b.order || 0) - (a.order || 0));
       let ord; if (!beforeId) ord = (items.length ? items[items.length - 1].order : Date.now()) - 1000;
       else { const i = items.findIndex((x) => x.id === beforeId); const bo = items[i].order, ao = i > 0 ? items[i - 1].order : bo + 2000; ord = (ao + bo) / 2; }
@@ -61,6 +67,6 @@ export async function render() { const grid = gridEl(); grid.innerHTML = '';
   const items = (await childrenOf(viewFolder)).sort((a, b) => (b.order || b.updated) - (a.order || a.updated));
   for (const d of items) grid.appendChild(await tileEl(d)); }
 
-export async function stackSelected() { if (selected.size < 2) return; await createFolder(t('gallery.folderName'), [...selected], viewFolder); setSelecting(false); }
+export async function stackSelected() { if (selected.size < 2) return; const fid = await createFolder(t('gallery.folderName'), [...selected], viewFolder); await setSelecting(false); editName(fid); }
 export async function dupSelected() { for (const id of selected) await duplicateItem(id); setSelecting(false); }
 export async function delSelected() { for (const id of selected) await removeItem(id); setSelecting(false); }

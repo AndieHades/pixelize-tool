@@ -15,7 +15,6 @@ import * as brushBar from './systems/brush-bar.js';
 import * as colorPicker from './systems/color-picker.js';
 import * as toolbars from './systems/toolbars.js';
 import * as layersUI from './systems/layers/index.js';
-import * as documents from './systems/documents.js';
 import * as importSys from './systems/import/index.js';
 import * as palManager from './systems/palette-manager.js';
 import * as preview from './systems/preview-window.js';
@@ -30,6 +29,7 @@ import * as bc from './systems/brightness-contrast.js';
 import * as adjust from './systems/draw/adjust.js';
 import * as gallery from './systems/gallery/index.js';
 import * as newCanvas from './systems/new-canvas.js';
+import * as settings from './systems/settings.js';
 
 // системы-эффекты без mount: импорт регистрирует инструменты/действия/тулы
 import './systems/draw/tools.js';
@@ -45,7 +45,7 @@ import './systems/free-rotate.js';
 import './systems/export.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, documents, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust, gallery, newCanvas];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust, gallery, newCanvas, settings];
 
 export function start() {
   detect(); applyTheme(); refreshColors();

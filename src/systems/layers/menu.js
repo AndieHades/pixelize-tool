@@ -19,7 +19,7 @@ const curTo = (L) => { const i = S.layers.indexOf(L); if (i >= 0) S.cur = i; };
 export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   const isFolder = kind === 'folder', isLayer = kind === 'layer';
   $('lctx-ung').style.display = isFolder ? '' : 'none'; $('lctx-clip').style.display = isLayer ? '' : 'none';
-  for (const id of ['lctx-select', 'lctx-invert', 'lctx-send', 'lctx-png-full', 'lctx-png-tight']) $(id).style.display = isLayer ? '' : 'none';
+  for (const id of ['lctx-select', 'lctx-invert', 'lctx-png-full', 'lctx-png-tight']) $(id).style.display = isLayer ? '' : 'none';
   $('lctx-dup').textContent = t(isFolder ? 'menu.dupFolder' : 'menu.dupLayer');
   $('lctx-clear').textContent = t(isFolder ? 'menu.clearFolder' : 'menu.clearLayer');
   $('lctx-rotate').textContent = t(isFolder ? 'menu.transformFolder' : 'menu.transform');
@@ -47,7 +47,6 @@ export function mountMenu() {
   $('lctx-clip').onclick = () => { close(); if (!lctxRef || lctxRef.kind !== 'layer') return; snapshot(); lctxRef.ref.clip = !lctxRef.ref.clip; bus.emit('layers'); bus.emit('render'); };
   $('lctx-png-full').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, false); };
   $('lctx-png-tight').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, true); };
-  $('lctx-send').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') bus.emit('send-layer', lctxRef.ref); };
   $('lctx-ung').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref; S.layers.forEach((L) => { if (L.fid === f.id) L.fid = null; }); S.folders = S.folders.filter((x) => x !== f); bus.emit('layers'); bus.emit('render'); } };
   $('ren-ok').onclick = () => { if (renRef) { const v = $('ren-name').value.trim(); if (v) { snapshot(); renRef.name = v.slice(0, 24); bus.emit('layers'); } } renRef = null; $('ren-ovl').classList.remove('on'); };
   $('ren-cancel').onclick = () => { renRef = null; $('ren-ovl').classList.remove('on'); };

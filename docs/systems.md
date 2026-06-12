@@ -65,7 +65,6 @@
 | `systems/layers/*` | панель слоёв: список/драг/операции/меню | ✅ | 09-layers-ui |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
-| `systems/documents.js` | держит несколько документов | 🔲 | 12-app |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
@@ -83,7 +82,8 @@
 |--------|-----------|:--:|-----|
 | `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` | 🔲 | [i18n.md](i18n.md) |
 | `styles/tokens.css` | задаёт дизайн-токены темы | 🔲 | [theming.md](theming.md) |
-| `systems/settings.js` | переключает язык и тему | 🔲 | i18n/theming |
+| `systems/settings.js` | тумблер темы + смена языка (шестерёнка в галерее) | ✅ | i18n/theming |
+| `core/swipe-actions.js` | свайп-влево по строке → действия (Правка/Удалить); переиспользуемо | ✅ | [utilities.md](utilities.md) |
 | `core/storage.js` | хранит документы в IndexedDB | ✅ | roadmap §5 |
 | `systems/gallery/store.js` | элементы галереи: папки, перемещение, дубль, удаление | ✅ | roadmap §5 |
 | `systems/gallery/doc.js` | персистентность активной работы (снимок ↔ запись, автосейв) | ✅ | roadmap §5 |

@@ -248,11 +248,10 @@
     <button id="lctx-clip">Обтравочная маска</button>
     <button id="lctx-png-full" data-i18n="menu.pngFull">Сохранить PNG (весь холст)</button>
     <button id="lctx-png-tight" data-i18n="menu.pngTight">Сохранить PNG (по контуру)</button>
-    <button id="lctx-send" data-i18n="menu.send">Копировать в документ →</button>
     <button id="lctx-ung" data-i18n="menu.ungroup">Расформировать папку</button>
   </div>
   <div id="cctx"></div>
-  <div id="dctx"></div>
+  <div id="setmenu"></div>
   <input id="repl" type="color" style="position:fixed; left:-100px; top:-100px; width:1px; height:1px; opacity:0" />
 
   <div id="ren-ovl" class="ovl"><div class="sheet">
@@ -273,19 +272,15 @@
     <div class="iact"><button id="imp-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="imp-asis" data-i18n="btn.insertAsIs" class="txtbtn">Вставить как есть</button><button id="imp-apply" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div></div>
 
-  <div id="new-ovl" class="ovl"><div class="sheet">
-    <h3 data-i18n="dialog.new">Новый документ</h3>
-    <div class="chips" id="new-chips">
-      <button data-w="16" data-h="16">16²</button><button data-w="32" data-h="32" class="on">32²</button>
-      <button data-w="64" data-h="64">64²</button><button data-w="128" data-h="128">128²</button>
-      <button data-w="256" data-h="256">256²</button>
-      <button data-w="160" data-h="144">160×144 GB</button><button data-w="240" data-h="160">240×160 GBA</button>
-      <button data-w="320" data-h="180">320×180</button><button data-w="320" data-h="240">320×240</button>
-      <button data-w="640" data-h="360">640×360</button><button data-w="640" data-h="480">640×480 VGA</button>
+  <div id="new-ovl" class="ovl"><div class="new-panel">
+    <header class="new-head"><h3 data-i18n="dialog.newCanvas">Новый холст</h3>
+      <button id="new-add" class="gal-round" data-i18n-title="new.addCustom" title="Свой размер">＋</button></header>
+    <div id="new-list" class="new-list"></div>
+    <div id="new-custom" class="new-custom">
+      <div class="irow"><label data-i18n="label.width">Ширина</label><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" />
+        <label style="min-width:auto" data-i18n="label.height">Высота</label><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /></div>
+      <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="new-create" data-i18n="btn.create" class="txtbtn primary">Создать</button></div>
     </div>
-    <div class="irow"><label data-i18n="label.width">Ширина</label><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" />
-      <label style="min-width:auto" data-i18n="label.height">Высота</label><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /></div>
-    <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="new-create" data-i18n="btn.create" class="txtbtn primary">Создать документ</button></div>
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">
@@ -307,6 +302,7 @@
         <button id="gal-import" data-i18n="gallery.import">Импорт</button>
         <button id="gal-photo" data-i18n="gallery.photo">Фото</button>
         <button id="gal-new" class="gal-round" data-i18n-title="gallery.new" title="Новый документ">＋</button>
+        <button id="gal-settings" class="gal-round" data-i18n-title="ui.settings" title="Настройки">⚙</button>
       </span>
     </header>
     <div id="gal-grid"></div>

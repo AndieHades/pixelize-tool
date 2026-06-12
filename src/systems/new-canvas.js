@@ -1,34 +1,53 @@
-// Диалог «Новый холст»: пресеты пиксельных размеров (config) + кастомные
-// (сохраняются), создаёт новую работу в галерее.
+// Диалог «Новый холст»: список пресетов (config) + кастомные размеры
+// (сохраняются). Тап по строке — создать и открыть. Кастомные строки можно
+// свайпнуть влево → Правка/Удалить. Создаёт новую работу в галерее.
 import { $ } from '../core/dom.js';
 import * as actions from '../core/actions.js';
-import { SIZE_PRESETS, DEFAULT_DOC } from '../config/presets.js';
+import { attachSwipe, closeSwipe } from '../core/swipe-actions.js';
+import { t } from '../i18n/index.js';
+import { SIZE_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { newWork } from './gallery/doc.js';
 
 const STORE = 'customSizes';
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
+let editIdx = null; // null — добавление нового; число — правка кастомного по индексу
 
-function buildChips() { const box = $('new-chips'); if (!box) return; box.innerHTML = '';
-  for (const p of [...SIZE_PRESETS, ...custom()]) {
-    const b = document.createElement('button'); b.dataset.w = p.w; b.dataset.h = p.h; b.textContent = p.label || `${p.w}×${p.h}`;
-    if (p.w === DEFAULT_DOC.w && p.h === DEFAULT_DOC.h) b.classList.add('on');
-    b.onclick = () => { $('new-w').value = p.w; $('new-h').value = p.h; box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
-    box.appendChild(b); }
+function open(p) { $('new-ovl').classList.remove('on'); $('gallery').classList.remove('on'); newWork(p.w, p.h, p.label); }
+
+function row(p, customIdx) {
+  const r = document.createElement('div'); r.className = 'new-row';
+  const nm = document.createElement('span'); nm.className = 'new-name'; nm.textContent = p.label || `${p.w}×${p.h}`;
+  const sz = document.createElement('span'); sz.className = 'new-size'; sz.textContent = `${p.w} × ${p.h} px`;
+  r.append(nm, sz); r.onclick = () => open(p);
+  if (customIdx != null) attachSwipe(r, [
+    { label: t('menu.edit'), onClick: () => editCustom(customIdx) },
+    { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }]);
+  return r;
 }
+
+function buildList() { const box = $('new-list'); if (!box) return; closeSwipe(); box.innerHTML = '';
+  SIZE_PRESETS.forEach((p) => box.appendChild(row(p, null)));
+  custom().forEach((p, i) => box.appendChild(row(p, i))); }
+
+function showCustom(on) { $('new-custom').classList.toggle('on', on); }
+function editCustom(i) { editIdx = i; const c = custom()[i]; if (!c) return; $('new-w').value = c.w; $('new-h').value = c.h; showCustom(true); $('new-w').focus(); }
+function removeCustom(i) { const c = custom(); c.splice(i, 1); saveCustom(c); buildList(); }
 
 function create() { const w = parseInt($('new-w').value, 10), h = parseInt($('new-h').value, 10);
   if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) return;
-  if (![...SIZE_PRESETS, ...custom()].some((p) => p.w === w && p.h === h)) { const c = custom(); c.push({ w, h, label: `${w}×${h}` }); saveCustom(c); } // запомнить кастомный
-  $('new-ovl').classList.remove('on'); $('gallery').classList.remove('on'); newWork(w, h);
+  const c = custom(), entry = { w, h, label: `${w}×${h}` };
+  if (editIdx != null) { c[editIdx] = entry; saveCustom(c); editIdx = null; showCustom(false); buildList(); return; } // правка — обновить и остаться
+  if (!SIZE_PRESETS.some((p) => p.w === w && p.h === h) && !c.some((p) => p.w === w && p.h === h)) { c.push(entry); saveCustom(c); }
+  open(entry);
 }
 
 export function mount() {
-  buildChips();
-  const open = () => { buildChips(); $('new-ovl').classList.add('on'); };
-  $('new').onclick = open; $('gal-new').onclick = open;
-  actions.register('doc.new', open);
-  $('new-cancel').onclick = () => $('new-ovl').classList.remove('on');
+  const openDlg = () => { editIdx = null; showCustom(false); buildList(); $('new-ovl').classList.add('on'); };
+  $('new').onclick = openDlg; $('gal-new').onclick = openDlg;
+  actions.register('doc.new', openDlg);
+  $('new-add').onclick = () => { editIdx = null; $('new-w').value = 32; $('new-h').value = 32; showCustom(true); $('new-w').focus(); };
+  $('new-cancel').onclick = () => { editIdx = null; showCustom(false); };
   $('new-create').onclick = create;
 }

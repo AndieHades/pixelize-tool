@@ -45,7 +45,6 @@ const bb = await import('../src/systems/brush-bar.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
-const docs = await import('../src/systems/documents.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tb = await import('../src/systems/toolbars.js');
 const outline = await import('../src/systems/outline.js');
@@ -194,10 +193,6 @@ t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; 
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 
 t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
-
-t('documents: new + переключение хранит состояние', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [5, 5, 5, 255];
-  docs.newDocument(8, 8); assert.equal(S.W, 8); assert.equal(S.layers[0].grid[1][1], null);
-  docs.loadDoc(0); assert.equal(S.W, 4); assert.deepEqual(S.layers[0].grid[1][1], [5, 5, 5, 255]); });
 
 t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
