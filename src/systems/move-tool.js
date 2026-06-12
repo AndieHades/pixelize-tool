@@ -14,6 +14,8 @@ const move = {
   up() { if (!S.moveDrag) return; const { dx, dy, idxs } = S.moveDrag; S.moveDrag = null;
     if (!dx && !dy) { bus.emit('render'); return; }
     snapshot(); for (const i of idxs) if (S.layers[i]) { shiftLayerGrid(S.layers[i], dx, dy); markDirty(i); }
+    if (S.sel) S.sel = { x0: S.sel.x0 + dx, y0: S.sel.y0 + dy, x1: S.sel.x1 + dx, y1: S.sel.y1 + dy }; // рамка едет вместе со слоем
+    if (S.selMask) { const m = new Set(); for (const k of S.selMask) { const c = k.indexOf(','); m.add((+k.slice(0, c) + dx) + ',' + (+k.slice(c + 1) + dy)); } S.selMask = m; }
     bus.emit('render'); bus.emit('layers'); },
 };
 

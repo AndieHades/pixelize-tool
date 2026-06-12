@@ -40,14 +40,16 @@ export function drawOverlays(ctx, ox, oy, z) {
     else { for (const [k, c] of S.selFloat.cells) { const [dx, dy] = parseKey(k);
       ctx.fillStyle = rgb(c); ctx.fillRect(ox + (S.selFloat.x + dx) * z, oy + (S.selFloat.y + dy) * z, z, z); } }
     ctx.restore(); }
-  if (S.sel && !S.selMask) { const sx = ox + S.sel.x0 * z, sy = oy + S.sel.y0 * z, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
+  // при перетаскивании слоя инструментом move рамка/маска выделения едет вместе с содержимым
+  const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0, mdy = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dy * z : 0;
+  if (S.sel && !S.selMask) { const sx = ox + S.sel.x0 * z + mdx, sy = oy + S.sel.y0 * z + mdy, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
     if (!S.selFloat) { ctx.fillStyle = 'rgba(0,0,0,.28)';
       ctx.fillRect(ox, oy, W * z, Math.max(0, sy - oy)); ctx.fillRect(ox, sy + sh, W * z, Math.max(0, oy + H * z - sy - sh));
       ctx.fillRect(ox, Math.max(sy, oy), Math.max(0, sx - ox), sh); ctx.fillRect(sx + sw, Math.max(sy, oy), Math.max(0, ox + W * z - sx - sw), sh); }
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.strokeRect(sx + .75, sy + .75, sw - 1.5, sh - 1.5); ctx.setLineDash([]); }
   if (S.sel && S.selMask && !S.selFloat) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath();
-    for (const k of S.selMask) { const [x, y] = parseKey(k); const sx = ox + x * z, sy = oy + y * z;
+    for (const k of S.selMask) { const [x, y] = parseKey(k); const sx = ox + x * z + mdx, sy = oy + y * z + mdy;
       if (!S.selMask.has(x + ',' + (y - 1))) { ctx.moveTo(sx, sy); ctx.lineTo(sx + z, sy); }
       if (!S.selMask.has(x + ',' + (y + 1))) { ctx.moveTo(sx, sy + z); ctx.lineTo(sx + z, sy + z); }
       if (!S.selMask.has((x - 1) + ',' + y)) { ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + z); }
