@@ -8,6 +8,7 @@ import { dragGhost } from '../../core/drag-ghost.js';
 export function attachDrag(tile, id, ctx) {
   tile.addEventListener('pointerdown', (e) => {
     if (ctx.selecting() || (e.pointerType === 'mouse' && e.button)) return;
+    if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
     const sx = e.clientX, sy = e.clientY; let started = false, ghost = null, dwell = null, overId = null, stackTo = null, onBack = false;
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
     const hold = setTimeout(() => begin(sx, sy), e.pointerType === 'touch' ? 250 : 1e9); // тач: долгий тап; мышь: по сдвигу

@@ -2,7 +2,7 @@
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
 import { $, showMenuAt } from '../../core/dom.js';
 import { t } from '../../i18n/index.js';
-import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem } from './store.js';
+import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem, nextFolderName } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 
@@ -36,7 +36,9 @@ function renameInline(nm, item) { nm.contentEditable = 'true'; nm.classList.add(
     const v = nm.textContent.trim().slice(0, 40); if (save && v && v !== item.name) await renameItem(item.id, v); render(); };
   nm.onblur = () => fin(true); nm.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); nm.blur(); } else if (e.key === 'Escape') { e.preventDefault(); fin(false); } }; }
 
-function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ по плитке: дублировать / удалить
+function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ по плитке: переименовать / дублировать / удалить
+  const ren = document.createElement('button'); ren.textContent = t('menu.rename');
+  ren.onclick = () => { m.classList.remove('on'); editName(d.id); }; m.appendChild(ren); // переименование — без ре-рендера
   const mk = (label, danger, fn) => { const b = document.createElement('button'); b.textContent = label; if (danger) b.classList.add('danger');
     b.onclick = async () => { m.classList.remove('on'); await fn(); render(); }; m.appendChild(b); };
   mk(t('gallery.duplicate'), false, () => duplicateItem(d.id));
@@ -66,7 +68,7 @@ async function tileEl(d) {
       await moveToFolder([dragId], f ? (f.folder ?? null) : null); render(); },
     onStack: async (dragId, targetId, kind) => {
       if (kind === 'folder') { await moveToFolder([dragId], targetId); await render(); }
-      else { const fid = await createFolder(t('gallery.folderName'), [targetId, dragId], viewFolder); await render(); editName(fid); } },
+      else { const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, dragId], viewFolder); await render(); editName(fid); } },
     onReorder: async (dragId, beforeId) => { const items = (await childrenOf(viewFolder)).filter((x) => x.id !== dragId).sort((a, b) => (b.order || 0) - (a.order || 0));
       let ord; if (!beforeId) ord = (items.length ? items[items.length - 1].order : Date.now()) - 1000;
       else { const i = items.findIndex((x) => x.id === beforeId); const bo = items[i].order, ao = i > 0 ? items[i - 1].order : bo + 2000; ord = (ao + bo) / 2; }
@@ -82,6 +84,6 @@ export async function render() { const grid = gridEl(); grid.innerHTML = '';
   const items = (await childrenOf(viewFolder)).sort((a, b) => (b.order || b.updated) - (a.order || a.updated));
   for (const d of items) grid.appendChild(await tileEl(d)); }
 
-export async function stackSelected() { if (selected.size < 2) return; const fid = await createFolder(t('gallery.folderName'), [...selected], viewFolder); await setSelecting(false); editName(fid); }
+export async function stackSelected() { if (selected.size < 2) return; const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [...selected], viewFolder); await setSelecting(false); editName(fid); }
 export async function dupSelected() { for (const id of selected) await duplicateItem(id); setSelecting(false); }
 export async function delSelected() { for (const id of selected) await removeItem(id); setSelecting(false); }
