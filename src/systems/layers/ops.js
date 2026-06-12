@@ -8,7 +8,7 @@ import { dirtyAll } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
-import { folderLayers, topOfFolder, commonParent } from './helpers.js';
+import { folderLayers, topOfFolder, commonParent, selectedIdx } from './helpers.js';
 
 export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   snapshot(); const nl = newLayer('Слой ' + (++S.layerSeq), S.W, S.H); nl.fid = S.layers[S.cur].fid;
@@ -24,14 +24,14 @@ function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
   S.layers.splice(base, 0, merged); S.cur = base; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
 
-export function doMerge() { let idx = [...S.marked].sort((a, b) => a - b);
+export function doMerge() { let idx = selectedIdx();
   if (idx.length < 2) { if (S.cur > 0) idx = [S.cur - 1, S.cur]; else { toast(t('toast.markLayers')); return; } }
   mergeIndices(idx); }
 
 // слить диапазон слоёв [a..b] (щипок), независимо от выбора
 export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
 
-export function doGroup() { let idx = [...S.marked].sort((a, b) => a - b); if (!idx.length) idx = [S.cur];
+export function doGroup() { const idx = selectedIdx(); // сгруппировать всё выделенное (активный + отмеченные)
   snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
   const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false, parent };
   S.folders.push(f); const moved = [];
@@ -62,8 +62,9 @@ export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.len
   const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
   const dst = topOfFolder(f.id) + 1; S.layers.splice(dst, 0, ...copies); S.cur = dst + copies.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.folderDup')); }
 
-export function deleteLayer() { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
-  snapshot(); S.layers.splice(S.cur, 1); S.cur = Math.max(0, S.cur - 1); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+export function deleteLayer() { const idx = selectedIdx(); if (S.layers.length - idx.length < 1) { toast(t('toast.onlyLayer')); return; } // удалить всё выделенное
+  snapshot(); for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
+  S.cur = Math.max(0, Math.min(idx[0], S.layers.length - 1)); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 actions.register('layer.add', doAddLayer);
 actions.register('layer.merge', doMerge);

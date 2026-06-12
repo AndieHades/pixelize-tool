@@ -118,7 +118,7 @@
     .lrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--panel-solid)); }  /* выбранные — приглушённо */
     .lrow.on { background: var(--accent); color: #fff; }                                     /* активный — ярко-синий */
     .lrow.on .lname, .lrow.on .eye, .lrow.on .caret { color: #fff; }
-    .lrow.on .clip-arrow { border-color: #fff; }
+    .lrow.on .clip-arrow { color: #fff; }
     .lth { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); flex: none; }
     .lname { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lname.editing { overflow: visible; text-overflow: clip; outline: none; cursor: text; color: var(--txt);
@@ -502,8 +502,8 @@
 .lrow .swipe-act { padding: 0 14px; font-size: 13px; }
 /* обтравочная маска: сдвиг строки вправо + стрелка слева (работает и на десктопе) */
 .lrow.clip .swipe-front, .lrow.clip:not(.swipe-row) { padding-left: 30px; }
-.clip-arrow { position: absolute; left: 9px; top: 50%; width: 12px; height: 12px; transform: translateY(-50%);
-  border-left: 2px solid var(--txt2); border-bottom: 2px solid var(--txt2); border-bottom-left-radius: 4px; }
+.clip-arrow { position: absolute; left: 6px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--txt2); }
+.clip-arrow svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 /* индикатор замка / альфа-замка */
 .lflag { width: 20px; height: 20px; flex: none; opacity: .8; display: grid; place-items: center; font-size: 12px; color: var(--txt2); cursor: pointer; }
 .lflag:active { opacity: 1; transform: scale(.9); }

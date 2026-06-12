@@ -20,9 +20,13 @@ function folderFromLayers(block, target) {
   moved.forEach((L) => { L.fid = f.id; }); S.layers.splice(idxs[0], 0, ...moved);
   S.cur = idxs[0] + moved.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
 
+// выделение для перетаскивания: активный слой + отмеченные (всё подсвеченное двигается вместе)
+export function dragBlock(srcIdx) { const sel = new Set(S.marked); sel.add(S.cur);
+  return (sel.size > 1 && sel.has(srcIdx)) ? [...sel].filter((i) => S.layers[i]).sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[srcIdx]]; }
+
 function layDrop(src, row, into) { const tIsFolder = row.classList.contains('frow');
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
-    const block = (S.marked.size > 1 && S.marked.has(src.idx)) ? [...S.marked].sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[src.idx]];
+    const block = dragBlock(src.idx);
     if (tL && block.includes(tL)) return;
     if (into && tL) { folderFromLayers(block, tL); return; } // бросок слоя в слой → новая (возможно вложенная) группа
     snapshot();
@@ -50,7 +54,8 @@ export function dragRow(el, info) {
       const ddx = ev.clientX - sx, ddy = ev.clientY - sy; // перетаскивание — по вертикали; горизонталь отдаём свайпу
       if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
         ghost = dragGhost(el, el.getBoundingClientRect().width); ghost.move(ev.clientX, ev.clientY);
-        if (info.kind === 'layer' && S.marked.size > 1 && S.marked.has(info.idx)) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (S.marked.has(+r.dataset.li)) r.classList.add('dragging'); }); }
+        const blk = dragBlock(info.idx); // подсветить все перетаскиваемые (активный + отмеченные)
+        if (info.kind === 'layer' && blk.length > 1) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); }); }
       if (!started) return; ghost.move(ev.clientX, ev.clientY);
       box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
       const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;

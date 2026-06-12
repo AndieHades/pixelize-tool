@@ -33,7 +33,8 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
 }
 
 export function move(e) {
-  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); S.hoverPx = [hx, hy]; }
+  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const over = hx >= 0 && hy >= 0 && hx < S.W && hy < S.H; // курсор кисти — только над холстом
+    S.hoverPx = over ? [hx, hy] : null; cv().style.cursor = over ? 'crosshair' : 'default'; }
   if (rdrag) { const dx = e.clientX - rdrag.x, dy = e.clientY - rdrag.y; if (Math.hypot(dx, dy) > DRAG_THRESHOLD) rdrag.moved = true;
     if (rdrag.moved) { S.view.ox = rdrag.ox + dx; S.view.oy = rdrag.oy + dy; bus.emit('render'); } return; }
   const m = activeMode();

@@ -14,6 +14,7 @@ import { toggleLock, toggleAlphaLock } from './ops.js';
 const INDENT = 16; // отступ на уровень вложенности
 
 const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>'; // глаз = видимость
+const CLIP_IC = '<svg viewBox="0 0 24 24"><path d="M16 5h-4.5A2.5 2.5 0 0 0 9 7.5V15"/><path d="M5.5 11.5l3.5 4 3.5-4"/></svg>'; // обтравка: стрелка вниз на слой ниже
 let lastClick = { idx: -1, t: 0 };
 export let layDragSquelch = false;
 export const setSquelch = (v) => { layDragSquelch = v; };
@@ -70,7 +71,7 @@ function layerRow(L, i, depth) {
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name);
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
-  if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
+  if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; ar.innerHTML = CLIP_IC; row.append(ar); } // обтравка: стрелка вниз + сдвиг строки
   row.append(thumbFor(i), nm);
   if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
     fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
