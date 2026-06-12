@@ -146,7 +146,7 @@
     .caret.open svg { transform: rotate(90deg); }
     .frow .lname { font-weight: 600; }
     .lrow.drop-above { box-shadow: 0 -2px 0 0 var(--accent); }
-    .lrow.drop-into { outline: 2px dashed var(--accent); outline-offset: -2px; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+    .lrow.drop-into { outline: 2px dashed var(--accent); outline-offset: -2px; background: color-mix(in srgb, var(--accent) 14%, transparent); transform: scale(1.03); }
     /* Единый призрак перетаскивания (плитки, слои) — клон объекта под курсором. */
     .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: .92;
       transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 14px 38px rgba(0, 0, 0, .5); border-radius: 12px; }
@@ -405,7 +405,8 @@
 #gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 22px; padding: 24px; align-content: start; }
 .gal-tile { cursor: pointer; user-select: none; }
 .gal-thumb { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center; }
+  box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
+  transition: transform var(--anim-fast) var(--ease-out), border-color var(--anim-fast), box-shadow var(--anim-fast); }
 .gal-tile:not(.folder) .gal-thumb { display: block; }
 .gal-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { gap: 2px; padding: 6px; background: var(--panel-solid); }
@@ -435,7 +436,8 @@
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
 #gal-back.drop-up { background: var(--accent); color: #fff; } /* бросок на «назад» — на уровень выше */
 .gal-tile.dragging { opacity: .35; }
-.gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
+/* цель, в которую кладут — увеличивается и держится, пока над ней висит объект */
+.gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); transform: scale(1.12); }
 .gal-tile.drop-before .gal-thumb { box-shadow: -4px 0 0 var(--accent); }
 
 /* ── Диалог «Новый холст» (список, как в Procreate) ── */
