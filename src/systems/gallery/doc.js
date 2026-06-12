@@ -26,8 +26,10 @@ export async function saveCurrent() { if (!curId) return;
   try { const rec = record(); const old = await getDoc(curId); if (old) { rec.folder = old.folder ?? null; rec.order = old.order ?? rec.order; } await saveDoc(rec); } catch (e) {} }
 export const autosave = () => { clearTimeout(saveT); saveT = setTimeout(saveCurrent, 800); };
 
-function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 1; S.folderSeq = rec.folderSeq || 0;
-  S.layers = rec.layers; S.folders = rec.folders || []; S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
+function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 1;
+  S.layers = rec.layers; S.folders = rec.folders || [];
+  // folderSeq всегда впереди реальных id — иначе новые папки могут получить чужой id (старые проекты)
+  S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
   S.docName = rec.name; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = null;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); }

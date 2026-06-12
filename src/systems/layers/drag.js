@@ -60,7 +60,8 @@ export function dragRow(el, info) {
     let started = false, ghost = null, dropRow = null, holdTimer = null;
 
     // Gap (drop-above) открывается сразу на любой строке. Над папкой после
-    // FOLDER_HOLD_MS gap уступает место drop-into (синий, слои падают внутрь).
+    // FOLDER_HOLD_MS добавляется drop-into (синий) — но зазор НЕ закрываем, иначе
+    // папка съезжает вверх и выскальзывает из-под курсора. Сброс — только при смене цели.
     const setDrop = (row) => {
       if (row === dropRow) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
@@ -68,7 +69,7 @@ export function dragRow(el, info) {
       dropRow = row; if (!row) return;
       row.classList.add('drop-above');
       if (row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid)) {
-        holdTimer = setTimeout(() => { row.classList.remove('drop-above'); row.classList.add('drop-into'); }, FOLDER_HOLD_MS);
+        holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS);
       }
     };
 
