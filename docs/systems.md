@@ -22,6 +22,12 @@
 | `core/history.js` | пишет и откатывает снимки документа | ✅ | 04-history |
 | `core/actions.js` | реестр именованных действий (для хоткеев/кнопок/меню) | ✅ | (новое) |
 | `core/io.js` | сохраняет canvas/blob в файл | ✅ | 11-export |
+| `core/image.js` | `imageData`/`looksPixelArt` — растеризация и эвристика пиксель-арта | ✅ | (новое) |
+| `core/storage.js` | документы галереи в IndexedDB | ✅ | (новое) |
+| `core/swipe-actions.js` | свайп строки → панель действий / разовый жест (тач) | ✅ | (новое) |
+| `core/drag-ghost.js` | `dragGhost(el)` — клон-призрак под курсором (плитки, слои) | ✅ | (новое) |
+| `core/reorder-drag.js` | `attachReorder` — перестановка кнопок (как цвета палитры) | ✅ | (новое) |
+| `core/env.js` | `isDesktop()` — тип управления (мышь vs тач) | ✅ | (новое) |
 
 ## logic/ — чистые вычисления (без DOM и state)
 
@@ -62,7 +68,8 @@
 | `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
-| `systems/layers/*` | панель слоёв: список/драг/свайпы/щипок-слияние/операции/меню | ✅ | 09-layers-ui |
+| `systems/layers/*` | панель слоёв: вложенные группы, список/драг/свайпы/щипок-слияние/операции/меню | ✅ | 09-layers-ui |
+| `systems/panels.js` | перестановка кнопок тулбара/сайдбара (ПКМ-удержание/долгий тап) | ✅ | (новое) |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
@@ -80,12 +87,10 @@
 
 | Модуль | Одна фраза | Статус | Док |
 |--------|-----------|:--:|-----|
-| `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` | 🔲 | [i18n.md](i18n.md) |
-| `styles/tokens.css` | задаёт дизайн-токены темы | 🔲 | [theming.md](theming.md) |
+| `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` (ru/en, паритет) | ✅ | [i18n.md](i18n.md) |
+| `styles/tokens.css` | дизайн-токены темы (синий — один токен `--accent`) | ✅ | [theming.md](theming.md) |
 | `systems/settings.js` | тумблер темы + смена языка (шестерёнка в галерее) | ✅ | i18n/theming |
-| `core/swipe-actions.js` | свайп-влево по строке → действия (Правка/Удалить); переиспользуемо | ✅ | [utilities.md](utilities.md) |
-| `core/storage.js` | хранит документы в IndexedDB | ✅ | roadmap §5 |
-| `systems/gallery/store.js` | элементы галереи: папки, перемещение, дубль, удаление | ✅ | roadmap §5 |
+| `systems/gallery/store.js` | элементы галереи: вложенные папки, перемещение, дубль, удаление, уникальные имена | ✅ | roadmap §5 |
 | `systems/gallery/doc.js` | персистентность активной работы (снимок ↔ запись, автосейв) | ✅ | roadmap §5 |
 | `systems/gallery/drag.js` | перетаскивание плиток (долгий тап → драг → папка) | ✅ | roadmap §5 |
 | `systems/gallery/screen.js` | рендер плиток, режим выбора, переименование | ✅ | roadmap §5 |
