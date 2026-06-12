@@ -17,9 +17,15 @@ export function layerCanvas(i) { let c = lcs[i];
   return c; }
 
 // слой i, обрезанный по силуэту базового слоя base (обтравочная маска)
-export function clippedCanvas(i, base) { const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
-  const x = c.getContext('2d'); x.drawImage(layerCanvas(i), 0, 0);
-  x.globalCompositeOperation = 'destination-in'; x.drawImage(layerCanvas(base), 0, 0); return c; }
+export function clippedCanvas(i, base) { return clippedShift(i, base, 0, 0, 0, 0); }
+
+// то же, но слой и база могут быть сдвинуты раздельно (в пикселях сетки) —
+// нужно для живого превью Move: маска едет вместе с базой, а не «застывает»
+export function clippedShift(i, base, dix, diy, dbx, dby) {
+  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  x.drawImage(layerCanvas(i), dix, diy);
+  x.globalCompositeOperation = 'destination-in'; x.drawImage(layerCanvas(base), dbx, dby); return c; }
 
 // итоговый цвет точки (x,y) по всем видимым слоям, либо null
 export function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;

@@ -6,7 +6,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { effVis, clipBase } from '../../core/layers.js';
-import { layerCanvas, clippedCanvas } from '../../core/layer-cache.js';
+import { layerCanvas, clippedShift } from '../../core/layer-cache.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { drawChecker } from './checker.js';
@@ -32,9 +32,11 @@ export function render() {
     if (S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i)) { // живое превью трансформации
       if (i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, ox + S.rotPrev.px * z, oy + S.rotPrev.py * z, S.rotPrev.ow * z, S.rotPrev.oh * z);
       continue; }
-    const mdx = (S.moveDrag && S.moveDrag.idxs.includes(i)) ? S.moveDrag.dx * z : 0; // живой сдвиг слоя инструментом Move
-    const mdy = (S.moveDrag && S.moveDrag.idxs.includes(i)) ? S.moveDrag.dy * z : 0;
-    ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
+    const md = S.moveDrag, di = (md && md.idxs.includes(i)) ? md : null; // живой сдвиг слоя инструментом Move
+    if (cb >= 0) { // обтравка: слой и база могут двигаться раздельно — маска едет вместе с базой
+      const db = (md && md.idxs.includes(cb)) ? md : null;
+      ctx.drawImage(clippedShift(i, cb, di ? di.dx : 0, di ? di.dy : 0, db ? db.dx : 0, db ? db.dy : 0), ox + iox, oy + ioy, W * z, H * z);
+    } else ctx.drawImage(layerCanvas(i), ox + iox + (di ? di.dx * z : 0), oy + ioy + (di ? di.dy * z : 0), W * z, H * z); }
   ctx.globalAlpha = 1;
   ctx.restore();
   if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
