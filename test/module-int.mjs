@@ -35,7 +35,11 @@ const { freeRotateLayer } = await import('../src/systems/free-rotate.js');
 const bc = await import('../src/systems/brightness-contrast.js');
 const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
-const xport = await import('../src/systems/export.js');
+const xtree = await import('../src/systems/export/tree.js');
+const xrender = await import('../src/systems/export/render.js');
+const xpipe = await import('../src/systems/export/pipeline.js');
+const { writePsd } = await import('../src/systems/export/psd-write.js');
+const { FORMATS } = await import('../src/systems/export/formats.js');
 const imp = await import('../src/systems/import/convert.js');
 const { insertPsd } = await import('../src/systems/import/psd-insert.js');
 const pal = await import('../src/systems/palette.js');
@@ -71,6 +75,18 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   cache.dirtyAll(); };
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
+const ta = async (name, fn) => { await fn(); n++; console.log('  ok   ' + name); };
+
+// общий проект для экспорта: папка G со слоями b,c + одиночный слой a (низ→верх)
+function exportProject() { resetWH(6, 6);
+  S.layers = [
+    { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
+    { name: 'b', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+    { name: 'c', grid: blank(6, 6), opacity: 1, visible: false, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.folderSeq = 1;
+  S.cur = 0; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null; cache.dirtyAll();
+}
 
 // маленький документ с одним непустым пикселем
 S.W = 4; S.H = 4; S.cur = 0; S.folders = [];
@@ -208,8 +224,48 @@ t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.lay
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); });
 
-t('export: PNG без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPng(); assert.ok(true); });
-t('export: PSD без ошибок', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); xport.exportPsd(); assert.ok(true); });
+// --- единый Export: дерево, форматы, пайплайн (Scope→Doc→Mode→Format→Save) ---
+t('export-tree: scope=project — все верхние узлы (папка + слой)', () => { exportProject();
+  const d = xtree.buildExportDoc('project', false);
+  assert.equal(d.root.length, 2); assert.ok(d.root.some((n2) => n2.kind === 'folder' && n2.name === 'G')); });
+t('export-tree: includeHidden скрывает/раскрывает скрытый слой c', () => { exportProject();
+  const off = xtree.buildExportDoc('project', false), fol = off.root.find((x) => x.kind === 'folder');
+  assert.equal(fol.children.length, 1); // c скрыт
+  const on = xtree.buildExportDoc('project', true).root.find((x) => x.kind === 'folder');
+  assert.equal(on.children.length, 2); });
+t('export-tree: scope=folder экспортирует выбранную папку', () => { exportProject(); S.selFolder = 1;
+  const d = xtree.buildExportDoc('folder', false); assert.equal(d.root.length, 1); assert.equal(d.root[0].kind, 'folder'); });
+t('export-tree: scope=selected — отмеченные слои', () => { exportProject(); S.marked = new Set([0]); S.cur = 0;
+  const d = xtree.buildExportDoc('selected', false); assert.ok(d.root.some((nd) => nd.name === 'a')); });
+t('export-render: flattenNodes даёт canvas W×H', () => { exportProject();
+  const d = xtree.buildExportDoc('project', false), c = xrender.flattenNodes(d.root, false);
+  assert.equal(c.width, 6); assert.equal(c.height, 6); });
+t('export-format: возможности форматов (PNG без слоёв, PSD со слоями)', () => {
+  assert.equal(FORMATS.png.supportsLayered, false); assert.equal(FORMATS.png.supportsFlattened, true);
+  assert.equal(FORMATS.psd.supportsLayered, true); assert.equal(FORMATS.psd.supportsFolders, true); });
+t('export-psd: writePsd возвращает непустой Blob', () => { const W = 2, H = 2, z = new Uint8Array(W * H);
+  const b = writePsd({ W, H, layers: [{ name: 'L', opacity: 255, hidden: false, clip: false, lsct: 0, data: { 0: z, 1: z, 2: z, 3: z } }], comp: { 0: z, 1: z, 2: z, 3: z } });
+  assert.ok(b.size > 0); });
+await ta('export: слой/папка/проект → PNG (flattened)', async () => { exportProject();
+  for (const scope of ['selected', 'folder', 'project']) { S.selFolder = scope === 'folder' ? 1 : null; S.marked = new Set([0]);
+    const out = await xpipe.runExport({ scope, mode: 'flattened', format: 'png', canvasBounds: 'current', includeHidden: false });
+    assert.equal(out.length, 1); assert.ok(/\.png$/.test(out[0].name)); } });
+await ta('export: слой/папка/проект → PSD (layered)', async () => { exportProject();
+  for (const scope of ['selected', 'folder', 'project']) { S.selFolder = scope === 'folder' ? 1 : null; S.marked = new Set([0]);
+    const out = await xpipe.runExport({ scope, mode: 'layered', format: 'psd', canvasBounds: 'current', includeHidden: false });
+    assert.equal(out.length, 1); assert.ok(/\.psd$/.test(out[0].name)); } });
+await ta('export: separate — все слои (leaf) = по файлу на слой', async () => { exportProject();
+  const out = await xpipe.runExport({ scope: 'project', mode: 'separate', separateMode: 'leaf', boundsMode: 'each', format: 'png', canvasBounds: 'current', includeHidden: true });
+  assert.equal(out.length, 3); }); // a, b, c
+await ta('export: separate top-level = папка одним файлом + слой', async () => { exportProject();
+  const out = await xpipe.runExport({ scope: 'project', mode: 'separate', separateMode: 'top', boundsMode: 'same', format: 'png', canvasBounds: 'current', includeHidden: false });
+  assert.equal(out.length, 2); });
+await ta('export: новый формат без переписывания пайплайна', async () => { exportProject();
+  let got = null;
+  FORMATS.fake = { id: 'fake', supportsFlattened: true, supportsLayered: false, supportsSeparateFiles: true,
+    encode: (c, name) => Promise.resolve({ name: name + '.fake', blob: new Blob([new Uint8Array([1])]), mime: 'x/fake', desc: 'fake' }) };
+  const out = await xpipe.runExport({ scope: 'project', mode: 'flattened', format: 'fake', canvasBounds: 'current', includeHidden: false });
+  got = out[0].name; delete FORMATS.fake; assert.ok(/\.fake$/.test(got)); });
 
 t('import: ImageData → пиксель-документ', () => {
   const data = new Uint8ClampedArray(4 * 4 * 4); // 2×2 красный блок в центре 4×4

@@ -10,28 +10,33 @@ const memberOf = (i, fid) => folderChain(S.layers[i].fid).some((f) => f.id === f
 const folderVis = (f) => folderChain(f.id).every((x) => x.visible);
 const depth = (f) => folderChain(f.id).length;
 
-// папки с эффектами: границы поддерева (нижний/верхний индекс слоёв в стопке)
-function fxGroups() { const res = [];
-  for (const f of S.folders) { if (!f.effects || !f.effects.length || !folderVis(f)) continue;
+// папки с эффектами: границы поддерева (нижний/верхний индекс слоёв в стопке).
+// opt.inc ограничивает состав (экспорт подмножества), opt.showHidden — игнор видимости.
+function fxGroups(opt) { const res = [];
+  for (const f of S.folders) { if (!f.effects || !f.effects.length) continue;
+    if (!opt.showHidden && !folderVis(f)) continue;
     let bottom = Infinity, top = -1;
-    for (let i = 0; i < S.layers.length; i++) if (memberOf(i, f.id)) { if (i < bottom) bottom = i; if (i > top) top = i; }
+    for (let i = 0; i < S.layers.length; i++) if (memberOf(i, f.id) && opt.inc(i)) { if (i < bottom) bottom = i; if (i > top) top = i; }
     if (top >= 0) res.push({ f, bottom, top }); }
   return res; }
 
-export function paintStack(ctx, live) {
+// opt0: { include(i), showHidden } — по умолчанию весь видимый стек (видимый рендер).
+export function paintStack(ctx, live, opt0 = {}) {
+  const opt = { inc: opt0.include || (() => true), showHidden: !!opt0.showHidden };
+  const vis = (i) => opt.inc(i) && (opt.showHidden || effVis(i));
   const iox = live && S.cropMode ? S.cropMode.idx : 0, ioy = live && S.cropMode ? S.cropMode.idy : 0;
-  const groups = fxGroups();
+  const groups = fxGroups(opt);
   const drawC = (c) => { if (c) { ctx.globalAlpha = 1; ctx.drawImage(c, iox, ioy); } };
   for (let i = 0; i < S.layers.length; i++) {
     groups.filter((g) => g.bottom === i).sort((a, b) => depth(a.f) - depth(b.f)).forEach((g) => drawC(folderFx(g.f, 'below')));
-    drawLayer(ctx, i, live, iox, ioy);
+    drawLayer(ctx, i, live, iox, ioy, vis);
     groups.filter((g) => g.top === i).sort((a, b) => depth(b.f) - depth(a.f)).forEach((g) => drawC(folderFx(g.f, 'above')));
   }
   ctx.globalAlpha = 1;
 }
 
-function drawLayer(ctx, i, live, iox, ioy) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) return;
-  const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) return;
+function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vis(i) || L.opacity <= 0) return;
+  const cb = clipBase(i); if (L.clip && (cb < 0 || !vis(cb))) return;
   ctx.globalAlpha = L.opacity;
   if (live && S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i)) { // живое превью трансформации
     if (i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh);

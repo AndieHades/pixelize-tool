@@ -17,6 +17,7 @@ import * as toolbars from './systems/toolbars.js';
 import * as layersUI from './systems/layers/index.js';
 import * as importSys from './systems/import/index.js';
 import * as importEditor from './systems/import/editor.js';
+import * as exportSys from './systems/export/index.js';
 import * as palManager from './systems/palette-manager.js';
 import * as tintShade from './systems/tint-shade/index.js';
 import * as preview from './systems/preview-window.js';
@@ -46,10 +47,9 @@ import './systems/trim.js';
 import './systems/mono.js';
 import './systems/recolor.js';
 import './systems/free-rotate.js';
-import './systems/export.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();
@@ -62,7 +62,7 @@ export function start() {
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
     onResize: (w, h) => { $('sidebar').style.width = Math.max(48, Math.min(innerWidth - 12, w)) + 'px'; $('sidebar').style.maxHeight = Math.max(80, Math.min(innerHeight - 12, h)) + 'px'; } });
 
-  for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl (конвертер) не закрываем по фону — это окно
+  for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl/export-ovl (окна) не закрываем по фону
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
     for (const id of ['ctx', 'lctx', 'cctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');

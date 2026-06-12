@@ -3,7 +3,7 @@
 export const ru = {
   // верхняя панель и инструменты (tooltips)
   'tool.gallery': 'Галерея', 'tool.new': 'Новый документ (N)', 'tool.import': 'Импорт картинки (Ctrl+O)',
-  'tool.export': 'Сохранить PNG (Ctrl+S)', 'tool.preview': 'Окно 1:1 (реальный размер)', 'tool.reference': 'Окно референса',
+  'tool.exportMenu': 'Экспорт', 'tool.preview': 'Окно 1:1 (реальный размер)', 'tool.reference': 'Окно референса',
   'tool.fit': 'Вписать (0)', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
   'tool.pencil': 'Карандаш (B)', 'tool.eraser': 'Ластик (E)', 'tool.fill': 'Заливка (F)',
   'tool.pick': 'Пипетка (I, пробел, Alt+клик)', 'tool.line': 'Линия (U)',
@@ -19,7 +19,9 @@ export const ru = {
   'side.flipV': 'Отразить по вертикали (V)', 'side.rotate': 'Поворот холста 90° (R)', 'side.mono': 'Монохром (всё изображение)',
   'side.bc': 'Яркость/контраст (всё изображение)', 'side.crop': 'Кроп (C): рамка → Enter', 'side.trim': 'Trim — обрезать пустые поля впритык к рисунку',
   // заголовки диалогов и попапов
-  'dialog.newCanvas': 'Новый холст', 'dialog.save': 'Сохранить', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
+  'dialog.newCanvas': 'Новый холст', 'dialog.export': 'Экспорт', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
+  'export.scope': 'Что', 'export.selected': 'Выделенное', 'export.folder': 'Папка', 'export.project': 'Проект', 'export.mode': 'Как', 'export.flattened': 'Склеить', 'export.layered': 'Со слоями', 'export.separateFiles': 'Раздельно', 'export.separate': 'Раздельно', 'export.top': 'Верхний уровень', 'export.leaves': 'Все слои',
+  'export.foldersFlat': 'Папки картинками', 'export.bounds': 'Размер файлов', 'export.sameBounds': 'Один размер', 'export.trimEach': 'Обрезать каждый', 'export.format': 'Формат', 'export.png': 'PNG', 'export.psd': 'PSD', 'export.canvas': 'Холст', 'export.current': 'Текущий размер', 'export.trim': 'По пикселям', 'export.hidden': 'Скрытые слои',
   'new.addCustom': 'Свой размер',
   'dialog.done': 'Готово', 'dialog.rename': 'Переименовать', 'dialog.panels': 'Кнопки панелей',
   'pop.color': 'Цвет', 'pop.bc': 'Яркость/контраст', 'pop.adjust': 'Кисть-коррекция', 'pop.glow': 'Свечение',
@@ -40,8 +42,7 @@ export const ru = {
   'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить',
   'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.replaceColor': 'Заменить цвет', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
   'btn.glow': 'Добавить свечение', 'btn.insertAsIs': 'Вставить как есть', 'btn.resetPanels': 'Сбросить панели',
-  'btn.fromImage': 'Палитра из изображения…', 'btn.exportPng': 'PNG — картинка с прозрачным фоном',
-  'btn.exportPsd': 'PSD — со слоями (Photoshop, Krita)',
+  'btn.fromImage': 'Палитра из изображения…', 'btn.export': 'Экспорт',
   // коррекция
   'adj.dodge': 'Осветлить', 'adj.burn': 'Затемнить', 'adj.colorize': 'В активный цвет',
   // меню слоя
@@ -69,9 +70,8 @@ export const ru = {
   'gallery.folderName': 'Папка',
   'menu.pickLayer': 'Слой:',
   'palette.none': 'Сохранённых палитр пока нет',
-  'tool.tsg': 'Генератор тинтов и теней', 'tsg.title': 'Тинты и тени', 'tsg.base': 'База', 'tsg.tints': 'Тинты', 'tsg.shades': 'Шейды', 'tsg.harmony': 'Гармония цвета', 'tsg.selected': 'Выбрано',
-  'harm.complementary': 'Комплементарная', 'harm.split': 'Сплит-комплементарная', 'harm.analogous': 'Аналоговая', 'harm.triadic': 'Триада', 'btn.tsgClear': 'Сбросить выбор',
-  'btn.tsgAdd': 'Добавить в текущую палитру', 'btn.tsgCreate': 'Создать палитру из выбранных', 'toast.selectBaseFirst': 'Сначала выбери базовый цвет', 'toast.nothingSelected': 'Цвета не выбраны', 'toast.tsgAdded': 'Добавлено в палитру: {n}', 'toast.tsgNewPalette': 'Новая палитра: {n} цветов',
+  'tool.tsg': 'Генератор тинтов и теней', 'tsg.title': 'Тинты и тени', 'tsg.base': 'База', 'tsg.tints': 'Тинты', 'tsg.shades': 'Шейды', 'tsg.harmony': 'Гармония цвета', 'tsg.selected': 'Выбрано', 'harm.complementary': 'Комплементарная', 'harm.split': 'Сплит-комплементарная', 'harm.analogous': 'Аналоговая', 'harm.triadic': 'Триада',
+  'btn.tsgClear': 'Сбросить выбор', 'btn.tsgAdd': 'Добавить в текущую палитру', 'btn.tsgCreate': 'Создать палитру из выбранных', 'toast.selectBaseFirst': 'Сначала выбери базовый цвет', 'toast.nothingSelected': 'Цвета не выбраны', 'toast.tsgAdded': 'Добавлено в палитру: {n}', 'toast.tsgNewPalette': 'Новая палитра: {n} цветов',
   'hint.panels': 'Включай и выключай кнопки. Перетащить между панелями: зажми ПКМ (или долгий тап) и тащи.',
   'hint.adjust': 'Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.',
   'hint.beforeSym': 'до симметрии',
@@ -165,6 +165,6 @@ export const ru = {
   'toast.importReady': 'Готово: {w}×{h} — рисуй!',
   'toast.sizeRange': 'Размеры от 2 до {max}',
   'toast.canvasSize': 'Холст: {w}×{h}',
-  'toast.recoloredN': 'Перекрашено: {n} пикс.',
+  'toast.recoloredN': 'Перекрашено: {n} пикс.', 'toast.exported': 'Экспортировано файлов: {n}', 'toast.exportEmpty': 'Нечего экспортировать',
   'menu.copyHex': 'Копировать HEX', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
 };

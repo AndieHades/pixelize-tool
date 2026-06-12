@@ -22,6 +22,15 @@ export function gridBounds(g) {
   return maxx < 0 ? null : { minx, miny, maxx, maxy };
 }
 
+// охват непрозрачных пикселей RGBA-буфера W×H (или null, если всё прозрачно) —
+// общий расчёт границ для Trim/экспорта; учитывает любые запечённые эффекты.
+export function alphaBounds(data, W, H, thr = 0) {
+  let minx = W, miny = H, maxx = -1, maxy = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > thr) {
+    if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+  return maxx < 0 ? null : { minx, miny, maxx, maxy };
+}
+
 // охват с учётом «запасных» пикселей за краем (ext: Map "x,y"→cell) — реальные
 // границы слоя, даже если часть вышла за холст. Координаты ext могут быть < 0.
 export function boundsWithExt(grid, ext) {

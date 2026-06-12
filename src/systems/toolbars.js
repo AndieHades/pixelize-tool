@@ -52,9 +52,6 @@ export function mount() {
   $('zin').onclick = () => actions.run('zoom.in');
   $('zout').onclick = () => actions.run('zoom.out');
   $('fit').onclick = () => actions.run('view.fit');
-  $('exp').onclick = () => $('exp-ovl').classList.add('on');
-  $('exp-png').onclick = () => { $('exp-ovl').classList.remove('on'); actions.run('file.exportPng'); };
-  $('exp-psd').onclick = () => { $('exp-ovl').classList.remove('on'); actions.run('file.exportPsd'); };
 
   $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn);
   bus.on('tool', syncToolButtons); syncToolButtons();

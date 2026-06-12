@@ -1,7 +1,7 @@
 // English locale. Keys mirror ru.js — keep them in sync.
 export const en = {
   'tool.gallery': 'Gallery', 'tool.new': 'New document (N)', 'tool.import': 'Import image (Ctrl+O)',
-  'tool.export': 'Save PNG (Ctrl+S)', 'tool.preview': '1:1 window (actual size)', 'tool.reference': 'Reference window',
+  'tool.exportMenu': 'Export', 'tool.preview': '1:1 window (actual size)', 'tool.reference': 'Reference window',
   'tool.fit': 'Fit (0)', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
   'tool.pencil': 'Pencil (B)', 'tool.eraser': 'Eraser (E)', 'tool.fill': 'Fill (F)',
   'tool.pick': 'Eyedropper (I, space, Alt+click)', 'tool.line': 'Line (U)',
@@ -15,7 +15,14 @@ export const en = {
   'side.stab': 'Stroke stabilization (T)', 'side.outline': 'Outline (O)', 'side.flipH': 'Flip horizontally (H)',
   'side.flipV': 'Flip vertically (V)', 'side.rotate': 'Rotate canvas 90° (R)', 'side.mono': 'Monochrome (whole image)',
   'side.bc': 'Brightness/contrast (whole image)', 'side.crop': 'Crop (C): frame → Enter', 'side.trim': 'Trim empty margins to artwork',
-  'dialog.newCanvas': 'New canvas', 'dialog.save': 'Save', 'dialog.palettes': 'Palettes', 'dialog.import': 'Import to pixel art',
+  'dialog.newCanvas': 'New canvas', 'dialog.export': 'Export', 'dialog.palettes': 'Palettes', 'dialog.import': 'Import to pixel art',
+  // export: four independent parameters + options
+  'export.scope': 'What', 'export.selected': 'Selected', 'export.folder': 'Folder', 'export.project': 'Project',
+  'export.mode': 'How', 'export.flattened': 'Flattened', 'export.layered': 'Layered', 'export.separateFiles': 'Separate',
+  'export.separate': 'Separate', 'export.top': 'Top-level', 'export.leaves': 'All layers', 'export.foldersFlat': 'Folders as images',
+  'export.bounds': 'File size', 'export.sameBounds': 'Same size', 'export.trimEach': 'Trim each',
+  'export.format': 'Format', 'export.png': 'PNG', 'export.psd': 'PSD',
+  'export.canvas': 'Canvas', 'export.current': 'Current size', 'export.trim': 'Trim to pixels', 'export.hidden': 'Hidden layers',
   'new.addCustom': 'Custom size',
   'dialog.done': 'Done', 'dialog.rename': 'Rename', 'dialog.panels': 'Panel buttons',
   'pop.color': 'Color', 'pop.bc': 'Brightness/contrast', 'pop.adjust': 'Adjust brush', 'pop.glow': 'Glow',
@@ -34,8 +41,7 @@ export const en = {
   'btn.apply': 'Apply', 'btn.cancel': 'Cancel', 'btn.close': 'Close', 'btn.save': 'Save',
   'btn.done': 'Done', 'btn.addPalette': 'Add to palette', 'btn.replaceColor': 'Replace color', 'btn.outline': 'Outline', 'btn.shadow': 'Create shadow',
   'btn.glow': 'Add glow', 'btn.insertAsIs': 'Insert as is', 'btn.resetPanels': 'Reset panels',
-  'btn.fromImage': 'Palette from image…', 'btn.exportPng': 'PNG — image with transparent background',
-  'btn.exportPsd': 'PSD — with layers (Photoshop, Krita)',
+  'btn.fromImage': 'Palette from image…', 'btn.export': 'Export',
   'adj.dodge': 'Dodge', 'adj.burn': 'Burn', 'adj.colorize': 'To active color',
   'menu.rename': 'Rename…', 'menu.dupLayer': 'Duplicate layer', 'menu.selectAll': 'Select all on layer',
   'menu.invert': 'Invert selection', 'menu.fill': 'Fill with active color', 'menu.clear': 'Clear layer',
@@ -158,5 +164,6 @@ export const en = {
   'toast.sizeRange': 'Sizes from 2 to {max}',
   'toast.canvasSize': 'Canvas: {w}×{h}',
   'toast.recoloredN': 'Recolored: {n} px',
+  'toast.exported': 'Exported files: {n}', 'toast.exportEmpty': 'Nothing to export',
   'menu.copyHex': 'Copy HEX', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
 };

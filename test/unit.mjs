@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { S, MAX_LAYERS, blank, newLayer, G } from '../src/core/state.js';
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
-import { parseKey, blendOver, mergeCells, gridBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill } from '../src/logic/raster.js';
+import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill } from '../src/logic/raster.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
 import { medianCut, nearest, paletteFromGrid, dedupePal } from '../src/logic/quantize.js';
@@ -38,6 +38,10 @@ t('raster: blendOver непрозрачный', () => { assert.deepEqual(blendOv
 t('raster: blendOver 50%', () => { assert.deepEqual(blendOver([255, 255, 255], [0, 0, 0, 255], 0.5), [128, 128, 128, 255]); });
 t('raster: mergeCells пусто', () => { assert.equal(mergeCells(null, null, 1), null); assert.deepEqual(mergeCells(null, [9, 9, 9, 255], 1), [9, 9, 9, 255]); });
 t('raster: gridBounds', () => { const g = blank(8, 8); assert.equal(gridBounds(g), null); g[2][5] = [1, 1, 1, 255]; assert.deepEqual(gridBounds(g), { minx: 5, miny: 2, maxx: 5, maxy: 2 }); });
+t('raster: alphaBounds (Trim по итоговым пикселям, в т.ч. запечённым эффектам)', () => {
+  const W = 4, H = 4, d = new Uint8Array(W * H * 4); assert.equal(alphaBounds(d, W, H), null); // всё прозрачно
+  const set = (x, y) => { d[(y * W + x) * 4 + 3] = 255; }; set(1, 2); set(3, 1);
+  assert.deepEqual(alphaBounds(d, W, H), { minx: 1, miny: 1, maxx: 3, maxy: 2 }); });
 t('raster: boundsWithExt учитывает пиксели за краем', () => { const g = blank(4, 4); g[1][1] = [1, 1, 1, 255];
   const ext = new Map([['-2,5', [2, 2, 2, 255]], ['6,0', [3, 3, 3, 255]]]);
   assert.deepEqual(boundsWithExt(g, ext), { minx: -2, miny: 0, maxx: 6, maxy: 5 });
