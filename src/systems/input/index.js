@@ -46,6 +46,7 @@ export function move(e) {
 }
 
 export function up(e) {
+  if (e && e.pointerId != null) { try { cv().releasePointerCapture(e.pointerId); } catch (er) {} }
   if (rdrag) { if (!rdrag.moved && rdrag.btn === 2) bus.emit('canvas-menu', e); rdrag = null; return; }
   stabPt = null;
   const m = activeMode(); if (m) { if (drawing && m.up) m.up({ e }); drawing = false; return; }
@@ -59,6 +60,9 @@ export function mount() {
   c.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') move(e); });
   c.addEventListener('pointerup', (e) => { if (e.pointerType !== 'touch') up(e); });
   c.addEventListener('pointercancel', (e) => { if (e.pointerType !== 'touch') up(e); });
+  const endStroke = () => { if (drawing || rdrag) up(); }; // скриншот/alt-tab крадут pointerup — не оставляем слой «висеть» на курсоре
+  window.addEventListener('blur', endStroke);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) endStroke(); });
   c.addEventListener('pointerleave', () => { if (S.hoverPx) { S.hoverPx = null; bus.emit('render'); } });
   window.addEventListener('pointermove', (e) => { if (S.hoverPx && e.target !== c) { S.hoverPx = null; bus.emit('render'); } }); // курсор кисти виден только над холстом
   c.addEventListener('wheel', (e) => { e.preventDefault(); const r = c.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;

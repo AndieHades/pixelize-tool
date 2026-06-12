@@ -25,6 +25,7 @@ export function render() {
   ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
   drawChecker(ctx, ox, oy, z, cw, chh);
   const iox = S.cropMode ? S.cropMode.idx * z : 0, ioy = S.cropMode ? S.cropMode.idy * z : 0; // сдвиг рисунка в кропе
+  ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // слои не выходят за холст: живой сдвиг Move/crop клипуется как итог
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
     const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
     ctx.globalAlpha = L.opacity;
@@ -35,6 +36,7 @@ export function render() {
     const mdy = (S.moveDrag && S.moveDrag.idxs.includes(i)) ? S.moveDrag.dy * z : 0;
     ctx.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), ox + iox + mdx, oy + ioy + mdy, W * z, H * z); }
   ctx.globalAlpha = 1;
+  ctx.restore();
   if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
     for (let x = 0; x <= W; x++) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
     for (let y = 0; y <= H; y++) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
