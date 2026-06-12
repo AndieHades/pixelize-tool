@@ -75,14 +75,15 @@ function folderRow(f, depth) {
     if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, f); return; }
     lastClick = { idx: key, t: now };
     if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
-      else { S.markedFolders.add(f.id); S.selFolder = f.id; } layList(); return; }
-    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); layList(); });
+      else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
+    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); layList(); }); // обычный клик — только эта папка активна
   longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
 }
 
 function layerRow(L, i, depth) {
-  const isCurPrim = i === S.cur && !S.selFolder; // полный синий только если папка не «активна»
-  const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : '') + ((S.marked.has(i) || (i === S.cur && S.selFolder)) ? ' marked' : '') + (L.clip ? ' clip' : '');
+  // активный слой ярко-синий, только если не выбрана папка; слабый синий — лишь у ctrl-отмеченных
+  const isCurPrim = i === S.cur && !S.selFolder;
+  const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name);
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
