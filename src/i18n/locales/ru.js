@@ -45,6 +45,7 @@ export const ru = {
   'menu.lock': 'Замок', 'menu.alphaLock': 'Альфа-замок', 'menu.clipMask': 'Обтравка', 'menu.selectLayer': 'Выделить', 'menu.duplicate': 'Дублировать', 'menu.delete': 'Удалить',
   'menu.ungroup': 'Расформировать папку',
   'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…',
+  'menu.deleteLayer': 'Удалить слой', 'menu.deleteFolder': 'Удалить папку',
   'ui.theme': 'Тема', 'ui.language': 'Язык', 'ui.settings': 'Настройки', 'ui.lightTheme': 'Светлая тема',
   'gallery.untitled': 'Без названия',
   'gallery.select': 'Выбрать',

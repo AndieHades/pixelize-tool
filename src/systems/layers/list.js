@@ -58,14 +58,25 @@ function wireVis(vis, obj) {
 }
 
 function folderRow(f, depth) {
-  const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
+  const isSel = S.markedFolders.has(f.id);
+  const fr = document.createElement('div'); fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
+  fr.className = 'lrow frow' + (f.id === S.selFolder ? ' on' : isSel ? ' marked' : '');
   const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+  car.addEventListener('pointerdown', (e) => e.stopPropagation());
+  car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; f.open = !f.open; layList(); });
   const nm = nameSpan(f.name);
   const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
-  fr.append(car, nm, vis);
-  fr.addEventListener('click', () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + f.id;
+  fr.append(car, nm);
+  if (S.sym || S.symH) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (f.symLock ? ' off' : ''); sy.innerHTML = SYM_IC;
+    sy.addEventListener('pointerdown', (e) => e.stopPropagation());
+    sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.symLock = !f.symLock; sy.classList.toggle('off', f.symLock); bus.emit('render'); }); fr.append(sy); }
+  fr.append(vis);
+  fr.addEventListener('click', (ev) => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + f.id;
     if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, f); return; }
-    lastClick = { idx: key, t: now }; f.open = !f.open; layList(); });
+    lastClick = { idx: key, t: now };
+    if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
+      else { S.markedFolders.add(f.id); S.selFolder = f.id; } layList(); return; }
+    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); layList(); });
   longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
 }
 
@@ -87,8 +98,8 @@ function layerRow(L, i, depth) {
     if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); layList(); return; } // ctrl/cmd-клик — мультивыбор
     const now = performance.now();
     if (lastClick.idx === i && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, L); return; } // двойной клик — переименование
-    lastClick = { idx: i, t: now }; S.cur = i; layList(); }); // клик — только сделать активным
-  longPress(row, (x, y) => { if (S.cur !== i) { S.cur = i; layList(); } openLctx(x, y, 'layer', L); }); // ПКМ/долгий тап: активный + меню
+    lastClick = { idx: i, t: now }; S.cur = i; S.markedFolders.clear(); S.selFolder = null; layList(); }); // клик — только сделать активным, снять выбор папок
+  longPress(row, (x, y) => { if (S.cur !== i) S.cur = i; S.markedFolders.clear(); S.selFolder = null; layList(); openLctx(x, y, 'layer', L); });
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
 }
 

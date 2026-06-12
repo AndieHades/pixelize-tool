@@ -37,6 +37,7 @@ export const en = {
   'menu.lock': 'Lock', 'menu.alphaLock': 'Alpha lock', 'menu.clipMask': 'Clip', 'menu.selectLayer': 'Select', 'menu.duplicate': 'Duplicate', 'menu.delete': 'Delete',
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…',
+  'menu.deleteLayer': 'Delete layer', 'menu.deleteFolder': 'Delete folder',
   'ui.theme': 'Theme', 'ui.language': 'Language', 'ui.settings': 'Settings', 'ui.lightTheme': 'Light theme',
   'gallery.untitled': 'Untitled',
   'gallery.select': 'Select',

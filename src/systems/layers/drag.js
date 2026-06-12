@@ -6,7 +6,7 @@ import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { folderChain } from '../../core/layers.js';
-import { topOfFolder, commonParent } from './helpers.js';
+import { topOfFolder, commonParent, folderLayers } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 
@@ -20,9 +20,17 @@ function folderFromLayers(block, target) {
   moved.forEach((L) => { L.fid = f.id; }); S.layers.splice(idxs[0], 0, ...moved);
   S.cur = idxs[0] + moved.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
 
-// выделение для перетаскивания: активный слой + отмеченные (всё подсвеченное двигается вместе)
+// выделение для перетаскивания: слои S.marked+S.cur + слои из выделенных папок
 export function dragBlock(srcIdx) { const sel = new Set(S.marked); sel.add(S.cur);
-  return (sel.size > 1 && sel.has(srcIdx)) ? [...sel].filter((i) => S.layers[i]).sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[srcIdx]]; }
+  for (const fid of S.markedFolders) { const f = S.folders.find((x) => x.id === fid);
+    if (f) for (const L of folderLayers(f)) { const i = S.layers.indexOf(L); if (i >= 0) sel.add(i); } }
+  return (sel.size > 1 && (sel.has(srcIdx) || S.markedFolders.size > 0)) ? [...sel].filter((i) => S.layers[i]).sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[srcIdx]]; }
+
+// набор папок для перетаскивания: все выделенные папки если src в их числе, иначе одна
+function dragFolderBlock(srcFid) {
+  return (S.markedFolders.has(srcFid) && S.markedFolders.size > 1)
+    ? [...S.markedFolders].map((fid) => S.folders.find((f) => f.id === fid)).filter(Boolean)
+    : [S.folders.find((f) => f.id === srcFid)].filter(Boolean); }
 
 function layDrop(src, row, into) { const tIsFolder = row.classList.contains('frow');
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
@@ -35,15 +43,17 @@ function layDrop(src, row, into) { const tIsFolder = row.classList.contains('fro
     for (const L of block) L.fid = dstFid;
     let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : S.layers.indexOf(tL) + 1; if (dstIdx < 0) dstIdx = S.layers.length;
     S.layers.splice(dstIdx, 0, ...block); S.cur = dstIdx + block.length - 1;
-  } else { const sf = S.folders.find((f) => f.id === src.fid); if (tIsFolder && +row.dataset.fid === src.fid) return;
+  } else { const foldersToMove = dragFolderBlock(src.fid);
     const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
-    if ((tL && folderChain(tL.fid).some((f) => f.id === src.fid)) || (tFid != null && folderChain(tFid).some((f) => f.id === src.fid))) return; // в своё поддерево нельзя
-    snapshot(); const block = []; // двигаем всё поддерево папки вместе
-    for (let i = S.layers.length - 1; i >= 0; i--) if (folderChain(S.layers[i].fid).some((f) => f.id === src.fid)) block.unshift(S.layers.splice(i, 1)[0]);
-    if (sf) sf.parent = tIsFolder ? (into ? tFid : (S.folders.find((f) => f.id === tFid)?.parent ?? null)) : (tL ? (tL.fid ?? null) : null); // куда вложить
+    if (tIsFolder && foldersToMove.some((f) => f.id === +row.dataset.fid)) return;
+    if (foldersToMove.some((f) => (tL && folderChain(tL.fid).some((x) => x.id === f.id)) || (tFid != null && folderChain(tFid).some((x) => x.id === f.id)))) return;
+    snapshot(); const block = [];
+    for (let i = S.layers.length - 1; i >= 0; i--) if (foldersToMove.some((f) => folderChain(S.layers[i].fid).some((x) => x.id === f.id))) block.unshift(S.layers.splice(i, 1)[0]);
+    const newParent = tIsFolder ? (into ? tFid : (S.folders.find((f) => f.id === tFid)?.parent ?? null)) : (tL ? (tL.fid ?? null) : null);
+    for (const f of foldersToMove) f.parent = newParent;
     let dstIdx; if (tIsFolder) dstIdx = topOfFolder(tFid) + 1; else if (tL && tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = (tL ? S.layers.indexOf(tL) : S.layers.length - 1) + 1;
     S.layers.splice(Math.min(Math.max(dstIdx, 0), S.layers.length), 0, ...block); S.cur = Math.min(S.cur, S.layers.length - 1); }
-  S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {
@@ -55,7 +65,8 @@ export function dragRow(el, info) {
       if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
         ghost = dragGhost(el, el.getBoundingClientRect().width); ghost.move(ev.clientX, ev.clientY);
         const blk = dragBlock(info.idx); // подсветить все перетаскиваемые (активный + отмеченные)
-        if (info.kind === 'layer' && blk.length > 1) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); }); }
+        if (info.kind === 'layer' && blk.length > 1) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); });
+        if (info.kind === 'folder' && S.markedFolders.has(info.fid) && S.markedFolders.size > 1) box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); }); }
       if (!started) return; ghost.move(ev.clientX, ev.clientY);
       box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
       const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;

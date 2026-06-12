@@ -16,7 +16,7 @@ const pal0 = defaultPalette();
 export const S = {
   W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1, docName: '',
   layers: [newLayer('Слой 1', DEFAULT_DOC.w, DEFAULT_DOC.h)], cur: 0,
-  folders: [], folderSeq: 0, marked: new Set(),
+  folders: [], folderSeq: 0, marked: new Set(), selFolder: null, markedFolders: new Set(),
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   tool: 'pencil', sym: false, symH: false,
   brushes: BRUSH_DEFAULTS(),

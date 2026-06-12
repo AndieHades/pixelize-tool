@@ -62,9 +62,29 @@ export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.len
   const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
   const dst = topOfFolder(f.id) + 1; S.layers.splice(dst, 0, ...copies); S.cur = dst + copies.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.folderDup')); }
 
-export function deleteLayer() { const idx = selectedIdx(); if (S.layers.length - idx.length < 1) { toast(t('toast.onlyLayer')); return; } // удалить всё выделенное
-  snapshot(); for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
-  S.cur = Math.max(0, Math.min(idx[0], S.layers.length - 1)); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+// удалить папку и всё её содержимое (слои + вложенные папки)
+export function deleteFolder(f) {
+  const kids = folderLayers(f);
+  if (S.layers.length - kids.length < 1) { toast(t('toast.onlyLayer')); return; }
+  snapshot();
+  for (let i = S.layers.length - 1; i >= 0; i--) if (folderChain(S.layers[i].fid).some((x) => x.id === f.id)) S.layers.splice(i, 1);
+  S.folders = S.folders.filter((sf) => sf !== f && !folderChain(sf.id).some((x) => x.id === f.id));
+  S.cur = Math.min(S.cur, S.layers.length - 1); S.marked.clear(); S.markedFolders.clear(); S.selFolder = null;
+  dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+
+export function deleteLayer() {
+  // удалить всё выделенное: слои S.marked+S.cur и содержимое выделенных папок
+  const allIdx = new Set(selectedIdx());
+  const markedFids = [...S.markedFolders];
+  for (const fid of markedFids) { const f = S.folders.find((x) => x.id === fid); if (!f) continue;
+    for (const L of folderLayers(f)) { const i = S.layers.indexOf(L); if (i >= 0) allIdx.add(i); } }
+  const idx = [...allIdx].filter((i) => S.layers[i]).sort((a, b) => a - b);
+  if (S.layers.length - idx.length < 1) { toast(t('toast.onlyLayer')); return; }
+  snapshot();
+  if (markedFids.length) S.folders = S.folders.filter((sf) => !markedFids.includes(sf.id) && !folderChain(sf.id).some((x) => markedFids.includes(x.id)));
+  for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
+  S.cur = Math.max(0, Math.min(idx[0] ?? 0, S.layers.length - 1));
+  S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 actions.register('layer.add', doAddLayer);
 actions.register('layer.merge', doMerge);
