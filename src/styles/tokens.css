@@ -17,6 +17,7 @@
   --toggle-on: var(--accent);
   --toggle-off: rgba(120, 122, 134, .5);
   --toggle-knob: #fff;
+  --vsl-track: rgba(190, 190, 205, .32); /* дорожка слайдеров размера/прозрачности */
   /* размеры */
   --btn: 40px;
   --radius: 12px;
@@ -48,6 +49,7 @@
   --accent: #2b6fe0;
   --accent-soft: rgba(43, 111, 224, .16);
   --toggle-off: rgba(120, 122, 134, .35);
+  --vsl-track: rgba(90, 95, 110, .22);
   --cv-bg: #d6d8dd;
   --cv-doc: #c8cbd2;
   --cv-check1: #cfd2d8;
