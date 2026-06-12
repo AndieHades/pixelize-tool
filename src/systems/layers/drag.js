@@ -9,8 +9,7 @@ import { folderChain } from '../../core/layers.js';
 import { topOfFolder, folderLayers } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
-
-const HOLD = 650; // мс удержания над папкой, прежде чем она «примет» (spring-load)
+import { FOLDER_HOLD_MS } from '../../config/timings.js';
 
 // выделение для перетаскивания: слои S.marked+S.cur + слои из выделенных папок
 export function dragBlock(srcIdx) { const sel = new Set(S.marked); sel.add(S.cur);
@@ -69,7 +68,7 @@ export function dragRow(el, info) {
       dropRow = row; if (!row) return;
       row.classList.add('drop-above');
       if (row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid)) {
-        holdTimer = setTimeout(() => { row.classList.remove('drop-above'); row.classList.add('drop-into'); }, HOLD);
+        holdTimer = setTimeout(() => { row.classList.remove('drop-above'); row.classList.add('drop-into'); }, FOLDER_HOLD_MS);
       }
     };
 

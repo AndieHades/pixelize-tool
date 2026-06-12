@@ -7,3 +7,4 @@ export const STABILIZE = 0.35;      // коэффициент сглаживан
 export const PINCH_MIN = 12;        // порог «настоящего» щипка против тап-отмены, px
 export const PINCH_MERGE = 0.55;    // щипок строк слоёв до этой доли расстояния → слить
 export const TOAST_MS = 2000;       // сколько висит всплывающее уведомление
+export const FOLDER_HOLD_MS = 650;  // удержание над папкой при перетаскивании → принять внутрь
