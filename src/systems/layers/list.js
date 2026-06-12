@@ -5,10 +5,13 @@ import * as bus from '../../core/bus.js';
 import { $ } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
 import { layerCanvas } from '../../core/layer-cache.js';
+import { folderChain } from '../../core/layers.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock } from './ops.js';
+
+const INDENT = 16; // отступ на уровень вложенности
 
 const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; // галочка = видимость
 let lastClick = { idx: -1, t: 0 };
@@ -50,37 +53,50 @@ function wireVis(vis, obj) {
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('on', obj.visible); bus.emit('render'); });
 }
 
+function folderRow(f, depth) {
+  const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
+  const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+  const nm = nameSpan(f.name);
+  const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, f);
+  fr.append(car, nm, vis);
+  fr.addEventListener('click', () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + f.id;
+    if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, f); return; }
+    lastClick = { idx: key, t: now }; f.open = !f.open; layList(); });
+  longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
+}
+
+function layerRow(L, i, depth) {
+  const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
+  row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
+  const nm = nameSpan(L.name);
+  const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, L); // галочка = видимость
+  if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
+  row.append(thumbFor(i), nm);
+  if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
+    fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
+  row.append(vis);
+  row.addEventListener('click', (ev) => { if (layDragSquelch) return;
+    if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); layList(); return; } // ctrl/cmd-клик — мультивыбор
+    const now = performance.now();
+    if (lastClick.idx === i && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, L); return; } // двойной клик — переименование
+    lastClick = { idx: i, t: now }; S.cur = i; layList(); }); // клик — только сделать активным
+  longPress(row, (x, y) => { if (S.cur !== i) { S.cur = i; layList(); } openLctx(x, y, 'layer', L); }); // ПКМ/долгий тап: активный + меню
+  attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
+}
+
 export function layList() {
-  S.folders = S.folders.filter((f) => S.layers.some((L) => L.fid === f.id));
-  const box = $('lay-list'); if (!box) return; box.innerHTML = ''; const doneF = new Set();
+  const used = new Set(); for (const L of S.layers) for (const f of folderChain(L.fid)) used.add(f.id); // убрать пустые папки (по всему поддереву)
+  S.folders = S.folders.filter((f) => used.has(f.id));
+  const box = $('lay-list'); if (!box) return; box.innerHTML = '';
+  const stack = []; // папки-предки сверху вниз (учтённые в текущем месте обхода)
   for (let i = S.layers.length - 1; i >= 0; i--) { const L = S.layers[i];
-    const f = L.fid != null ? S.folders.find((x) => x.id === L.fid) : null;
-    if (f && !doneF.has(f.id)) { doneF.add(f.id);
-      const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id;
-      const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
-      const nm = nameSpan(f.name);
-      const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, f);
-      fr.append(car, nm, vis);
-      fr.addEventListener('click', ((fld, sp) => () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + fld.id;
-        if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, fld); return; }
-        lastClick = { idx: key, t: now }; fld.open = !fld.open; layList(); })(f, nm));
-      longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); box.appendChild(fr); }
-    if (f && !f.open) continue;
-    const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (f ? ' inf' : '') + (L.clip ? ' clip' : ''); row.dataset.li = i;
-    const nm = nameSpan(L.name);
-    const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, L); // галочка = видимость
-    if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
-    row.append(thumbFor(i), nm);
-    if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
-      fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
-    row.append(vis);
-    row.addEventListener('click', ((idx, lay, sp) => (ev) => { if (layDragSquelch) return;
-      if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); return; } // десктоп: ctrl/cmd-клик — выбор
-      const now = performance.now();
-      if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; } // двойной клик — переименование
-      lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // клик — только сделать активным; меню — только ПКМ/долгий тап
-    longPress(row, (x, y) => { if (S.cur !== i) { S.cur = i; layList(); } openLctx(x, y, 'layer', L); }); // ПКМ/долгий тап: сделать активным + меню
-    attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
+    const chain = folderChain(L.fid).reverse(); // от корня к ближайшей папке
+    let common = 0; while (common < stack.length && common < chain.length && stack[common].id === chain[common].id) common++;
+    stack.length = common; let hidden = stack.some((f) => !f.open);
+    for (let d = common; d < chain.length; d++) { const f = chain[d];
+      if (!hidden) box.appendChild(folderRow(f, d)); stack.push(f); if (!f.open) hidden = true; }
+    if (hidden) continue;
+    box.appendChild(layerRow(L, i, chain.length));
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   if ($('lay-alpha')) { $('lay-alpha').classList.toggle('on', !!cur.alphaLock); $('lay-clip').classList.toggle('on', !!cur.clip); }

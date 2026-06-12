@@ -51,7 +51,10 @@ export function mountMenu() {
   $('lctx-del').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') deleteLayerRef(lctxRef.ref); };
   $('lctx-png-full').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, false); };
   $('lctx-png-tight').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, true); };
-  $('lctx-ung').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref; S.layers.forEach((L) => { if (L.fid === f.id) L.fid = null; }); S.folders = S.folders.filter((x) => x !== f); bus.emit('layers'); bus.emit('render'); } };
+  $('lctx-ung').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref; // расформировать: содержимое — на уровень выше
+    S.layers.forEach((L) => { if (L.fid === f.id) L.fid = f.parent ?? null; });
+    S.folders.forEach((sf) => { if (sf.parent === f.id) sf.parent = f.parent ?? null; });
+    S.folders = S.folders.filter((x) => x !== f); bus.emit('layers'); bus.emit('render'); } };
   $('ren-ok').onclick = () => { if (renRef) { const v = $('ren-name').value.trim(); if (v) { snapshot(); renRef.name = v.slice(0, 24); bus.emit('layers'); } } renRef = null; $('ren-ovl').classList.remove('on'); };
   $('ren-cancel').onclick = () => { renRef = null; $('ren-ovl').classList.remove('on'); };
   $('ren-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ren-ok').click(); });

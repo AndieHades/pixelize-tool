@@ -237,5 +237,11 @@ t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
+t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
+  S.folders = []; S.folderSeq = 0; S.layers = [S.layers[0], { ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) }, { ...S.layers[0], name: 'c', grid: S.layers[0].grid.map((r) => r.slice()) }]; S.cur = 0; S.marked = new Set([1, 2]);
+  lops.doGroup(); const A = S.folders[0]; assert.equal(A.parent ?? null, null);
+  const inner = S.layers.map((L, i) => [L, i]).filter(([L]) => L.fid === A.id).map(([, i]) => i); S.marked = new Set(inner); lops.doGroup();
+  const B = S.folders.find((f) => f !== A); assert.equal(B.parent, A.id); // B вложена в A
+  assert.deepEqual(folderChain(S.layers.find((L) => L.fid === B.id).fid).map((f) => f.id), [B.id, A.id]); });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

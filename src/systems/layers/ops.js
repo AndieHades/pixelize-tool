@@ -7,7 +7,8 @@ import { mergeCells } from '../../logic/raster.js';
 import { dirtyAll } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
-import { folderLayers, topOfFolder } from './helpers.js';
+import { folderChain } from '../../core/layers.js';
+import { folderLayers, topOfFolder, commonParent } from './helpers.js';
 
 export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   snapshot(); const nl = newLayer('Слой ' + (++S.layerSeq), S.W, S.H); nl.fid = S.layers[S.cur].fid;
@@ -31,7 +32,8 @@ export function doMerge() { let idx = [...S.marked].sort((a, b) => a - b);
 export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
 
 export function doGroup() { let idx = [...S.marked].sort((a, b) => a - b); if (!idx.length) idx = [S.cur];
-  snapshot(); const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false };
+  snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
+  const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false, parent };
   S.folders.push(f); const moved = [];
   for (let j = idx.length - 1; j >= 0; j--) moved.unshift(S.layers.splice(idx[j], 1)[0]);
   moved.forEach((L) => { L.fid = f.id; }); S.layers.splice(idx[0], 0, ...moved);
@@ -52,8 +54,12 @@ export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.on
 
 export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.length) return;
   if (S.layers.length + kids.length > MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
-  snapshot(); const nf = { id: ++S.folderSeq, name: f.name + ' копия', open: true, visible: f.visible, symLock: !!f.symLock };
-  S.folders.push(nf); const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: nf.id, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
+  snapshot();
+  const subs = S.folders.filter((sf) => folderChain(sf.id).some((x) => x.id === f.id)); // f + все потомки
+  const map = new Map(); for (const sf of subs) map.set(sf.id, { ...sf, id: ++S.folderSeq, name: sf.name + (sf === f ? ' копия' : '') });
+  for (const sf of subs) { const nf = map.get(sf.id); nf.parent = (sf === f) ? (f.parent ?? null) : (map.has(sf.parent) ? map.get(sf.parent).id : sf.parent ?? null); }
+  for (const nf of map.values()) S.folders.push(nf);
+  const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
   const dst = topOfFolder(f.id) + 1; S.layers.splice(dst, 0, ...copies); S.cur = dst + copies.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.folderDup')); }
 
 export function deleteLayer() { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }

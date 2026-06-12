@@ -5,15 +5,17 @@ import { snapshot } from '../../core/history.js';
 import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
-import { topOfFolder } from './helpers.js';
+import { folderChain } from '../../core/layers.js';
+import { topOfFolder, commonParent } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 
 function folderFromLayers(block, target) {
   const members = [...new Set([target, ...block])].filter(Boolean), idxs = members.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0).sort((a, b) => a - b);
   if (idxs.length < 2) return false;
-  snapshot(); const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false };
-  S.folders.push(f); const moved = idxs.map((i) => S.layers[i]);
+  const moved = idxs.map((i) => S.layers[i]), parent = commonParent(moved); // новая группа вложится в общую папку слоёв
+  snapshot(); const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false, parent };
+  S.folders.push(f);
   for (let j = idxs.length - 1; j >= 0; j--) S.layers.splice(idxs[j], 1);
   moved.forEach((L) => { L.fid = f.id; }); S.layers.splice(idxs[0], 0, ...moved);
   S.cur = idxs[0] + moved.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
@@ -22,20 +24,21 @@ function layDrop(src, row, into) { const tIsFolder = row.classList.contains('fro
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
     const block = (S.marked.size > 1 && S.marked.has(src.idx)) ? [...S.marked].sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[src.idx]];
     if (tL && block.includes(tL)) return;
-    // группируем, только если ещё не в одной папке; иначе (уже сгруппированы) — просто переставляем, не пересоздаём папку
-    if (into && tL && !(tL.fid != null && block.every((L) => L.fid === tL.fid))) { folderFromLayers(block, tL); return; }
+    if (into && tL) { folderFromLayers(block, tL); return; } // бросок слоя в слой → новая (возможно вложенная) группа
     snapshot();
     for (const L of block) { const i = S.layers.indexOf(L); if (i >= 0) S.layers.splice(i, 1); }
     const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
     for (const L of block) L.fid = dstFid;
     let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : S.layers.indexOf(tL) + 1; if (dstIdx < 0) dstIdx = S.layers.length;
     S.layers.splice(dstIdx, 0, ...block); S.cur = dstIdx + block.length - 1;
-  } else { if (tIsFolder && +row.dataset.fid === src.fid) return;
-    const tL = tIsFolder ? null : S.layers[+row.dataset.li]; if (tL && tL.fid === src.fid) return; const tFid = tIsFolder ? +row.dataset.fid : null;
-    snapshot(); const block = [];
-    for (let i = S.layers.length - 1; i >= 0; i--) if (S.layers[i].fid === src.fid) block.unshift(S.layers.splice(i, 1)[0]);
-    let dstIdx; if (tIsFolder) dstIdx = topOfFolder(tFid) + 1; else if (tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = S.layers.indexOf(tL) + 1;
-    S.layers.splice(Math.min(dstIdx, S.layers.length), 0, ...block); S.cur = Math.min(S.cur, S.layers.length - 1); }
+  } else { const sf = S.folders.find((f) => f.id === src.fid); if (tIsFolder && +row.dataset.fid === src.fid) return;
+    const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
+    if ((tL && folderChain(tL.fid).some((f) => f.id === src.fid)) || (tFid != null && folderChain(tFid).some((f) => f.id === src.fid))) return; // в своё поддерево нельзя
+    snapshot(); const block = []; // двигаем всё поддерево папки вместе
+    for (let i = S.layers.length - 1; i >= 0; i--) if (folderChain(S.layers[i].fid).some((f) => f.id === src.fid)) block.unshift(S.layers.splice(i, 1)[0]);
+    if (sf) sf.parent = tIsFolder ? (into ? tFid : (S.folders.find((f) => f.id === tFid)?.parent ?? null)) : (tL ? (tL.fid ?? null) : null); // куда вложить
+    let dstIdx; if (tIsFolder) dstIdx = topOfFolder(tFid) + 1; else if (tL && tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = (tL ? S.layers.indexOf(tL) : S.layers.length - 1) + 1;
+    S.layers.splice(Math.min(Math.max(dstIdx, 0), S.layers.length), 0, ...block); S.cur = Math.min(S.cur, S.layers.length - 1); }
   S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 export function dragRow(el, info) {
