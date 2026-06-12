@@ -44,11 +44,7 @@ export function dropImage(file) { if (!file) return;
   im.src = URL.createObjectURL(file); }
 
 export function mount() {
-  const fileInp = document.createElement('input'); fileInp.type = 'file'; fileInp.accept = 'image/*'; fileInp.id = 'file';
-  document.body.appendChild(fileInp);
-  fileInp.onchange = (e) => { openImport(e.target.files[0]); e.target.value = ''; };
-  $('imp').onclick = () => fileInp.click();
-  actions.register('file.import', () => fileInp.click());
+  // кнопка импорта редактора и хоткей живут в ./editor.js (единый путь Import)
   let timer = null; const soon = () => { clearTimeout(timer); timer = setTimeout(impConvert, 60); };
   $('imp-colors').addEventListener('input', () => { $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); soon(); }); // 0 = без квантования
   $('imp-bgtol').addEventListener('input', () => { $('imp-bgtolv').textContent = $('imp-bgtol').value; soon(); });

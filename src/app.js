@@ -16,6 +16,7 @@ import * as colorPicker from './systems/color-picker.js';
 import * as toolbars from './systems/toolbars.js';
 import * as layersUI from './systems/layers/index.js';
 import * as importSys from './systems/import/index.js';
+import * as importEditor from './systems/import/editor.js';
 import * as palManager from './systems/palette-manager.js';
 import * as preview from './systems/preview-window.js';
 import * as reference from './systems/reference-window.js';
@@ -47,7 +48,7 @@ import './systems/free-rotate.js';
 import './systems/export.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, palManager, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, palManager, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();
@@ -62,7 +63,7 @@ export function start() {
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl (конвертер) не закрываем по фону — это окно
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'fxctx', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
+    for (const id of ['ctx', 'lctx', 'cctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
   window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
     document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());

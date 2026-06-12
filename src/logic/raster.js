@@ -22,6 +22,16 @@ export function gridBounds(g) {
   return maxx < 0 ? null : { minx, miny, maxx, maxy };
 }
 
+// охват с учётом «запасных» пикселей за краем (ext: Map "x,y"→cell) — реальные
+// границы слоя, даже если часть вышла за холст. Координаты ext могут быть < 0.
+export function boundsWithExt(grid, ext) {
+  let b = gridBounds(grid);
+  if (ext) for (const k of ext.keys()) { const [x, y] = parseKey(k);
+    if (!b) b = { minx: x, miny: y, maxx: x, maxy: y };
+    else { if (x < b.minx) b.minx = x; if (x > b.maxx) b.maxx = x; if (y < b.miny) b.miny = y; if (y > b.maxy) b.maxy = y; } }
+  return b;
+}
+
 // Брезенхем — обход линии без дырок; cb(x,y) на каждой клетке
 export function bres(x0, y0, x1, y1, cb) {
   let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;

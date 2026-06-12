@@ -19,8 +19,8 @@
   <header id="topbar">
     <div class="tb-group" id="tb-left">
       <button id="docsbtn" data-i18n-title="tool.gallery" title="Галерея"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+      <button id="imp-btn" data-i18n-title="tool.importMenu" title="Импорт в проект"><svg viewBox="0 0 24 24"><rect x="3.5" y="11" width="17" height="9" rx="2.5"/><path d="M12 3v8.5"/><path d="M8.5 8L12 11.5 15.5 8"/></svg></button>
       <button id="new" data-i18n-title="tool.new" title="Новый документ (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
-      <button id="imp" data-i18n-title="tool.import" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
       <button id="exp" data-i18n-title="tool.export" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
       <button id="fx-btn" data-i18n-title="tool.effects" title="Эффекты слоя"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z"/></svg></button>
       <div class="tb-sep" id="tb-sep-l"></div>
@@ -252,6 +252,11 @@
     <button id="lctx-ung" data-i18n="menu.ungroup">Расформировать папку</button>
   </div>
   <div id="cctx"></div>
+  <div id="impmenu">
+    <button id="impmenu-photo" data-i18n="import.photo">Фото</button>
+    <button id="impmenu-file" data-i18n="import.file">Файл</button>
+    <button id="impmenu-pix" data-i18n="import.pixelize">Pixelize</button>
+  </div>
   <div id="fxctx">
     <button id="fxctx-edit" data-i18n="menu.edit">Правка</button>
     <button id="fxctx-copy" data-i18n="menu.fxCopy">Скопировать</button>

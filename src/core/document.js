@@ -50,6 +50,17 @@ export function placeImageLayer(w, h, d) {
   S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); return nl;
 }
 
+// вставить RGBA-картинку w×h САМЫМ ВЕРХНИМ слоем (конец массива), по центру холста;
+// то, что не влезло, хранится в ext (реальные границы) — не разрушаем, Trim откроет
+export function addImageLayerTop(w, h, d, name) {
+  const nl = newLayer(name || 'Картинка', S.W, S.H); nl.fid = null;
+  const ox = (S.W - w) >> 1, oy = (S.H - h) >> 1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = (y * w + x) * 4; if (d[o + 3] < 8) continue;
+    const px = ox + x, py = oy + y, c = [d[o], d[o + 1], d[o + 2], d[o + 3]];
+    if (px >= 0 && py >= 0 && px < S.W && py < S.H) nl.grid[py][px] = c; else nl.ext.set(px + ',' + py, c); }
+  S.layers.push(nl); S.cur = S.layers.length - 1; S.marked.clear(); dirtyAll(); return nl;
+}
+
 // сдвинуть содержимое слоя на (dx,dy); ушедшее за край — в запас ext
 export function shiftLayerGrid(L, dx, dy) { const ng = blank(S.W, S.H), ne = new Map();
   const put = (x, y, c) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); };

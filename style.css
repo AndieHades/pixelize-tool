@@ -288,16 +288,16 @@
 
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }
-    #ctx, #lctx, #cctx, #fxctx, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
+    #ctx, #lctx, #cctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
       box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
-    #ctx.on, #lctx.on, #cctx.on, #fxctx.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
-    #ctx button, #lctx button, #cctx button, #fxctx button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
+    #ctx.on, #lctx.on, #cctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
+    #ctx button, #lctx button, #cctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
     /* подсветка пункта меню при наведении (десктоп) */
-    #ctx button:hover, #lctx button:hover, #cctx button:hover, #fxctx button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover { background: var(--accent-soft); }
+    #ctx button:hover, #lctx button:hover, #cctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover { background: var(--accent-soft); }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }

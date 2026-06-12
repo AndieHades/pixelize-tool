@@ -14,7 +14,7 @@
 | `core/bus.js` | разносит синхронные события между системами | ✅ | (новое) |
 | `core/dom.js` | даёт DOM-помощники (`$`, `toast`, `copyText`, `showMenuAt`) | ✅ | 01-state |
 | `core/layers.js` | отвечает на запросы видимости/обтравки/симметрии слоёв | ✅ | 01-state |
-| `core/document.js` | структурно меняет холст (expand/crop/clearLayer/placeImage) | ✅ | 05-draw |
+| `core/document.js` | структурно меняет холст (expand/crop/clearLayer/placeImage/картинка верхним слоем) | ✅ | 05-draw |
 | `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
 | `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
 | `core/canvas-handlers.js` | реестр обработчиков холста (инструменты/режимы) | ✅ | 07-input |
@@ -66,7 +66,7 @@
 | `systems/input/*` | разбирает указатель и тач-жесты, диспетчеризует в обработчики | ✅ | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
-| `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
+| `systems/import/*` | импорт в редактор: кнопка Import (Photo/File/Pixelize), конвертер, вставка PSD папкой | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
 | `systems/layers/*` | панель слоёв: вложенные группы, список/драг/свайпы/щипок-слияние/операции/меню, строки эффектов (fx-rows) | ✅ | 09-layers-ui |
@@ -97,7 +97,8 @@
 | `systems/gallery/screen.js` | рендер плиток, режим выбора, переименование | ✅ | roadmap §5 |
 | `systems/gallery/index.js` | кнопки (Photo/Convert/Import/Select/＋), навигация, инициализация | ✅ | roadmap §5 |
 | `systems/new-canvas.js` | диалог «Новый холст»: пресеты + кастомные размеры | ✅ | roadmap §5 |
-| `logic/psd.js` | чтение PSD послойно (raw + RLE) для импорта | ✅ | roadmap §5 |
+| `logic/psd.js` | чтение PSD послойно (raw + RLE): пиксели, видимость, группы, эффекты | ✅ | roadmap §5 |
+| `logic/psd-effects.js` | разбор lfx2 → эффекты PixelHeart (best-effort) | ✅ | (импорт) |
 | `styles/animations.css` | анимации UI (нажатие, выбор, драг) — единое место | ✅ | [theming.md](theming.md) |
 | `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
 

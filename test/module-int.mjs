@@ -37,6 +37,7 @@ const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
 const xport = await import('../src/systems/export.js');
 const imp = await import('../src/systems/import/convert.js');
+const { insertPsd } = await import('../src/systems/import/psd-insert.js');
 const pal = await import('../src/systems/palette.js');
 const bb = await import('../src/systems/brush-bar.js');
 const cp = await import('../src/systems/color-picker.js');
@@ -154,6 +155,27 @@ t('draw: пипетка берёт цвет в активный', () => { reset4
 t('rotate-canvas: меняет W/H местами', () => { resetWH(4, 6); rotateCanvas(); assert.equal(S.W, 6); assert.equal(S.H, 4); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
 t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); });
+t('trim: расширяет холст до пикселей за краем (включая скрытые)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+  S.layers[0].visible = false; S.layers[0].ext.set('6,6', [1, 1, 1, 255]); trimCanvas();
+  assert.equal(S.W, 7); assert.equal(S.H, 7); assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.layers[0].visible = true; });
+t('document: addImageLayerTop кладёт картинку верхним слоем', () => { resetWH(6, 6); const n = S.layers.length;
+  const d = new Uint8ClampedArray(2 * 2 * 4); for (let i = 0; i < 4; i++) { d[i * 4] = 200; d[i * 4 + 3] = 255; }
+  doc.addImageLayerTop(2, 2, d, 'pic'); assert.equal(S.layers.length, n + 1); assert.equal(S.cur, S.layers.length - 1);
+  assert.ok(S.layers[S.cur].grid[2][2] && S.layers[S.cur].fid === null); });
+t('psd-insert: PSD → верхняя папка со слоями/группами/видимостью/эффектами', () => { resetWH(8, 8);
+  const empty = () => Array.from({ length: 2 }, () => new Array(2).fill(null));
+  const g = empty(); g[0][0] = [255, 0, 0, 255];
+  const psd = { W: 2, H: 2, layers: [
+    { name: 'div', section: 3, visible: true, grid: empty() },
+    { name: 'inside', section: 0, visible: false, grid: g, effects: [{ type: 'stroke', params: { size: 1, color: '#ff0000' } }] },
+    { name: 'Group', section: 1, visible: true, grid: empty() },
+    { name: 'flat', section: 0, visible: true, grid: empty() } ] };
+  const nf = S.folders.length, nl = S.layers.length; insertPsd(psd, 'doc');
+  assert.equal(S.folders.length, nf + 2); assert.equal(S.layers.length, nl + 2);
+  const top = S.folders.find((f) => f.name === 'doc' && f.parent == null); assert.ok(top);
+  const grp = S.folders.find((f) => f.name === 'Group'); assert.equal(grp.parent, top.id);
+  const inside = S.layers.find((L) => L.name === 'inside'); assert.equal(inside.visible, false); assert.equal(inside.fid, grp.id);
+  assert.equal(inside.effects.length, 1); assert.equal(inside.effects[0].type, 'stroke'); });
 t('mono: переводит в серый', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [200, 50, 10, 255]; monoAll(); const c = S.layers[0].grid[1][1]; assert.ok(c[0] === c[1] && c[1] === c[2]); });
 
 t('layer-effects: обводка даёт кольцо вокруг силуэта', () => { const mask = fxlogic.maskFromGrid([[null, null, null], [null, [1, 1, 1, 1], null], [null, null, null]], 3, 3);
