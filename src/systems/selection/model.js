@@ -18,6 +18,13 @@ export function normSel(ax, ay, bx, by) { let x0 = Math.min(ax, bx), x1 = Math.m
 
 export function deselect() { commitFloat(); S.sel = null; S.selMask = null; bus.emit('selection'); bus.emit('render'); }
 
+// есть ли в текущем выделении хоть один непустой пиксель активного слоя
+export function selHasPixels() { const g = G();
+  if (S.selMask) { for (const k of S.selMask) { const [x, y] = parseKey(k); if (g[y] && g[y][x]) return true; } return false; }
+  if (!S.sel) return false;
+  for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) if (g[y][x]) return true;
+  return false; }
+
 export function maskFromCells(set) { let x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (const k of set) { const [x, y] = parseKey(k); if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   if (x1 < 0) { deselect(); return; }

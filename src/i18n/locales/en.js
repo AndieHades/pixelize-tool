@@ -77,6 +77,7 @@ export const en = {
   'toast.maxLayersDel': 'Max 8 layers — delete some',
   'toast.maxLayers': 'Max 8 layers',
   'toast.noColorOnLayer': 'Color not on active layer',
+  'toast.noPixelsToSelect': 'No pixels to select',
   'toast.nothingOutline': 'Nothing to outline',
   'toast.imgOpenFail': 'Failed to open image',
   'toast.nothingUndo': 'Nothing to undo',

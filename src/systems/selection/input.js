@@ -4,8 +4,8 @@ import * as bus from '../../core/bus.js';
 import { symA, symHA } from '../../core/layers.js';
 import { snapshot } from '../../core/history.js';
 import { registerTool } from '../../core/canvas-handlers.js';
-import { $ } from '../../core/dom.js';
-import { normSel, symmetrizeSelection } from './model.js';
+import { $, toast, t } from '../../core/dom.js';
+import { normSel, symmetrizeSelection, selHasPixels, deselect } from './model.js';
 import { liftSelection, liftSelectionSym, commitFloat, symFloatBounds } from './float.js';
 
 let selDrag = null, hinted = false;
@@ -72,7 +72,9 @@ function up() { if (!selDrag) return;
     S.sel = S.sel ? normSel(S.sel.x0, S.sel.y0, S.sel.x1, S.sel.y1) : null;
     if (!S.sel) { commitFloat(); S.selMask = null; } } // унесли совсем за холст — осел в ext
   else if (!selDrag.moved) S.sel = null;
-  else { symmetrizeSelection(); if (S.sel && !hinted) { hinted = true; } }
+  else { symmetrizeSelection(); // пустую рамку (без пикселей под ней) не создаём — нечего таскать
+    if (S.sel && !selHasPixels()) { deselect(); toast(t('toast.noPixelsToSelect')); }
+    else if (S.sel && !hinted) hinted = true; }
   selDrag = null; bus.emit('selection'); bus.emit('render'); }
 
 registerTool('select', { down, move, up });

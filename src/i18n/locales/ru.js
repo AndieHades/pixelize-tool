@@ -85,6 +85,7 @@ export const ru = {
   'toast.maxLayersDel': 'Максимум 8 слоёв — удали лишние',
   'toast.maxLayers': 'Максимум 8 слоёв',
   'toast.noColorOnLayer': 'На активном слое нет этого цвета',
+  'toast.noPixelsToSelect': 'Нет пикселей для выделения',
   'toast.nothingOutline': 'На слое нечего обводить',
   'toast.imgOpenFail': 'Не удалось открыть картинку',
   'toast.nothingUndo': 'Нечего отменять',

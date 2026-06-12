@@ -235,8 +235,13 @@ t('input: mount + диспетч pencil рисует', () => { resetWH(8, 8); S.
   assert.ok(S.layers[0].grid.some((r) => r.some((c) => c))); });
 
 t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+  S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
   assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
+
+t('selection-input: пустая рамка не создаётся', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+  const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
+  assert.equal(S.sel, null); });
 t('selection-float: lift + commit переносит фрагмент', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
   sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
