@@ -2,6 +2,7 @@
 // предпросмотр; применение создаёт новый документ. Чистые алгоритмы — в logic.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { rgb } from '../../logic/color.js';
 import { sampleGrid } from '../../logic/sample.js';
 import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
@@ -54,6 +55,6 @@ export function applyImport() {
   S.sym = $('imp-sym').checked; $('sym').classList.toggle('on', S.sym);
   S.undoStack.length = S.redoStack.length = 0; dirtyAll();
   bus.emit('palette'); setTool('pencil'); bus.emit('layers');
-  $('imp-ovl').classList.remove('on'); bus.emit('fit');
+  $('imp-ovl').classList.remove('on'); actions.run('gallery.hide'); bus.emit('fit'); // применили — уходим с галереи в редактор
   toast(t('toast.importReady', { w: S.W, h: S.H }));
 }

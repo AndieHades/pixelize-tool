@@ -49,7 +49,7 @@ export function mount() {
   ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
   $('imp-apply').onclick = applyImport; $('imp-rot').onclick = rotateImp;
   $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
-  $('imp-asis').onclick = () => { if (impSrcImg) { $('imp-ovl').classList.remove('on'); insertPixelImage(impSrcImg); } };
+  $('imp-asis').onclick = () => { if (impSrcImg) { $('imp-ovl').classList.remove('on'); actions.run('gallery.hide'); insertPixelImage(impSrcImg); } };
   let depth = 0; const show = (on) => $('dropmask').classList.toggle('on', on);
   window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
   window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });

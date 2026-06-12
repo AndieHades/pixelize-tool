@@ -430,6 +430,12 @@
 .gal-tile.drop-before .gal-thumb { box-shadow: -4px 0 0 var(--accent); }
 
 /* ── Диалог «Новый холст» (список, как в Procreate) ── */
+/* New Canvas и конвертер показываются ПОВЕРХ галереи (галерея — z-index 100). */
+#new-ovl, #imp-ovl { z-index: 130; }
+/* список выезжает сверху-справа (под кнопкой ＋ галереи); карточка правки — по центру */
+#new-ovl { align-items: flex-start; justify-content: flex-end; }
+#new-ovl.editing { align-items: center; justify-content: center; }
+#new-ovl .new-panel { margin: 54px 14px 0 0; }
 .new-panel { width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
   background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); overflow: hidden; }
 .new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; }
