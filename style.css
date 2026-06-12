@@ -479,7 +479,9 @@
 /* ---- галерея работ (Procreate-стиль) ---- */
 #gallery { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
 #gallery.on { display: flex; }
-#gal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); gap: 12px; }
+#gal-top { display: flex; align-items: center; justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) max(20px, env(safe-area-inset-right, 0px)) 14px max(20px, env(safe-area-inset-left, 0px));
+  border-bottom: 1px solid var(--line); gap: 12px; }
 #gal-left { display: flex; align-items: center; gap: 8px; }
 #gal-title { font-weight: 700; font-size: 18px; color: var(--txt); }
 #gal-back { width: auto; min-width: 32px; max-width: 42vw; height: 36px; padding: 0 12px; font-size: 17px; font-weight: 600;
