@@ -1,14 +1,16 @@
 // Призрак перетаскивания: клон самого элемента следует за курсором — единый
 // вид для всех перетаскиваемых объектов (плитки галереи, строки слоёв).
+// stack: число перетаскиваемых объектов (>1 — рисует карточки «пачкой»).
 // Возвращает { move(x, y), remove() }.
-export function dragGhost(el, width) {
+export function dragGhost(el, width, stack) {
   const g = el.cloneNode(true);
   g.classList.add('drag-ghost');
   for (const c of ['dragging', 'lifting', 'sel', 'on', 'marked', 'swiping-right', 'drop-into', 'drop-before', 'drop-above']) g.classList.remove(c);
-  g.querySelectorAll('.swipe-acts').forEach((n) => n.remove()); // кнопки свайпа в призраке не нужны
-  const f = g.querySelector('.swipe-front'); if (f) f.style.transform = ''; // сбросить возможное смещение свайпа
-  g.style.margin = '0'; // призрак центрируется под курсором — снять отступ вложенности строки
+  g.querySelectorAll('.swipe-acts').forEach((n) => n.remove());
+  const f = g.querySelector('.swipe-front'); if (f) f.style.transform = '';
+  g.style.margin = '0';
   if (width) g.style.width = Math.round(width) + 'px';
+  if (stack && stack > 1) g.dataset.stack = stack > 2 ? '3' : '2';
   document.body.appendChild(g);
   return { move: (x, y) => { g.style.left = x + 'px'; g.style.top = y + 'px'; }, remove: () => g.remove() };
 }

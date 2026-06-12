@@ -58,29 +58,61 @@ function layDrop(src, row, into) { const tIsFolder = row.classList.contains('fro
 export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false, ghost = null;
+    const sx = e.clientX, sy = e.clientY, box = $('lay-list');
+    let started = false, ghost = null, lastDropRow = null, lastDropKind = null;
+
+    const setDrop = (row, kind) => {
+      if (row === lastDropRow && kind === lastDropKind) return; // no-op — prevent CSS restart
+      if (lastDropRow) { lastDropRow.classList.remove('drop-above', 'drop-into'); }
+      lastDropRow = row; lastDropKind = kind;
+      if (row && kind) row.classList.add(kind);
+    };
+
     const move = (ev) => {
-      if (pinchActive()) return; // два пальца — это щипок-слияние, не перетаскивание
-      const ddx = ev.clientX - sx, ddy = ev.clientY - sy; // перетаскивание — по вертикали; горизонталь отдаём свайпу
-      if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
-        ghost = dragGhost(el, el.getBoundingClientRect().width); ghost.move(ev.clientX, ev.clientY);
-        const blk = dragBlock(info.idx); // подсветить все перетаскиваемые (активный + отмеченные)
-        if (info.kind === 'layer' && blk.length > 1) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); });
-        if (info.kind === 'folder' && S.markedFolders.has(info.fid) && S.markedFolders.size > 1) box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); }); }
-      if (!started) return; ghost.move(ev.clientX, ev.clientY);
-      box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
-      const t = document.elementFromPoint(ev.clientX, ev.clientY), row = t && t.closest ? t.closest('#lay-list .lrow') : null;
-      if (!row || row === el) return; const r = row.getBoundingClientRect();
-      if (info.kind === 'layer' && row.dataset.li && ev.clientY > r.top + r.height * 0.28 && ev.clientY < r.bottom - r.height * 0.28) row.classList.add('drop-into');
-      else if (row.classList.contains('frow') && info.kind === 'layer' && ev.clientY > r.top + r.height / 2) row.classList.add('drop-into');
-      else row.classList.add('drop-above'); };
-    const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
-      if (ghost) ghost.remove(); box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
-      const into = $('lay-list').querySelector('.drop-into'), above = $('lay-list').querySelector('.drop-above'), target = into || above;
-      $('lay-list').querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
+      if (pinchActive()) return;
+      const ddx = ev.clientX - sx, ddy = ev.clientY - sy;
+      if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) {
+        started = true; el.classList.add('dragging');
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        const blk = dragBlock(info.idx);
+        const stackCount = info.kind === 'folder'
+          ? (S.markedFolders.has(info.fid) ? S.markedFolders.size : 1)
+          : blk.length;
+        ghost = dragGhost(el, el.getBoundingClientRect().width, stackCount);
+        ghost.move(ev.clientX, ev.clientY);
+        if (info.kind === 'layer' && blk.length > 1) {
+          box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); });
+        }
+        if (info.kind === 'folder' && S.markedFolders.has(info.fid) && S.markedFolders.size > 1) {
+          box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); });
+        }
+      }
+      if (!started) return;
+      ghost.move(ev.clientX, ev.clientY);
+      const t = document.elementFromPoint(ev.clientX, ev.clientY);
+      const row = t && t.closest ? t.closest('#lay-list .lrow:not(.dragging)') : null;
+      if (!row) { setDrop(null, null); return; }
+      const r = row.getBoundingClientRect();
+      // drop-into only in central 20% of row; folder accepts drop-into only in top 40%
+      const intoZone = row.classList.contains('frow')
+        ? (info.kind === 'layer' && ev.clientY > r.top + r.height * 0.5 && ev.clientY < r.bottom - r.height * 0.25)
+        : (info.kind === 'layer' && row.dataset.li && ev.clientY > r.top + r.height * 0.4 && ev.clientY < r.bottom - r.height * 0.4);
+      setDrop(row, intoZone ? 'drop-into' : 'drop-above');
+    };
+
+    const up = () => {
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      if (ghost) ghost.remove();
+      box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
+      const intoEl = box.querySelector('.drop-into'), aboveEl = box.querySelector('.drop-above'), target = intoEl || aboveEl;
+      setDrop(null, null);
       if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0);
-      if (target) { layDrop(info, target, !!into); // приземление: проиграть «вставку» на новой строке активного слоя
-        const r = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]'); if (r) { r.classList.add('dropped'); r.addEventListener('animationend', () => r.classList.remove('dropped'), { once: true }); } } };
+      if (target) {
+        layDrop(info, target, !!intoEl);
+        const dropped = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]');
+        if (dropped) { dropped.classList.add('dropped'); dropped.addEventListener('animationend', () => dropped.classList.remove('dropped'), { once: true }); }
+      }
+    };
     el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   });
 }
