@@ -99,7 +99,7 @@
     #palrsz { position: absolute; right: 1px; bottom: 1px; width: 20px; height: 20px;
       cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
-    .sw { width: 30px; height: 30px; }
+    .sw { width: 30px; height: 30px; border-radius: 0; }
     .sw.on { box-shadow: 0 0 0 2px #fff; border-color: transparent; }
 
     /* ---- панель слоёв ---- */
