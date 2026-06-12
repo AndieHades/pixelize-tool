@@ -30,7 +30,7 @@ export const ru = {
   'label.detail': 'Детализация', 'label.bgTol': 'Отсечение фона', 'label.clean': 'Чистка мусора', 'label.symmetry': 'Симметрия',
   'label.range': 'Диапазон', 'label.intensity': 'Интенсивность', 'label.offsetX': 'Смещение X', 'label.offsetY': 'Смещение Y',
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
-  'label.reference': 'Референс', 'label.palette': 'Палитра',
+  'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки
   'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить',
   'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
