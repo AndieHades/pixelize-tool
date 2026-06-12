@@ -43,16 +43,23 @@ Pixel Heart — пиксель-арт редактор (PWA), тач-first.
 ## Проверка перед коммитом
 
 ```bash
+npm run lint      # ESLint (flat config, eslint.config.js)
 npm test          # unit (чистая логика) + module-int (системы) + module-boot (загрузка app)
 npm run dev       # Vite dev-сервер с горячей перезагрузкой
 npm run build     # сборка в dist/
 ```
 
-`npm test` обязан быть зелёным. Меняешь поведение — добавь сценарий в
-`test/unit.mjs` (чистая логика) или `test/module-int.mjs` (система под jsdom).
+`npm run lint` и `npm test` обязаны быть зелёными. Меняешь поведение — добавь
+сценарий в `test/unit.mjs` (чистая логика) или `test/module-int.mjs` (система
+под jsdom).
 
 GUI в CI не запускается, поэтому интерактив (drag окон, pinch, перо)
 проверяется вручную в браузере: открой `index.html`.
+
+## Рабочий процесс агента
+
+- **Не создавай pull request'ы.** Автор работает один: коммить и пушь прямо в
+  рабочую ветку, PR заводить не нужно (даже draft).
 
 ## Статус
 
