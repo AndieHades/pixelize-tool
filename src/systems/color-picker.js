@@ -23,13 +23,13 @@ function colApply() { if (replaceFrom) return; // в режиме замены �
 export function syncColFromActive() { const [h, s, v] = rgbToHsv(S.active[0], S.active[1], S.active[2]); colH = h; colS = s; colV = v; syncColUI(); }
 
 function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); return; }
-  replaceFrom = null; setAddLabel(); $('outpop').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
+  replaceFrom = null; setAddLabel(); $('fx-edit').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
 
 // открыть наш пикер для выбора нового цвета в палитру (вместо нативного input)
-export function openColPick() { replaceFrom = null; setAddLabel(); $('outpop').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
+export function openColPick() { replaceFrom = null; setAddLabel(); $('fx-edit').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
 
 // открыть наш пикер в режиме «заменить цвет from на выбранный по всему рисунку»
-export function openColReplace(from) { replaceFrom = from.slice(); $('outpop').classList.remove('on');
+export function openColReplace(from) { replaceFrom = from.slice(); $('fx-edit').classList.remove('on');
   const [h, s, v] = rgbToHsv(from[0], from[1], from[2]); colH = h; colS = s; colV = v; syncColUI(); setAddLabel(); $('colpop').classList.add('on'); }
 
 export function mount() {

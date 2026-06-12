@@ -43,8 +43,7 @@ export function mountMenu() {
   $('lctx-symm').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot(); const v = S.sym || (!S.sym && !S.symH), h = S.symH;
     for (const L of ts) { symmetrizeGrid(L.grid, v, h); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
   $('lctx-rotate').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('transform.enterTargets', ts); };
-  $('lctx-shadow').onclick = () => { close(); const ts = targets(); if (ts.length) { curTo(ts[ts.length - 1]); actions.run('effect.shadow', ts.length > 1 ? ts : ts[0]); } };
-  $('lctx-glow').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.glow', ts.length > 1 ? ts : ts[0]); };
+  $('lctx-paste-fx').onclick = () => { close(); actions.run('fx.paste'); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
   $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, 'Яркость/контраст'); };
   $('lctx-clip').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleClip(lctxRef.ref); };

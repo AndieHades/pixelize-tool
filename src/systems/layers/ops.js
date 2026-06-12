@@ -1,5 +1,5 @@
 // Операции над слоями: добавить, слить отмеченные, сгруппировать, дублировать.
-import { S, newLayer } from '../../core/state.js';
+import { S, newLayer, cloneFx } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot, cloneGrid } from '../../core/history.js';
@@ -33,7 +33,7 @@ export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); 
 
 export function doGroup() { const idx = selectedIdx(); // сгруппировать всё выделенное (активный + отмеченные)
   snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
-  const id = nextFolderId(); const f = { id, name: uniqueFolderName('Папка ' + id), open: true, visible: true, symLock: false, parent };
+  const id = nextFolderId(); const f = { id, name: uniqueFolderName('Папка ' + id), open: true, visible: true, symLock: false, parent, effects: [] };
   S.folders.push(f); const moved = [];
   for (let j = idx.length - 1; j >= 0; j--) moved.unshift(S.layers.splice(idx[j], 1)[0]);
   moved.forEach((L) => { L.fid = f.id; }); S.layers.splice(idx[0], 0, ...moved);
@@ -41,7 +41,7 @@ export function doGroup() { const idx = selectedIdx(); // сгруппирова
 
 export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
-  S.layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
+  S.layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) });
   S.cur = idx + 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerDup')); }
 
 // переключатели свойств слоя — общие для свайпов и контекстного меню
@@ -57,9 +57,9 @@ export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.len
   snapshot();
   const subs = S.folders.filter((sf) => folderChain(sf.id).some((x) => x.id === f.id)); // f + все потомки
   const map = new Map(); // имена и id новых папок — уникальны; пушим сразу, чтобы следующие копии это учитывали
-  for (const sf of subs) { const nf = { ...sf, id: nextFolderId(), name: uniqueFolderName(sf === f ? sf.name + ' копия' : sf.name) }; map.set(sf.id, nf); S.folders.push(nf); }
+  for (const sf of subs) { const nf = { ...sf, id: nextFolderId(), name: uniqueFolderName(sf === f ? sf.name + ' копия' : sf.name), effects: cloneFx(sf.effects) }; map.set(sf.id, nf); S.folders.push(nf); }
   for (const sf of subs) { const nf = map.get(sf.id); nf.parent = (sf === f) ? (f.parent ?? null) : (map.has(sf.parent) ? map.get(sf.parent).id : sf.parent ?? null); }
-  const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) }));
+  const copies = kids.map((L) => ({ name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) }));
   const dst = topOfFolder(f.id) + 1; S.layers.splice(dst, 0, ...copies); S.cur = dst + copies.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.folderDup')); }
 
 // удалить папку и всё её содержимое (слои + вложенные папки)

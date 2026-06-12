@@ -3,10 +3,17 @@
 import { S } from './state.js';
 import { effVis, clipBase } from './layers.js';
 import { parseKey } from '../logic/raster.js';
+import { layerFxCanvas } from './effects-render.js';
+import { paintStack } from './composite.js';
 
-let lcs = []; const dirtySet = new Set();
-export const markDirty = (i) => dirtySet.add(i);
-export function dirtyAll() { lcs = []; dirtySet.clear(); }
+let lcs = []; const dirtySet = new Set(), revs = [];
+let revAll = 0; // глобальный счётчик инвалидации — для подписи кеша эффектов
+export const markDirty = (i) => { dirtySet.add(i); revs[i] = (revs[i] || 0) + 1; revAll++; };
+export function dirtyAll() { lcs = []; dirtySet.clear(); revs.length = 0; revAll++; }
+// версия содержимого слоя i (растёт при правках) — подпись для кеша эффектов
+export const layerRev = (i) => (revs[i] || 0) + revAll;
+// источник для композита: слой с эффектами рисуется через fx-канвас, иначе как есть
+export const layerSrcCanvas = (i) => (S.layers[i].effects && S.layers[i].effects.length) ? layerFxCanvas(i) : layerFloatCanvas(i);
 
 export function layerCanvas(i) { let c = lcs[i];
   if (!c) { c = document.createElement('canvas'); lcs[i] = c; dirtySet.add(i); }
@@ -37,7 +44,7 @@ export function clippedCanvas(i, base) { return clippedShift(i, base, 0, 0, 0, 0
 export function clippedShift(i, base, dix, diy, dbx, dby) {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-  x.drawImage(layerFloatCanvas(i), dix, diy);
+  x.drawImage(layerSrcCanvas(i), dix, diy); // слой с его эффектами, обрезанный по силуэту базы
   x.globalCompositeOperation = 'destination-in'; x.drawImage(layerFloatCanvas(base), dbx, dby); return c; }
 
 // итоговый цвет точки (x,y) по всем видимым слоям, либо null
@@ -49,9 +56,6 @@ export function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
     r = c[0] * la + r * (1 - la); g = c[1] * la + g * (1 - la); b = c[2] * la + b * (1 - la); a = la + a * (1 - la); }
   return a > 0.02 ? [Math.round(r), Math.round(g), Math.round(b)] : null; }
 
-// нарисовать все видимые слои (с обтравкой) в произвольный 2D-контекст
-export function compositeLayers(x) {
-  for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-    const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-    x.globalAlpha = L.opacity; x.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerFloatCanvas(i), 0, 0); }
-  x.globalAlpha = 1; }
+// нарисовать все видимые слои (с эффектами и обтравкой) в произвольный 2D-контекст —
+// единственная точка композита; раскладку слой/папка/эффекты держит paintStack.
+export function compositeLayers(x) { paintStack(x, false); }

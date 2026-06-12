@@ -288,16 +288,16 @@
 
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }
-    #ctx, #lctx, #cctx, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
+    #ctx, #lctx, #cctx, #fxctx, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
       box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
-    #ctx.on, #lctx.on, #cctx.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
-    #ctx button, #lctx button, #cctx button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
+    #ctx.on, #lctx.on, #cctx.on, #fxctx.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
+    #ctx button, #lctx button, #cctx button, #fxctx button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
     /* подсветка пункта меню при наведении (десктоп) */
-    #ctx button:hover, #lctx button:hover, #cctx button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover { background: var(--accent-soft); }
+    #ctx button:hover, #lctx button:hover, #cctx button:hover, #fxctx button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover { background: var(--accent-soft); }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }
@@ -557,3 +557,24 @@
 .set-row:hover { background: var(--accent-soft); }
 .set-row > span:first-child { color: var(--txt); font-size: 14px; }
 .set-val { margin-left: auto; color: var(--txt2); font-size: 13px; font-weight: 600; }
+
+/* === Эффекты слоя (панель, окно, строки в списке) === */
+#fx-panel { position: fixed; left: 50%; transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 18; width: 232px; display: none; flex-direction: column;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); overflow: hidden; }
+#fx-panel.on { display: flex; animation: pop .18s ease-out; }
+#fx-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
+#fx-types button { height: 46px; border-radius: 11px; background: var(--row); color: var(--txt2); }
+#fx-types button:hover { background: var(--accent-soft); color: var(--txt); }
+#fx-types button svg { width: 22px; height: 22px; }
+#fx-rsz { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; color: var(--txt2); cursor: nwse-resize; touch-action: none; }
+#fx-rsz svg { width: 18px; height: 18px; }
+#fx-btn.on { color: var(--accent); }
+.fxrow { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 9px; cursor: pointer; touch-action: none; }
+.fxrow:hover { background: var(--accent-soft); }
+.fxrow.fxoff { opacity: .5; }
+.fxrow .fxstar { display: flex; width: 22px; height: 22px; color: var(--accent); flex: none; }
+.fxrow .fxstar svg { width: 18px; height: 18px; fill: currentColor; stroke: none; }
+.fxrow .lname { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fxrow .eye { width: 30px; height: 30px; }
+.fxrow.dragging { opacity: .35; }

@@ -29,6 +29,10 @@ export const ru = {
   'label.width': 'Ширина', 'label.height': 'Высота', 'label.rotate90': 'Поворот', 'label.colors': 'Цвета палитры', 'label.noQuant': 'Без квантования',
   'label.detail': 'Детализация', 'label.bgTol': 'Отсечение фона', 'label.clean': 'Чистка мусора', 'label.symmetry': 'Симметрия',
   'label.range': 'Диапазон', 'label.intensity': 'Интенсивность', 'label.offsetX': 'Смещение X', 'label.offsetY': 'Смещение Y',
+  'label.size': 'Размер', 'label.effects': 'Эффекты', 'tool.effects': 'Эффекты слоя',
+  'fx.stroke': 'Обводка', 'fx.glow': 'Свечение', 'fx.dropShadow': 'Внешняя тень', 'fx.innerShadow': 'Внутренняя тень',
+  'menu.fxCopy': 'Скопировать', 'menu.pasteEffect': 'Вставить эффект',
+  'toast.fxCopied': 'Эффект скопирован', 'toast.fxPasted': 'Эффект вставлен', 'toast.noFxClipboard': 'Эффект не скопирован', 'toast.fxAdded': 'Эффект добавлен',
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
   'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки

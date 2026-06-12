@@ -53,14 +53,17 @@
 
 ## Модель документа
 
-- **Слой** `{ name, grid, opacity, visible, fid, clip, lock, alphaLock, symLock, ext }`.
+- **Слой** `{ name, grid, opacity, visible, fid, clip, lock, alphaLock, symLock, ext, effects }`.
   - `grid` — `H×W` массив; клетка = `[r,g,b,a]` или `null` (пусто).
   - `ext` — `Map "x,y"→[r,g,b,a]` пикселей, ушедших за край (не теряются при
     сдвиге/кропе/повороте; ключи разбираются `parseKey`).
   - `fid` — id ближайшей папки (`folders`) или `null`. `clip` — обтравочная маска.
   - `lock` — слой нельзя править; `alphaLock` — рисование только по существующим
     пикселям (проверяются в `draw/cells.js`, `draw/adjust.js`, `move-tool`).
-- **Папка** `{ id, name, open, visible, symLock, parent }` — **вложенные группы**:
+  - `effects` — массив неразрушающих Layer Effects `{ id, type, visible, params }`
+    (`stroke`/`glow`/`dropShadow`/`innerShadow`). Пересчитываются из силуэта слоя при
+    каждом изменении (`core/effects-render.js`); порядок = порядок в списке.
+- **Папка** `{ id, name, open, visible, symLock, parent, effects }` — **вложенные группы**:
   `parent` — id родительской папки или `null`. Видимость/симметрия каскадом по
   цепочке предков (`folderChain`, `effVis`, `layerSymLocked`). Инвариант: все слои
   поддерева папки идут подряд в `S.layers`; список рисуется рекурсивно с отступом.

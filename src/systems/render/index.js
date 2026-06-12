@@ -5,14 +5,14 @@ import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
-import { effVis, clipBase } from '../../core/layers.js';
-import { layerFloatCanvas, clippedShift } from '../../core/layer-cache.js';
+import { paintStack } from '../../core/composite.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { drawOverlays } from './overlays.js';
 import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
+const buf = document.createElement('canvas'); // композит слой+эффекты в пиксельном масштабе
 
 export function render() {
   const W = S.W, H = S.H;
@@ -23,20 +23,11 @@ export function render() {
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
   ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
-  const iox = S.cropMode ? S.cropMode.idx * z : 0, ioy = S.cropMode ? S.cropMode.idy * z : 0; // сдвиг рисунка в кропе
-  ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // слои не выходят за холст: живой сдвиг Move/crop клипуется как итог
-  for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
-    const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-    ctx.globalAlpha = L.opacity;
-    if (S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i)) { // живое превью трансформации
-      if (i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, ox + S.rotPrev.px * z, oy + S.rotPrev.py * z, S.rotPrev.ow * z, S.rotPrev.oh * z);
-      continue; }
-    const md = S.moveDrag, di = (md && md.idxs.includes(i)) ? md : null; // живой сдвиг слоя инструментом Move
-    if (cb >= 0) { // обтравка: слой и база могут двигаться раздельно — маска едет вместе с базой
-      const db = (md && md.idxs.includes(cb)) ? md : null;
-      ctx.drawImage(clippedShift(i, cb, di ? di.dx : 0, di ? di.dy : 0, db ? db.dx : 0, db ? db.dy : 0), ox + iox, oy + ioy, W * z, H * z);
-    } else ctx.drawImage(layerFloatCanvas(i), ox + iox + (di ? di.dx * z : 0), oy + ioy + (di ? di.dy * z : 0), W * z, H * z); }
-  ctx.globalAlpha = 1;
+  if (buf.width !== W || buf.height !== H) { buf.width = W; buf.height = H; }
+  const bx = buf.getContext('2d'); bx.imageSmoothingEnabled = false; bx.clearRect(0, 0, W, H);
+  paintStack(bx, true); // слои + эффекты слоёв/папок + живые превью move/transform/crop
+  ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // итог клипуется холстом
+  ctx.drawImage(buf, ox, oy, W * z, H * z);
   ctx.restore();
   if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
     for (let x = 0; x <= W; x++) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }

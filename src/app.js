@@ -22,9 +22,7 @@ import * as reference from './systems/reference-window.js';
 import * as input from './systems/input/index.js';
 import * as crop from './systems/crop.js';
 import * as transform from './systems/transform/index.js';
-import * as outline from './systems/outline.js';
-import * as shadow from './systems/shadow.js';
-import * as glow from './systems/glow.js';
+import * as effects from './systems/effects/index.js';
 import * as bc from './systems/brightness-contrast.js';
 import * as adjust from './systems/draw/adjust.js';
 import * as gallery from './systems/gallery/index.js';
@@ -49,7 +47,7 @@ import './systems/free-rotate.js';
 import './systems/export.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, palManager, preview, reference, input, crop, transform, outline, shadow, glow, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, palManager, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();
@@ -64,7 +62,7 @@ export function start() {
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl (конвертер) не закрываем по фону — это окно
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
+    for (const id of ['ctx', 'lctx', 'cctx', 'fxctx', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
   window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
     document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());

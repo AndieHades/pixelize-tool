@@ -10,10 +10,11 @@ import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock } from './ops.js';
+import { appendEffects } from './fx-rows.js';
 
 const INDENT = 16; // отступ на уровень вложенности
 
-const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>'; // глаз = видимость
+export const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>'; // глаз = видимость
 const CLIP_IC = '<svg viewBox="0 0 24 24"><path d="M16 5h-4.5A2.5 2.5 0 0 0 9 7.5V15"/><path d="M5.5 11.5l3.5 4 3.5-4"/></svg>'; // обтравка: стрелка вниз на слой ниже
 const LOCK_IC = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const ALPHA_IC = '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M12 4.5v15M4.5 12h15"/></svg>';
@@ -115,9 +116,9 @@ export function layList() {
     let common = 0; while (common < stack.length && common < chain.length && stack[common].id === chain[common].id) common++;
     stack.length = common; let hidden = stack.some((f) => !f.open);
     for (let d = common; d < chain.length; d++) { const f = chain[d];
-      if (!hidden) box.appendChild(folderRow(f, d)); stack.push(f); if (!f.open) hidden = true; }
+      if (!hidden) { box.appendChild(folderRow(f, d)); appendEffects(box, f, d + 1); } stack.push(f); if (!f.open) hidden = true; }
     if (hidden) continue;
-    box.appendChild(layerRow(L, i, chain.length));
+    box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   if ($('lay-alpha')) { $('lay-alpha').classList.toggle('on', !!cur.alphaLock); $('lay-clip').classList.toggle('on', !!cur.clip); }

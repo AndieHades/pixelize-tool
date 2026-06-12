@@ -22,6 +22,7 @@
       <button id="new" data-i18n-title="tool.new" title="Новый документ (N)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>
       <button id="imp" data-i18n-title="tool.import" title="Импорт картинки (Ctrl+O)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="8.8" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 16.5l4-4 2.8 2.8 2.4-2.4 4.3 4.3"/></svg></button>
       <button id="exp" data-i18n-title="tool.export" title="Сохранить PNG (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M12 3.5V14"/><path d="M8.5 7L12 3.5 15.5 7"/><path d="M7.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-.5"/></svg></button>
+      <button id="fx-btn" data-i18n-title="tool.effects" title="Эффекты слоя"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z"/></svg></button>
       <div class="tb-sep" id="tb-sep-l"></div>
       <button id="prev" data-i18n-title="tool.preview" title="Окно 1:1 (реальный размер)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
       <button id="refbtn" data-i18n-title="tool.reference" title="Окно референса"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
@@ -52,7 +53,6 @@
     <button id="sym-h" data-i18n-title="side.symH" title="Симметрия верх-низ (Shift+S)"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg></button>
     <button id="pp" class="on" data-i18n-title="side.pp" title="Пиксель-перфект (P)"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
     <button id="stab" class="on" data-i18n-title="side.stab" title="Стабилизация штриха (T)"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
-    <button id="outline" data-i18n-title="side.outline" title="Обводка контуром (O)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" rx="1"/><rect x="4.5" y="4.5" width="15" height="15" rx="3" stroke-dasharray="3 3"/></svg></button>
     <button id="flip-h" data-i18n-title="side.flipH" title="Отразить по горизонтали (H)"><svg viewBox="0 0 24 24"><path d="M12 3.5v17" stroke-dasharray="2.5 3"/><path d="M8.5 7.5v9L3.5 12l5-4.5z"/><path d="M15.5 7.5v9l5-4.5-5-4.5z"/></svg></button>
     <button id="flip-v" data-i18n-title="side.flipV" title="Отразить по вертикали (V)"><svg viewBox="0 0 24 24"><path d="M3.5 12h17" stroke-dasharray="2.5 3"/><path d="M7.5 8.5h9L12 3.5l-4.5 5z"/><path d="M7.5 15.5h9L12 20.5l-4.5-5z"/></svg></button>
     <button id="rot" data-i18n-title="side.rotate" title="Поворот холста 90° (R)"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
@@ -114,29 +114,25 @@
     <p class="hint" style="margin:0 2px" data-i18n="hint.adjust">Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.</p>
   </div>
 
-  <div id="glowpop" class="toolpop">
-    <div class="bp-head">Свечение</div>
-    <div class="irow"><label data-i18n="label.range">Диапазон</label><input id="glow-range" type="range" min="1" max="32" step="1" value="6" /><b id="glow-rangev">6</b></div>
-    <div class="irow"><label data-i18n="label.intensity">Интенсивность</label><input id="glow-int" type="range" min="10" max="100" step="5" value="80" /><b id="glow-intv">80%</b></div>
-    <div class="irow"><label data-i18n="label.color">Цвет</label><label class="outcolwrap"><input id="glow-col" type="color" value="#78d7ff" /><span id="glow-colsw" style="background:#78d7ff"></span></label></div>
-    <div class="iact"><button id="glow-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="glow-apply" data-i18n="btn.glow" class="txtbtn primary">Добавить свечение</button></div>
+  <div id="fx-panel">
+    <div class="pop-head" id="fx-head"><span data-i18n="label.effects">Эффекты</span></div>
+    <div id="fx-types">
+      <button data-fx="stroke" data-i18n-title="fx.stroke" title="Обводка"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/><rect x="3.5" y="3.5" width="17" height="17" rx="3"/></svg></button>
+      <button data-fx="glow" data-i18n-title="fx.glow" title="Свечение"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
+      <button data-fx="dropShadow" data-i18n-title="fx.dropShadow" title="Внешняя тень"><svg viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/><rect x="4.5" y="4.5" width="11" height="11" rx="1.5"/></svg></button>
+      <button data-fx="innerShadow" data-i18n-title="fx.innerShadow" title="Внутренняя тень"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M6.5 13a6.5 6.5 0 0 1 6.5-6.5"/></svg></button>
+    </div>
+    <div id="fx-rsz" title="Размер панели"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </div>
 
-  <div id="dspop" class="toolpop">
-    <div class="bp-head">Тень (Drop Shadow)</div>
-    <div class="irow"><label data-i18n="label.offsetX">Смещение X</label><input id="ds-x" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-xv">2</b></div>
-    <div class="irow"><label data-i18n="label.offsetY">Смещение Y</label><input id="ds-y" type="range" min="-12" max="12" step="1" value="2" /><b id="ds-yv">2</b></div>
-    <div class="irow"><label data-i18n="label.opacity">Непрозр.</label><input id="ds-op" type="range" min="10" max="100" step="5" value="60" /><b id="ds-opv">60%</b></div>
-    <div class="irow"><label data-i18n="label.color">Цвет</label><label class="outcolwrap"><input id="ds-col" type="color" value="#000000" /><span id="ds-colsw" style="background:#000"></span></label></div>
-    <div class="iact"><button id="ds-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="ds-apply" data-i18n="btn.shadow" class="txtbtn primary">Создать тень</button></div>
-  </div>
-
-  <div id="outpop" class="toolpop">
-    <div class="bp-head">Обводка</div>
-    <div class="irow"><label data-i18n="label.thickness">Толщина</label><input id="out-size" type="range" min="1" max="4" step="1" value="1" /><b id="out-sizev">1</b></div>
-    <div class="irow"><label data-i18n="label.opacity">Непрозр.</label><input id="out-op" type="range" min="10" max="100" step="5" value="100" /><b id="out-opv">100%</b></div>
-    <div class="irow"><label data-i18n="label.color">Цвет</label><label class="outcolwrap"><input id="out-col" type="color" value="#ff7a18" /><span id="out-colsw"></span></label></div>
-    <div class="iact"><button id="out-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="out-apply" data-i18n="btn.outline" class="txtbtn primary">Обвести</button></div>
+  <div id="fx-edit" class="toolpop">
+    <div class="bp-head" id="fx-edit-title">Эффект</div>
+    <div class="irow fxf-size"><label data-i18n="label.size">Размер</label><input id="fx-size" type="range" min="1" max="16" step="1" value="1" /><b id="fx-sizev">1</b></div>
+    <div class="irow fxf-intensity"><label data-i18n="label.intensity">Интенсивность</label><input id="fx-int" type="range" min="5" max="100" step="5" value="80" /><b id="fx-intv">80%</b></div>
+    <div class="irow fxf-offset"><label data-i18n="label.offsetX">Смещение X</label><input id="fx-dx" type="range" min="-12" max="12" step="1" value="2" /><b id="fx-dxv">2</b></div>
+    <div class="irow fxf-offset"><label data-i18n="label.offsetY">Смещение Y</label><input id="fx-dy" type="range" min="-12" max="12" step="1" value="2" /><b id="fx-dyv">2</b></div>
+    <div class="irow fxf-color"><label data-i18n="label.color">Цвет</label><label class="outcolwrap"><input id="fx-col" type="color" value="#ff7a18" /><span id="fx-colsw"></span></label></div>
+    <div class="iact"><button id="fx-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="fx-apply" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div>
 
   <div id="status">32×32 px</div>
@@ -244,8 +240,7 @@
     <button id="lctx-clear">Очистить слой</button>
     <button id="lctx-symm" data-i18n="menu.symm">Симметрировать слой</button>
     <button id="lctx-rotate">Трансформировать…</button>
-    <button id="lctx-shadow" data-i18n="menu.shadow">Тень (Drop Shadow)…</button>
-    <button id="lctx-glow" data-i18n="menu.glow">Свечение…</button>
+    <button id="lctx-paste-fx" data-i18n="menu.pasteEffect">Вставить эффект</button>
     <button id="lctx-mono" data-i18n="menu.mono">В монохром</button>
     <button id="lctx-bc" data-i18n="menu.bc">Яркость/контраст…</button>
     <button id="lctx-clip">Обтравочная маска</button>
@@ -257,6 +252,11 @@
     <button id="lctx-ung" data-i18n="menu.ungroup">Расформировать папку</button>
   </div>
   <div id="cctx"></div>
+  <div id="fxctx">
+    <button id="fxctx-edit" data-i18n="menu.edit">Правка</button>
+    <button id="fxctx-copy" data-i18n="menu.fxCopy">Скопировать</button>
+    <button id="fxctx-del" data-i18n="menu.delete">Удалить</button>
+  </div>
   <div id="setmenu"></div>
   <div id="rowctx"></div>
 

@@ -10,9 +10,7 @@ import { setTool } from '../core/tools.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
 
 const PANEL_TARGETS = [
-  { pop: 'outpop', input: 'out-col', sw: 'out-colsw' },
-  { pop: 'dspop', input: 'ds-col', sw: 'ds-colsw' },
-  { pop: 'glowpop', input: 'glow-col', sw: 'glow-colsw' },
+  { pop: 'fx-edit', input: 'fx-col', sw: 'fx-colsw' },
 ];
 let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1;
 

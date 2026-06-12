@@ -2,10 +2,9 @@
 // выделение, рамка/маска выделения, подсветка перекраски, рамка кропа, контур
 // кисти. Всё выражается из общего S.
 import { S } from '../../core/state.js';
-import { rgb, hexToRgb, eqc } from '../../logic/color.js';
+import { rgb, eqc } from '../../logic/color.js';
 import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
 import { symA, symHA, effVis } from '../../core/layers.js';
-import { $ } from '../../core/dom.js';
 import { C } from '../../styles/canvas-colors.js';
 
 export function drawOverlays(ctx, ox, oy, z) {
@@ -27,15 +26,6 @@ export function drawOverlays(ctx, ox, oy, z) {
     else if (S.tool === 'ellipse') (S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], paint);
     else bres(lp[0], lp[1], lp[2], lp[3], paint);
     ctx.globalAlpha = 1; }
-  if (S.outPreview && $('outpop').classList.contains('on')) {
-    const oc = hexToRgb($('out-col').value); ctx.fillStyle = rgb(oc); ctx.globalAlpha = (+$('out-op').value / 100) * .8;
-    for (const p of S.outPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z); ctx.globalAlpha = 1; }
-  if (S.dsPreview && $('dspop').classList.contains('on')) {
-    const dc = hexToRgb($('ds-col').value); ctx.fillStyle = rgb(dc); ctx.globalAlpha = (+$('ds-op').value / 100) * .85;
-    for (const p of S.dsPreview) ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z); ctx.globalAlpha = 1; }
-  if (S.glowPreview && $('glowpop').classList.contains('on')) {
-    const gc = hexToRgb($('glow-col').value); ctx.fillStyle = rgb(gc);
-    for (const p of S.glowPreview) { ctx.globalAlpha = p[2] / 255; ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z); } ctx.globalAlpha = 1; }
   // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет
   // при перетаскивании слоя инструментом move рамка/маска выделения едет вместе с содержимым
   const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0, mdy = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dy * z : 0;

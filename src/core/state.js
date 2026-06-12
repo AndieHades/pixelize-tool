@@ -5,11 +5,17 @@
 import { MAX_LAYERS, MAX_SIZE, BP_SMAX } from '../config/limits.js';
 import { DEFAULT_DOC } from '../config/presets.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
-import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT } from '../config/defaults.js';
+import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT, EFFECT_DEFAULTS } from '../config/defaults.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
 export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
-export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map() });
+export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map(), effects: [] });
+
+// фабрика эффекта слоя/папки: уникальный id, видимость, копия дефолтных параметров
+let fxSeq = 0;
+export const newEffect = (type) => ({ id: ++fxSeq, type, visible: true, params: { ...EFFECT_DEFAULTS[type] } });
+// глубокая копия списка эффектов (только данные — для истории/сериализации/копипаста)
+export const cloneFx = (list) => (list || []).map((e) => ({ id: ++fxSeq, type: e.type, visible: e.visible !== false, params: { ...e.params } }));
 
 const pal0 = defaultPalette();
 // единый контейнер изменяемого состояния
@@ -30,7 +36,7 @@ export const S = {
   // (system-private мелочь вроде ppPath/strokeSeen живёт внутри своих систем)
   cropMode: null, rotMode: null, rotPrev: null, moveDrag: null,
   hoverPx: null, lineStart: null, linePrev: null,
-  outPreview: null, dsPreview: null, glowPreview: null, replaceMode: null,
+  replaceMode: null,
 };
 
 // активная сетка текущего слоя

@@ -42,7 +42,6 @@ export function mount() {
   $('pp').onclick = () => toggle('ppOn', 'pp', 'toast.ppOn', 'toast.ppOff');
   $('stab').onclick = () => toggle('stabOn', 'stab', 'toast.stabOn', 'toast.stabOff');
 
-  $('outline').onclick = () => actions.run('effect.outline');
   $('flip-h').onclick = () => actions.run('layer.flipH');
   $('flip-v').onclick = () => actions.run('layer.flipV');
   $('rot').onclick = () => actions.run('canvas.rotate');

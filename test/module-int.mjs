@@ -30,9 +30,6 @@ const { rotateCanvas } = await import('../src/systems/rotate-canvas.js');
 const { flipLayer } = await import('../src/systems/flip.js');
 const { trimCanvas } = await import('../src/systems/trim.js');
 const { monoAll } = await import('../src/systems/mono.js');
-const { glowLayer } = await import('../src/systems/glow.js');
-const { outlineLayer } = await import('../src/systems/outline.js');
-const { dropShadow } = await import('../src/systems/shadow.js');
 const { recolorAll } = await import('../src/systems/recolor.js');
 const { freeRotateLayer } = await import('../src/systems/free-rotate.js');
 const bc = await import('../src/systems/brightness-contrast.js');
@@ -47,9 +44,9 @@ const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tb = await import('../src/systems/toolbars.js');
-const outline = await import('../src/systems/outline.js');
-const shadow = await import('../src/systems/shadow.js');
-const glow = await import('../src/systems/glow.js');
+const effects = await import('../src/systems/effects/index.js');
+const fxr = await import('../src/core/effects-render.js');
+const fxlogic = await import('../src/logic/layer-effects.js');
 const adjust = await import('../src/systems/draw/adjust.js');
 const crop = await import('../src/systems/crop.js');
 await import('../src/systems/draw/tools.js');
@@ -63,11 +60,11 @@ const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
-  S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
+  S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set();
-  S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
+  S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil';
   cache.dirtyAll(); };
 
@@ -75,7 +72,7 @@ let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); }
 
 // маленький документ с одним непустым пикселем
 S.W = 4; S.H = 4; S.cur = 0; S.folders = [];
-S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }];
+S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
 S.layers[0].grid[1][2] = [10, 20, 30, 255];
 cache.dirtyAll();
 
@@ -159,13 +156,14 @@ t('flip: отражает слой по горизонтали', () => { resetWH
 t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); });
 t('mono: переводит в серый', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [200, 50, 10, 255]; monoAll(); const c = S.layers[0].grid[1][1]; assert.ok(c[0] === c[1] && c[1] === c[2]); });
 
-t('glow: добавляет ореол в слой', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
-  glowLayer(S.layers[0], 3, [120, 215, 255], 0.8); assert.ok(S.layers[0].grid[4][3]); });
-t('outline: обводит контур слоя', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
-  document.getElementById('out-size').value = '1'; document.getElementById('out-op').value = '100'; document.getElementById('out-col').value = '#ff7a18';
-  outlineLayer(); assert.ok(S.layers[0].grid[3][4]); });
-t('shadow: создаёт слой тени', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255];
-  const m = S.layers.length; dropShadow(S.layers[0], 1, 1, [0, 0, 0], 0.6); assert.equal(S.layers.length, m + 1); });
+t('layer-effects: обводка даёт кольцо вокруг силуэта', () => { const mask = fxlogic.maskFromGrid([[null, null, null], [null, [1, 1, 1, 1], null], [null, null, null]], 3, 3);
+  const px = fxlogic.strokePixels(mask, 3, 3, { size: 1 }); assert.ok(px.some(([x, y]) => x === 0 && y === 1)); });
+t('layer-effects: внутренняя тень только по силуэту', () => { const g = [[[1, 1, 1, 1], [1, 1, 1, 1]], [[1, 1, 1, 1], [1, 1, 1, 1]]];
+  const mask = fxlogic.maskFromGrid(g, 2, 2); const px = fxlogic.innerShadowPixels(mask, 2, 2, { size: 1, dx: 1, dy: 0, intensity: 1 });
+  assert.ok(px.length && px.every(([x, y]) => x >= 0 && x < 2 && y >= 0 && y < 2)); });
+t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
+  const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
 
 t('recolor: меняет цвет на слоях и в палитре', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.palette = [[9, 9, 9]]; cache.dirtyAll();
   recolorAll([9, 9, 9, 255], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.palette[0], [200, 100, 50]); });
@@ -213,12 +211,24 @@ t('palette-manager: монтируется и сохраняет палитру'
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
-t('outline: openOutlinePop через action', () => { outline.mount(); resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll(); actions.run('effect.outline'); assert.ok(document.getElementById('outpop').classList.contains('on')); });
+t('effects: панель открывается, иконка добавляет черновик-эффект с превью', () => { effects.mount(); adjust.mount();
+  resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  actions.run('fx.panel'); assert.ok(document.getElementById('fx-panel').classList.contains('on'));
+  document.querySelector('#fx-types button[data-fx="glow"]').click();
+  assert.equal(S.layers[0].effects.length, 1); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
+  document.getElementById('fx-cancel').click(); assert.equal(S.layers[0].effects.length, 0); });
 
-t('shadow/glow: popup открывается и копит превью', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
-  shadow.mount(); glow.mount(); adjust.mount();
-  actions.run('effect.shadow', S.layers[0]); assert.ok(document.getElementById('dspop').classList.contains('on'));
-  actions.run('effect.glow', S.layers[0]); assert.ok(document.getElementById('glowpop').classList.contains('on')); assert.ok(S.glowPreview && S.glowPreview.length > 0); });
+t('effects: Apply фиксирует эффект, undo убирает', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  document.querySelector('#fx-types button[data-fx="stroke"]').click(); document.getElementById('fx-apply').click();
+  assert.equal(S.layers[0].effects.length, 1); history.doUndo(); assert.equal(S.layers[0].effects.length, 0); });
+
+t('effects: copy/paste переносит эффект на выбранные слои', () => { resetWH(8, 8); lops.doAddLayer();
+  S.layers[0].effects = [{ id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
+  actions.run('fx.copy', S.layers[0].effects[0]); S.cur = 1; S.marked = new Set([0, 1]); actions.run('fx.paste');
+  assert.ok(S.layers[1].effects.length >= 1 && S.layers[1].effects[0].type === 'stroke'); S.marked = new Set(); });
+
+t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
+  document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });
 
 t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
