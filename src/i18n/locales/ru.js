@@ -26,7 +26,7 @@ export const ru = {
   // подписи полей
   'label.brightness': 'Яркость', 'label.contrast': 'Контраст', 'label.hue': 'Тон', 'label.saturation': 'Насыщенность',
   'label.value': 'Яркость', 'label.color': 'Цвет', 'label.opacity': 'Непрозр.', 'label.thickness': 'Толщина',
-  'label.width': 'Ширина', 'label.height': 'Высота', 'label.rotate90': 'Поворот', 'label.colors': 'Цвета палитры',
+  'label.width': 'Ширина', 'label.height': 'Высота', 'label.rotate90': 'Поворот', 'label.colors': 'Цвета палитры', 'label.noQuant': 'Без квантования',
   'label.detail': 'Детализация', 'label.bgTol': 'Отсечение фона', 'label.clean': 'Чистка мусора', 'label.symmetry': 'Симметрия',
   'label.range': 'Диапазон', 'label.intensity': 'Интенсивность', 'label.offsetX': 'Смещение X', 'label.offsetY': 'Смещение Y',
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',

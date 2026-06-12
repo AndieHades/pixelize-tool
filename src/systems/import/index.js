@@ -31,7 +31,9 @@ export function openImport(file) {
     // у гигантских файлов, иначе размывается родная сетка пиксель-арта
     const k = Math.min(1, IMPORT_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
     const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
-    setImpData(imageData(im, w, h, k < 1)); $('imp-ovl').classList.add('on'); impConvert(); };
+    setImpData(imageData(im, w, h, k < 1));
+    $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); // синхронизировать подпись (0 = без квантования)
+    $('imp-ovl').classList.add('on'); impConvert(); };
   im.src = URL.createObjectURL(file);
 }
 
@@ -47,7 +49,8 @@ export function mount() {
   $('imp').onclick = () => fileInp.click();
   actions.register('file.import', () => fileInp.click());
   let timer = null; const soon = () => { clearTimeout(timer); timer = setTimeout(impConvert, 60); };
-  ['imp-colors', 'imp-bgtol'].forEach((id) => { const el = $(id), out = $(id + 'v'); el.addEventListener('input', () => { if (out) out.textContent = el.value; soon(); }); });
+  $('imp-colors').addEventListener('input', () => { $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); soon(); }); // 0 = без квантования
+  $('imp-bgtol').addEventListener('input', () => { $('imp-bgtolv').textContent = $('imp-bgtol').value; soon(); });
   $('imp-cell').addEventListener('input', () => { const v = +$('imp-cell').value; $('imp-cellv').textContent = v || 'Авто'; soon(); });
   ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
   $('imp-apply').onclick = applyImport; $('imp-rot').onclick = rotateImp;

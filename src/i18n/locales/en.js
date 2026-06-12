@@ -21,7 +21,7 @@ export const en = {
   'pop.shadow': 'Drop shadow', 'pop.outline': 'Outline',
   'label.brightness': 'Brightness', 'label.contrast': 'Contrast', 'label.hue': 'Hue', 'label.saturation': 'Saturation',
   'label.value': 'Value', 'label.color': 'Color', 'label.opacity': 'Opacity', 'label.thickness': 'Thickness',
-  'label.width': 'Width', 'label.height': 'Height', 'label.rotate90': 'Rotate', 'label.colors': 'Palette colors',
+  'label.width': 'Width', 'label.height': 'Height', 'label.rotate90': 'Rotate', 'label.colors': 'Palette colors', 'label.noQuant': 'No quantize',
   'label.detail': 'Detail', 'label.bgTol': 'Background cutout', 'label.clean': 'Despeckle', 'label.symmetry': 'Symmetry',
   'label.range': 'Range', 'label.intensity': 'Intensity', 'label.offsetX': 'Offset X', 'label.offsetY': 'Offset Y',
   'label.strength': 'Strength per stroke', 'label.current': 'Current', 'label.layerOpacity': 'Opacity', 'label.preview': 'Preview',
