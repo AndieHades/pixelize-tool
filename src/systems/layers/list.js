@@ -98,7 +98,7 @@ function layerRow(L, i, depth) {
     if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); layList(); return; } // ctrl/cmd-клик — мультивыбор
     const now = performance.now();
     if (lastClick.idx === i && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, L); return; } // двойной клик — переименование
-    lastClick = { idx: i, t: now }; S.cur = i; S.markedFolders.clear(); S.selFolder = null; layList(); }); // клик — только сделать активным, снять выбор папок
+    lastClick = { idx: i, t: now }; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; layList(); }); // клик без Ctrl — сбросить общее выделение, выбрать только этот слой
   longPress(row, (x, y) => { if (S.cur !== i) S.cur = i; S.markedFolders.clear(); S.selFolder = null; layList(); openLctx(x, y, 'layer', L); });
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
 }
