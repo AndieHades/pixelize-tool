@@ -1,17 +1,24 @@
 // Сведение набора цветов к палитре (median-cut) и подбор ближайшего. Чисто.
+const CUBE_SHIFT = 4;  // дедупликация входа по кубам 16×16×16: почти одинаковые оттенки — один голос
+const MERGE_TOL = 14;  // итоговые цвета ближе этого (по макс. каналу) сливаются — в палитре нет почти-дублей
+
 export function medianCut(cols, n) {
-  // Один представитель на куб 16×16×16 в RGB-пространстве.
-  // Сотни почти одинаковых оттенков кожи схлопываются; редкие уникальные (зелёные глаза) — в своих кубах, остаются.
+  // Один представитель на куб RGB-пространства: сотни почти одинаковых оттенков
+  // (кожа, волосы) схлопываются, редкие уникальные (зелёные глаза) — в своих кубах, остаются.
   const umap = new Map();
-  for (const c of cols) { const k = (c[0] >> 4) + ',' + (c[1] >> 4) + ',' + (c[2] >> 4); if (!umap.has(k)) umap.set(k, [c[0], c[1], c[2]]); }
+  for (const c of cols) { const k = (c[0] >> CUBE_SHIFT) + ',' + (c[1] >> CUBE_SHIFT) + ',' + (c[2] >> CUBE_SHIFT); if (!umap.has(k)) umap.set(k, [c[0], c[1], c[2]]); }
   let bx = [[...umap.values()]];
   const bnd = (b) => { const mn = [255, 255, 255], mx = [0, 0, 0]; for (const c of b) for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], c[k]); mx[k] = Math.max(mx[k], c[k]); } return [mn, mx]; };
   while (bx.length < n) { let bi = -1, bv = -1; bx.forEach((b, i) => { if (b.length < 2) return; const [mn, mx] = bnd(b), v = (mx[0] - mn[0]) + (mx[1] - mn[1]) + (mx[2] - mn[2]); if (v > bv) { bv = v; bi = i; } }); if (bi < 0) break;
     const b = bx[bi], [mn, mx] = bnd(b); let ch = 0; if (mx[1] - mn[1] > mx[ch] - mn[ch]) ch = 1; if (mx[2] - mn[2] > mx[ch] - mn[ch]) ch = 2; b.sort((p, q) => p[ch] - q[ch]); const mid = b.length >> 1; bx.splice(bi, 1, b.slice(0, mid), b.slice(mid)); }
-  const avg = bx.map((b) => { const s = [0, 0, 0]; for (const c of b) for (let k = 0; k < 3; k++) s[k] += c[k]; return s.map((v) => Math.round(v / b.length)); });
-  const seen = new Set(), out = [];
-  for (const c of avg) { const k = c.join(','); if (!seen.has(k)) { seen.add(k); out.push(c); } }
-  return out;
+  const avg = bx.map((b) => { const s = [0, 0, 0]; for (const c of b) for (let k = 0; k < 3; k++) s[k] += c[k]; return { c: s.map((v) => Math.round(v / b.length)), w: b.length }; });
+  // слить почти одинаковые средние (взвешенно): палитра может выйти меньше n — это ок
+  for (let merged = true; merged;) { merged = false;
+    outer: for (let i = 0; i < avg.length; i++) for (let j = i + 1; j < avg.length; j++) {
+      const a = avg[i], b = avg[j], d = Math.max(Math.abs(a.c[0] - b.c[0]), Math.abs(a.c[1] - b.c[1]), Math.abs(a.c[2] - b.c[2]));
+      if (d < MERGE_TOL) { const w = a.w + b.w; avg[i] = { c: a.c.map((v, k) => Math.round((v * a.w + b.c[k] * b.w) / w)), w };
+        avg.splice(j, 1); merged = true; break outer; } } }
+  return avg.map((e) => e.c);
 }
 
 export const nearest = (c, pal) => { let best = pal[0], bd = Infinity; for (const p of pal) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } } return best; };

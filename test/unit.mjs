@@ -65,6 +65,16 @@ t('quantize: medianCut/nearest', () => {
   const pal = medianCut([[0, 0, 0], [255, 255, 255]], 2);
   assert.equal(pal.length, 2); assert.deepEqual(nearest([20, 20, 20], pal), [0, 0, 0]);
 });
+t('quantize: medianCut сливает почти-дубли, бережёт редкий цвет', () => {
+  // тысяча почти одинаковых красных + один зелёный: зелёный остаётся, красные — один слот
+  const cols = [];
+  for (let i = 0; i < 1000; i++) cols.push([200 + (i % 11), (i % 7), (i % 5)]);
+  cols.push([0, 180, 0]);
+  const pal = medianCut(cols, 8);
+  assert.ok(pal.some((c) => c[1] > 150), 'зелёный должен выжить');
+  const reds = pal.filter((c) => c[0] > 150);
+  assert.equal(reds.length, 1, 'почти одинаковые красные — один цвет');
+});
 t('quantize: paletteFromGrid по частоте', () => {
   const g = [[[1, 1, 1, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], null]];
   assert.deepEqual(paletteFromGrid(g)[0], [1, 1, 1]);
