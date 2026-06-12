@@ -12,7 +12,7 @@ export async function saveFile(b, name, mime, desc, overlayUrl = null) {
       const w = await h.createWritable(); await w.write(b); await w.close(); toast(t('toast.savedAs', { name: h.name })); return; }
     catch (e) { if (e && e.name === 'AbortError') return; } }
   const file = new File([b], name, { type: mime });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   if (overlayUrl) { showSaveOverlay(overlayUrl); return; }
   const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);

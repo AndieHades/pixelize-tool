@@ -29,5 +29,5 @@ export function setLocale(code) { if (!LOCALES[code]) return; current = code;
 
 export function detect() { let code;
   try { code = localStorage.getItem(STORE); } catch (e) {}
-  if (!code) { const nav = (navigator.language || 'ru').slice(0, 2); code = LOCALES[nav] ? nav : 'ru'; }
+  if (!code) { const nav = ((typeof navigator !== 'undefined' && navigator.language) || 'ru').slice(0, 2); code = LOCALES[nav] ? nav : 'ru'; }
   current = LOCALES[code] ? code : 'ru'; }

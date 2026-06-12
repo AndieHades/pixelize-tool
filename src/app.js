@@ -62,7 +62,7 @@ export function start() {
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
 
   requestAnimationFrame(() => { fitView(); });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});
 }
 
 start();
