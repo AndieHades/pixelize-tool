@@ -23,6 +23,13 @@
 `hexToRgb` · `rgbToHex` · `rgb` (→ `rgb(r,g,b)`) · `eqc` (равенство по RGB,
 игнорит альфу) · `rgbToHsv` · `hsvToRgb`.
 
+## `logic/tint-shade.js` — оттенки и гармонии (чистый)
+
+`generateTints(base)` / `generateShades(base)` — 5 цветов (база + 4 шага).
+`generateHarmonyBaseColors(base, type)` — доп. базы по тону.
+`generateTintShadeScalesForHarmony(base, type)` — `{base,tints,shades}[]`.
+Шаги/углы — `config/tint-shade.js`.
+
 ## `logic/raster.js` — пиксельная сетка (чистый)
 
 | Функция | Назначение |

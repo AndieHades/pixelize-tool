@@ -45,6 +45,7 @@
 | `logic/outline.js` | считает кольца обводки | ✅ | 05-draw |
 | `logic/layer-effects.js` | пиксели эффектов слоя из маски силуэта (обводка/свечение/тени) | ✅ | (эффекты) |
 | `logic/bc.js` | яркость/контраст клетки | ✅ | 05-draw |
+| `logic/tint-shade.js` | генерирует 5-цветные шкалы тинтов/шейдов и цвета гармоний | ✅ | (новое) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -76,6 +77,7 @@
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
+| `systems/tint-shade/*` | окно Tint & Shade: шкалы тинтов/шейдов + гармонии от базового цвета, выбор → палитра | ✅ | (новое) |
 | `systems/toolbars.js` | кнопки панелей: инструменты/тогглы/эффекты/экспорт | ✅ | 12-app |
 | `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
 | `app.js` | поднимает системы и инициализирует приложение | ✅ | 12-app |
@@ -112,6 +114,7 @@
 | `config/defaults.js` | дефолты кисти/эффектов/импорта | ✅ |
 | `config/timings.js` | тайминги и пороги жестов | ✅ |
 | `config/layer-actions.js` | набор кнопок свайпа строки слоя (`LAYER_SWIPE_ACTIONS`) | ✅ |
+| `config/tint-shade.js` | шаги шкал (`TINT_SHADE_STEPS`) и углы гармоний (`HARMONY_OFFSETS`) | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

@@ -142,6 +142,7 @@
     <div id="pal"></div>
     <div id="palrsz" title="Изменить размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
     <button id="pal-menu" title="Палитры: сохранить, загрузить, из изображения"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
+    <button id="tsg-btn" data-i18n-title="tool.tsg" title="Генератор тинтов и теней"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="4"/><circle cx="15.5" cy="15.5" r="4"/><path d="M8.5 4.5v8M4.5 8.5h8"/></svg></button>
   </footer>
 
   <div id="prevwin">
@@ -162,6 +163,33 @@
     </div>
     <canvas id="refcv"></canvas>
     <div id="refrsz" title="Размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
+  </div>
+
+  <div id="tsg-win">
+    <div id="tsg-grip"><span data-i18n="tsg.title">Тинты и тени</span>
+      <button id="tsg-x" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div id="tsg-body">
+      <div class="tsg-base"><span id="tsg-baseprev"></span><b id="tsg-basehex">#000000</b></div>
+      <div id="tsg-scales"></div>
+      <div class="tsg-htitle" data-i18n="tsg.harmony">Гармония цвета</div>
+      <div class="tsg-harm-btns">
+        <button data-harm="complementary" data-i18n="harm.complementary">Комплементарная</button>
+        <button data-harm="splitComplementary" data-i18n="harm.split">Сплит-комплементарная</button>
+        <button data-harm="analogous" data-i18n="harm.analogous">Аналоговая</button>
+        <button data-harm="triadic" data-i18n="harm.triadic">Триада</button>
+      </div>
+      <div id="tsg-harm"></div>
+      <div class="tsg-htitle"><span data-i18n="tsg.selected">Выбрано</span> · <b id="tsg-selcount">0</b></div>
+      <div id="tsg-selprev"></div>
+      <div class="tsg-act">
+        <button id="tsg-add" class="txtbtn primary" data-i18n="btn.tsgAdd">Добавить в текущую палитру</button>
+        <button id="tsg-create" class="txtbtn" data-i18n="btn.tsgCreate">Создать палитру из выбранных</button>
+        <button id="tsg-clear" class="txtbtn" data-i18n="btn.tsgClear">Сбросить выбор</button>
+        <button id="tsg-close" class="txtbtn" data-i18n="btn.close">Закрыть</button>
+      </div>
+    </div>
+    <div id="tsg-rsz" title="Размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </div>
 
   <div id="exp-ovl" class="ovl"><div class="sheet">

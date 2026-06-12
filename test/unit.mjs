@@ -13,6 +13,7 @@ import { rotSprite } from '../src/logic/rotsprite.js';
 import { computeGlow } from '../src/logic/glow.js';
 import { outlineRings } from '../src/logic/outline.js';
 import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
+import { generateTints, generateShades, generateHarmonyBaseColors, generateTintShadeScalesForHarmony } from '../src/logic/tint-shade.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -123,6 +124,33 @@ t('rotsprite: поворот не теряет контент', () => {
   const src = new Int32Array([0, 0, 0, 0xff0000ff | 0]); // один непрозрачный пиксель 2×2
   const r = rotSprite(src, 2, 2, 0, 1);
   assert.ok(r.w > 0 && r.h > 0); assert.ok(r.data.some((v) => v !== 0));
+});
+
+// --- Tint & Shade Generator ---
+t('tint-shade: тинты — ровно 5 цветов, первый = база', () => {
+  const ti = generateTints([100, 50, 20]);
+  assert.equal(ti.length, 5); assert.deepEqual(ti[0], [100, 50, 20]);
+});
+t('tint-shade: тинт светлеет к белому по формуле', () => {
+  assert.deepEqual(generateTints([100, 50, 20])[1], [131, 91, 67]); // +20%: 100+(155*.2)=131 …
+  assert.deepEqual(generateTints([0, 0, 0])[4], [204, 204, 204]); // +80% от чёрного
+});
+t('tint-shade: шейды — ровно 5 цветов, темнеют к чёрному', () => {
+  const sh = generateShades([200, 100, 50]);
+  assert.equal(sh.length, 5); assert.deepEqual(sh[0], [200, 100, 50]);
+  assert.deepEqual(sh[4], [40, 20, 10]); // ×(1-.8)
+});
+t('tint-shade: число базовых цветов гармонии', () => {
+  const b = [200, 80, 60];
+  assert.equal(generateHarmonyBaseColors(b, 'complementary').length, 1);
+  assert.equal(generateHarmonyBaseColors(b, 'splitComplementary').length, 2);
+  assert.equal(generateHarmonyBaseColors(b, 'analogous').length, 2);
+  assert.equal(generateHarmonyBaseColors(b, 'triadic').length, 2);
+});
+t('tint-shade: каждая шкала гармонии — база + 4 тинта/шейда (по 5)', () => {
+  const scales = generateTintShadeScalesForHarmony([200, 80, 60], 'triadic');
+  assert.equal(scales.length, 2);
+  for (const s of scales) { assert.equal(s.tints.length, 5); assert.equal(s.shades.length, 5); assert.deepEqual(s.tints[0], s.base); }
 });
 
 // --- конфигурация ---

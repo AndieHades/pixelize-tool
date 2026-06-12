@@ -44,6 +44,7 @@ const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const palMgr = await import('../src/systems/palette-manager.js');
+const tsg = await import('../src/systems/tint-shade/index.js');
 const tb = await import('../src/systems/toolbars.js');
 const effects = await import('../src/systems/effects/index.js');
 const fxr = await import('../src/core/effects-render.js');
@@ -230,6 +231,33 @@ t('windows: preview/reference монтируются без ошибок', () =>
 t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]); });
+
+t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
+  tsg.mount(); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [200, 100, 50];
+  document.getElementById('tsg-btn').click();
+  assert.ok(document.getElementById('tsg-win').classList.contains('on'));
+  assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale').length, 2); // тинты + шейды
+  assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale')[0].querySelectorAll('.tsg-sw').length, 5);
+});
+t('tint-shade: гармония рисует доп. шкалы по 5', () => {
+  document.querySelector('#tsg-win [data-harm="triadic"]').click();
+  const blocks = document.querySelectorAll('#tsg-harm .tsg-block');
+  assert.equal(blocks.length, 2);
+  assert.equal(blocks[0].querySelectorAll('.tsg-sw').length, 10); // 5 тинтов + 5 шейдов
+});
+t('tint-shade: addSelected/createNew меняют палитру', () => {
+  S.palette = [[1, 2, 3]];
+  assert.equal(tsg.addSelectedToCurrentPalette([[9, 9, 9], [1, 2, 3]]), 1); // дубль не добавляется
+  assert.deepEqual(S.palette, [[1, 2, 3], [9, 9, 9]]);
+  tsg.createNewPaletteFromSelected([[7, 7, 7], [8, 8, 8]]);
+  assert.deepEqual(S.palette, [[7, 7, 7], [8, 8, 8]]); assert.deepEqual(S.active, [7, 7, 7]);
+});
+t('tint-shade: без активного цвета в палитре — окно не открывается', () => {
+  document.getElementById('tsg-win').classList.remove('on');
+  S.palette = [[1, 2, 3]]; S.active = [200, 200, 200]; // нет в палитре
+  document.getElementById('tsg-btn').click();
+  assert.ok(!document.getElementById('tsg-win').classList.contains('on'));
+});
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
