@@ -62,7 +62,7 @@
 | `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
-| `systems/layers/*` | панель слоёв: список/драг/свайпы/операции/меню | ✅ | 09-layers-ui |
+| `systems/layers/*` | панель слоёв: список/драг/свайпы/щипок-слияние/операции/меню | ✅ | 09-layers-ui |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |

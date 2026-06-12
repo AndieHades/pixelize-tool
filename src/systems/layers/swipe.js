@@ -7,6 +7,7 @@ import { t } from '../../i18n/index.js';
 import { attachSwipe } from '../../core/swipe-actions.js';
 import { LAYER_SWIPE_ACTIONS } from '../../config/layer-actions.js';
 import { duplicateLayer, deleteLayerRef, toggleLock, toggleAlphaLock, toggleClip } from './ops.js';
+import { pinchActive } from './pinch.js';
 
 const ACT = {
   lock: (L) => ({ label: t('menu.lock'), on: L.lock, onClick: () => toggleLock(L) }),
@@ -20,5 +21,5 @@ function toggleSelect(L) { const i = S.layers.indexOf(L); if (i < 0) return;
   if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); bus.emit('layers'); }
 
 export function attachLayerSwipe(row, L) {
-  attachSwipe(row, { actions: LAYER_SWIPE_ACTIONS.filter((id) => ACT[id]).map((id) => ACT[id](L)), onSwipeRight: () => toggleSelect(L) });
+  attachSwipe(row, { actions: LAYER_SWIPE_ACTIONS.filter((id) => ACT[id]).map((id) => ACT[id](L)), onSwipeRight: () => toggleSelect(L), guard: pinchActive });
 }

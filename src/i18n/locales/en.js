@@ -34,7 +34,7 @@ export const en = {
   'menu.symm': 'Symmetrize layer', 'menu.transform': 'Transform…', 'menu.shadow': 'Drop shadow…',
   'menu.glow': 'Glow…', 'menu.mono': 'To monochrome', 'menu.bc': 'Brightness/contrast…', 'menu.clip': 'Clipping mask',
   'menu.pngFull': 'Save PNG (whole canvas)', 'menu.pngTight': 'Save PNG (cropped)', 'menu.edit': 'Edit',
-  'menu.lock': 'Lock', 'menu.alphaLock': 'Alpha lock', 'menu.clipMask': 'Clip', 'menu.duplicate': 'Duplicate', 'menu.delete': 'Delete',
+  'menu.lock': 'Lock', 'menu.alphaLock': 'Alpha lock', 'menu.clipMask': 'Clip', 'menu.selectLayer': 'Select', 'menu.duplicate': 'Duplicate', 'menu.delete': 'Delete',
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…',
   'ui.theme': 'Theme', 'ui.language': 'Language', 'ui.settings': 'Settings', 'ui.lightTheme': 'Light theme',

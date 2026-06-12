@@ -8,6 +8,7 @@ import { layerCanvas } from '../../core/layer-cache.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
+import { toggleLock, toggleAlphaLock } from './ops.js';
 
 const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; // галочка = видимость
 let lastClick = { idx: -1, t: 0 };
@@ -66,7 +67,8 @@ export function layList() {
     vis.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); bus.emit('render'); });
     if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
     row.append(thumbFor(i), nm);
-    if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; row.append(fl); }
+    if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
+      fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
     row.append(vis);
     row.addEventListener('click', ((idx, lay, sp) => (ev) => { if (layDragSquelch) return;
       if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); return; } // десктоп: ctrl/cmd-клик — выбор
@@ -76,5 +78,6 @@ export function layList() {
       lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // тап — сделать активным
     longPress(row, (x, y) => openLctx(x, y, 'layer', L)); attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
   }
-  const op = $('lay-op'), v = Math.round(S.layers[S.cur].opacity * 100); if (op) { op.value = v; $('lay-opv').textContent = v + '%'; }
+  const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
+  if ($('lay-alpha')) { $('lay-alpha').classList.toggle('on', !!cur.alphaLock); $('lay-clip').classList.toggle('on', !!cur.clip); }
 }

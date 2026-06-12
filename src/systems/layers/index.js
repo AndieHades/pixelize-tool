@@ -10,7 +10,8 @@ import { placeImageLayer } from '../../core/document.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { layList } from './list.js';
-import { doAddLayer, doMerge, doGroup, deleteLayer } from './ops.js';
+import { doAddLayer, doMerge, doGroup, deleteLayer, toggleAlphaLock, toggleClip } from './ops.js';
+import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
 
 function openLayerMenu(px, py) { const m = $('cctx'); m.innerHTML = '';
@@ -26,6 +27,9 @@ export function mount() {
   $('lay-merge').addEventListener('click', doMerge);
   $('lay-group').addEventListener('click', doGroup);
   $('lay-del').addEventListener('click', deleteLayer);
+  $('lay-select').addEventListener('click', () => actions.run('selection.layer'));
+  $('lay-alpha').addEventListener('click', () => toggleAlphaLock(S.layers[S.cur]));
+  $('lay-clip').addEventListener('click', () => toggleClip(S.layers[S.cur]));
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
@@ -42,6 +46,7 @@ export function mount() {
       $('lay-pop').style.height = Math.max(220, Math.min(innerHeight - 12, h)) + 'px';
       $('lay-list').style.maxHeight = Math.max(80, $('lay-pop').getBoundingClientRect().height - 156) + 'px'; } });
   mountMenu();
+  mountPinch();
   bus.on('layers', layList);
   bus.on('canvas-menu', (e) => openLayerMenu(e.clientX, e.clientY));
   actions.register('ui.layers', () => $('layers').click());

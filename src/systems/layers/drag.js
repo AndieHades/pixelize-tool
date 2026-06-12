@@ -6,6 +6,7 @@ import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { topOfFolder } from './helpers.js';
 import { setSquelch } from './list.js';
+import { pinchActive } from './pinch.js';
 
 function makeGhost(label) { const g = document.createElement('div'); g.className = 'lay-drag-ghost';
   const dot = document.createElement('i'), text = document.createElement('span'); text.textContent = label; g.append(dot, text); document.body.appendChild(g); return g; }
@@ -44,6 +45,7 @@ export function dragRow(el, info) {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false, ghost = null;
     const move = (ev) => {
+      if (pinchActive()) return; // два пальца — это щипок-слияние, не перетаскивание
       const ddx = ev.clientX - sx, ddy = ev.clientY - sy; // перетаскивание — по вертикали; горизонталь отдаём свайпу
       if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
         const label = info.kind === 'folder' ? el.querySelector('.lname').textContent : (S.marked.size > 1 && S.marked.has(info.idx) ? S.marked.size + ' слоя' : S.layers[info.idx].name);

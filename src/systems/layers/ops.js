@@ -13,16 +13,22 @@ export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toa
   snapshot(); const nl = newLayer('Слой ' + (++S.layerSeq), S.W, S.H); nl.fid = S.layers[S.cur].fid;
   S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
-export function doMerge() { let idx = [...S.marked].sort((a, b) => a - b);
-  if (idx.length < 2) { if (S.cur > 0) idx = [S.cur - 1, S.cur]; else { toast(t('toast.markLayers')); return; } }
+function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
   snapshot();
   const base = idx[0], out = cloneGrid(S.layers[base].grid), ext = new Map(S.layers[base].ext);
   for (let j = 1; j < idx.length; j++) { const L = S.layers[idx[j]];
-    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const t = L.grid[y][x]; if (t) out[y][x] = mergeCells(out[y][x], t, L.opacity); }
+    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const t2 = L.grid[y][x]; if (t2) out[y][x] = mergeCells(out[y][x], t2, L.opacity); }
     for (const [k, c] of L.ext) ext.set(k, c); }
-  const merged = { name: S.layers[base].name, grid: out, opacity: 1, visible: true, fid: S.layers[base].fid, clip: false, ext };
+  const merged = { name: S.layers[base].name, grid: out, opacity: 1, visible: true, fid: S.layers[base].fid, clip: false, lock: false, alphaLock: false, ext };
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
   S.layers.splice(base, 0, merged); S.cur = base; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
+
+export function doMerge() { let idx = [...S.marked].sort((a, b) => a - b);
+  if (idx.length < 2) { if (S.cur > 0) idx = [S.cur - 1, S.cur]; else { toast(t('toast.markLayers')); return; } }
+  mergeIndices(idx); }
+
+// слить диапазон слоёв [a..b] (щипок), независимо от выбора
+export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
 
 export function doGroup() { let idx = [...S.marked].sort((a, b) => a - b); if (!idx.length) idx = [S.cur];
   snapshot(); const f = { id: ++S.folderSeq, name: 'Папка ' + S.folderSeq, open: true, visible: true, symLock: false };

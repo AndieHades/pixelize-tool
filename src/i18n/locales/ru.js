@@ -42,7 +42,7 @@ export const ru = {
   'menu.symm': 'Симметрировать слой', 'menu.transform': 'Трансформировать…', 'menu.shadow': 'Тень (Drop Shadow)…',
   'menu.glow': 'Свечение…', 'menu.mono': 'В монохром', 'menu.bc': 'Яркость/контраст…', 'menu.clip': 'Обтравочная маска',
   'menu.pngFull': 'Сохранить PNG (весь холст)', 'menu.pngTight': 'Сохранить PNG (по контуру)', 'menu.edit': 'Правка',
-  'menu.lock': 'Замок', 'menu.alphaLock': 'Альфа-замок', 'menu.clipMask': 'Обтравка', 'menu.duplicate': 'Дублировать', 'menu.delete': 'Удалить',
+  'menu.lock': 'Замок', 'menu.alphaLock': 'Альфа-замок', 'menu.clipMask': 'Обтравка', 'menu.selectLayer': 'Выделить', 'menu.duplicate': 'Дублировать', 'menu.delete': 'Удалить',
   'menu.ungroup': 'Расформировать папку',
   'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…',
   'ui.theme': 'Тема', 'ui.language': 'Язык', 'ui.settings': 'Настройки', 'ui.lightTheme': 'Светлая тема',
