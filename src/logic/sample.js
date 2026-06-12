@@ -6,7 +6,13 @@ function edgeEnergy(im, axis) { const n = axis === 0 ? im.w : im.h, m = axis ===
   for (let i = 1; i < n; i++) { let s = 0; for (let j = 0; j < m; j += 2) { const a = axis === 0 ? at(im, i, j) : at(im, j, i), b = axis === 0 ? at(im, i - 1, j) : at(im, j, i - 1); s += Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]); } e[i] = s; } return e; }
 
 // период решётки апскейленного пиксель-арта: автокорреляция энергии граней (коэф. 2..40)
-function detectPeriod(e) { let best = 8, bv = -1; for (let lag = 4; lag <= 40; lag++) { let s = 0; for (let i = 0; i + lag < e.length; i++) s += e[i] * e[i + lag]; s /= e.length - lag; if (s > bv) { bv = s; best = lag; } } return best; }
+function detectPeriod(e) { const score = (lag) => { let s = 0; for (let i = 0; i + lag < e.length; i++) s += e[i] * e[i + lag]; return s / (e.length - lag); };
+  let best = 8, bv = -1; for (let lag = 4; lag <= 40; lag++) { const s = score(lag); if (s > bv) { bv = s; best = lag; } }
+  // максимум бывает на кратном периоде (гармонике) — тогда клетка вдвое-втрое крупнее
+  // настоящей и детали теряются; наименьший лаг с почти пиковой автокорреляцией —
+  // настоящий период, дробную точность берём делением главного пика
+  for (let lag = 4; lag < best; lag++) if (score(lag) >= bv * 0.85) return best / Math.round(best / lag);
+  return best; }
 
 // доминирующий цвет клетки; прозрачные пиксели не учитываем, клетка прозрачна
 // при большинстве прозрачных — точный вырез по альфе исходника

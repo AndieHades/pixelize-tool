@@ -55,6 +55,16 @@ t('sample: сетка из картинки', () => {
   assert.equal(r.nx, 2); assert.equal(r.ny, 2); assert.equal(r.samples.length, 4);
   assert.deepEqual(r.grid[0][0], [10, 20, 30]);
 });
+t('sample: автосетка находит настоящий период, не гармонику', () => {
+  // 50×50 случайных клеток, апскейл 6× → 300×300; автодетект обязан дать 50×50
+  let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF) % 256;
+  const cells = Array.from({ length: 50 }, () => Array.from({ length: 50 }, () => [rnd(), rnd(), rnd()]));
+  const data = new Uint8ClampedArray(300 * 300 * 4);
+  for (let y = 0; y < 300; y++) for (let x = 0; x < 300; x++) { const c = cells[(y / 6) | 0][(x / 6) | 0], i = (y * 300 + x) * 4;
+    data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255; }
+  const r = sampleGrid({ w: 300, h: 300, ch: 4, data }, 0, 0);
+  assert.equal(r.nx, 50); assert.equal(r.ny, 50);
+});
 t('sample: прозрачные пиксели → прозрачная клетка (вырез по альфе)', () => {
   // 2×1: слева непрозрачный красный, справа полностью прозрачный
   const data = new Uint8ClampedArray([200, 10, 10, 255, 0, 0, 0, 0]);
