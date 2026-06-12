@@ -121,5 +121,4 @@ export function layList() {
     box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
-  if ($('lay-alpha')) { $('lay-alpha').classList.toggle('on', !!cur.alphaLock); $('lay-clip').classList.toggle('on', !!cur.clip); }
 }

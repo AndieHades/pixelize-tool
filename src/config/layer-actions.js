@@ -3,4 +3,4 @@
 // Доступные id: lock, alphaLock, clip, duplicate, clean, delete.
 // Иконка + обработчик каждого id живут в `systems/layers/swipe.js` (ICON + ACT);
 // новое действие = добавить туда пару строк и вписать его id сюда.
-export const LAYER_SWIPE_ACTIONS = ['duplicate', 'alphaLock', 'clean'];
+export const LAYER_SWIPE_ACTIONS = ['alphaLock', 'clip', 'duplicate'];
