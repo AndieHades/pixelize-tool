@@ -241,6 +241,17 @@ t('selection-float: lift + commit переносит фрагмент', () => { 
   sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
 
+t('selection-float: повторный перенос не стирает подложку', () => { resetWH(8, 8); S.tool = 'select';
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.cur = 0;
+  S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null;
+  const h = toolHandler('select');
+  h.down({ gx: 0, gy: 0, e: null }); h.move({ gx: 4, gy: 4 }); h.up({});   // несём пиксель на (4,4): он висит, не оседает
+  assert.deepEqual(S.layers[0].grid[4][4], [9, 9, 9, 255]);                 // подложка под фрагментом цела
+  h.down({ gx: 4, gy: 4, e: null }); h.move({ gx: 6, gy: 6 }); h.up({});   // поднимаем тот же фрагмент дальше
+  actions.run('select.none');                                               // деселект — фрагмент оседает
+  assert.deepEqual(S.layers[0].grid[4][4], [9, 9, 9, 255]);
+  assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.sel = S.selMask = null; });
+
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });

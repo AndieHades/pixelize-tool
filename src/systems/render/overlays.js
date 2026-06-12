@@ -55,7 +55,7 @@ export function drawOverlays(ctx, ox, oy, z) {
       if (!S.selMask.has((x - 1) + ',' + y)) { ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + z); }
       if (!S.selMask.has((x + 1) + ',' + y)) { ctx.moveTo(sx + z, sy); ctx.lineTo(sx + z, sy + z); } }
     ctx.stroke(); ctx.setLineDash([]); }
-  if (S.sel && !S.selFloat && S.tool === 'select') {
+  if (S.sel && S.tool === 'select') { // ручки и у плавающего фрагмента — его можно масштабировать не «приземляя»
     const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, hs = 7;
     ctx.fillStyle = '#fff';
     for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]])

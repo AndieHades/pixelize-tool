@@ -10,7 +10,7 @@ import { liftSelection, liftSelectionSym, commitFloat, symFloatBounds } from './
 
 let selDrag = null, hinted = false;
 
-function selZone(e) { if (!S.sel || S.selFloat) return null;
+function selZone(e) { if (!S.sel) return null;
   const r = $('cv').getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, z = S.view.zoom;
   const lx = S.view.ox + S.sel.x0 * z, rx = S.view.ox + (S.sel.x1 + 1) * z, ty = S.view.oy + S.sel.y0 * z, by = S.view.oy + (S.sel.y1 + 1) * z, tol = 14;
   const nl = Math.abs(px - lx) < tol, nr = Math.abs(px - rx) < tol, nt = Math.abs(py - ty) < tol, nb = Math.abs(py - by) < tol;
@@ -20,9 +20,17 @@ function selZone(e) { if (!S.sel || S.selFloat) return null;
 
 function down({ gx, gy, e }) {
   if (S.sel && e) { const zn = selZone(e);
-    if (zn) { const sX = !!(S.selMask && symA()), sY = !!(S.selMask && symHA()); snapshot(); liftSelection();
+    if (zn) { const sX = !!(S.selMask && symA()), sY = !!(S.selMask && symHA());
+      if (S.selFloat && S.selFloat.symItems) commitFloat(); // sym-фрагмент масштабируем уже осевшим
+      if (!S.selFloat) { snapshot(); liftSelection(); }     // обычный плавающий масштабируется «в воздухе»
       selDrag = { mode: 'scale', zn, src: new Map(S.selFloat.cells), sw: S.selFloat.w, sh: S.selFloat.h, x0: S.sel.x0, y0: S.sel.y0, x1: S.sel.x1, y1: S.sel.y1, symX: sX, symY: sY }; return; } }
-  if (S.sel && gx >= S.sel.x0 && gx <= S.sel.x1 && gy >= S.sel.y0 && gy <= S.sel.y1 && (!S.selMask || S.selMask.has(gx + ',' + gy)))
+  const inSel = S.sel && gx >= S.sel.x0 && gx <= S.sel.x1 && gy >= S.sel.y0 && gy <= S.sel.y1;
+  if (S.selFloat && inSel) { // фрагмент уже в воздухе — продолжаем нести, не трогая слой
+    if (S.selFloat.symItems) selDrag = { mode: 'move', sx: gx, sy: gy, lifted: true, moved: false, bdx: S.selFloat.dx, bdy: S.selFloat.dy };
+    else { S.selFloat.ox = S.selFloat.x; S.selFloat.oy = S.selFloat.y; selDrag = { mode: 'move', sx: gx, sy: gy, lifted: true, moved: false }; }
+    return; }
+  if (S.selFloat) commitFloat(); // клик мимо фрагмента — он оседает
+  if (inSel && (!S.selMask || S.selMask.has(gx + ',' + gy)))
     selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false, sym: !!(S.selMask && (symA() || symHA())) };
   else { S.selMask = null; selDrag = { mode: 'new', sx: gx, sy: gy, moved: false }; }
 }
@@ -48,18 +56,21 @@ function scaleMove(gx, gy) { const d = selDrag; let nw = d.sw, nh = d.sh, nx0 = 
   S.sel = { x0: nx0, y0: ny0, x1: nx0 + nw - 1, y1: ny0 + nh - 1 }; bus.emit('selection'); bus.emit('render'); }
 
 function move({ gx, gy }) { if (!selDrag) return;
+  if (selDrag.mode !== 'new' && selDrag.lifted && !S.selFloat) { selDrag = null; return; } // фрагмент осел извне (undo) — жест обрывается
   if (selDrag.mode === 'scale') { scaleMove(gx, gy); return; }
   if (selDrag.mode === 'new') { if (gx !== selDrag.sx || gy !== selDrag.sy) selDrag.moved = true; S.sel = normSel(selDrag.sx, selDrag.sy, gx, gy); }
   else { if (!selDrag.lifted) { if (gx === selDrag.sx && gy === selDrag.sy) return; snapshot();
       if (selDrag.sym) liftSelectionSym(selDrag.sx, selDrag.sy); else liftSelection(); selDrag.lifted = true; }
-    if (S.selFloat.symItems) { S.selFloat.dx = gx - selDrag.sx; S.selFloat.dy = gy - selDrag.sy; symFloatBounds(); }
+    if (S.selFloat.symItems) { S.selFloat.dx = (selDrag.bdx || 0) + gx - selDrag.sx; S.selFloat.dy = (selDrag.bdy || 0) + gy - selDrag.sy; symFloatBounds(); }
     else { S.selFloat.x = S.selFloat.ox + (gx - selDrag.sx); S.selFloat.y = S.selFloat.oy + (gy - selDrag.sy);
       S.sel = { x0: S.selFloat.x, y0: S.selFloat.y, x1: S.selFloat.x + S.selFloat.w - 1, y1: S.selFloat.y + S.selFloat.h - 1 }; }
     selDrag.moved = true; }
   bus.emit('selection'); bus.emit('render'); }
 
 function up() { if (!selDrag) return;
-  if (selDrag.mode === 'move' || selDrag.mode === 'scale') { if (selDrag.lifted || selDrag.mode === 'scale') { commitFloat(); S.sel = S.sel ? normSel(S.sel.x0, S.sel.y0, S.sel.x1, S.sel.y1) : null; if (!S.sel) S.selMask = null; } }
+  if (selDrag.mode === 'move' || selDrag.mode === 'scale') { // фрагмент НЕ оседает: висит до клика вне/деселекта — подложка под ним цела
+    S.sel = S.sel ? normSel(S.sel.x0, S.sel.y0, S.sel.x1, S.sel.y1) : null;
+    if (!S.sel) { commitFloat(); S.selMask = null; } } // унесли совсем за холст — осел в ext
   else if (!selDrag.moved) S.sel = null;
   else { symmetrizeSelection(); if (S.sel && !hinted) { hinted = true; } }
   selDrag = null; bus.emit('selection'); bus.emit('render'); }

@@ -8,13 +8,14 @@ import { markDirty, dirtyAll } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { normSel, fragFromSel, deleteSelContent, deselect } from './model.js';
+import { commitFloat } from './float.js';
 
 let clip = null;
 
 export function doCopy() { clip = S.sel ? fragFromSel() : cloneGrid(G()); toast(S.sel ? t('toast.selCopied') : t('toast.layerCopied')); }
 export function doCut() { clip = S.sel ? fragFromSel() : cloneGrid(G()); toast((S.sel ? deleteSelContent() : clearLayer()) ? t('toast.cut') : t('toast.hereEmpty')); }
 
-export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; } snapshot();
+export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; } commitFloat(); snapshot();
   const px = S.sel ? S.sel.x0 : 0, py = S.sel ? S.sel.y0 : 0, asNew = S.layers.length < MAX_LAYERS;
   let g;
   if (asNew) { const nl = newLayer('Вставка', S.W, S.H); nl.fid = S.layers[S.cur].fid; // вставка — на новый слой

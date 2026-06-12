@@ -26,8 +26,10 @@ let undoGuard = null;
 export const setUndoGuard = (fn) => { undoGuard = fn; };
 
 export function doUndo() { if (undoGuard && undoGuard()) return;
+  bus.emit('before-undo'); // незавершённые жесты (плавающее выделение) оседают до снимка
   if (!S.undoStack.length) { toast(t('toast.nothingUndo')); return; }
   S.redoStack.push(snapState()); restore(S.undoStack.pop()); toast(t('toast.undone')); }
 
 export function doRedo() { if (!S.redoStack.length) return;
+  bus.emit('before-undo');
   S.undoStack.push(snapState()); restore(S.redoStack.pop()); toast(t('toast.redone')); }
