@@ -224,8 +224,14 @@ t('effects: Apply фиксирует эффект, undo убирает', () => {
 
 t('effects: copy/paste переносит эффект на выбранные слои', () => { resetWH(8, 8); lops.doAddLayer();
   S.layers[0].effects = [{ id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
-  actions.run('fx.copy', S.layers[0].effects[0]); S.cur = 1; S.marked = new Set([0, 1]); actions.run('fx.paste');
-  assert.ok(S.layers[1].effects.length >= 1 && S.layers[1].effects[0].type === 'stroke'); S.marked = new Set(); });
+  S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.copy');
+  S.cur = 1; S.marked = new Set([0, 1]); actions.run('fx.paste');
+  assert.ok(S.layers[1].effects.length >= 1 && S.layers[1].effects[0].type === 'stroke'); S.marked = new Set(); S.fxSel.clear(); S.fxCur = null; });
+
+t('effects: дублирование/удаление выделенных эффектов', () => { resetWH(8, 8);
+  S.layers[0].effects = [{ id: 11, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
+  S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.duplicate'); assert.equal(S.layers[0].effects.length, 2);
+  S.fxSel = new Set(S.layers[0].effects); actions.run('fx.delete'); assert.equal(S.layers[0].effects.length, 0); });
 
 t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });

@@ -3,13 +3,14 @@
 import * as actions from '../../core/actions.js';
 import { mountPanel } from './panel.js';
 import { mountSettings, openFxEdit } from './settings.js';
-import { mountClipboard, openFxMenu, moveFx, deleteFx, copyFx } from './clipboard.js';
+import { mountClipboard, openFxMenu, deleteFx, copyFx, duplicateFx, pasteFx } from './clipboard.js';
 
 export function mount() {
   mountPanel(); mountSettings(); mountClipboard();
   actions.register('fx.edit', openFxEdit);
   actions.register('fx.menu', openFxMenu);
-  actions.register('fx.move', moveFx);
   actions.register('fx.delete', deleteFx);
   actions.register('fx.copy', copyFx);
+  actions.register('fx.duplicate', duplicateFx);
+  actions.register('fx.paste', pasteFx);
 }

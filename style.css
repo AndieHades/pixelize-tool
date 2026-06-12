@@ -573,6 +573,11 @@
 .fxrow { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 9px; cursor: pointer; touch-action: none; }
 .fxrow:hover { background: var(--accent-soft); }
 .fxrow.fxoff { opacity: .5; }
+.fxrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }
+.fxrow.on { background: var(--accent); color: #fff; }
+.fxrow.on .lname, .fxrow.on .fxstar, .fxrow.on .eye { color: #fff; }
+.fxrow.fxdrop { box-shadow: inset 0 2px 0 var(--accent); }
+.lrow.fxdrop { outline: 2px solid var(--accent); outline-offset: -2px; }
 .fxrow .fxstar { display: flex; width: 22px; height: 22px; color: var(--accent); flex: none; }
 .fxrow .fxstar svg { width: 18px; height: 18px; fill: currentColor; stroke: none; }
 .fxrow .lname { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -16,6 +16,21 @@ export function pasteTargets() {
   return out;
 }
 
+// владелец эффекта (слой или папка, в чьём .effects он лежит) и его индекс
+export function ownerOf(eff) {
+  for (const L of S.layers) { const i = L.effects.indexOf(eff); if (i >= 0) return L; }
+  for (const f of S.folders) { const i = (f.effects || []).indexOf(eff); if (i >= 0) return f; }
+  return null;
+}
+// выделенные эффекты в порядке стека их владельцев (стабильно для копий/удаления)
+export function selectedEffects() {
+  if (!S.fxSel.size && S.fxCur) return [S.fxCur];
+  const out = [];
+  for (const L of S.layers) for (const e of L.effects) if (S.fxSel.has(e)) out.push(e);
+  for (const f of S.folders) for (const e of (f.effects || [])) if (S.fxSel.has(e)) out.push(e);
+  return out;
+}
+
 let fxClip = []; // последний скопированный набор эффектов (данные)
 export const getFxClip = () => fxClip;
 export const setFxClip = (a) => { fxClip = a; };

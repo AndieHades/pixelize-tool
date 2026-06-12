@@ -19,7 +19,8 @@ export function snapshot() { S.undoStack.push(snapState());
   S.redoStack.length = 0; bus.emit('snapshot'); }
 
 export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folders = s.folders; S.folderSeq = s.folderSeq;
-  S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 // перехватчик undo: система (напр. трансформация) может на время «забрать» отмену
 let undoGuard = null;

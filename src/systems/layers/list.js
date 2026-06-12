@@ -77,7 +77,7 @@ function folderRow(f, depth) {
     lastClick = { idx: key, t: now };
     if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
       else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
-    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); layList(); }); // обычный клик — только эта папка активна
+    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); }); // обычный клик — только эта папка активна
   longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
 }
 
@@ -101,7 +101,7 @@ function layerRow(L, i, depth) {
     if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); layList(); return; } // ctrl/cmd-клик — мультивыбор
     const now = performance.now();
     if (lastClick.idx === i && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, L); return; } // двойной клик — переименование
-    lastClick = { idx: i, t: now }; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; layList(); }); // клик без Ctrl — сбросить общее выделение, выбрать только этот слой
+    lastClick = { idx: i, t: now }; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); }); // клик без Ctrl — сбросить общее выделение, выбрать только этот слой
   longPress(row, (x, y) => { if (S.cur !== i) S.cur = i; S.markedFolders.clear(); S.selFolder = null; layList(); openLctx(x, y, 'layer', L); });
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
 }
