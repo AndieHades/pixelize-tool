@@ -1,6 +1,6 @@
 // English locale. Keys mirror ru.js — keep them in sync.
 export const en = {
-  'tool.docs': 'Documents', 'tool.new': 'New document (N)', 'tool.import': 'Import image (Ctrl+O)',
+  'tool.gallery': 'Gallery', 'tool.new': 'New document (N)', 'tool.import': 'Import image (Ctrl+O)',
   'tool.export': 'Save PNG (Ctrl+S)', 'tool.preview': '1:1 window (actual size)', 'tool.reference': 'Reference window',
   'tool.fit': 'Fit (0)', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
   'tool.pencil': 'Pencil (B)', 'tool.eraser': 'Eraser (E)', 'tool.fill': 'Fill (F)',

@@ -30,7 +30,7 @@ export async function mount() {
   $('gal-back').onclick = goBack;
   $('docsbtn').onclick = show;
   bus.on('snapshot', autosave); bus.on('layers', autosave);
-  const docs = (await listAll()).filter((d) => d.kind !== 'folder'); // на старте всегда открываем галерею
-  if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); }
-  show();
+  try { const docs = (await listAll()).filter((d) => d.kind !== 'folder'); // последнюю работу грузим под галереей (для «продолжить»)
+    if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); } } catch (e) {}
+  show(); // на старте всегда открываем галерею, что бы ни случилось при чтении
 }

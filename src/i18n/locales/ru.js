@@ -2,7 +2,7 @@
 // label/btn/menu/adj/toast. Добавляешь ключ — добавь его и в остальные локали.
 export const ru = {
   // верхняя панель и инструменты (tooltips)
-  'tool.docs': 'Документы', 'tool.new': 'Новый документ (N)', 'tool.import': 'Импорт картинки (Ctrl+O)',
+  'tool.gallery': 'Галерея', 'tool.new': 'Новый документ (N)', 'tool.import': 'Импорт картинки (Ctrl+O)',
   'tool.export': 'Сохранить PNG (Ctrl+S)', 'tool.preview': 'Окно 1:1 (реальный размер)', 'tool.reference': 'Окно референса',
   'tool.fit': 'Вписать (0)', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
   'tool.pencil': 'Карандаш (B)', 'tool.eraser': 'Ластик (E)', 'tool.fill': 'Заливка (F)',
