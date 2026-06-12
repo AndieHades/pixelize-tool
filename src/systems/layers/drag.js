@@ -22,7 +22,8 @@ function layDrop(src, row, into) { const tIsFolder = row.classList.contains('fro
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
     const block = (S.marked.size > 1 && S.marked.has(src.idx)) ? [...S.marked].sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[src.idx]];
     if (tL && block.includes(tL)) return;
-    if (into && tL) { folderFromLayers(block, tL); return; }
+    // группируем, только если ещё не в одной папке; иначе (уже сгруппированы) — просто переставляем, не пересоздаём папку
+    if (into && tL && !(tL.fid != null && block.every((L) => L.fid === tL.fid))) { folderFromLayers(block, tL); return; }
     snapshot();
     for (const L of block) { const i = S.layers.indexOf(L); if (i >= 0) S.layers.splice(i, 1); }
     const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
