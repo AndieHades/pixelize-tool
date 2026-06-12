@@ -59,6 +59,8 @@ export function start() {
     onResize: (w, h) => { $('sidebar').style.width = Math.max(48, Math.min(innerWidth - 12, w)) + 'px'; $('sidebar').style.maxHeight = Math.max(80, Math.min(innerHeight - 12, h)) + 'px'; } });
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'exp-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl (конвертер) не закрываем по фону — это окно
+  document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
+    for (const id of ['ctx', 'lctx', 'cctx', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
 
   requestAnimationFrame(() => { fitView(); });

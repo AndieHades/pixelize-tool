@@ -10,8 +10,8 @@
   --line: rgba(255, 255, 255, .08);
   --txt: #f2f2f5;
   --txt2: #9a9aa3;
-  --accent: #3d8bfd;
-  --accent-soft: rgba(61, 139, 253, .18);
+  --accent: #3d8bfd; /* СИНИЙ ТЕМЫ — единственное место; всё остальное синее выводится отсюда */
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   --danger: #f00;
   /* тумблеры (единый вид; перекрасить = поменять здесь) */
   --toggle-on: var(--accent);
@@ -46,8 +46,8 @@
   --line: rgba(0, 0, 0, .1);
   --txt: #15161a;
   --txt2: #5b5f6b;
-  --accent: #2b6fe0;
-  --accent-soft: rgba(43, 111, 224, .16);
+  --accent: #2b6fe0; /* синий темы (светлая) — меняй здесь */
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --toggle-off: rgba(120, 122, 134, .35);
   --vsl-track: rgba(90, 95, 110, .22);
   --cv-bg: #d6d8dd;

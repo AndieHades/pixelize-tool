@@ -2,7 +2,7 @@
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
 import { $, showMenuAt } from '../../core/dom.js';
 import { t } from '../../i18n/index.js';
-import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, folderPreviews, setOrder, getItem } from './store.js';
+import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 
@@ -47,9 +47,7 @@ async function tileEl(d) {
   const tile = document.createElement('div'); tile.className = 'gal-tile' + (d.kind === 'folder' ? ' folder' : '') + (selected.has(d.id) ? ' sel' : '');
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
-  if (d.kind === 'folder') { const ps = await folderPreviews(d.id); // папка: монтаж превью, иначе иконка папки
-    if (ps.length) for (const p of ps) { const im = document.createElement('img'); im.src = p; im.draggable = false; thumb.appendChild(im); }
-    else { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } }
+  if (d.kind === 'folder') { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } // у всех папок — значок папки
   else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; thumb.appendChild(im); }
   tile.addEventListener('dragstart', (e) => e.preventDefault()); // не запускать нативный драг картинки (мешает своему)
   tile.addEventListener('contextmenu', (e) => { e.preventDefault(); tileMenu(e.clientX, e.clientY, d); }); // ПКМ (десктоп) — меню

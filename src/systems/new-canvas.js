@@ -4,6 +4,7 @@
 import { $, showMenuAt } from '../core/dom.js';
 import * as actions from '../core/actions.js';
 import { attachSwipe, closeSwipe } from '../core/swipe-actions.js';
+import { isDesktop } from '../core/env.js';
 import { t } from '../i18n/index.js';
 import { SIZE_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
@@ -24,7 +25,7 @@ function row(p, customIdx) {
   if (customIdx != null) { const acts = [ // палец — свайп; мышь (десктоп) — ПКМ-меню
     { label: t('menu.edit'), onClick: () => editCustom(customIdx) },
     { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }];
-    attachSwipe(r, { actions: acts });
+    if (!isDesktop()) attachSwipe(r, { actions: acts }); // тач — свайп, десктоп — ПКМ
     r.addEventListener('contextmenu', (e) => { e.preventDefault(); rowMenu(e.clientX, e.clientY, acts); }); }
   return r;
 }

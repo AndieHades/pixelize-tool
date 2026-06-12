@@ -59,6 +59,7 @@ export function mount() {
   c.addEventListener('pointerup', (e) => { if (e.pointerType !== 'touch') up(e); });
   c.addEventListener('pointercancel', (e) => { if (e.pointerType !== 'touch') up(e); });
   c.addEventListener('pointerleave', () => { if (S.hoverPx) { S.hoverPx = null; bus.emit('render'); } });
+  window.addEventListener('pointermove', (e) => { if (S.hoverPx && e.target !== c) { S.hoverPx = null; bus.emit('render'); } }); // курсор кисти виден только над холстом
   c.addEventListener('wheel', (e) => { e.preventDefault(); const r = c.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
     const wx = (mx - S.view.ox) / S.view.zoom, wy = (my - S.view.oy) / S.view.zoom;
     S.view.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, S.view.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
