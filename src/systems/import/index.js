@@ -33,7 +33,8 @@ export function openImport(file) {
     const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
     setImpData(imageData(im, w, h, k < 1));
     $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); // синхронизировать подпись (0 = без квантования)
-    $('imp-ovl').classList.add('on'); impConvert(); };
+    $('imp-ovl').classList.add('on');
+    requestAnimationFrame(impConvert); }; // первый рендер — после раскладки, чтобы превью сразу было полного размера
   im.src = URL.createObjectURL(file);
 }
 
