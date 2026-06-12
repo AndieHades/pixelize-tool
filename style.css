@@ -184,6 +184,11 @@
       max-height: 92vh; overflow-y: auto; animation: up .28s cubic-bezier(.2, .9, .25, 1); }
     @keyframes up { from { transform: translateY(48px); opacity: .5; } }
     .sheet h3 { margin: 2px 0 14px; font-size: 17px; font-weight: 700; }
+    /* конвертер — перетаскиваемое окно по центру (а не «шторка»), без закрытия по фону */
+    #imp-box { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: min(480px, 94vw); max-width: none; border-radius: 18px; animation: pop .18s ease-out; }
+    #imp-grip { cursor: grab; touch-action: none; user-select: none; }
+    #imp-grip:active { cursor: grabbing; }
     .irow { display: flex; align-items: center; gap: 12px; min-height: 44px; }
     .irow label { color: var(--txt2); min-width: 104px; font-size: 13px; }
     .irow b { min-width: 30px; text-align: right; }
@@ -424,10 +429,13 @@
 .gal-actions button.confirm { background: var(--accent); color: #fff; }
 /* круглые иконочные кнопки (＋, ✓) */
 .gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
-.gal-cap { padding: 8px 2px 0; }
-.gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; outline: none; }
+.gal-cap { padding: 8px 2px 0; text-align: center; }
+.gal-cap b { display: block; color: var(--txt); font-size: 15px; font-weight: 600; outline: none; }
 .gal-cap b.editing { background: var(--panel-solid); border-radius: 4px; padding: 1px 4px; }
-.gal-cap small { color: var(--txt2); font-size: 12px; }
+.gal-cap small { display: block; color: var(--txt2); font-size: 11px; margin-top: 1px; }
+/* иконка папки, когда внутри нет превью */
+.gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
+.gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
 .gal-ghost { position: fixed; z-index: 200; width: 120px; pointer-events: none; opacity: .85; transform: translate(-50%,-50%); }
 .gal-tile.dragging { opacity: .35; }
 .gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }

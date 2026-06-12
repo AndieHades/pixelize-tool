@@ -7,6 +7,7 @@ import { snapshot, restore } from '../../core/history.js';
 import { expandCanvas, placeImageLayer } from '../../core/document.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { $, toast, t } from '../../core/dom.js';
+import { floatingWindow } from '../../core/floating-window.js';
 import { imageData, looksPixelArt } from '../../core/image.js';
 import { setImpData, impConvert, applyImport, rotateImp } from './convert.js';
 
@@ -50,6 +51,7 @@ export function mount() {
   $('imp-apply').onclick = applyImport; $('imp-rot').onclick = rotateImp;
   $('imp-cancel').onclick = () => $('imp-ovl').classList.remove('on');
   $('imp-asis').onclick = () => { if (impSrcImg) { $('imp-ovl').classList.remove('on'); actions.run('gallery.hide'); insertPixelImage(impSrcImg); } };
+  floatingWindow($('imp-box'), { grip: $('imp-grip'), storeKey: 'impwin' }); // конвертер — перетаскиваемое окно
   let depth = 0; const show = (on) => $('dropmask').classList.toggle('on', on);
   window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
   window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });

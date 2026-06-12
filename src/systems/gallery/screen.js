@@ -1,11 +1,12 @@
 // Экран галереи: рендер плиток (работы/папки), переименование двойным кликом,
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
-import { $ } from '../../core/dom.js';
+import { $, showMenuAt } from '../../core/dom.js';
 import { t } from '../../i18n/index.js';
 import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, folderPreviews, setOrder, getItem } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 
+const FOLDER_IC = '<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.5h7A2 2 0 0 1 20.5 10v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7.5z"/></svg>';
 let viewFolder = null, selecting = false, onOpen = null, rootTitle = ''; const selected = new Set();
 export const configure = (o) => { onOpen = o.onOpen; rootTitle = $('gal-title').textContent; };
 const gridEl = () => $('gal-grid');
@@ -35,12 +36,23 @@ function renameInline(nm, item) { nm.contentEditable = 'true'; nm.classList.add(
     const v = nm.textContent.trim().slice(0, 40); if (save && v && v !== item.name) await renameItem(item.id, v); render(); };
   nm.onblur = () => fin(true); nm.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); nm.blur(); } else if (e.key === 'Escape') { e.preventDefault(); fin(false); } }; }
 
+function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ по плитке: дублировать / удалить
+  const mk = (label, danger, fn) => { const b = document.createElement('button'); b.textContent = label; if (danger) b.classList.add('danger');
+    b.onclick = async () => { m.classList.remove('on'); await fn(); render(); }; m.appendChild(b); };
+  mk(t('gallery.duplicate'), false, () => duplicateItem(d.id));
+  mk(t('gallery.delete'), true, () => removeItem(d.id));
+  showMenuAt(m, x, y); }
+
 async function tileEl(d) {
   const tile = document.createElement('div'); tile.className = 'gal-tile' + (d.kind === 'folder' ? ' folder' : '') + (selected.has(d.id) ? ' sel' : '');
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
-  if (d.kind === 'folder') { for (const p of await folderPreviews(d.id)) { const im = document.createElement('img'); im.src = p; thumb.appendChild(im); } }
-  else { const im = document.createElement('img'); im.src = d.preview || ''; thumb.appendChild(im); }
+  if (d.kind === 'folder') { const ps = await folderPreviews(d.id); // папка: монтаж превью, иначе иконка папки
+    if (ps.length) for (const p of ps) { const im = document.createElement('img'); im.src = p; im.draggable = false; thumb.appendChild(im); }
+    else { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } }
+  else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; thumb.appendChild(im); }
+  tile.addEventListener('dragstart', (e) => e.preventDefault()); // не запускать нативный драг картинки (мешает своему)
+  tile.addEventListener('contextmenu', (e) => { e.preventDefault(); tileMenu(e.clientX, e.clientY, d); }); // ПКМ (десктоп) — меню
   const chk = document.createElement('div'); chk.className = 'gal-check' + (selected.has(d.id) ? ' on' : ''); thumb.appendChild(chk);
   const cap = document.createElement('div'); cap.className = 'gal-cap';
   const nm = document.createElement('b'); nm.textContent = d.name;
