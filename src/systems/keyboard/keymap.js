@@ -5,7 +5,7 @@
 export const DEFAULT_KEYMAP = {
   // инструменты
   b: 'tool.pencil', e: 'tool.eraser', f: 'tool.fill', i: 'tool.pick',
-  m: 'tool.select', u: 'tool.line', k: 'tool.rect',
+  m: 'tool.select', u: 'tool.line', k: 'tool.rect', q: 'tool.ellipse',
   // переключатели и панели
   l: 'ui.layers', p: 'toggle.pixelPerfect', t: 'toggle.stabilize',
   s: 'toggle.symV', 'shift+s': 'toggle.symH', o: 'effect.outline',

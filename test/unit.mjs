@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { S, MAX_LAYERS, blank, newLayer, G } from '../src/core/state.js';
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
-import { parseKey, blendOver, mergeCells, gridBounds, symmetrizeGrid } from '../src/logic/raster.js';
+import { parseKey, blendOver, mergeCells, gridBounds, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill } from '../src/logic/raster.js';
 import { sampleGrid } from '../src/logic/sample.js';
 import { medianCut, nearest, paletteFromGrid, dedupePal } from '../src/logic/quantize.js';
 import { despeckle, cropEmpty } from '../src/logic/cleanup.js';
@@ -36,6 +36,16 @@ t('raster: blendOver непрозрачный', () => { assert.deepEqual(blendOv
 t('raster: blendOver 50%', () => { assert.deepEqual(blendOver([255, 255, 255], [0, 0, 0, 255], 0.5), [128, 128, 128, 255]); });
 t('raster: mergeCells пусто', () => { assert.equal(mergeCells(null, null, 1), null); assert.deepEqual(mergeCells(null, [9, 9, 9, 255], 1), [9, 9, 9, 255]); });
 t('raster: gridBounds', () => { const g = blank(8, 8); assert.equal(gridBounds(g), null); g[2][5] = [1, 1, 1, 255]; assert.deepEqual(gridBounds(g), { minx: 5, miny: 2, maxx: 5, maxy: 2 }); });
+t('raster: rectFill заливает всю область', () => { const c = new Set(); rectFill(1, 1, 3, 2, (x, y) => c.add(x + ',' + y));
+  assert.equal(c.size, 6); assert.ok(c.has('2,1') && c.has('3,2')); });
+t('raster: ellipseEdges касается всех сторон бокса', () => { const c = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
+  let l = false, r = false, t2 = false, b = false;
+  for (const k of c) { const [x, y] = parseKey(k); if (x === 0) l = true; if (x === 8) r = true; if (y === 0) t2 = true; if (y === 6) b = true;
+    assert.ok(x >= 0 && x <= 8 && y >= 0 && y <= 6); }
+  assert.ok(l && r && t2 && b); });
+t('raster: ellipseFill заполняет середину', () => { const c = new Set(); ellipseFill(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
+  assert.ok(c.has('4,3')); const edge = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => edge.add(x + ',' + y));
+  assert.ok(c.size > edge.size); });
 t('raster: symmetrizeGrid', () => { const g = blank(8, 4); g[0][0] = [1, 2, 3, 255]; symmetrizeGrid(g, true, false); assert.deepEqual(g[0][7], [1, 2, 3, 255]); });
 
 // --- логика импорта/поворота ---

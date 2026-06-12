@@ -3,7 +3,7 @@
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
-import { bres, rectEdges } from '../../logic/raster.js';
+import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
 import { stamp } from './stamp.js';
 import { afterStroke } from './stroke.js';
 
@@ -13,7 +13,8 @@ export function commitLine() {
   const lp = S.linePrev; S.linePrev = null; S.lineStart = null;
   if (!lp) { bus.emit('render'); return; }
   snapshot();
-  if (S.tool === 'rect') rectEdges(lp[0], lp[1], lp[2], lp[3], stamp);
+  if (S.tool === 'rect') (S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], stamp);
+  else if (S.tool === 'ellipse') (S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], stamp);
   else line(lp[0], lp[1], lp[2], lp[3]);
   bus.emit('render'); afterStroke();
 }

@@ -19,6 +19,7 @@ export const S = {
   folders: [], folderSeq: 0, marked: new Set(), selFolder: null, markedFolders: new Set(),
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   tool: 'pencil', sym: false, symH: false,
+  fillShape: { rect: false, ellipse: false }, // ПКМ по иконке фигуры — рисовать залитой
   brushes: BRUSH_DEFAULTS(),
   ppOn: FLAGS_DEFAULT.pixelPerfect, stabOn: FLAGS_DEFAULT.stabilize, stroke: false,
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,

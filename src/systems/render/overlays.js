@@ -3,7 +3,7 @@
 // кисти. Всё выражается из общего S.
 import { S } from '../../core/state.js';
 import { rgb, hexToRgb, eqc } from '../../logic/color.js';
-import { bres, rectEdges } from '../../logic/raster.js';
+import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
 import { symA, symHA, effVis } from '../../core/layers.js';
 import { $ } from '../../core/dom.js';
 import { C } from '../../styles/canvas-colors.js';
@@ -22,8 +22,10 @@ export function drawOverlays(ctx, ox, oy, z) {
       if (sa) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
       if (sha) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
       if (sa && sha) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
-    if (S.tool === 'rect') rectEdges(S.linePrev[0], S.linePrev[1], S.linePrev[2], S.linePrev[3], paint);
-    else bres(S.linePrev[0], S.linePrev[1], S.linePrev[2], S.linePrev[3], paint);
+    const lp = S.linePrev;
+    if (S.tool === 'rect') (S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], paint);
+    else if (S.tool === 'ellipse') (S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], paint);
+    else bres(lp[0], lp[1], lp[2], lp[3], paint);
     ctx.globalAlpha = 1; }
   if (S.outPreview && $('outpop').classList.contains('on')) {
     const oc = hexToRgb($('out-col').value); ctx.fillStyle = rgb(oc); ctx.globalAlpha = (+$('out-op').value / 100) * .8;

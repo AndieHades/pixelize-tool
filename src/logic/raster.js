@@ -35,6 +35,35 @@ export function rectEdges(x0, y0, x1, y1, cb) {
   for (let y = ay + 1; y < by; y++) { cb(ax, y); if (bx !== ax) cb(bx, y); }
 }
 
+// залитый прямоугольник по углам; cb(x,y) на каждой клетке
+export function rectFill(x0, y0, x1, y1, cb) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1), ay = Math.min(y0, y1), by = Math.max(y0, y1);
+  for (let y = ay; y <= by; y++) for (let x = ax; x <= bx; x++) cb(x, y);
+}
+
+// контур эллипса, вписанного в прямоугольник по углам (алгоритм Цингля);
+// cb(x,y) на каждой клетке контура — без дырок
+export function ellipseEdges(x0, y0, x1, y1, cb) {
+  let a = Math.abs(x1 - x0), b = Math.abs(y1 - y0); const b1 = b & 1;
+  let dx = 4 * (1 - a) * b * b, dy = 4 * (b1 + 1) * a * a, err = dx + dy + b1 * a * a;
+  if (x0 > x1) { x0 = x1; x1 += a; }
+  if (y0 > y1) y0 = y1;
+  y0 += (b + 1) >> 1; y1 = y0 - b1;
+  a = 8 * a * a; const bsq = 8 * b * b;
+  do { cb(x1, y0); cb(x0, y0); cb(x0, y1); cb(x1, y1);
+    const e2 = 2 * err;
+    if (e2 <= dy) { y0++; y1--; err += dy += a; }
+    if (e2 >= dx || 2 * err > dy) { x0++; x1--; err += dx += bsq; }
+  } while (x0 <= x1);
+  while (y0 - y1 < b) { cb(x0 - 1, y0); cb(x1 + 1, y0++); cb(x0 - 1, y1); cb(x1 + 1, y1--); } // узкие эллипсы (ширина 1-2)
+}
+
+// залитый эллипс: по контуру собираем границы строк и заливаем пролёты
+export function ellipseFill(x0, y0, x1, y1, cb) { const rows = new Map();
+  ellipseEdges(x0, y0, x1, y1, (x, y) => { const r = rows.get(y); if (!r) rows.set(y, [x, x]); else { if (x < r[0]) r[0] = x; if (x > r[1]) r[1] = x; } });
+  for (const [y, r] of rows) for (let x = r[0]; x <= r[1]; x++) cb(x, y);
+}
+
 // сделать сетку симметричной: зеркалим опорную половину на вторую по осям
 export function symmetrizeGrid(g, v, h) {
   const H = g.length, W = g[0].length;

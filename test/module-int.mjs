@@ -125,7 +125,7 @@ t('keyboard: комбо из события', () => {
 });
 t('keyboard: хоткей запускает действие', () => { let ran = 0; actions.register('tool.pencil', () => ran++);
   assert.ok(kbd.handle(ev('KeyB'))); assert.equal(ran, 1); });
-t('keyboard: несвязанная клавиша игнорится', () => { assert.equal(kbd.handle(ev('KeyQ')), false); });
+t('keyboard: несвязанная клавиша игнорится', () => { assert.equal(kbd.handle(ev('KeyJ')), false); });
 t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
   kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap(); });
 t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
@@ -142,6 +142,15 @@ t('draw: прямоугольник фиксируется в слой', () => {
   S.linePrev = [0, 0, 3, 3]; commitLine();
   assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[3][3] && S.layers[0].grid[0][3] && S.layers[0].grid[3][0]);
   assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая — только контур
+t('draw: залитый прямоугольник (ПКМ-режим)', () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect'; S.fillShape.rect = true;
+  S.linePrev = [0, 0, 3, 3]; commitLine(); S.fillShape.rect = false;
+  assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[2][2]); }); // середина залита
+t('draw: эллипс фиксируется в слой, shift — круг', () => { reset4(); S.active = [7, 7, 7]; S.tool = 'ellipse';
+  const h = toolHandler('ellipse');
+  h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 3, gy: 1, e: { shiftKey: true } }); // shift: бокс станет квадратом 0..3
+  assert.deepEqual(S.linePrev, [0, 0, 3, 3]); h.up({});
+  assert.ok(S.layers[0].grid[0][1] && S.layers[0].grid[3][1]); // контур слева и справа
+  assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая
 t('draw: пипетка берёт цвет в активный', () => { reset4(); S.layers[0].grid[1][1] = [40, 50, 60, 255]; cache.dirtyAll();
   S.tool = 'pick'; stamp(1, 1); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 

@@ -18,7 +18,11 @@ const brush = {
 
 const shape = {
   down({ gx, gy }) { S.lineStart = [gx, gy]; S.linePrev = [gx, gy, gx, gy]; bus.emit('render'); },
-  move({ gx, gy }) { if (S.lineStart) { S.linePrev = [S.lineStart[0], S.lineStart[1], gx, gy]; bus.emit('render'); } },
+  move({ gx, gy, e }) { if (!S.lineStart) return;
+    if (e && e.shiftKey && (S.tool === 'rect' || S.tool === 'ellipse')) { // shift — квадрат/круг
+      const dx = gx - S.lineStart[0], dy = gy - S.lineStart[1], s = Math.max(Math.abs(dx), Math.abs(dy));
+      gx = S.lineStart[0] + (dx < 0 ? -1 : 1) * s; gy = S.lineStart[1] + (dy < 0 ? -1 : 1) * s; }
+    S.linePrev = [S.lineStart[0], S.lineStart[1], gx, gy]; bus.emit('render'); },
   up() { if (S.linePrev) commitLine(); },
 };
 
@@ -26,6 +30,6 @@ const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); bus.emit('render');
 const pick = { down({ gx, gy }) { stamp(gx, gy); } }; // stamp при tool=pick подбирает цвет и ставит карандаш
 
 for (const t of ['pencil', 'eraser', 'adjust']) registerTool(t, brush);
-for (const t of ['line', 'rect']) registerTool(t, shape);
+for (const t of ['line', 'rect', 'ellipse']) registerTool(t, shape);
 registerTool('fill', fill);
 registerTool('pick', pick);
