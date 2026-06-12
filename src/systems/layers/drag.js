@@ -44,7 +44,8 @@ export function dragRow(el, info) {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     const sx = e.clientX, sy = e.clientY, box = $('lay-list'); let started = false, ghost = null;
     const move = (ev) => {
-      if (!started && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 7) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      const ddx = ev.clientX - sx, ddy = ev.clientY - sy; // перетаскивание — по вертикали; горизонталь отдаём свайпу
+      if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) { started = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {}
         const label = info.kind === 'folder' ? el.querySelector('.lname').textContent : (S.marked.size > 1 && S.marked.has(info.idx) ? S.marked.size + ' слоя' : S.layers[info.idx].name);
         ghost = makeGhost(label); place(ghost, ev.clientX, ev.clientY);
         if (info.kind === 'layer' && S.marked.size > 1 && S.marked.has(info.idx)) box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (S.marked.has(+r.dataset.li)) r.classList.add('dragging'); }); }

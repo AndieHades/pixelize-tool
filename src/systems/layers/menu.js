@@ -9,7 +9,7 @@ import { symmetrizeGrid } from '../../logic/raster.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { t } from '../../i18n/index.js';
 import { folderLayers } from './helpers.js';
-import { duplicateLayer, duplicateFolder } from './ops.js';
+import { duplicateLayer, duplicateFolder, toggleLock, toggleAlphaLock, toggleClip, deleteLayerRef } from './ops.js';
 
 let lctxRef = null, renRef = null;
 const targets = () => (!lctxRef ? [] : (lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref])).filter((L) => S.layers.includes(L));
@@ -19,11 +19,12 @@ const curTo = (L) => { const i = S.layers.indexOf(L); if (i >= 0) S.cur = i; };
 export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   const isFolder = kind === 'folder', isLayer = kind === 'layer';
   $('lctx-ung').style.display = isFolder ? '' : 'none'; $('lctx-clip').style.display = isLayer ? '' : 'none';
-  for (const id of ['lctx-select', 'lctx-invert', 'lctx-png-full', 'lctx-png-tight']) $(id).style.display = isLayer ? '' : 'none';
+  for (const id of ['lctx-select', 'lctx-invert', 'lctx-lock', 'lctx-alpha', 'lctx-del', 'lctx-png-full', 'lctx-png-tight']) $(id).style.display = isLayer ? '' : 'none';
   $('lctx-dup').textContent = t(isFolder ? 'menu.dupFolder' : 'menu.dupLayer');
   $('lctx-clear').textContent = t(isFolder ? 'menu.clearFolder' : 'menu.clearLayer');
   $('lctx-rotate').textContent = t(isFolder ? 'menu.transformFolder' : 'menu.transform');
-  if (isLayer) $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + t('menu.clip');
+  if (isLayer) { $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + t('menu.clip');
+    $('lctx-lock').textContent = (ref.lock ? '✓ ' : '') + t('menu.lock'); $('lctx-alpha').textContent = (ref.alphaLock ? '✓ ' : '') + t('menu.alphaLock'); }
   showMenuAt($('lctx'), x, y); }
 
 export function openRename(ref) { renRef = ref; $('ren-name').value = ref.name; $('ren-ovl').classList.add('on'); setTimeout(() => { $('ren-name').focus(); $('ren-name').select(); }, 80); }
@@ -44,7 +45,10 @@ export function mountMenu() {
   $('lctx-glow').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.glow', ts.length > 1 ? ts : ts[0]); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
   $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, 'Яркость/контраст'); };
-  $('lctx-clip').onclick = () => { close(); if (!lctxRef || lctxRef.kind !== 'layer') return; snapshot(); lctxRef.ref.clip = !lctxRef.ref.clip; bus.emit('layers'); bus.emit('render'); };
+  $('lctx-clip').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleClip(lctxRef.ref); };
+  $('lctx-lock').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleLock(lctxRef.ref); };
+  $('lctx-alpha').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleAlphaLock(lctxRef.ref); };
+  $('lctx-del').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') deleteLayerRef(lctxRef.ref); };
   $('lctx-png-full').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, false); };
   $('lctx-png-tight').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') actions.run('export.layer', lctxRef.ref, true); };
   $('lctx-ung').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref; S.layers.forEach((L) => { if (L.fid === f.id) L.fid = null; }); S.folders = S.folders.filter((x) => x !== f); bus.emit('layers'); bus.emit('render'); } };

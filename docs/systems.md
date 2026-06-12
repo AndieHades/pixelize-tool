@@ -62,7 +62,7 @@
 | `systems/import/*` | импортирует картинку (конвертер + вставка) | ✅ | 10-import |
 | `systems/export.js` | выгружает PNG/PSD | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
-| `systems/layers/*` | панель слоёв: список/драг/операции/меню | ✅ | 09-layers-ui |
+| `systems/layers/*` | панель слоёв: список/драг/свайпы/операции/меню | ✅ | 09-layers-ui |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
@@ -104,6 +104,7 @@
 | `config/palette.js` | палитра по умолчанию | ✅ |
 | `config/defaults.js` | дефолты кисти/эффектов/импорта | ✅ |
 | `config/timings.js` | тайминги и пороги жестов | ✅ |
+| `config/layer-actions.js` | набор кнопок свайпа строки слоя (`LAYER_SWIPE_ACTIONS`) | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

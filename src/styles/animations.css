@@ -33,3 +33,7 @@
 /* «Призрак» перетаскивания появляется с лёгким всплытием. */
 @keyframes ghost-in { 0% { transform: translate(-50%, -50%) scale(.7); } 60% { transform: translate(-50%, -50%) scale(1.1); } 100% { transform: translate(-50%, -50%) scale(1); } }
 .gal-ghost { animation: ghost-in var(--anim-fast) var(--ease-pop); }
+
+/* Тап по строке слоя — лёгкая отдача (увеличить), чтобы взаимодействие читалось. */
+.lrow { transition: transform var(--anim-fast) var(--ease-out); }
+.lrow:not(.dragging):active { transform: scale(1.025); }

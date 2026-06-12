@@ -1,16 +1,15 @@
-// Отрисовка списка слоёв и папок: миниатюры, видимость, замок симметрии,
-// мультивыбор, инлайн-переименование. Перетаскивание — drag.js, меню — menu.js.
+// Отрисовка списка слоёв и папок: миниатюры, видимость (галочка), выделение
+// цветом, инлайн-переименование. Свайпы — swipe.js, драг — drag.js, меню — menu.js.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { $ } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
-import { layerFolder, layerSymLocked } from '../../core/layers.js';
 import { layerCanvas } from '../../core/layer-cache.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
+import { attachLayerSwipe } from './swipe.js';
 
-const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>';
-const SYMLOCK = '<svg viewBox="0 0 24 24"><path d="M12 5v14" stroke-dasharray="2.5 2.5"/><path d="M8.5 8.5L5 12l3.5 3.5"/><path d="M15.5 8.5L19 12l-3.5 3.5"/><path class="slash" d="M4 4l16 16"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; // галочка = видимость
 let lastClick = { idx: -1, t: 0 };
 export let layDragSquelch = false;
 export const setSquelch = (v) => { layDragSquelch = v; };
@@ -53,27 +52,29 @@ export function layList() {
       const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id;
       const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
       const nm = nameSpan(f.name);
-      const eye = document.createElement('button'); eye.className = 'eye' + (f.visible ? '' : ' off'); eye.innerHTML = EYE;
-      eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); bus.emit('render'); });
-      fr.append(car, nm, eye);
+      const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK;
+      vis.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); bus.emit('render'); });
+      fr.append(car, nm, vis);
       fr.addEventListener('click', ((fld, sp) => () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + fld.id;
         if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, fld); return; }
         lastClick = { idx: key, t: now }; fld.open = !fld.open; layList(); })(f, nm));
       longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); box.appendChild(fr); }
     if (f && !f.open) continue;
-    const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (f ? ' inf' : ''); row.dataset.li = i;
-    const chk = document.createElement('button'); chk.className = 'lchk' + (S.marked.has(i) ? ' on' : '');
-    chk.addEventListener('click', ((idx) => (ev) => { ev.stopPropagation(); if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); })(i));
-    const nm = nameSpan((L.clip ? '⤵ ' : '') + L.name);
-    const eye = document.createElement('button'); eye.className = 'eye' + (L.visible ? '' : ' off'); eye.innerHTML = EYE;
-    eye.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); bus.emit('render'); });
-    row.append(chk, thumbFor(i), nm, eye);
+    const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (f ? ' inf' : '') + (L.clip ? ' clip' : ''); row.dataset.li = i;
+    const nm = nameSpan(L.name);
+    const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; // галочка = видимость
+    vis.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); bus.emit('render'); });
+    if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
+    row.append(thumbFor(i), nm);
+    if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; row.append(fl); }
+    row.append(vis);
     row.addEventListener('click', ((idx, lay, sp) => (ev) => { if (layDragSquelch) return;
-      if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); return; }
+      if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); return; } // десктоп: ctrl/cmd-клик — выбор
       const now = performance.now();
-      if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; }
-      lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm));
-    longPress(row, (x, y) => openLctx(x, y, 'layer', L)); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
+      if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; } // двойной тап — переименование
+      if (idx === S.cur) { lastClick = { idx, t: now }; openLctx(ev.clientX, ev.clientY, 'layer', lay); return; } // тап по активному — контекстное меню
+      lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // тап — сделать активным
+    longPress(row, (x, y) => openLctx(x, y, 'layer', L)); attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
   }
   const op = $('lay-op'), v = Math.round(S.layers[S.cur].opacity * 100); if (op) { op.value = v; $('lay-opv').textContent = v + '%'; }
 }

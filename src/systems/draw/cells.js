@@ -9,19 +9,23 @@ import { strokeSeen } from './seen.js';
 
 export function setCell(x, y, c) {
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return; // выделение работает как маска
-  const g = G(); g[y][x] = c ? c.slice() : null;
+  const L = S.layers[S.cur]; if (L.lock) return; // замок: слой нельзя трогать
+  const g = G(); const put = (px, py) => { if (L.alphaLock && !g[py][px]) return; g[py][px] = c ? c.slice() : null; }; // альфа-замок: только по существующим
+  put(x, y);
   const mx = S.W - 1 - x, my = S.H - 1 - y, sa = symA(), sha = symHA();
-  if (sa && mx !== x && inSel(mx, y)) g[y][mx] = c ? c.slice() : null;
-  if (sha && my !== y && inSel(x, my)) g[my][x] = c ? c.slice() : null;
-  if (sa && sha && mx !== x && my !== y && inSel(mx, my)) g[my][mx] = c ? c.slice() : null;
+  if (sa && mx !== x && inSel(mx, y)) put(mx, y);
+  if (sha && my !== y && inSel(x, my)) put(x, my);
+  if (sa && sha && mx !== x && my !== y && inSel(mx, my)) put(mx, my);
   markDirty(S.cur);
 }
 
 export function paintCell(x, y, erase) { // кисть с прозрачностью и альфа-смешиванием
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return;
+  const L = S.layers[S.cur]; if (L.lock) return; // замок: слой нельзя трогать
   const br = S.brushes[erase ? 'eraser' : 'pencil'], o = br.op, g = G(), key = y * S.W + x;
-  if (o < 1) { if (strokeSeen.has(key)) return; strokeSeen.add(key); }
   const dst = g[y][x];
+  if (L.alphaLock && !dst) return; // альфа-замок: пустые клетки не трогаем
+  if (o < 1) { if (strokeSeen.has(key)) return; strokeSeen.add(key); }
   if (erase) {
     if (o >= 1) g[y][x] = null;
     else if (dst) { const a1 = ((dst.length > 3 ? dst[3] : 255) / 255) * (1 - o);

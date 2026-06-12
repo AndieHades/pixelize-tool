@@ -10,6 +10,7 @@ import { strokeSeen } from './seen.js';
 
 export function adjustCell(x, y) {
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return;
+  if (S.layers[S.cur].lock) return; // замок: слой нельзя трогать
   const key = y * S.W + x; if (strokeSeen.has(key)) return; strokeSeen.add(key);
   const g = G(), c = g[y][x]; if (!c) return; // только непустые пиксели
   const a = c.length > 3 ? c[3] : 255; let [h, s, v] = rgbToHsv(c[0], c[1], c[2]);

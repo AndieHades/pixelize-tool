@@ -17,7 +17,7 @@ function record() {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H; compositeLayers(c.getContext('2d'));
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
-    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) })),
+    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) })),
     folders: S.folders.map((f) => ({ ...f })), palette: S.palette.map((p) => p.slice()), active: S.active.slice(),
     preview: c.toDataURL('image/png'), order: Date.now(), updated: Date.now() };
 }
@@ -45,7 +45,7 @@ export function newWorkFromImage(w, h, data, name) { blankWork(w, h, name);
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }
 
 export function newWorkFromLayers(w, h, layers, name) { blankWork(w, h, name);
-  S.layers = layers.map((L, i) => ({ name: L.name || ('Слой ' + (i + 1)), grid: L.grid, opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }));
+  S.layers = layers.map((L, i) => ({ name: L.name || ('Слой ' + (i + 1)), grid: L.grid, opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map() }));
   if (!S.layers.length) S.layers = [newLayer('Слой 1', w, h)];
   S.cur = S.layers.length - 1;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }

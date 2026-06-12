@@ -115,15 +115,14 @@
     .pop-head button svg { width: 19px; height: 19px; }
     #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; }
     .lrow { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; cursor: pointer; }
-    .lrow.on { background: rgba(61, 139, 253, .18); outline: 1px solid rgba(61, 139, 253, .5); }
+    .lrow.on { outline: 1px solid rgba(61, 139, 253, .6); }
     .lth { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); flex: none; }
     .lname { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lname.editing { overflow: visible; text-overflow: clip; outline: none; cursor: text;
       background: var(--surface); border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 0 2px var(--accent); -webkit-user-select: text; user-select: text; }
-    .eye { width: 34px; height: 34px; color: var(--txt2); }
-    .eye.off { opacity: .35; }
-    .eye .slash { display: none; }
-    .eye.off .slash { display: block; }
+    .lvis { width: 26px; height: 26px; border-radius: 7px; border: 1.6px solid var(--txt2); color: transparent; flex: none; display: grid; place-items: center; }
+    .lvis.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .lvis svg { width: 15px; height: 15px; stroke-width: 2.4; }
     .symlock { width: 32px; height: 34px; color: var(--accent); flex: none; }
     .symlock svg { width: 19px; height: 19px; }
     .symlock .slash { display: none; }
@@ -468,6 +467,24 @@
 .swipe-act { height: 100%; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; color: #fff;
   background: var(--txt2); cursor: pointer; }
 .swipe-act.danger { background: var(--danger); }
+.swipe-act.on { background: var(--accent); }
+
+/* ── Слои: свайп-строка (фронт несёт фон, кнопки выезжают из-под него) ── */
+.lrow.swipe-row { display: block; padding: 0; }
+.lrow .swipe-front { display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--panel-solid); }
+.lrow.marked .swipe-front { background: rgba(61, 139, 253, .16); }   /* выбранные — тускло */
+.lrow.on .swipe-front { background: rgba(61, 139, 253, .34); }       /* активный — ярче */
+.lrow.swiping-right .swipe-front { box-shadow: inset 3px 0 0 var(--accent); }
+.lrow .swipe-acts { border-radius: 0; }
+.lrow .swipe-act { padding: 0 14px; font-size: 13px; }
+/* обтравочная маска: сдвиг строки вправо + стрелка слева */
+.lrow.clip .swipe-front { padding-left: 26px; }
+.clip-arrow { position: absolute; left: 7px; top: 50%; width: 12px; height: 12px; transform: translateY(-50%);
+  border-left: 2px solid var(--txt2); border-bottom: 2px solid var(--txt2); border-bottom-left-radius: 4px; }
+/* индикатор замка / альфа-замка */
+.lflag { width: 18px; height: 18px; flex: none; opacity: .8; display: grid; place-items: center; font-size: 12px; color: var(--txt2); }
+.lflag[data-k="lk"]::after { content: '🔒'; }
+.lflag[data-k="al"]::after { content: '▦'; }
 
 /* ── Строки настроек (шестерёнка в галерее) ── */
 .set-row { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 12px; cursor: pointer; border-radius: 9px; }

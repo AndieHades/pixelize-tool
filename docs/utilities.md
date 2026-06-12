@@ -47,7 +47,7 @@
 | `floatingWindow(el,opts)` | drag за грип + resize за уголок + localStorage | палитра, боковая панель, окна слоёв/превью/референса |
 | `core/pan-zoom.js` → `attachPanZoom(cv, view, opts)` | пан/зум двумя пальцами и колесом | холст, превью, референс |
 | `markDirty(i)` / `layerCanvas(i)` | кеш слоя в `canvas` и его инвалидация | рендер, миниатюры, экспорт |
-| `core/swipe-actions.js` → `attachSwipe(row, [{label,danger?,onClick}])` | свайп-влево раскрывает кнопки действий; открыта одна строка | «Новый холст» (кастомные размеры), задел под слои |
+| `core/swipe-actions.js` → `attachSwipe(row, {actions:[{label,danger?,on?,onClick}], onSwipeRight?})` | свайп-влево — липкая панель кнопок; свайп-вправо — разовый жест; открыта одна строка | «Новый холст» (правка/удаление), слои (Замок/Дубл./Удалить + выбор) |
 | `core/swipe-actions.js` → `closeSwipe()` | закрыть открытую свайп-строку | при ре-рендере списков |
 
 > На время миграции часть этих помощников ещё живёт в `js/00-util.js`

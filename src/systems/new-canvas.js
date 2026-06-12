@@ -21,9 +21,9 @@ function row(p, customIdx) {
   const nm = document.createElement('span'); nm.className = 'new-name'; nm.textContent = p.label || `${p.w}×${p.h}`;
   const sz = document.createElement('span'); sz.className = 'new-size'; sz.textContent = `${p.w} × ${p.h} px`;
   r.append(nm, sz); r.onclick = () => open(p);
-  if (customIdx != null) attachSwipe(r, [
+  if (customIdx != null) attachSwipe(r, { actions: [
     { label: t('menu.edit'), onClick: () => editCustom(customIdx) },
-    { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }]);
+    { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }] });
   return r;
 }
 

@@ -9,7 +9,7 @@ import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT } from '../config/default
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
 export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
-export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map() });
+export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map() });
 
 const pal0 = defaultPalette();
 // единый контейнер изменяемого состояния

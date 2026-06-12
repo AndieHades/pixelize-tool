@@ -33,8 +33,16 @@ export function doGroup() { let idx = [...S.marked].sort((a, b) => a - b); if (!
 
 export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
-  S.layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
+  S.layers.splice(idx + 1, 0, { name: L.name + ' копия', opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid) });
   S.cur = idx + 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerDup')); }
+
+// переключатели свойств слоя — общие для свайпов и контекстного меню
+export function toggleLock(L) { snapshot(); L.lock = !L.lock; bus.emit('layers'); }
+export function toggleAlphaLock(L) { snapshot(); L.alphaLock = !L.alphaLock; bus.emit('layers'); }
+export function toggleClip(L) { snapshot(); L.clip = !L.clip; bus.emit('layers'); bus.emit('render'); }
+export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
+  const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot(); S.layers.splice(idx, 1);
+  S.cur = Math.min(S.cur, S.layers.length - 1); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.length) return;
   if (S.layers.length + kids.length > MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
