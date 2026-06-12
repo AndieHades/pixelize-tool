@@ -3,10 +3,20 @@
 import { $, t } from '../../core/dom.js';
 import { rgb, rgbToHex } from '../../logic/color.js';
 import { generateTints, generateShades, generateTintShadeScalesForHarmony } from '../../logic/tint-shade.js';
-import { tsg, isSel } from './store.js';
+import { tsg, isSel, allSel, setGroup } from './store.js';
 
 let H = { onTap: () => {}, onAdd: () => {} }; // обработчики из index (выбор / ПКМ-добавление)
 export const setHandlers = (h) => { H = h; };
+
+// Галочка у базового цвета: выбрать/снять всю шкалу (тинты + шейды) целиком.
+function groupCheck(colors) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'tsg-check';
+  if (allSel(colors)) b.classList.add('on');
+  b.title = t('tsg.selectAll');
+  b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+  b.addEventListener('click', () => { setGroup(colors, !allSel(colors)); render(); });
+  return b;
+}
 
 function swatch(c) {
   const b = document.createElement('button'); b.className = 'tsg-sw'; b.type = 'button';
@@ -39,7 +49,8 @@ function harmonyBlocks() {
     const head = document.createElement('div'); head.className = 'tsg-bhead';
     const dot = document.createElement('span'); dot.className = 'tsg-dot'; dot.style.background = rgb(sc.base);
     const hx = document.createElement('span'); hx.textContent = rgbToHex(sc.base).toUpperCase();
-    head.append(dot, hx); block.append(head, scaleRow(sc.tints, t('tsg.tints')), scaleRow(sc.shades, t('tsg.shades')));
+    head.append(dot, hx, groupCheck([...sc.tints, ...sc.shades]));
+    block.append(head, scaleRow(sc.tints, t('tsg.tints')), scaleRow(sc.shades, t('tsg.shades')));
     wrap.appendChild(block);
   }
 }
@@ -56,8 +67,10 @@ function renderSelected() {
 export function render() {
   $('tsg-baseprev').style.background = rgb(tsg.base);
   $('tsg-basehex').textContent = rgbToHex(tsg.base).toUpperCase();
+  const tints = generateTints(tsg.base), shades = generateShades(tsg.base);
   const sc = $('tsg-scales'); sc.innerHTML = '';
-  sc.append(scaleRow(generateTints(tsg.base), t('tsg.tints')), scaleRow(generateShades(tsg.base), t('tsg.shades')));
+  sc.append(scaleRow(tints, t('tsg.tints')), scaleRow(shades, t('tsg.shades')));
+  const bc = $('tsg-basecheck'); bc.innerHTML = ''; bc.appendChild(groupCheck([...tints, ...shades]));
   harmonyBlocks(); renderSelected();
   for (const b of document.querySelectorAll('#tsg-win [data-harm]')) b.classList.toggle('on', b.dataset.harm === tsg.harmony);
 }

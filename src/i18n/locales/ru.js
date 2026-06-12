@@ -70,7 +70,7 @@ export const ru = {
   'gallery.folderName': 'Папка',
   'menu.pickLayer': 'Слой:',
   'palette.none': 'Сохранённых палитр пока нет',
-  'tool.tsg': 'Генератор тинтов и теней', 'tsg.title': 'Тинты и тени', 'tsg.base': 'База', 'tsg.tints': 'Тинты', 'tsg.shades': 'Шейды', 'tsg.harmony': 'Гармония цвета', 'tsg.selected': 'Выбрано', 'harm.complementary': 'Комплементарная', 'harm.split': 'Сплит-комплементарная', 'harm.analogous': 'Аналоговая', 'harm.triadic': 'Триада',
+  'tool.tsg': 'Генератор тинтов и теней', 'tsg.title': 'Тинты и тени', 'tsg.base': 'База', 'tsg.tints': 'Тинты', 'tsg.shades': 'Шейды', 'tsg.harmony': 'Гармония цвета', 'tsg.selected': 'Выбрано', 'tsg.selectAll': 'Выбрать всю шкалу', 'harm.complementary': 'Комплементарная', 'harm.split': 'Сплит-комплементарная', 'harm.analogous': 'Аналоговая', 'harm.triadic': 'Триада',
   'btn.tsgClear': 'Сбросить выбор', 'btn.tsgAdd': 'Добавить в текущую палитру', 'btn.tsgCreate': 'Создать палитру из выбранных', 'toast.selectBaseFirst': 'Сначала выбери базовый цвет', 'toast.nothingSelected': 'Цвета не выбраны', 'toast.tsgAdded': 'Добавлено в палитру: {n}', 'toast.tsgNewPalette': 'Новая палитра: {n} цветов',
   'hint.panels': 'Включай и выключай кнопки. Перетащить между панелями: зажми ПКМ (или долгий тап) и тащи.',
   'hint.adjust': 'Один проход кистью = +1 уровень. Отпусти и проведи снова — сильнее.',

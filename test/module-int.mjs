@@ -301,6 +301,19 @@ t('tint-shade: гармония рисует доп. шкалы по 5', () => {
   assert.equal(blocks.length, 2);
   assert.equal(blocks[0].querySelectorAll('.tsg-sw').length, 10); // 5 тинтов + 5 шейдов
 });
+t('tint-shade: галочка у базы выбирает/снимает всю шкалу целиком', () => {
+  S.palette = [[40, 90, 200]]; S.active = [40, 90, 200];
+  document.getElementById('tsg-btn').click(); // переоткрыть — выбор чистый
+  const check = () => document.querySelector('#tsg-basecheck .tsg-check');
+  check().click(); // тинты(5)+шейды(5), база общая → 9 уникальных
+  assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 9);
+  assert.ok(check().classList.contains('on'));
+  check().click(); // снять всю шкалу
+  assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 0);
+});
+t('tint-shade: кнопки Close в окне нет (закрытие крестиком)', () => {
+  assert.equal(document.getElementById('tsg-close'), null);
+});
 t('tint-shade: addSelected/createNew меняют палитру', () => {
   S.palette = [[1, 2, 3]];
   assert.equal(tsg.addSelectedToCurrentPalette([[9, 9, 9], [1, 2, 3]]), 1); // дубль не добавляется

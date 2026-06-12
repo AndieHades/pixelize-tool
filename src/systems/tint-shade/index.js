@@ -31,7 +31,7 @@ function open() {
 
 export function mount() {
   setHandlers({ onTap: tap, onAdd: addOne });
-  $('tsg-btn').onclick = open; $('tsg-x').onclick = close; $('tsg-close').onclick = close;
+  $('tsg-btn').onclick = open; $('tsg-x').onclick = close;
   for (const b of document.querySelectorAll('#tsg-win [data-harm]'))
     b.onclick = () => { tsg.harmony = tsg.harmony === b.dataset.harm ? null : b.dataset.harm; render(); };
   $('tsg-add').onclick = () => { if (!tsg.sel.length) { toast(t('toast.nothingSelected')); return; }

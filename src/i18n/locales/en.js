@@ -67,7 +67,7 @@ export const en = {
   'gallery.folderName': 'Stack',
   'menu.pickLayer': 'Layer:',
   'palette.none': 'No saved palettes yet',
-  'tool.tsg': 'Tint & Shade generator', 'tsg.title': 'Tint & Shade', 'tsg.base': 'Base', 'tsg.tints': 'Tints', 'tsg.shades': 'Shades', 'tsg.harmony': 'Color harmony', 'tsg.selected': 'Selected',
+  'tool.tsg': 'Tint & Shade generator', 'tsg.title': 'Tint & Shade', 'tsg.base': 'Base', 'tsg.tints': 'Tints', 'tsg.shades': 'Shades', 'tsg.harmony': 'Color harmony', 'tsg.selected': 'Selected', 'tsg.selectAll': 'Select whole scale',
   'harm.complementary': 'Complementary', 'harm.split': 'Split Complementary', 'harm.analogous': 'Analogous', 'harm.triadic': 'Triadic', 'btn.tsgClear': 'Clear Selection',
   'btn.tsgAdd': 'Add Selected To Current Palette', 'btn.tsgCreate': 'Create New Palette From Selected', 'toast.selectBaseFirst': 'Select a base color first', 'toast.nothingSelected': 'No colors selected', 'toast.tsgAdded': 'Added to palette: {n}', 'toast.tsgNewPalette': 'New palette: {n} colors',
   'hint.panels': 'Toggle buttons on/off. To move between panels: hold right-click (or long-press) and drag.',
