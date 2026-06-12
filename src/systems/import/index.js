@@ -33,10 +33,15 @@ export function openImport(file) {
     const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
     setImpData(imageData(im, w, h, k < 1));
     $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); // синхронизировать подпись (0 = без квантования)
+    centerImpBox(); // окно конвертера всегда по центру: не теряется за краем после прежних перетаскиваний
     $('imp-ovl').classList.add('on');
     requestAnimationFrame(impConvert); }; // первый рендер — после раскладки, чтобы превью сразу было полного размера
   im.src = URL.createObjectURL(file);
 }
+
+// вернуть окно конвертера в центр экрана (перебивает сохранённую/съехавшую геометрию)
+function centerImpBox() { const b = $('imp-box'); if (!b) return;
+  b.style.left = '50%'; b.style.top = '50%'; b.style.right = 'auto'; b.style.bottom = 'auto'; b.style.transform = 'translate(-50%, -50%)'; }
 
 export function dropImage(file) { if (!file) return;
   const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
