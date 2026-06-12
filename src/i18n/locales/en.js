@@ -88,7 +88,7 @@ export const en = {
   'toast.nothingTrim': 'Nothing to trim',
   'toast.undone': 'Undone',
   'toast.markLayers': 'Check 2+ layers',
-  'toast.paletteFromImg': 'Palette from image: 16 colors',
+  'toast.paletteFromImg': 'Palette from image: {n} colors',
   'toast.folderDup': 'Folder duplicated',
   'toast.folderCreated': 'Folder created',
   'toast.replaceHint': 'Pixels highlighted — tap a new color',

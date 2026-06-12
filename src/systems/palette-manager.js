@@ -40,6 +40,7 @@ export function mount() {
       const d = c.getContext('2d').getImageData(0, 0, w, h).data, samples = [];
       for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 127) samples.push([d[i], d[i + 1], d[i + 2]]);
       if (!samples.length) { toast(t('toast.imgEmpty')); return; }
-      loadPalette(medianCut(samples, 16)); toast(t('toast.paletteFromImg')); };
+      const pal = medianCut(samples, 16);
+      loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); };
     im.src = URL.createObjectURL(f); };
 }

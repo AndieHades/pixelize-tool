@@ -96,7 +96,7 @@ export const ru = {
   'toast.nothingTrim': 'Обрезать нечего',
   'toast.undone': 'Отменено',
   'toast.markLayers': 'Отметь 2+ слоя галочками',
-  'toast.paletteFromImg': 'Палитра из изображения: 16 цветов',
+  'toast.paletteFromImg': 'Палитра из изображения: {n} цветов',
   'toast.folderDup': 'Папка продублирована',
   'toast.folderCreated': 'Папка создана',
   'toast.replaceHint': 'Пиксели подсвечены — тапни новый цвет в палитре',
