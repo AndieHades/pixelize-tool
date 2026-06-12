@@ -246,6 +246,14 @@ t('selection-float: lift + commit переносит фрагмент', () => { 
   sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
 
+t('layer-cache: висящий фрагмент подмешивается в канвас слоя', () => { resetWH(8, 8);
+  S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.cur = 0; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
+  assert.equal(cache.layerFloatCanvas(0), cache.layerCanvas(0)); // фрагмента нет — кешированный канвас как есть
+  sfloat.liftSelection();
+  assert.notEqual(cache.layerFloatCanvas(0), cache.layerCanvas(0)); // фрагмент в воздухе — слой рисуется с ним
+  sfloat.commitFloat(); S.sel = S.selMask = null;
+  assert.equal(cache.layerFloatCanvas(0), cache.layerCanvas(0)); });
+
 t('selection-float: повторный перенос не стирает подложку', () => { resetWH(8, 8); S.tool = 'select';
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.cur = 0;
   S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null;

@@ -6,7 +6,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { effVis, clipBase } from '../../core/layers.js';
-import { layerCanvas, clippedShift } from '../../core/layer-cache.js';
+import { layerFloatCanvas, clippedShift } from '../../core/layer-cache.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { drawChecker } from './checker.js';
@@ -36,7 +36,7 @@ export function render() {
     if (cb >= 0) { // обтравка: слой и база могут двигаться раздельно — маска едет вместе с базой
       const db = (md && md.idxs.includes(cb)) ? md : null;
       ctx.drawImage(clippedShift(i, cb, di ? di.dx : 0, di ? di.dy : 0, db ? db.dx : 0, db ? db.dy : 0), ox + iox, oy + ioy, W * z, H * z);
-    } else ctx.drawImage(layerCanvas(i), ox + iox + (di ? di.dx * z : 0), oy + ioy + (di ? di.dy * z : 0), W * z, H * z); }
+    } else ctx.drawImage(layerFloatCanvas(i), ox + iox + (di ? di.dx * z : 0), oy + ioy + (di ? di.dy * z : 0), W * z, H * z); }
   ctx.globalAlpha = 1;
   ctx.restore();
   if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();

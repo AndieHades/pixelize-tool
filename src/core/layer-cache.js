@@ -2,6 +2,7 @@
 // markDirty. Здесь же сборка композита — единственная точка композита в проекте.
 import { S } from './state.js';
 import { effVis, clipBase } from './layers.js';
+import { parseKey } from '../logic/raster.js';
 
 let lcs = []; const dirtySet = new Set();
 export const markDirty = (i) => dirtySet.add(i);
@@ -16,6 +17,18 @@ export function layerCanvas(i) { let c = lcs[i];
     x.putImageData(id, 0, 0); dirtySet.delete(i); }
   return c; }
 
+// слой i вместе с «висящим» фрагментом выделения (если фрагмент поднят с него):
+// обтравка и композит видят фрагмент так, будто он уже лежит в слое
+export function layerFloatCanvas(i) {
+  const f = S.selFloat; if (!f || (f.li ?? S.cur) !== i) return layerCanvas(i);
+  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const x = c.getContext('2d'); x.drawImage(layerCanvas(i), 0, 0);
+  const put = (xx, yy, cc) => { if (xx >= 0 && yy >= 0 && xx < S.W && yy < S.H) {
+    x.fillStyle = 'rgba(' + cc[0] + ',' + cc[1] + ',' + cc[2] + ',' + (cc.length > 3 ? cc[3] : 255) / 255 + ')'; x.fillRect(xx, yy, 1, 1); } };
+  if (f.symItems) for (const it of f.symItems) put(it.ax + it.sgnx * f.dx, it.ay + it.sgny * f.dy, it.c);
+  else for (const [k, cc] of f.cells) { const [dx, dy] = parseKey(k); put(f.x + dx, f.y + dy, cc); }
+  return c; }
+
 // слой i, обрезанный по силуэту базового слоя base (обтравочная маска)
 export function clippedCanvas(i, base) { return clippedShift(i, base, 0, 0, 0, 0); }
 
@@ -24,8 +37,8 @@ export function clippedCanvas(i, base) { return clippedShift(i, base, 0, 0, 0, 0
 export function clippedShift(i, base, dix, diy, dbx, dby) {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-  x.drawImage(layerCanvas(i), dix, diy);
-  x.globalCompositeOperation = 'destination-in'; x.drawImage(layerCanvas(base), dbx, dby); return c; }
+  x.drawImage(layerFloatCanvas(i), dix, diy);
+  x.globalCompositeOperation = 'destination-in'; x.drawImage(layerFloatCanvas(base), dbx, dby); return c; }
 
 // итоговый цвет точки (x,y) по всем видимым слоям, либо null
 export function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
@@ -40,5 +53,5 @@ export function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
 export function compositeLayers(x) {
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
     const cb = clipBase(i); if (L.clip && (cb < 0 || !effVis(cb))) continue;
-    x.globalAlpha = L.opacity; x.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerCanvas(i), 0, 0); }
+    x.globalAlpha = L.opacity; x.drawImage(cb >= 0 ? clippedCanvas(i, cb) : layerFloatCanvas(i), 0, 0); }
   x.globalAlpha = 1; }

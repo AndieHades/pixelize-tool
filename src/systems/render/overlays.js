@@ -33,13 +33,7 @@ export function drawOverlays(ctx, ox, oy, z) {
   if (S.glowPreview && $('glowpop').classList.contains('on')) {
     const gc = hexToRgb($('glow-col').value); ctx.fillStyle = rgb(gc);
     for (const p of S.glowPreview) { ctx.globalAlpha = p[2] / 255; ctx.fillRect(ox + p[0] * z, oy + p[1] * z, z, z); } ctx.globalAlpha = 1; }
-  if (S.selFloat) { ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // плавающее выделение клипуется к холсту при перетаскивании
-    if (S.selFloat.symItems) { const sdx = S.selFloat.dx, sdy = S.selFloat.dy;
-      for (const it of S.selFloat.symItems) { ctx.fillStyle = rgb(it.c);
-        ctx.fillRect(ox + (it.ax + it.sgnx * sdx) * z, oy + (it.ay + it.sgny * sdy) * z, z, z); } }
-    else { for (const [k, c] of S.selFloat.cells) { const [dx, dy] = parseKey(k);
-      ctx.fillStyle = rgb(c); ctx.fillRect(ox + (S.selFloat.x + dx) * z, oy + (S.selFloat.y + dy) * z, z, z); } }
-    ctx.restore(); }
+  // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет
   // при перетаскивании слоя инструментом move рамка/маска выделения едет вместе с содержимым
   const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0, mdy = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dy * z : 0;
   if (S.sel && !S.selMask) { const sx = ox + S.sel.x0 * z + mdx, sy = oy + S.sel.y0 * z + mdy, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
