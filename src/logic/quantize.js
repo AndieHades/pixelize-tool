@@ -1,9 +1,9 @@
 // Сведение набора цветов к палитре (median-cut) и подбор ближайшего. Чисто.
 export function medianCut(cols, n) {
-  // Дедупликация: каждый уникальный цвет — равный голос.
-  // Без этого редкие цвета (напр. зелёные глаза) тонут среди тысяч дублей кожи.
+  // Один представитель на куб 16×16×16 в RGB-пространстве.
+  // Сотни почти одинаковых оттенков кожи схлопываются; редкие уникальные (зелёные глаза) — в своих кубах, остаются.
   const umap = new Map();
-  for (const c of cols) { const k = c[0] + ',' + c[1] + ',' + c[2]; if (!umap.has(k)) umap.set(k, [c[0], c[1], c[2]]); }
+  for (const c of cols) { const k = (c[0] >> 4) + ',' + (c[1] >> 4) + ',' + (c[2] >> 4); if (!umap.has(k)) umap.set(k, [c[0], c[1], c[2]]); }
   let bx = [[...umap.values()]];
   const bnd = (b) => { const mn = [255, 255, 255], mx = [0, 0, 0]; for (const c of b) for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], c[k]); mx[k] = Math.max(mx[k], c[k]); } return [mn, mx]; };
   while (bx.length < n) { let bi = -1, bv = -1; bx.forEach((b, i) => { if (b.length < 2) return; const [mn, mx] = bnd(b), v = (mx[0] - mn[0]) + (mx[1] - mn[1]) + (mx[2] - mn[2]); if (v > bv) { bv = v; bi = i; } }); if (bi < 0) break;
