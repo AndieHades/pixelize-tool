@@ -33,7 +33,7 @@ export const ru = {
   'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки
   'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить',
-  'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
+  'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.replaceColor': 'Заменить цвет', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
   'btn.glow': 'Добавить свечение', 'btn.insertAsIs': 'Вставить как есть', 'btn.resetPanels': 'Сбросить панели',
   'btn.fromImage': 'Палитра из изображения…', 'btn.exportPng': 'PNG — картинка с прозрачным фоном',
   'btn.exportPsd': 'PSD — со слоями (Photoshop, Krita)',

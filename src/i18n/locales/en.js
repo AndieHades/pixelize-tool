@@ -27,7 +27,7 @@ export const en = {
   'label.strength': 'Strength per stroke', 'label.current': 'Current', 'label.layerOpacity': 'Opacity', 'label.preview': 'Preview',
   'label.reference': 'Reference', 'label.palette': 'Palette', 'label.paletteN': 'Palette · {n}',
   'btn.apply': 'Apply', 'btn.cancel': 'Cancel', 'btn.close': 'Close', 'btn.save': 'Save',
-  'btn.done': 'Done', 'btn.addPalette': 'Add to palette', 'btn.outline': 'Outline', 'btn.shadow': 'Create shadow',
+  'btn.done': 'Done', 'btn.addPalette': 'Add to palette', 'btn.replaceColor': 'Replace color', 'btn.outline': 'Outline', 'btn.shadow': 'Create shadow',
   'btn.glow': 'Add glow', 'btn.insertAsIs': 'Insert as is', 'btn.resetPanels': 'Reset panels',
   'btn.fromImage': 'Palette from image…', 'btn.exportPng': 'PNG — image with transparent background',
   'btn.exportPsd': 'PSD — with layers (Photoshop, Krita)',

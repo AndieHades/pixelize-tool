@@ -14,7 +14,7 @@ const PANEL_TARGETS = [
   { pop: 'dspop', input: 'ds-col', sw: 'ds-colsw' },
   { pop: 'glowpop', input: 'glow-col', sw: 'glow-colsw' },
 ];
-let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1, replFrom = null;
+let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1;
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
 
@@ -26,7 +26,7 @@ function setOpenPanelColor(c) {
 }
 
 export function setActiveColor(c, pickTool = true) {
-  S.active = c.slice(); $('picker').value = rgbToHex(S.active); refreshActive();
+  S.active = c.slice(); refreshActive();
   bus.emit('color-sync'); buildPalette();
   if (pickTool) setTool('pencil');
 }
@@ -63,7 +63,7 @@ export function buildPalette() {
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
   add.addEventListener('click', () => { if (S.palette.some((p) => eqc(p, S.active))) { toast(t('toast.colorExists')); return; }
     S.palette.push(S.active.slice()); buildPalette(); toast(t('toast.colorAdded')); });
-  add.addEventListener('contextmenu', (e) => { e.preventDefault(); $('picker').click(); });
+  add.addEventListener('contextmenu', (e) => { e.preventDefault(); actions.run('color.pick'); });
   box.appendChild(add);
 }
 
@@ -91,9 +91,7 @@ export function mount() {
     if (act === 'copy') { const h = rgbToHex(col).toUpperCase(); copyText(h).then(() => toast(t('toast.copied', { s: h }))); }
     else if (act === 'delete') { S.palette.splice(ctxIdx, 1); buildPalette(); toast(t('toast.colorRemoved')); }
     else if (act === 'select') actions.run('selection.byColor', col);
-    else if (act === 'replace') { const r = $('repl'); replFrom = col.slice(); r.value = rgbToHex(col); r.click(); } });
-  $('repl').addEventListener('change', (e) => { if (!replFrom) return; const from = replFrom; replFrom = null; actions.run('recolor.all', from, hexToRgb(e.target.value)); });
-  $('picker').onchange = (e) => { if (S.replaceMode) { const from = S.replaceMode.from; S.replaceMode = null; actions.run('recolor.all', from, hexToRgb(e.target.value)); } else addColor(e.target.value); };
+    else if (act === 'replace') actions.run('color.replace', col); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
   refreshActive(); buildPalette();
 }

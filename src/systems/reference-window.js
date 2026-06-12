@@ -30,7 +30,7 @@ function flipRef() { if (!refSrc) return; const c = document.createElement('canv
 function pickFromRef(e) { if (!refSrc) return; const cv = rcv(), dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
   try { const px = cv.getContext('2d').getImageData(Math.round((e.clientX - r.left) * dpr), Math.round((e.clientY - r.top) * dpr), 1, 1).data;
     if (px[3] > 10) { const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
-      actions.run('palette.add', hex); $('picker').value = hex; toast(t('toast.colorFromRef')); } } catch (err) {} }
+      actions.run('palette.add', hex); toast(t('toast.colorFromRef')); } } catch (err) {} }
 
 export function mount() {
   $('refbtn').onclick = () => toggleRef(); $('ref-x').onclick = () => toggleRef(false);

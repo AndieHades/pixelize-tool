@@ -1,5 +1,8 @@
 // Плавающее окно: перетаскивание за грип + ресайз за уголок + сохранение
 // геометрии. Один помощник на палитру, боковую панель, окна слоёв/превью/референса.
+let zTop = 30; // общий счётчик: окно, за которое взялись, поднимается над остальными
+const bringToFront = (el) => { el.style.zIndex = ++zTop; };
+
 export function floatingWindow(el, opts = {}) {
   const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize } = opts;
   const place = (l, t) => {
@@ -14,9 +17,10 @@ export function floatingWindow(el, opts = {}) {
   if (storeKey) try { const s = JSON.parse(localStorage.getItem(storeKey));
     if (s && s.l != null) { place(s.l, s.t); if (s.w) applySize(s.w, s.h); } } catch (e) {}
 
+  el.addEventListener('pointerdown', () => bringToFront(el), true); // любой тык по окну — наверх стопки
   let d = null;
   grip.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
-    grip.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+    grip.setPointerCapture(e.pointerId); bringToFront(el); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
   grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
   const dEnd = () => { if (d) { d = null; save(); } };
   grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
