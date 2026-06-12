@@ -9,7 +9,7 @@ export function attachDrag(tile, id, ctx) {
   tile.addEventListener('pointerdown', (e) => {
     if (ctx.selecting() || (e.pointerType === 'mouse' && e.button)) return;
     const sx = e.clientX, sy = e.clientY; let started = false, ghost = null, dwell = null, overId = null, stackTo = null, onBack = false;
-    const grid = ctx.gridEl(), back = $('gal-back');
+    const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
     const hold = setTimeout(() => begin(sx, sy), e.pointerType === 'touch' ? 250 : 1e9); // тач: долгий тап; мышь: по сдвигу
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       tile.classList.add('dragging'); ghost = dragGhost(tile, 120); ghost.move(x, y); }
@@ -24,8 +24,9 @@ export function attachDrag(tile, id, ctx) {
       const tg = el && el.closest ? el.closest('.gal-tile') : null;
       const tid = tg && tg !== tile ? tg.dataset.id : null;
       if (tid !== overId) { overId = tid; clearTimeout(dwell); if (stackTo) { stackTo = null; } clearMarks();
-        if (tg && tg !== tile) { tg.classList.add('drop-before');
-          dwell = setTimeout(() => { tg.classList.remove('drop-before'); tg.classList.add('drop-into'); stackTo = tg; }, 450); } }
+        if (tg && tg !== tile) { tg.classList.add('drop-before'); // папку на файл не вкладываем — только переставляем
+          if (!(dragKind === 'folder' && tg.dataset.kind !== 'folder'))
+            dwell = setTimeout(() => { tg.classList.remove('drop-before'); tg.classList.add('drop-into'); stackTo = tg; }, 450); } }
     };
     const up = (ev) => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up);
