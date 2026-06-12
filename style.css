@@ -154,6 +154,10 @@
     /* Единый призрак перетаскивания (плитки, слои) — клон объекта под курсором. */
     .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: .92;
       transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 14px 38px rgba(0, 0, 0, .5); border-radius: 12px; }
+    /* перестановка кнопок панелей (как цвета в палитре) */
+    .reorder-ghost { position: fixed; z-index: 300; pointer-events: none; opacity: .9;
+      transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+    .pbtn.reordering { opacity: .3; }
 
     /* ---- слайдеры ---- */
     input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 28px; background: transparent; }
