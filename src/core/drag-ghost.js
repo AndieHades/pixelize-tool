@@ -7,6 +7,7 @@ export function dragGhost(el, width) {
   for (const c of ['dragging', 'lifting', 'sel', 'on', 'marked', 'swiping-right', 'drop-into', 'drop-before', 'drop-above']) g.classList.remove(c);
   g.querySelectorAll('.swipe-acts').forEach((n) => n.remove()); // кнопки свайпа в призраке не нужны
   const f = g.querySelector('.swipe-front'); if (f) f.style.transform = ''; // сбросить возможное смещение свайпа
+  g.style.margin = '0'; // призрак центрируется под курсором — снять отступ вложенности строки
   if (width) g.style.width = Math.round(width) + 'px';
   document.body.appendChild(g);
   return { move: (x, y) => { g.style.left = x + 'px'; g.style.top = y + 'px'; }, remove: () => g.remove() };

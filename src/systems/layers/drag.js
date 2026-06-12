@@ -78,7 +78,9 @@ export function dragRow(el, info) {
       if (ghost) ghost.remove(); box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
       const into = $('lay-list').querySelector('.drop-into'), above = $('lay-list').querySelector('.drop-above'), target = into || above;
       $('lay-list').querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
-      if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0); if (target) layDrop(info, target, !!into); };
+      if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0);
+      if (target) { layDrop(info, target, !!into); // приземление: проиграть «вставку» на новой строке активного слоя
+        const r = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]'); if (r) { r.classList.add('dropped'); r.addEventListener('animationend', () => r.classList.remove('dropped'), { once: true }); } } };
     el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   });
 }
