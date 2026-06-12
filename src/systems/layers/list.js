@@ -81,7 +81,8 @@ function folderRow(f, depth) {
 }
 
 function layerRow(L, i, depth) {
-  const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
+  const isCurPrim = i === S.cur && !S.selFolder; // полный синий только если папка не «активна»
+  const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : '') + ((S.marked.has(i) || (i === S.cur && S.selFolder)) ? ' marked' : '') + (L.clip ? ' clip' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name);
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость

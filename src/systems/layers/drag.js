@@ -59,10 +59,10 @@ export function dragRow(el, info) {
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
     let started = false, ghost = null, dropRow = null, holdTimer = null;
 
-    // Слои реагируют только вставкой между (drop-above). Папка принимает внутрь
-    // (drop-into) лишь по выдержке HOLD, пока курсор стоит точно над ней.
+    // Gap (drop-above) открывается сразу на любой строке. Над папкой после
+    // FOLDER_HOLD_MS gap уступает место drop-into (синий, слои падают внутрь).
     const setDrop = (row) => {
-      if (row === dropRow) return; // та же цель — ничего не трогаем (нет дрожи)
+      if (row === dropRow) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
       if (dropRow) dropRow.classList.remove('drop-above', 'drop-into');
       dropRow = row; if (!row) return;
