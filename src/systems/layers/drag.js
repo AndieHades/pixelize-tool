@@ -87,15 +87,20 @@ export function dragRow(el, info) {
           box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); });
       }
       if (!started) return;
-      ghost.move(ev.clientX, ev.clientY);
-      const t = document.elementFromPoint(ev.clientX, ev.clientY);
+      // призрак нельзя выносить за пределы панели слоёв — иначе он «зависает»;
+      // зажимаем и его, и точку попадания в границы окна #lay-pop
+      const pr = ($('lay-pop') || box).getBoundingClientRect();
+      const gx = Math.max(pr.left + 8, Math.min(ev.clientX, pr.right - 8));
+      const gy = Math.max(pr.top + 8, Math.min(ev.clientY, pr.bottom - 8));
+      ghost.move(gx, gy);
+      const t = document.elementFromPoint(gx, gy);
       const row = t && t.closest ? t.closest('#lay-list .lrow:not(.dragging)') : null;
       if (!row) return; // над открытым зазором/пустотой — держим текущую цель, не дёргаемся
       setDrop(row);
     };
 
     const up = () => {
-      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
       if (holdTimer) clearTimeout(holdTimer);
       if (ghost) ghost.remove();
       box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
@@ -106,6 +111,6 @@ export function dragRow(el, info) {
         const dropped = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]');
         if (dropped) { dropped.classList.add('dropped'); dropped.addEventListener('animationend', () => dropped.classList.remove('dropped'), { once: true }); } }
     };
-    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
   });
 }
