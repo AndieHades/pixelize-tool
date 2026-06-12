@@ -13,7 +13,7 @@ import { toggleLock, toggleAlphaLock } from './ops.js';
 
 const INDENT = 16; // отступ на уровень вложенности
 
-const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; // галочка = видимость
+const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/><path class="slash" d="M4 4l16 16"/></svg>'; // глаз = видимость
 let lastClick = { idx: -1, t: 0 };
 export let layDragSquelch = false;
 export const setSquelch = (v) => { layDragSquelch = v; };
@@ -47,17 +47,17 @@ function nameSpan(text) { const nm = document.createElement('span'); nm.classNam
   nm.addEventListener('pointerdown', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
   nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); }); return nm; }
 
-// галочка видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
+// глаз видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
 function wireVis(vis, obj) {
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());
-  vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('on', obj.visible); bus.emit('render'); });
+  vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('off', !obj.visible); bus.emit('render'); });
 }
 
 function folderRow(f, depth) {
   const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
   const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   const nm = nameSpan(f.name);
-  const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, f);
+  const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
   fr.append(car, nm, vis);
   fr.addEventListener('click', () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + f.id;
     if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, f); return; }
@@ -69,7 +69,7 @@ function layerRow(L, i, depth) {
   const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name);
-  const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, L); // галочка = видимость
+  const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
   if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
   row.append(thumbFor(i), nm);
   if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
