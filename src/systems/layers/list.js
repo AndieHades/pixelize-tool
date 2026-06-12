@@ -44,6 +44,12 @@ function nameSpan(text) { const nm = document.createElement('span'); nm.classNam
   nm.addEventListener('pointerdown', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
   nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); }); return nm; }
 
+// галочка видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
+function wireVis(vis, obj) {
+  vis.addEventListener('pointerdown', (e) => e.stopPropagation());
+  vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('on', obj.visible); bus.emit('render'); });
+}
+
 export function layList() {
   S.folders = S.folders.filter((f) => S.layers.some((L) => L.fid === f.id));
   const box = $('lay-list'); if (!box) return; box.innerHTML = ''; const doneF = new Set();
@@ -53,8 +59,7 @@ export function layList() {
       const fr = document.createElement('div'); fr.className = 'lrow frow'; fr.dataset.fid = f.id;
       const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
       const nm = nameSpan(f.name);
-      const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK;
-      vis.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.visible = !f.visible; layList(); bus.emit('render'); });
+      const vis = document.createElement('button'); vis.className = 'lvis' + (f.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, f);
       fr.append(car, nm, vis);
       fr.addEventListener('click', ((fld, sp) => () => { if (layDragSquelch) return; const now = performance.now(), key = 'f' + fld.id;
         if (lastClick.idx === key && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, fld); return; }
@@ -63,8 +68,7 @@ export function layList() {
     if (f && !f.open) continue;
     const row = document.createElement('div'); row.className = 'lrow' + (i === S.cur ? ' on' : '') + (S.marked.has(i) ? ' marked' : '') + (f ? ' inf' : '') + (L.clip ? ' clip' : ''); row.dataset.li = i;
     const nm = nameSpan(L.name);
-    const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; // галочка = видимость
-    vis.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.visible = !L.visible; layList(); bus.emit('render'); });
+    const vis = document.createElement('button'); vis.className = 'lvis' + (L.visible ? ' on' : ''); vis.innerHTML = CHECK; wireVis(vis, L); // галочка = видимость
     if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; row.append(ar); } // обтравка: стрелка + сдвиг строки
     row.append(thumbFor(i), nm);
     if (L.lock || L.alphaLock) { const fl = document.createElement('span'); fl.className = 'lflag'; fl.dataset.k = L.lock ? 'lk' : 'al'; // клик по замку — снять
@@ -75,7 +79,8 @@ export function layList() {
       const now = performance.now();
       if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; } // двойной клик — переименование
       lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // клик — только сделать активным; меню — только ПКМ/долгий тап
-    longPress(row, (x, y) => openLctx(x, y, 'layer', L)); attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
+    longPress(row, (x, y) => { if (S.cur !== i) { S.cur = i; layList(); } openLctx(x, y, 'layer', L); }); // ПКМ/долгий тап: сделать активным + меню
+    attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   if ($('lay-alpha')) { $('lay-alpha').classList.toggle('on', !!cur.alphaLock); $('lay-clip').classList.toggle('on', !!cur.clip); }
