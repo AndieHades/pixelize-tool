@@ -24,6 +24,6 @@ function build() { const m = $('setmenu'); m.innerHTML = '';
   m.appendChild(langRow);
 }
 
-function openSettings() { build(); const r = $('gal-settings').getBoundingClientRect(); showMenuAt($('setmenu'), r.right - 60, r.bottom + 6); }
+function openSettings() { build(); const r = $('gal-settings').getBoundingClientRect(); showMenuAt($('setmenu'), r.left + r.width / 2, r.bottom + 2); }
 
 export function mount() { $('gal-settings').onclick = openSettings; }

@@ -43,7 +43,7 @@
 | `compositeLayers(ctx)` | композит видимых слоёв (с обтравкой) в контекст | экспорт PNG, PSD, окно-превью, рендер |
 | `saveFile(blob,name,mime,desc,overlay?)` | диалог→share→скачивание | весь экспорт |
 | `placeImageLayer(w,h,data)` | RGBA-картинка новым слоем по центру | импорт, «слой из картинки» |
-| `showMenuAt(el,x,y,above?)` | позиционирование всплывающего меню в пределах экрана | все контекстные меню |
+| `showMenuAt(el,ax,ay,above?)` | меню-бабл у якоря (ax,ay) с треугольником-указателем; единый вид всех меню | все контекстные меню (ctx/lctx/cctx/setmenu) |
 | `floatingWindow(el,opts)` | drag за грип + resize за уголок + localStorage | палитра, боковая панель, окна слоёв/превью/референса |
 | `core/pan-zoom.js` → `attachPanZoom(cv, view, opts)` | пан/зум двумя пальцами и колесом | холст, превью, референс |
 | `markDirty(i)` / `layerCanvas(i)` | кеш слоя в `canvas` и его инвалидация | рендер, миниатюры, экспорт |

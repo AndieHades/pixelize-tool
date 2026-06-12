@@ -250,6 +250,11 @@
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }
     .cctx-head { color: var(--txt2); font-size: 12px; padding: 6px 12px 2px; }
+    /* Треугольник-указатель меню-бабла (единый для всех меню). */
+    .menu-arrow { position: absolute; width: 12px; height: 12px; background: var(--panel-solid);
+      border: 1px solid var(--line); transform: rotate(45deg); pointer-events: none; }
+    .menu-arrow.up { top: -7px; border-right: none; border-bottom: none; }
+    .menu-arrow.down { bottom: -7px; border-left: none; border-top: none; }
     .sw.drop { box-shadow: 0 0 0 2px var(--accent); }
     .sw.plus { background: transparent; border: 1.5px dashed var(--txt2); color: var(--txt2); display: grid; place-items: center; }
     .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }

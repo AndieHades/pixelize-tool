@@ -2,12 +2,12 @@
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
 import { $ } from '../../core/dom.js';
 import { t } from '../../i18n/index.js';
-import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, folderPreviews, setOrder } from './store.js';
+import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, folderPreviews, setOrder, getItem } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 
-let viewFolder = null, selecting = false, onOpen = null; const selected = new Set();
-export const configure = (o) => { onOpen = o.onOpen; };
+let viewFolder = null, selecting = false, onOpen = null, rootTitle = ''; const selected = new Set();
+export const configure = (o) => { onOpen = o.onOpen; rootTitle = $('gal-title').textContent; };
 const gridEl = () => $('gal-grid');
 export const isSelecting = () => selecting;
 
@@ -64,6 +64,9 @@ async function tileEl(d) {
 
 export async function render() { const grid = gridEl(); grid.innerHTML = '';
   $('gal-back').style.display = viewFolder ? '' : 'none';
+  const f = viewFolder ? await getItem(viewFolder) : null; // внутри папки — её имя в заголовке + назад
+  $('gal-title').textContent = f ? f.name : rootTitle;
+  $('gal-title').onclick = viewFolder ? goBack : null; $('gal-title').style.cursor = viewFolder ? 'pointer' : '';
   const items = (await childrenOf(viewFolder)).sort((a, b) => (b.order || b.updated) - (a.order || a.updated));
   for (const d of items) grid.appendChild(await tileEl(d)); }
 

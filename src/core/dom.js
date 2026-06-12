@@ -19,11 +19,17 @@ export async function copyText(t) {
   }
 }
 
-// показать всплывающее меню m у точки (x, y), удерживая в пределах экрана
-export function showMenuAt(m, x, y, above = false) {
+// Всплывающее меню-бабл m у якоря (ax, ay): центрируем по горизонтали на якоре,
+// рисуем треугольник, указывающий на точку вызова. Единый вид для всех меню.
+export function showMenuAt(m, ax, ay, above = false) {
   m.style.visibility = 'hidden'; m.classList.add('on');
-  requestAnimationFrame(() => { const r = m.getBoundingClientRect();
-    m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
-    m.style.top = Math.max(8, Math.min(above ? y - r.height - 10 : y, innerHeight - r.height - 8)) + 'px';
+  let arrow = m.querySelector(':scope > .menu-arrow');
+  if (!arrow) { arrow = document.createElement('div'); arrow.className = 'menu-arrow'; m.appendChild(arrow); }
+  requestAnimationFrame(() => { const r = m.getBoundingClientRect(), gap = 10;
+    const left = Math.max(8, Math.min(ax - r.width / 2, innerWidth - r.width - 8));
+    const top = Math.max(8, Math.min(above ? ay - r.height - gap : ay + gap, innerHeight - r.height - 8));
+    m.style.left = left + 'px'; m.style.top = top + 'px';
+    arrow.className = 'menu-arrow ' + (above ? 'down' : 'up');
+    arrow.style.left = (Math.max(16, Math.min(ax - left, r.width - 16)) - 6) + 'px';
     m.style.visibility = ''; });
 }
