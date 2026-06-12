@@ -29,7 +29,7 @@ export const ru = {
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
   'label.reference': 'Референс', 'label.palette': 'Палитра',
   // кнопки
-  'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить', 'btn.create': 'Создать документ',
+  'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить',
   'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
   'btn.glow': 'Добавить свечение', 'btn.insertAsIs': 'Вставить как есть', 'btn.resetPanels': 'Сбросить панели',
   'btn.fromImage': 'Палитра из изображения…', 'btn.exportPng': 'PNG — картинка с прозрачным фоном',

@@ -14,7 +14,7 @@ const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || [
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
 let editIdx = null; // null — добавление нового; число — правка кастомного по индексу
 
-function open(p) { $('new-ovl').classList.remove('on'); $('gallery').classList.remove('on'); newWork(p.w, p.h, p.label); }
+function open(p) { closeEditor(); $('new-ovl').classList.remove('on'); $('gallery').classList.remove('on'); newWork(p.w, p.h); }
 
 function row(p, customIdx) {
   const r = document.createElement('div'); r.className = 'new-row';
@@ -31,23 +31,27 @@ function buildList() { const box = $('new-list'); if (!box) return; closeSwipe()
   SIZE_PRESETS.forEach((p) => box.appendChild(row(p, null)));
   custom().forEach((p, i) => box.appendChild(row(p, i))); }
 
-function showCustom(on) { $('new-custom').classList.toggle('on', on); }
-function editCustom(i) { editIdx = i; const c = custom()[i]; if (!c) return; $('new-w').value = c.w; $('new-h').value = c.h; showCustom(true); $('new-w').focus(); }
+// компактное окошко правки размера (имя + ширина/высота + ✓/отмена)
+function openEditor(name, w, h) { $('new-name-in').value = name; $('new-w').value = w; $('new-h').value = h;
+  $('new-ovl').classList.add('editing'); setTimeout(() => { $('new-w').focus(); $('new-w').select(); }, 30); }
+function closeEditor() { $('new-ovl').classList.remove('editing'); }
+function editCustom(i) { editIdx = i; const c = custom()[i]; if (!c) return; openEditor(c.label || `${c.w}×${c.h}`, c.w, c.h); }
 function removeCustom(i) { const c = custom(); c.splice(i, 1); saveCustom(c); buildList(); }
 
 function create() { const w = parseInt($('new-w').value, 10), h = parseInt($('new-h').value, 10);
   if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) return;
-  const c = custom(), entry = { w, h, label: `${w}×${h}` };
-  if (editIdx != null) { c[editIdx] = entry; saveCustom(c); editIdx = null; showCustom(false); buildList(); return; } // правка — обновить и остаться
-  if (!SIZE_PRESETS.some((p) => p.w === w && p.h === h) && !c.some((p) => p.w === w && p.h === h)) { c.push(entry); saveCustom(c); }
-  open(entry);
+  const label = ($('new-name-in').value.trim() || `${w}×${h}`).slice(0, 24);
+  const c = custom(), entry = { w, h, label };
+  if (editIdx != null) { c[editIdx] = entry; saveCustom(c); editIdx = null; closeEditor(); buildList(); return; } // правка — обновить и остаться в списке
+  c.push(entry); saveCustom(c); open(entry); // добавление — сохранить пресет и сразу создать холст
 }
 
 export function mount() {
-  const openDlg = () => { editIdx = null; showCustom(false); buildList(); $('new-ovl').classList.add('on'); };
+  const openDlg = () => { editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on'); };
   $('new').onclick = openDlg; $('gal-new').onclick = openDlg;
   actions.register('doc.new', openDlg);
-  $('new-add').onclick = () => { editIdx = null; $('new-w').value = 32; $('new-h').value = 32; showCustom(true); $('new-w').focus(); };
-  $('new-cancel').onclick = () => { editIdx = null; showCustom(false); };
+  $('new-add').onclick = () => { editIdx = null; openEditor('32×32', 32, 32); };
+  $('new-cancel').onclick = () => { editIdx = null; closeEditor(); };
   $('new-create').onclick = create;
+  ['new-w', 'new-h', 'new-name-in'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); create(); } }));
 }

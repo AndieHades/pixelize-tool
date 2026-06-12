@@ -437,8 +437,24 @@
 .new-name { color: var(--txt); font-size: 16px; }
 .new-size { margin-left: auto; color: var(--txt2); font-size: 13px; background: var(--surface); padding: 4px 10px; border-radius: 8px; }
 .new-row:hover .new-name { color: var(--accent); }
-.new-custom { display: none; border-top: 1px solid var(--line); padding: 12px 16px; }
-.new-custom.on { display: block; }
+/* компактное окошко создания/правки размера (имя + ширина/высота + ✓/отмена) */
+#new-ovl.editing .new-panel { display: none; }
+.size-edit { display: none; width: min(420px, 92vw); flex-direction: column; overflow: hidden;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+#new-ovl.editing .size-edit { display: flex; }
+.se-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.se-title { flex: 1; min-width: 0; text-align: center; background: transparent; border: none; outline: none;
+  color: var(--txt); font-size: 18px; font-weight: 700; }
+.se-title:focus { background: var(--surface); border-radius: 8px; }
+.se-btn { color: var(--txt2); font-size: 14px; padding: 6px 8px; flex: none; }
+.se-ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 17px; flex: none; }
+.se-body { padding: 4px 0 8px; }
+.se-row { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
+.se-row:first-child { border-top: none; }
+.se-row > span { color: var(--txt); font-size: 15px; }
+.se-row input { margin-left: auto; width: 96px; text-align: right; padding: 7px 10px; font-size: 15px;
+  color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; }
+.se-row em { color: var(--txt2); font-style: normal; font-size: 13px; width: 16px; }
 
 /* ── Свайп-действия по строке (переиспользуемо: новый холст, слои) ── */
 .swipe-row { position: relative; overflow: hidden; }

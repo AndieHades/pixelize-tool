@@ -276,10 +276,16 @@
     <header class="new-head"><h3 data-i18n="dialog.newCanvas">Новый холст</h3>
       <button id="new-add" class="gal-round" data-i18n-title="new.addCustom" title="Свой размер">＋</button></header>
     <div id="new-list" class="new-list"></div>
-    <div id="new-custom" class="new-custom">
-      <div class="irow"><label data-i18n="label.width">Ширина</label><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" />
-        <label style="min-width:auto" data-i18n="label.height">Высота</label><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /></div>
-      <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="new-create" data-i18n="btn.create" class="txtbtn primary">Создать</button></div>
+  </div>
+  <div id="new-custom" class="size-edit">
+    <header class="se-top">
+      <button id="new-cancel" class="se-btn" data-i18n="btn.cancel">Отмена</button>
+      <input id="new-name-in" class="se-title" maxlength="24" />
+      <button id="new-create" class="se-ok gal-round" title="OK">✓</button>
+    </header>
+    <div class="se-body">
+      <div class="se-row"><span data-i18n="label.width">Ширина</span><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
+      <div class="se-row"><span data-i18n="label.height">Высота</span><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
     </div>
   </div></div>
 

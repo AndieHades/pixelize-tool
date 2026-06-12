@@ -23,7 +23,7 @@ export const en = {
   'label.range': 'Range', 'label.intensity': 'Intensity', 'label.offsetX': 'Offset X', 'label.offsetY': 'Offset Y',
   'label.strength': 'Strength per stroke', 'label.current': 'Current', 'label.layerOpacity': 'Opacity', 'label.preview': 'Preview',
   'label.reference': 'Reference', 'label.palette': 'Palette',
-  'btn.apply': 'Apply', 'btn.cancel': 'Cancel', 'btn.close': 'Close', 'btn.save': 'Save', 'btn.create': 'Create document',
+  'btn.apply': 'Apply', 'btn.cancel': 'Cancel', 'btn.close': 'Close', 'btn.save': 'Save',
   'btn.done': 'Done', 'btn.addPalette': 'Add to palette', 'btn.outline': 'Outline', 'btn.shadow': 'Create shadow',
   'btn.glow': 'Add glow', 'btn.insertAsIs': 'Insert as is', 'btn.resetPanels': 'Reset panels',
   'btn.fromImage': 'Palette from image…', 'btn.exportPng': 'PNG — image with transparent background',
