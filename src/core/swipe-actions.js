@@ -15,8 +15,9 @@ export function attachSwipe(row, opts) {
   const reset = () => { front._open = false; front.style.transform = ''; row.classList.remove('swiping-right'); if (openFront === front) openFront = null; };
   let acts = null;
   if (actions.length) { acts = document.createElement('div'); acts.className = 'swipe-acts';
-    for (const b of actions) { const el = document.createElement('button'); el.className = 'swipe-act' + (b.danger ? ' danger' : '') + (b.on ? ' on' : '');
-      el.textContent = b.label; el.addEventListener('click', (e) => { e.stopPropagation(); reset(); b.onClick(); }); acts.appendChild(el); }
+    for (const b of actions) { const el = document.createElement('button'); el.className = 'swipe-act' + (b.danger ? ' danger' : '') + (b.on ? ' on' : '') + (b.icon ? ' icon' : '');
+      if (b.icon) { el.innerHTML = b.icon; el.title = b.label; } else el.textContent = b.label;
+      el.addEventListener('click', (e) => { e.stopPropagation(); reset(); b.onClick(); }); acts.appendChild(el); }
     row.append(acts); }
   row.append(front);
 

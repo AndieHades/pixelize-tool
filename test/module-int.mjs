@@ -43,6 +43,7 @@ const { FORMATS } = await import('../src/systems/export/formats.js');
 const imp = await import('../src/systems/import/convert.js');
 const { insertPsd } = await import('../src/systems/import/psd-insert.js');
 const pal = await import('../src/systems/palette.js');
+const swipe = await import('../src/core/swipe-actions.js');
 const bb = await import('../src/systems/brush-bar.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
@@ -300,6 +301,15 @@ t('tint-shade: гармония рисует доп. шкалы по 5', () => {
   const blocks = document.querySelectorAll('#tsg-harm .tsg-block');
   assert.equal(blocks.length, 2);
   assert.equal(blocks[0].querySelectorAll('.tsg-sw').length, 10); // 5 тинтов + 5 шейдов
+});
+t('swipe-actions: action c icon рисует svg-кнопку, label идёт в title', () => {
+  const row = document.createElement('div');
+  swipe.attachSwipe(row, { actions: [
+    { icon: '<svg viewBox="0 0 24 24"><path d="M4 4"/></svg>', label: 'Замок', onClick: () => {} },
+    { label: 'Правка', onClick: () => {} }] });
+  const btns = row.querySelectorAll('.swipe-act');
+  assert.ok(btns[0].classList.contains('icon')); assert.ok(btns[0].querySelector('svg')); assert.equal(btns[0].title, 'Замок');
+  assert.ok(!btns[1].classList.contains('icon')); assert.equal(btns[1].textContent, 'Правка');
 });
 t('tint-shade: галочка у базы выбирает/снимает всю шкалу целиком', () => {
   S.palette = [[40, 90, 200]]; S.active = [40, 90, 200];
