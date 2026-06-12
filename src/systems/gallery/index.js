@@ -1,11 +1,10 @@
 // Галерея: сборка экрана, кнопки (Photo/Convert/Import/Select), навигация,
-// автосохранение, инициализация (открыть последнюю работу или создать новую).
+// автосохранение, инициализация (на старте открываем галерею).
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { imageData, looksPixelArt } from '../../core/image.js';
-import { DEFAULT_DOC } from '../../config/presets.js';
-import { newWork, newWorkFromImage, newWorkFromLayers, beginConvertedWork, saveCurrent, autosave, openWork } from './doc.js';
+import { newWorkFromImage, newWorkFromLayers, beginConvertedWork, saveCurrent, autosave, openWork } from './doc.js';
 import { listAll } from './store.js';
 import { configure, render, goBack, setSelecting, isSelecting, stackSelected, dupSelected, delSelected } from './screen.js';
 import { readPsd } from '../../logic/psd.js';
@@ -31,7 +30,7 @@ export async function mount() {
   $('gal-back').onclick = goBack;
   $('docsbtn').onclick = show;
   bus.on('snapshot', autosave); bus.on('layers', autosave);
-  const docs = (await listAll()).filter((d) => d.kind !== 'folder');
-  if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); show(); }
-  else newWork(DEFAULT_DOC.w, DEFAULT_DOC.h);
+  const docs = (await listAll()).filter((d) => d.kind !== 'folder'); // на старте всегда открываем галерею
+  if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); }
+  show();
 }
