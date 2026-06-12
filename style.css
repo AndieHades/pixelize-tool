@@ -113,11 +113,12 @@
       cursor: grab; touch-action: none; }
     .pop-head button { width: 34px; height: 34px; background: rgba(255, 255, 255, .08); }
     .pop-head button svg { width: 19px; height: 19px; }
-    #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; }
-    .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; cursor: pointer;
+    #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: 12px; }
+    .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer;
+      margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
       max-height: 100px; overflow: hidden;
       transition: margin-top var(--anim-pop) var(--ease-out), max-height 180ms ease, padding 180ms ease, opacity 150ms; }
-    .lrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--panel-solid)); }  /* выбранные — приглушённо */
+    .lrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }  /* выбранные — приглушённо */
     .lrow.on { background: var(--accent); color: #fff; }                                     /* активный — ярко-синий */
     .lrow.on .lname, .lrow.on .eye, .lrow.on .caret { color: #fff; }
     .lrow.on .clip-arrow { color: #fff; }
@@ -152,9 +153,9 @@
     .caret svg { width: 16px; height: 16px; transition: transform .15s; }
     .caret.open svg { transform: rotate(90deg); }
     .frow .lname { font-weight: 600; }
-    /* папки слегка подсвечены фоном — чтобы не сливаться со строками слоёв */
+    /* папка — чуть светлее обычной строки (жирное имя + каретка отличают её от слоя) */
     .frow { gap: 6px; } /* высота = как у слоёв (padding 6px сверху/снизу по умолчанию) */
-    .frow:not(.on):not(.marked):not(.drop-into) { background: color-mix(in srgb, var(--panel-solid) 50%, transparent); }
+    .frow:not(.on):not(.marked):not(.drop-into) { background: color-mix(in srgb, var(--txt) 7%, var(--row)); }
     /* открытая папка — тонкая полоска-заголовок */
     .frow.open { padding-top: 0; padding-bottom: 0; }
     .frow.open .eye, .frow.open .caret { height: 24px; }
@@ -525,8 +526,8 @@
 
 /* ── Слои: свайп-строка (фронт несёт фон, кнопки выезжают из-под него) ── */
 .lrow.swipe-row { display: block; padding: 0; }
-.lrow .swipe-front { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--panel-solid); }
-.lrow.marked .swipe-front { background: color-mix(in srgb, var(--accent) 42%, var(--panel-solid)); }  /* выбранные — приглушённо */
+.lrow .swipe-front { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--row); }
+.lrow.marked .swipe-front { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }  /* выбранные — приглушённо */
 .lrow.on .swipe-front { background: var(--accent); }                                                 /* активный — ярко-синий */
 .lrow.swiping-right .swipe-front { box-shadow: inset 3px 0 0 var(--accent); }
 .lrow .swipe-acts { border-radius: 0; }
