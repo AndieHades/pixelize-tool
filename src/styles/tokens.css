@@ -26,6 +26,9 @@
   /* анимации (тайминги/кривые/масштабы — единое место настройки, см. animations.css) */
   --anim-fast: 120ms;
   --anim-pop: 240ms;
+  --ants-period: 600ms; /* скорость «бегущих муравьёв» вокруг выделения */
+  --ants-fg: #fff;
+  --ants-bg: rgba(0, 0, 0, .8);
   --ease-out: cubic-bezier(.22, .61, .36, 1);
   --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
   --press-scale: .9;
@@ -33,8 +36,6 @@
   /* цвета холста (читаются JS-рендером) */
   --cv-bg: #0d0d10;
   --cv-doc: #141419;
-  --cv-check1: #1a1a20;
-  --cv-check2: #222228;
   --cv-grid: rgba(255, 255, 255, .05);
 }
 
@@ -54,7 +55,5 @@
   --vsl-track: rgba(90, 95, 110, .22);
   --cv-bg: #d6d8dd;
   --cv-doc: #c8cbd2;
-  --cv-check1: #cfd2d8;
-  --cv-check2: #bfc3cb;
   --cv-grid: rgba(0, 0, 0, .06);
 }

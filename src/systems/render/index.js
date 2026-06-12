@@ -9,8 +9,8 @@ import { effVis, clipBase } from '../../core/layers.js';
 import { layerFloatCanvas, clippedShift } from '../../core/layer-cache.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
-import { drawChecker } from './checker.js';
 import { drawOverlays } from './overlays.js';
+import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
 
@@ -22,8 +22,7 @@ export function render() {
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, cw, chh);
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
-  ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore();
-  drawChecker(ctx, ox, oy, z, cw, chh);
+  ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
   const iox = S.cropMode ? S.cropMode.idx * z : 0, ioy = S.cropMode ? S.cropMode.idy * z : 0; // сдвиг рисунка в кропе
   ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // слои не выходят за холст: живой сдвиг Move/crop клипуется как итог
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!effVis(i) || L.opacity <= 0) continue;
@@ -45,6 +44,7 @@ export function render() {
     ctx.stroke(); }
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)
   drawOverlays(ctx, ox, oy, z);
+  updateAnts(ox, oy, z); // «бегущие муравьи» — SVG поверх холста, бег анимирует CSS
 }
 
 export function fitView() {

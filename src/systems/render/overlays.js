@@ -3,9 +3,10 @@
 // кисти. Всё выражается из общего S.
 import { S } from '../../core/state.js';
 import { rgb, hexToRgb, eqc } from '../../logic/color.js';
-import { bres, rectEdges, parseKey } from '../../logic/raster.js';
+import { bres, rectEdges } from '../../logic/raster.js';
 import { symA, symHA, effVis } from '../../core/layers.js';
 import { $ } from '../../core/dom.js';
+import { C } from '../../styles/canvas-colors.js';
 
 export function drawOverlays(ctx, ox, oy, z) {
   const W = S.W, H = S.H;
@@ -36,24 +37,15 @@ export function drawOverlays(ctx, ox, oy, z) {
   // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет
   // при перетаскивании слоя инструментом move рамка/маска выделения едет вместе с содержимым
   const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0, mdy = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dy * z : 0;
-  if (S.sel && !S.selMask) { const sx = ox + S.sel.x0 * z + mdx, sy = oy + S.sel.y0 * z + mdy, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
-    if (!S.selFloat) { ctx.fillStyle = 'rgba(0,0,0,.28)';
-      ctx.fillRect(ox, oy, W * z, Math.max(0, sy - oy)); ctx.fillRect(ox, sy + sh, W * z, Math.max(0, oy + H * z - sy - sh));
-      ctx.fillRect(ox, Math.max(sy, oy), Math.max(0, sx - ox), sh); ctx.fillRect(sx + sw, Math.max(sy, oy), Math.max(0, ox + W * z - sx - sw), sh); }
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.strokeRect(sx + .75, sy + .75, sw - 1.5, sh - 1.5); ctx.setLineDash([]); }
-  if (S.sel && S.selMask && !S.selFloat) {
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath();
-    for (const k of S.selMask) { const [x, y] = parseKey(k); const sx = ox + x * z + mdx, sy = oy + y * z + mdy;
-      if (!S.selMask.has(x + ',' + (y - 1))) { ctx.moveTo(sx, sy); ctx.lineTo(sx + z, sy); }
-      if (!S.selMask.has(x + ',' + (y + 1))) { ctx.moveTo(sx, sy + z); ctx.lineTo(sx + z, sy + z); }
-      if (!S.selMask.has((x - 1) + ',' + y)) { ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + z); }
-      if (!S.selMask.has((x + 1) + ',' + y)) { ctx.moveTo(sx + z, sy); ctx.lineTo(sx + z, sy + z); } }
-    ctx.stroke(); ctx.setLineDash([]); }
-  if (S.sel && S.tool === 'select') { // ручки и у плавающего фрагмента — его можно масштабировать не «приземляя»
-    const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, hs = 7;
-    ctx.fillStyle = '#fff';
-    for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]])
-      ctx.fillRect(p[0] - hs / 2, p[1] - hs / 2, hs, hs); }
+  if (S.sel && !S.selMask && !S.selFloat) { const sx = ox + S.sel.x0 * z + mdx, sy = oy + S.sel.y0 * z + mdy, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; // затемнение вне рамки; сам пунктир — SVG #sel-ants (бежит по кругу)
+    ctx.fillRect(ox, oy, W * z, Math.max(0, sy - oy)); ctx.fillRect(ox, sy + sh, W * z, Math.max(0, oy + H * z - sy - sh));
+    ctx.fillRect(ox, Math.max(sy, oy), Math.max(0, sx - ox), sh); ctx.fillRect(sx + sw, Math.max(sy, oy), Math.max(0, ox + W * z - sx - sw), sh); }
+  if (S.sel && S.tool === 'select') { // круглые ручки (как в Procreate); работают и у плавающего фрагмента
+    const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, R = 5;
+    for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]]) {
+      ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);
+      ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); } }
   if (S.replaceMode) { ctx.fillStyle = 'rgba(61,139,253,.5)';
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let hit = false; for (let i = 0; i < S.layers.length; i++) { if (!effVis(i)) continue; const c = S.layers[i].grid[y][x]; if (c && eqc(c, S.replaceMode.from)) { hit = true; break; } }

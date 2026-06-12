@@ -9,7 +9,7 @@ import { pickAt } from './pick.js';
 
 export function stamp(x, y) {
   if (S.tool === 'select' || S.tool === 'move') return;
-  if (S.tool === 'pencil' || S.tool === 'line') brushStamp(x, y, false);
+  if (S.tool === 'pencil' || S.tool === 'line' || S.tool === 'rect') brushStamp(x, y, false);
   else if (S.tool === 'eraser') brushStamp(x, y, true);
   else if (S.tool === 'adjust') adjustStamp(x, y);
   else if (S.tool === 'pick') { pickAt(x, y); setTool('pencil'); }

@@ -274,6 +274,13 @@
     #selbar.on, #cropbar.on, #rotbar.on { display: flex; }
     #crop-ok, #rot-ok { color: #6fdb8b; }
 
+    /* «бегущие муравьи» выделения — SVG поверх холста, анимация чистым CSS */
+    #sel-ants { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+    #sel-ants .bg { fill: none; stroke: var(--ants-bg); stroke-width: 1.5; }
+    #sel-ants .fg { fill: none; stroke: var(--ants-fg); stroke-width: 1.5; stroke-dasharray: 6 4;
+      animation: ants-run var(--ants-period) linear infinite; }
+    @keyframes ants-run { to { stroke-dashoffset: -10; } }
+
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }
     #ctx, #lctx, #cctx, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;

@@ -138,6 +138,10 @@ t('draw: заливка заполняет холст', () => { reset4(); S.acti
   assert.deepEqual(S.layers[0].grid[3][3], [1, 2, 3]); assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3]); });
 t('draw: линия фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('line'); S.tool = 'line';
   S.linePrev = [0, 0, 3, 0]; commitLine(); assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[0][3]); });
+t('draw: прямоугольник фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('rect'); S.tool = 'rect';
+  S.linePrev = [0, 0, 3, 3]; commitLine();
+  assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[3][3] && S.layers[0].grid[0][3] && S.layers[0].grid[3][0]);
+  assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая — только контур
 t('draw: пипетка берёт цвет в активный', () => { reset4(); S.layers[0].grid[1][1] = [40, 50, 60, 255]; cache.dirtyAll();
   S.tool = 'pick'; stamp(1, 1); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 
@@ -242,6 +246,11 @@ t('selection-input: select-инструмент тянет рамку', () => { 
 t('selection-input: пустая рамка не создаётся', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
   assert.equal(S.sel, null); });
+t('selection-input: hover внутри рамки — курсор move', () => { resetWH(8, 8); S.tool = 'select';
+  S.sel = { x0: 2, y0: 2, x1: 5, y1: 5 }; S.selMask = null;
+  const h = toolHandler('select');
+  assert.equal(h.hover({ gx: 3, gy: 3, e: null }), 'move');
+  assert.equal(h.hover({ gx: 7, gy: 7, e: null }), null); S.sel = null; });
 t('selection-float: lift + commit переносит фрагмент', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
   sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });

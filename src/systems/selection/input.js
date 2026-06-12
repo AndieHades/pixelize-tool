@@ -77,4 +77,10 @@ function up() { if (!selDrag) return;
     else if (S.sel && !hinted) hinted = true; }
   selDrag = null; bus.emit('selection'); bus.emit('render'); }
 
-registerTool('select', { down, move, up });
+// курсоры на десктопе: двойные стрелки на ручках/рёбрах, move внутри рамки
+function hover({ gx, gy, e }) { if (!S.sel) return null;
+  const zn = e ? selZone(e) : null;
+  if (zn) return ((zn.l && zn.t) || (zn.r && zn.b)) ? 'nwse-resize' : ((zn.r && zn.t) || (zn.l && zn.b)) ? 'nesw-resize' : (zn.l || zn.r) ? 'ew-resize' : 'ns-resize';
+  return (gx >= S.sel.x0 && gx <= S.sel.x1 && gy >= S.sel.y0 && gy <= S.sel.y1) ? 'move' : null; }
+
+registerTool('select', { down, move, up, hover });
