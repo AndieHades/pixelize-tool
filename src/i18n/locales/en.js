@@ -7,6 +7,7 @@ export const en = {
   'tool.pick': 'Eyedropper (I, space, Alt+click)', 'tool.line': 'Line (U)', 'tool.rect': 'Rectangle (K)',
   'tool.move': 'Move layer (left-drag)', 'tool.adjust': 'Adjust brush: dodge / burn / tone',
   'tool.select': 'Selection (M)', 'tool.layers': 'Layers (L) · right-click canvas — pick layer', 'tool.color': 'Color (HSV)',
+  'tool.copy': 'Copy', 'tool.cut': 'Cut', 'tool.paste': 'Paste', 'tool.deleteSel': 'Delete selection', 'tool.deselect': 'Deselect',
   'side.symV': 'Horizontal symmetry (S)', 'side.symH': 'Vertical symmetry (Shift+S)', 'side.pp': 'Pixel-perfect (P)',
   'side.stab': 'Stroke stabilization (T)', 'side.outline': 'Outline (O)', 'side.flipH': 'Flip horizontally (H)',
   'side.flipV': 'Flip vertically (V)', 'side.rotate': 'Rotate canvas 90° (R)', 'side.mono': 'Monochrome (whole image)',
