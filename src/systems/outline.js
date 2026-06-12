@@ -46,6 +46,7 @@ export function openOutlinePop() {
 
 export function mount() {
   $('out-apply').onclick = outlineLayer;
+  $('out-cancel').onclick = () => { $('outpop').classList.remove('on'); S.outPreview = null; bus.emit('render'); };
   $('out-size').addEventListener('input', () => { $('out-sizev').textContent = $('out-size').value; computeOutlinePreview(); bus.emit('render'); });
   $('out-op').addEventListener('input', () => { $('out-opv').textContent = $('out-op').value + '%'; bus.emit('render'); });
   $('out-col').addEventListener('input', () => { $('out-colsw').style.background = $('out-col').value; bus.emit('render'); });

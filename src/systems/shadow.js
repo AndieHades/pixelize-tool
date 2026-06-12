@@ -48,6 +48,7 @@ export function mount() {
   $('ds-y').addEventListener('input', () => { $('ds-yv').textContent = $('ds-y').value; computeDsPreview(); });
   $('ds-op').addEventListener('input', () => { $('ds-opv').textContent = $('ds-op').value + '%'; bus.emit('render'); });
   $('ds-col').addEventListener('input', () => { $('ds-colsw').style.background = $('ds-col').value; bus.emit('render'); });
+  $('ds-cancel').onclick = () => { $('dspop').classList.remove('on'); S.dsPreview = null; bus.emit('render'); };
   $('ds-apply').onclick = () => { $('dspop').classList.remove('on'); S.dsPreview = null; const targets = effTargets(dsRef);
     if (targets.length) dropShadowLayers(targets, +$('ds-x').value, +$('ds-y').value, hexToRgb($('ds-col').value), +$('ds-op').value / 100); };
 }

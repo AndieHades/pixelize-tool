@@ -44,6 +44,7 @@ export function mount() {
   $('glow-range').addEventListener('input', () => { $('glow-rangev').textContent = $('glow-range').value; computeGlowPreview(); });
   $('glow-int').addEventListener('input', () => { $('glow-intv').textContent = $('glow-int').value + '%'; computeGlowPreview(); });
   $('glow-col').addEventListener('input', () => { $('glow-colsw').style.background = $('glow-col').value; bus.emit('render'); });
+  $('glow-cancel').onclick = () => { $('glowpop').classList.remove('on'); S.glowPreview = null; bus.emit('render'); };
   $('glow-apply').onclick = () => { $('glowpop').classList.remove('on'); S.glowPreview = null; const targets = effTargets(glowRef);
     if (targets.length) glowLayers(targets, +$('glow-range').value, hexToRgb($('glow-col').value), +$('glow-int').value / 100); };
 }
