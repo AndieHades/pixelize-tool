@@ -73,9 +73,8 @@ export function layList() {
     row.addEventListener('click', ((idx, lay, sp) => (ev) => { if (layDragSquelch) return;
       if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(idx)) S.marked.delete(idx); else S.marked.add(idx); layList(); return; } // десктоп: ctrl/cmd-клик — выбор
       const now = performance.now();
-      if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; } // двойной тап — переименование
-      if (idx === S.cur) { lastClick = { idx, t: now }; openLctx(ev.clientX, ev.clientY, 'layer', lay); return; } // тап по активному — контекстное меню
-      lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // тап — сделать активным
+      if (lastClick.idx === idx && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(sp, lay); return; } // двойной клик — переименование
+      lastClick = { idx, t: now }; S.cur = idx; layList(); })(i, L, nm)); // клик — только сделать активным; меню — только ПКМ/долгий тап
     longPress(row, (x, y) => openLctx(x, y, 'layer', L)); attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); box.appendChild(row);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
