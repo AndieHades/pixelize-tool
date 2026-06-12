@@ -53,7 +53,10 @@ export function applyImport() {
   S.W = g[0].length; S.H = g.length;
   S.layerSeq = 1; S.layers = [{ name: 'Слой 1', grid: g, opacity: 1, visible: true, fid: null, clip: false, ext: new Map() }]; S.cur = 0;
   S.folders = []; S.folderSeq = 0; S.marked.clear();
-  S.palette = paletteFromGrid(g); if (S.palette.length) S.active = S.palette[0].slice();
+  // при квантовании держим в палитре ВСЕ цвета результата (включая редкие — белые
+  // остатки в волосах и т.п.), чтобы их можно было найти через «Выбрать все пиксели»
+  const cap = (+$('imp-colors').value) || 64;
+  S.palette = paletteFromGrid(g, Math.max(cap, 16)); if (S.palette.length) S.active = S.palette[0].slice();
   S.sym = $('imp-sym').checked; $('sym').classList.toggle('on', S.sym);
   S.undoStack.length = S.redoStack.length = 0; dirtyAll();
   bus.emit('palette'); setTool('pencil'); bus.emit('layers');

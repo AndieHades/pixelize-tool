@@ -25,18 +25,6 @@ function floodBackground(g, nx, ny, bgTol) { const bg = g[0][0], tol2 = bgTol * 
   for (let x = 0; x < nx; x++) st.push([x, 0], [x, ny - 1]); for (let y = 0; y < ny; y++) st.push([0, y], [nx - 1, y]);
   while (st.length) { const [x, y] = st.pop(); if (x < 0 || y < 0 || x >= nx || y >= ny || isBg[y][x] || !near(g[y][x])) continue; isBg[y][x] = true; st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); } return isBg; }
 
-// снять антиалиас-ореол вдоль выреза: блёклые «смешанные с фоном» пиксели у
-// границы прозрачного. Толерантность шире, чем у заливки фона (×2), но трогаем
-// только клетки на границе — съедаем кайму послойно, не залезая внутрь рисунка
-function defringe(g, isBg, nx, ny, bgTol) { const bg = g[0][0]; if (!bg) return; const tol2 = (bgTol * 2) ** 2;
-  const near = (c) => c && (c[0] - bg[0]) ** 2 + (c[1] - bg[1]) ** 2 + (c[2] - bg[2]) ** 2 < tol2;
-  for (let pass = 0; pass < 4; pass++) { let changed = false;
-    for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { if (isBg[y][x] || !near(g[y][x])) continue;
-      let edge = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x2 = x + dx, y2 = y + dy;
-        if (x2 < 0 || y2 < 0 || x2 >= nx || y2 >= ny || isBg[y2][x2] || !g[y2][x2]) { edge = true; break; } }
-      if (edge) { isBg[y][x] = true; changed = true; } }
-    if (!changed) break; } }
-
 export function sampleGrid(im, cell, bgTol) {
   let cw, ch;
   if (cell) { cw = cell; ch = cell; }
@@ -47,7 +35,5 @@ export function sampleGrid(im, cell, bgTol) {
     if (Math.max(im.w / cw, im.h / ch) < 32) { cw = ch = Math.max(im.w, im.h) / 64; } }
   const nx = Math.max(1, Math.round(im.w / cw)), ny = Math.max(1, Math.round(im.h / ch)), full = [];
   for (let j = 0; j < ny; j++) { const row = []; for (let i = 0; i < nx; i++) row.push(cellColor(im, i * im.w / nx, j * im.h / ny, (i + 1) * im.w / nx, (j + 1) * im.h / ny)); full.push(row); }
-  const isBg = floodBackground(full, nx, ny, bgTol);
-  if (bgTol > 0) defringe(full, isBg, nx, ny, bgTol); // добить антиалиас-ореол у выреза
-  const grid = [], samples = [];
+  const isBg = floodBackground(full, nx, ny, bgTol), grid = [], samples = [];
   for (let j = 0; j < ny; j++) { const row = []; for (let i = 0; i < nx; i++) { if (isBg[j][i] || !full[j][i]) row.push(null); else { row.push(full[j][i]); samples.push(full[j][i]); } } grid.push(row); } return { grid, samples, nx, ny }; }

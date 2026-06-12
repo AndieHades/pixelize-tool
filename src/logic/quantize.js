@@ -9,11 +9,11 @@ export function medianCut(cols, n) { let bx = [cols.slice()]; const bnd = (b) =>
 
 export const nearest = (c, pal) => { let best = pal[0], bd = Infinity; for (const p of pal) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } } return best; };
 
-export function paletteFromGrid(g) { const m = new Map();
+export function paletteFromGrid(g, cap = 32) { const m = new Map();
   for (const row of g) for (const c of row) { if (!c) continue;
     const k = c[0] + ',' + c[1] + ',' + c[2]; // только RGB: полупрозрачные варианты того же цвета не плодят дубликаты
     const e = m.get(k); if (e) e.n++; else m.set(k, { c: [c[0], c[1], c[2]], n: 1 }); }
-  return [...m.values()].sort((a, b) => b.n - a.n).slice(0, 32).map((e) => e.c); }
+  return [...m.values()].sort((a, b) => b.n - a.n).slice(0, cap).map((e) => e.c); }
 
 export function dedupePal(arr) { const seen = new Set(), out = [];
   for (const c of arr || []) { if (!c) continue; const k = c[0] + ',' + c[1] + ',' + c[2];

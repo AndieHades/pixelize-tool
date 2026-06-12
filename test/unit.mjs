@@ -61,13 +61,6 @@ t('sample: прозрачные пиксели → прозрачная клет
   const r = sampleGrid({ w: 2, h: 1, ch: 4, data }, 1, 0);
   assert.deepEqual(r.grid[0][0], [200, 10, 10]); assert.equal(r.grid[0][1], null);
 });
-t('sample: defringe снимает блёклую кайму у выреза', () => {
-  // 3×1: белый фон(угол) · блёклая кайма(230) вне толерантности заливки · тёмный субъект
-  const data = new Uint8ClampedArray([255, 255, 255, 255, 230, 230, 230, 255, 10, 10, 10, 255]);
-  const r = sampleGrid({ w: 3, h: 1, ch: 4, data }, 1, 30);
-  assert.equal(r.grid[0][0], null); assert.equal(r.grid[0][1], null); // фон и кайма срезаны
-  assert.deepEqual(r.grid[0][2], [10, 10, 10]); // субъект цел
-});
 t('quantize: medianCut/nearest', () => {
   const pal = medianCut([[0, 0, 0], [255, 255, 255]], 2);
   assert.equal(pal.length, 2); assert.deepEqual(nearest([20, 20, 20], pal), [0, 0, 0]);
