@@ -10,6 +10,7 @@ import { inMask } from '../../core/selection.js';
 import { snapshot } from '../../core/history.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
+import { setTool } from '../../core/tools.js';
 import { commitFloat } from './float.js';
 
 export function normSel(ax, ay, bx, by) { let x0 = Math.min(ax, bx), x1 = Math.max(ax, bx), y0 = Math.min(ay, by), y1 = Math.max(ay, by);
@@ -44,13 +45,13 @@ export function selectColorPixels(col) { commitFloat(); const g = G(), mask = ne
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = g[y][x];
     if (c && eqc(c, col)) { mask.add(x + ',' + y); nn++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
   if (!nn) { toast(t('toast.noColorOnLayer')); return; }
-  S.sel = { x0, y0, x1, y1 }; S.selMask = mask; bus.emit('selection'); bus.emit('render'); // по цвету уже выбрано всё совпадающее — зеркалить не нужно
+  S.sel = { x0, y0, x1, y1 }; S.selMask = mask; setTool('select'); bus.emit('selection'); bus.emit('render'); // инструмент выделения: клик мимо маски снимает выделение
   toast(t('toast.selectedColorN', { n: nn })); }
 
 export function selectLayerContent() { commitFloat(); const g = G(), mask = new Set();
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (g[y][x]) mask.add(x + ',' + y);
   if (!mask.size) { deselect(); toast(t('toast.layerEmpty')); return; }
-  maskFromCells(mask); toast(t('toast.selectedLayerN', { n: mask.size })); } // содержимое слоя уже выбрано полностью
+  setTool('select'); maskFromCells(mask); toast(t('toast.selectedLayerN', { n: mask.size })); } // инструмент выделения: клик мимо маски снимает
 
 export function invertSelection() { commitFloat();
   const inNow = (x, y) => (S.selMask ? S.selMask.has(x + ',' + y) : (S.sel && x >= S.sel.x0 && x <= S.sel.x1 && y >= S.sel.y0 && y <= S.sel.y1));
