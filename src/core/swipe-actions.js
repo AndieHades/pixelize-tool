@@ -22,7 +22,7 @@ export function attachSwipe(row, opts) {
 
   let rw = 0, sx = 0, sy = 0, base = 0, cur = 0, dir = 0, suppress = false;
   const setX = (x) => { cur = x; front.style.transform = x ? `translateX(${x}px)` : ''; row.classList.toggle('swiping-right', x > 0); };
-  front.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button) return;
+  front.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return; // свайп — только палец; на десктопе действия в ПКМ-меню
     rw = acts ? acts.offsetWidth : 0; sx = e.clientX; sy = e.clientY; dir = 0; base = front._open ? -rw : 0;
     const move = (ev) => { if (guard && guard()) { if (cur) setX(0); dir = 0; return; } const dx = ev.clientX - sx, dy = ev.clientY - sy;
       if (!dir) { if (Math.abs(dx) <= DRAG_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return; dir = 1; if (openFront && openFront !== front) closeSwipe(); }

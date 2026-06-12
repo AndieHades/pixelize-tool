@@ -43,8 +43,7 @@ export function mount() {
     im.src = URL.createObjectURL(f); };
   floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220,
     onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';
-      $('lay-pop').style.height = Math.max(220, Math.min(innerHeight - 12, h)) + 'px';
-      $('lay-list').style.maxHeight = Math.max(80, $('lay-pop').getBoundingClientRect().height - 156) + 'px'; } });
+      $('lay-list').style.maxHeight = Math.max(80, h - 156) + 'px'; } }); // высота окна — по содержимому; ресайз тянет область списка
   mountMenu();
   mountPinch();
   bus.on('layers', layList);

@@ -1,7 +1,7 @@
 // Диалог «Новый холст»: список пресетов (config) + кастомные размеры
 // (сохраняются). Тап по строке — создать и открыть. Кастомные строки можно
 // свайпнуть влево → Правка/Удалить. Создаёт новую работу в галерее.
-import { $ } from '../core/dom.js';
+import { $, showMenuAt } from '../core/dom.js';
 import * as actions from '../core/actions.js';
 import { attachSwipe, closeSwipe } from '../core/swipe-actions.js';
 import { t } from '../i18n/index.js';
@@ -21,11 +21,18 @@ function row(p, customIdx) {
   const nm = document.createElement('span'); nm.className = 'new-name'; nm.textContent = p.label || `${p.w}×${p.h}`;
   const sz = document.createElement('span'); sz.className = 'new-size'; sz.textContent = `${p.w} × ${p.h} px`;
   r.append(nm, sz); r.onclick = () => open(p);
-  if (customIdx != null) attachSwipe(r, { actions: [
+  if (customIdx != null) { const acts = [ // палец — свайп; мышь (десктоп) — ПКМ-меню
     { label: t('menu.edit'), onClick: () => editCustom(customIdx) },
-    { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }] });
+    { label: t('gallery.delete'), danger: true, onClick: () => removeCustom(customIdx) }];
+    attachSwipe(r, { actions: acts });
+    r.addEventListener('contextmenu', (e) => { e.preventDefault(); rowMenu(e.clientX, e.clientY, acts); }); }
   return r;
 }
+
+function rowMenu(x, y, acts) { const m = $('rowctx'); m.innerHTML = '';
+  for (const a of acts) { const b = document.createElement('button'); b.textContent = a.label; if (a.danger) b.classList.add('danger');
+    b.onclick = () => { m.classList.remove('on'); a.onClick(); }; m.appendChild(b); }
+  showMenuAt(m, x, y); }
 
 function buildList() { const box = $('new-list'); if (!box) return; closeSwipe(); box.innerHTML = '';
   SIZE_PRESETS.forEach((p) => box.appendChild(row(p, null)));
