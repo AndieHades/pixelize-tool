@@ -38,7 +38,8 @@ export function paintStack(ctx, live, opt0 = {}) {
 function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vis(i) || L.opacity <= 0) return;
   const cb = clipBase(i); if (L.clip && (cb < 0 || !vis(cb))) return;
   ctx.globalAlpha = L.opacity;
-  if (live && S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i)) { // живое превью трансформации
+  const inRot = live && S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i);
+  if (inRot && !S.rotMode.selection) { // живое превью трансформации целого слоя/папки
     if (i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh);
     return; }
   const md = live ? S.moveDrag : null, di = (md && md.idxs.includes(i)) ? md : null;
@@ -46,4 +47,6 @@ function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vi
     ctx.drawImage(clippedShift(i, cb, di ? di.dx : 0, di ? di.dy : 0, db ? db.dx : 0, db ? db.dy : 0), iox, ioy);
   } else if (di) ctx.drawImage(layerMoveCanvas(i, di.dx, di.dy), iox, ioy); // содержимое+ext+эффекты, пересчитанные для сдвига
   else ctx.drawImage(layerSrcCanvas(i), iox, ioy);
+  if (inRot && S.rotMode.selection && i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) {
+    ctx.globalAlpha = L.opacity; ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh); }
 }

@@ -18,6 +18,8 @@ function wireShape(id, outlineKey, fillKey) { const b = $('t-' + id);
 
 function syncToolButtons() {
   for (const id of TOOLS) { const b = $('t-' + id); if (b) b.classList.toggle('on', S.tool === id); }
+  $('t-select').classList.toggle('on', S.tool === 'select' || !!S.sel);
+  $('t-move').classList.toggle('on', !!S.rotMode);
   $('bb-pick').classList.toggle('on', S.tool === 'pick');
   document.body.classList.toggle('picking', S.tool === 'pick');
   $('cv').style.cursor = S.tool === 'move' ? 'move' : '';
@@ -54,7 +56,7 @@ export function mount() {
   $('fit').onclick = () => actions.run('view.fit');
 
   $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn);
-  bus.on('tool', syncToolButtons); syncToolButtons();
+  bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); syncToolButtons();
 }
 
 actions.register('toggle.symV', () => $('sym').click());

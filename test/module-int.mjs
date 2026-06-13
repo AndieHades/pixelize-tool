@@ -63,6 +63,7 @@ await import('../src/systems/move-tool.js');
 const { toolHandler } = await import('../src/core/canvas-handlers.js');
 const input = await import('../src/systems/input/index.js');
 await import('../src/systems/selection/input.js');
+await import('../src/systems/selection/handles.js');
 const sfloat = await import('../src/systems/selection/float.js');
 const tf = await import('../src/systems/transform/index.js');
 const layers = await import('../src/systems/layers/index.js');
@@ -70,11 +71,11 @@ const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
-const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
+const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
 
-const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set();
+const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil';
   cache.dirtyAll(); };
@@ -173,8 +174,8 @@ t('draw: reference-слой задаёт контур заливки для ни
   S.cur = 0; S.active = [8, 9, 10]; flood(2, 2);
   assert.deepEqual(S.layers[0].grid[2][2], [8, 9, 10]); assert.equal(S.layers[0].grid[0][0], null);
   assert.equal(S.layers[0].grid[1][2], null); assert.deepEqual(S.layers[1].grid[1][2], line); });
-const overCv = () => { const cv = document.getElementById('cv'); S.view = { zoom: 1, ox: 0, oy: 0 };
-  cv.getBoundingClientRect = () => ({ left: 0, top: 0, right: S.W, bottom: S.H, width: S.W, height: S.H });
+const overCv = (zoom = 1) => { const cv = document.getElementById('cv'); S.view = { zoom, ox: 0, oy: 0 };
+  cv.getBoundingClientRect = () => ({ left: 0, top: 0, right: S.W * zoom, bottom: S.H * zoom, width: S.W * zoom, height: S.H * zoom });
   const prev = document.elementFromPoint; document.elementFromPoint = () => cv; return () => { document.elementFromPoint = prev; }; };
 t('drop-color: бросок над выделением заливает всё выделение', () => { resetWH(6, 6);
   S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; const undo = overCv();
@@ -422,6 +423,12 @@ t('tint-shade: без активного цвета в палитре — окн
 });
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t('toolbars: выделение и Free Transform подсвечивают свои кнопки', () => { resetWH(8, 8); S.tool = 'pencil';
+  S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; bus.emit('selection');
+  assert.ok(document.getElementById('t-select').classList.contains('on'));
+  S.sel = null; S.layers[0].grid[2][2] = [1, 1, 1, 255]; actions.run('transform.enter');
+  assert.ok(document.getElementById('t-move').classList.contains('on'));
+  tf.exitRotMode(false); assert.ok(!document.getElementById('t-move').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
 t('effects: новый эффект до Apply остаётся черновиком без строки в списке', () => { effects.mount(); adjust.mount();
   resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
@@ -523,6 +530,17 @@ t('input: ПКМ пан холста работает и с инструмент
 t('input: ЛКМ вне выделения снимает его у любого инструмента', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   const undo = overCv(); input.down({ pointerType: 'mouse', button: 0, clientX: 6, clientY: 6, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
   assert.equal(S.sel, null); assert.equal(S.layers[0].grid[6][6], null); });
+t('input: ПКМ при выделении открывает selection-меню', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+  let sm = 0, cm = 0; const offS = bus.on('selection-menu', () => sm++), offC = bus.on('canvas-menu', () => cm++), undo = overCv();
+  input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
+  input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 }); undo(); offS(); offC();
+  assert.equal(sm, 1); assert.equal(cm, 0); });
+t('input: ЛКМ по выделению двигает только рамку', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  S.layers[0].grid[2][2] = [7, 7, 7, 255]; const undo = overCv(10);
+  input.down({ pointerType: 'mouse', button: 0, clientX: 25, clientY: 25, pointerId: 1 });
+  input.move({ pointerType: 'mouse', button: 0, clientX: 45, clientY: 35, pointerId: 1 });
+  input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
+  assert.deepEqual(S.sel, { x0: 3, y0: 2, x1: 5, y1: 4 }); assert.deepEqual(S.layers[0].grid[2][2], [7, 7, 7, 255]); });
 
 t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно
@@ -569,6 +587,21 @@ t('selection-float: повторный перенос не стирает под
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
+t('transform: Ctrl+T с Selection трансформирует фрагмент и гасит выделение', () => { resetWH(8, 8);
+  S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[5][5] = [1, 1, 1, 255];
+  S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null; actions.run('transform.enter');
+  assert.ok(S.rotMode && S.rotMode.selection); assert.equal(S.sel, null); assert.equal(S.layers[0].grid[2][2], null);
+  assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]);
+  S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
+  assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
+  assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
+t('transform: выбранная папка строит рамку по скрытым слоям', () => { resetWH(8, 8);
+  S.layers = [
+    { name: 'v', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+    { name: 'h', grid: blank(8, 8), opacity: 1, visible: false, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ]; S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
+  S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[1].grid[6][6] = [2, 2, 2, 255]; S.selFolder = 1; S.markedFolders = new Set([1]);
+  actions.run('transform.enter'); assert.deepEqual(S.rotMode.b, { x0: 1, y0: 1, w: 6, h: 6 }); tf.exitRotMode(false); });
 
 t('transform: превью строится с эффектами слоя и папки (обводка не пропадает)', () => { resetWH(8, 8);
   S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[4][3] = [1, 1, 1, 255];

@@ -27,13 +27,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     else bres(lp[0], lp[1], lp[2], lp[3], paint);
     ctx.globalAlpha = 1; }
   // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет
-  // при перетаскивании слоя инструментом move рамка/маска выделения едет вместе с содержимым
-  const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0, mdy = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dy * z : 0;
-  if (S.sel && !S.selMask && !S.selFloat) { const sx = ox + S.sel.x0 * z + mdx, sy = oy + S.sel.y0 * z + mdy, sw = (S.sel.x1 - S.sel.x0 + 1) * z, sh = (S.sel.y1 - S.sel.y0 + 1) * z;
-    ctx.fillStyle = 'rgba(0,0,0,.28)'; // затемнение вне рамки; сам пунктир — SVG #sel-ants (бежит по кругу)
-    ctx.fillRect(ox, oy, W * z, Math.max(0, sy - oy)); ctx.fillRect(ox, sy + sh, W * z, Math.max(0, oy + H * z - sy - sh));
-    ctx.fillRect(ox, Math.max(sy, oy), Math.max(0, sx - ox), sh); ctx.fillRect(sx + sw, Math.max(sy, oy), Math.max(0, ox + W * z - sx - sw), sh); }
-  if (S.sel && S.tool === 'select') { // круглые ручки (как в Procreate); работают и у плавающего фрагмента
+  if (S.sel && !S.selFloat) { // ручки активного выделения видны всегда, поверх любого инструмента
     const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, R = 5;
     for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]]) {
       ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);

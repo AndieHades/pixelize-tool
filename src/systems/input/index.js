@@ -6,7 +6,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { selHit } from '../../core/selection.js';
-import { toolHandler, modeHandler } from '../../core/canvas-handlers.js';
+import { toolHandler, modeHandler, globalHandlers } from '../../core/canvas-handlers.js';
 import { STABILIZE, DRAG_THRESHOLD } from '../../config/timings.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { mountGestures } from './gestures.js';
@@ -17,12 +17,13 @@ export const toGrid = (e) => { const r = cv().getBoundingClientRect();
 const activeMode = () => (S.cropMode ? modeHandler('crop') : S.rotMode ? modeHandler('transform') : null);
 const capture = (id) => { try { cv().setPointerCapture(id); } catch (e) {} };
 
-let rdrag = null, drawing = false, stabPt = null;
+let rdrag = null, drawing = false, stabPt = null, activeGlobal = null;
 function smooth(e) { if (!S.stabOn) return [e.clientX, e.clientY];
   if (!stabPt) { stabPt = { x: e.clientX, y: e.clientY }; return [e.clientX, e.clientY]; }
   stabPt.x += (e.clientX - stabPt.x) * STABILIZE; stabPt.y += (e.clientY - stabPt.y) * STABILIZE; return [stabPt.x, stabPt.y]; }
 
 export function down(e) { if (e.pointerId != null) capture(e.pointerId);
+  if (e.pointerType === 'mouse' && e.button === 2 && S.rotMode) { bus.emit('transform-menu', e); return; }
   if (e.pointerType === 'mouse' && (e.button === 1 || e.button === 2) && !S.cropMode && !S.rotMode) {
     rdrag = { x: e.clientX, y: e.clientY, ox: S.view.ox, oy: S.view.oy, moved: false, btn: e.button }; return; }
   if (e.pointerType === 'mouse' && e.button) return;
@@ -30,6 +31,7 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
   if (e.altKey) { actions.run('draw.pickAt', gx, gy); bus.emit('render'); return; }
   stabPt = { x: e.clientX, y: e.clientY };
   const m = activeMode(); if (m) { m.down({ gx, gy, e }); drawing = true; return; }
+  for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e })) { activeGlobal = gh; drawing = true; return; }
   if (S.sel && S.tool !== 'select' && !selHit(gx, gy)) { actions.run('select.none'); return; }
   const h = toolHandler(S.tool); if (h && h.down) { h.down({ gx, gy, e }); drawing = true; }
 }
@@ -38,11 +40,12 @@ export function move(e) {
   if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const over = hx >= 0 && hy >= 0 && hx < S.W && hy < S.H; // курсор кисти — только над холстом
     S.hoverPx = over ? [hx, hy] : null;
     let cur = over ? 'crosshair' : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)
-    const ht = toolHandler(S.tool);
-    if (!drawing && !rdrag && !activeMode() && ht && ht.hover) { const c2 = ht.hover({ gx: hx, gy: hy, e }); if (c2) cur = c2; }
+    const ht = toolHandler(S.tool), gh = globalHandlers().map((h) => h.hover && h.hover({ gx: hx, gy: hy, e })).find(Boolean);
+    if (!drawing && !rdrag && !activeMode()) { if (gh) cur = gh; else if (ht && ht.hover) { const c2 = ht.hover({ gx: hx, gy: hy, e }); if (c2) cur = c2; } }
     cv().style.cursor = cur; }
   if (rdrag) { const dx = e.clientX - rdrag.x, dy = e.clientY - rdrag.y; if (Math.hypot(dx, dy) > DRAG_THRESHOLD) rdrag.moved = true;
     if (rdrag.moved) { S.view.ox = rdrag.ox + dx; S.view.oy = rdrag.oy + dy; bus.emit('render'); } return; }
+  if (activeGlobal) { const [gx, gy] = toGrid(e); if (activeGlobal.move) activeGlobal.move({ gx, gy, e }); return; }
   const m = activeMode();
   if (m) { const [gx, gy] = toGrid(e); if (drawing) m.move({ gx, gy, e }); else if (m.hover) m.hover({ gx, gy, e }); return; }
   const h = toolHandler(S.tool);
@@ -53,7 +56,8 @@ export function move(e) {
 
 export function up(e) {
   if (e && e.pointerId != null) { try { cv().releasePointerCapture(e.pointerId); } catch (er) {} }
-  if (rdrag) { if (!rdrag.moved && rdrag.btn === 2) bus.emit('canvas-menu', e); rdrag = null; return; }
+  if (rdrag) { if (e && !rdrag.moved && rdrag.btn === 2) bus.emit(S.sel && !S.selFloat ? 'selection-menu' : 'canvas-menu', e); rdrag = null; return; }
+  if (activeGlobal) { if (activeGlobal.up) activeGlobal.up({ e }); activeGlobal = null; drawing = false; return; }
   stabPt = null;
   const m = activeMode(); if (m) { if (drawing && m.up) m.up({ e }); drawing = false; return; }
   const h = toolHandler(S.tool); if (drawing && h && h.up) h.up({ e }); drawing = false;

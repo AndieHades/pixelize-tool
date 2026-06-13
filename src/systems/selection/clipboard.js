@@ -14,6 +14,7 @@ let clip = null;
 
 export function doCopy() { clip = S.sel ? fragFromSel() : cloneGrid(G()); toast(S.sel ? t('toast.selCopied') : t('toast.layerCopied')); }
 export function doCut() { clip = S.sel ? fragFromSel() : cloneGrid(G()); toast((S.sel ? deleteSelContent() : clearLayer()) ? t('toast.cut') : t('toast.hereEmpty')); }
+export function copySelectionLayer() { if (!S.sel) return; doCopy(); doPaste(); }
 
 export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; } commitFloat(); snapshot();
   const px = S.sel ? S.sel.x0 : 0, py = S.sel ? S.sel.y0 : 0, asNew = S.layers.length < MAX_LAYERS;
@@ -31,6 +32,7 @@ export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.dele
 
 actions.register('edit.copy', doCopy); actions.register('edit.cut', doCut);
 actions.register('edit.paste', doPaste); actions.register('edit.delete', doDelete);
+actions.register('selection.copyLayer', copySelectionLayer);
 actions.register('select.none', deselect);
 actions.register('edit.undo', doUndo);
 actions.register('edit.redo', doRedo);
