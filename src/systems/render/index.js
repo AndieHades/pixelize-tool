@@ -21,7 +21,7 @@ export function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, cw, chh);
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 20;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2; // = --win-shadow: одинаковая тень во всём приложении
   ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
   if (buf.width !== W || buf.height !== H) { buf.width = W; buf.height = H; }
   const bx = buf.getContext('2d'); bx.imageSmoothingEnabled = false; bx.clearRect(0, 0, W, H);
