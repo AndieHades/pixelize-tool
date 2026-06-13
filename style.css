@@ -10,13 +10,13 @@
       border-radius: 10px; display: grid; place-items: center; padding: 0; cursor: pointer;
       font: inherit; flex: none; transition: background .12s, transform .08s, color .12s; }
     button:active { background: rgba(255, 255, 255, .1); transform: scale(.94); }
-    button.on { background: var(--accent); color: #fff; }
+    button.on { background: var(--accent); color: var(--on-accent); }
     button svg { width: 22px; height: 22px; stroke: currentColor; fill: none;
       stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
     .toolfill svg rect, .toolfill svg ellipse { fill: currentColor; } /* режим залитой фигуры (ПКМ по иконке) */
     .txtbtn { width: auto; min-width: 44px; height: 44px; padding: 0 18px; border-radius: 12px;
       background: rgba(255, 255, 255, .08); font-size: 15px; font-weight: 600; }
-    .txtbtn.primary { background: var(--accent); color: #fff; }
+    .txtbtn.primary { background: var(--accent); color: var(--on-accent); }
 
     /* ---- верхняя панель ---- */
     #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 10;
@@ -88,7 +88,7 @@
       width: min(92vw, 560px); display: flex; flex-direction: column;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
       border: 1px solid var(--line); border-radius: 16px; padding: 0 8px 8px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, .45); }
+      box-shadow: var(--win-shadow); }
     #palbar.closed { display: none; } /* палитру можно закрыть крестиком; открыть снова — кружком цвета */
     #palgrip { flex: none; -webkit-user-select: none; user-select: none; } /* остальное — общий .pop-head */
     #palgrip:active { cursor: grabbing; }
@@ -105,7 +105,7 @@
     #lay-pop { position: fixed; right: max(10px, env(safe-area-inset-right, 0px));
       top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 20; width: 272px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px;
-      box-shadow: 0 14px 44px rgba(0, 0, 0, .55); display: none; overflow: hidden; }
+      box-shadow: var(--win-shadow); display: none; overflow: hidden; }
     #lay-pop.on { display: block; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
     .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -118,16 +118,16 @@
       width: 32px; height: 32px; border-radius: 9px; background: var(--row); color: var(--txt2); flex: none; }
     .pop-head button:hover, .bp-head button:hover, .pop-acts button:hover, #pal-menu:hover, #tsg-btn:hover { color: var(--txt); }
     .pop-head button svg, .bp-head button svg, .pop-acts button svg, #pal-menu svg, #tsg-btn svg { width: 18px; height: 18px; }
-    .win-x:hover { background: var(--accent); color: #fff; }
+    .win-x:hover { background: var(--accent); color: var(--on-accent); }
     #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: 12px; }
     .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer;
       margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
       max-height: 100px; overflow: hidden;
       transition: margin-top var(--anim-pop) var(--ease-out), max-height 180ms ease, padding 180ms ease, opacity 150ms; }
     .lrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }  /* выбранные — приглушённо */
-    .lrow.on { background: var(--accent); color: #fff; }                                     /* активный — ярко-синий */
-    .lrow.on .lname, .lrow.on .eye, .lrow.on .caret { color: #fff; }
-    .lrow.on .clip-arrow { color: #fff; }
+    .lrow.on { background: var(--accent); color: var(--on-accent); }                                     /* активный — ярко-синий */
+    .lrow.on .lname, .lrow.on .eye, .lrow.on .caret { color: var(--on-accent); }
+    .lrow.on .clip-arrow { color: var(--on-accent); }
     .lth { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); flex: none; }
     .lname { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lname.editing { overflow: visible; text-overflow: clip; outline: none; cursor: text; color: var(--txt);
@@ -148,7 +148,7 @@
     .lay-act button { width: 34px; height: 36px; color: var(--txt2); }
     .lay-act button svg { width: 20px; height: 20px; }
     .lay-act button:active { color: var(--txt); }
-    .lay-act button.on { color: #fff; } /* активная — синий фон (button.on) + белая иконка, как везде */
+    .lay-act button.on { color: var(--on-accent); } /* активная — синий фон (button.on) + белая иконка, как везде */
     #lay-rsz { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; cursor: nwse-resize;
       touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #lay-rsz svg { width: 16px; height: 16px; }
@@ -168,9 +168,9 @@
 
     /* drop-into — только для папок, появляется по выдержке: насыщенный синий.
        Зазор (drop-above) при этом сохраняется — папка не съезжает из-под курсора. */
-    .lrow.drop-into { background: var(--accent); color: #fff; outline: 2px solid var(--accent); outline-offset: -2px;
+    .lrow.drop-into { background: var(--accent); color: var(--on-accent); outline: 2px solid var(--accent); outline-offset: -2px;
       animation: into-pop 160ms var(--ease-out); }
-    .lrow.drop-into .lname, .lrow.drop-into .eye, .lrow.drop-into .caret { color: #fff; }
+    .lrow.drop-into .lname, .lrow.drop-into .eye, .lrow.drop-into .caret { color: var(--on-accent); }
     @keyframes into-pop { from { background: color-mix(in srgb, var(--accent) 30%, transparent); } to { background: var(--accent); } }
     /* Procreate-стиль: строки раздвигаются, открывая слот — анимируется через transition на .lrow */
     .lrow.drop-above { margin-top: 52px; }
@@ -295,7 +295,7 @@
     #selbar, #cropbar, #rotbar { position: fixed; left: 50%; transform: translateX(-50%);
       top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 15; display: none; gap: 2px; padding: 5px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px;
-      box-shadow: 0 10px 34px rgba(0, 0, 0, .5); }
+      box-shadow: var(--win-shadow); }
     #selbar.on, #cropbar.on, #rotbar.on { display: flex; }
     #crop-ok, #rot-ok { color: #6fdb8b; }
 
@@ -310,7 +310,7 @@
     .tool-hidden { display: none !important; }
     #ctx, #lctx, #cctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
-      box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+      box-shadow: var(--win-shadow); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
     #ctx.on, #lctx.on, #cctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
@@ -339,7 +339,7 @@
     .toolpop { position: fixed; left: 50%; transform: translateX(-50%);
       top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 16; display: none; flex-direction: column;
       width: min(92vw, 330px); padding: 10px 16px 14px; background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+      border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--win-shadow); }
     .toolpop { overflow: hidden; } /* шапка с border-bottom не торчит из скруглённых углов */
     .toolpop.on { display: flex; }
     /* шапка toolpop приведена к виду #lay-pop: тянется на всю ширину (компенсируем падинг) */
@@ -358,7 +358,7 @@
       border-radius: 10px; color: var(--txt); background: transparent; }
     #bb-pick svg { width: 18px; height: 18px; }
     #bb-pick.on { background: color-mix(in srgb, var(--accent) 92%, transparent); border-color: rgba(255, 255, 255, .86);
-      color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent); }
+      color: var(--on-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent); }
     .vsl { position: relative; width: 44px; height: clamp(116px, 20vh, 218px);
       touch-action: none; cursor: pointer; -webkit-user-select: none; user-select: none; flex: none; }
     .vsl::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 38px; transform: translateX(-50%);
@@ -387,7 +387,7 @@
     /* ---- режим пипетки очевиден ---- */
     body.picking #cv { cursor: crosshair; }
     #pickflag { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 60px); transform: translateX(-50%);
-      z-index: 80; display: none; align-items: center; gap: 8px; background: var(--accent); color: #fff;
+      z-index: 80; display: none; align-items: center; gap: 8px; background: var(--accent); color: var(--on-accent);
       font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
     body.picking #pickflag { display: flex; }
     #pickflag svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
@@ -408,7 +408,7 @@
     #prevwin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px));
       top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 13; width: 220px; height: 220px;
       display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
-      border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); padding: 0 6px 6px; }
+      border-radius: 12px; box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #prevwin.on { display: flex; }
     #prevgrip { display: flex; align-items: center; gap: 6px; height: 28px; flex: none;
       cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; }
@@ -427,7 +427,7 @@
     /* ---- окно референса ---- */
     #refwin { position: fixed; left: 60%; top: 26%; z-index: 13; width: 270px; height: 250px;
       display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
-      border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); padding: 0 6px 6px; }
+      border-radius: 12px; box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #refwin.on { display: flex; }
     #refgrip { display: flex; align-items: center; gap: 2px; height: 28px; cursor: grab;
       touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; flex: none; }
@@ -450,7 +450,7 @@
     #tsg-btn svg { width: 18px; height: 18px; }
     #tsg-win { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 14;
       width: 340px; height: 460px; display: none; flex-direction: column; background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 36px rgba(0, 0, 0, .5); padding: 0 6px 6px; }
+      border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #tsg-win.on { display: flex; }
     #tsg-grip { display: flex; align-items: center; height: 30px; cursor: grab; touch-action: none;
       color: var(--txt2); font-size: 12px; font-weight: 600; padding-left: 8px; flex: none; }
@@ -471,7 +471,7 @@
     .tsg-harm-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .tsg-harm-btns button { height: 34px; width: auto; padding: 0 6px; border-radius: 9px; font-size: 11px;
       background: rgba(255, 255, 255, .08); color: var(--txt); }
-    .tsg-harm-btns button.on { background: var(--accent); color: #fff; }
+    .tsg-harm-btns button.on { background: var(--accent); color: var(--on-accent); }
     #tsg-harm { display: flex; flex-direction: column; gap: 8px; }
     .tsg-block { border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
     .tsg-bhead { display: flex; align-items: center; gap: 6px; font-size: 12px; }
@@ -483,7 +483,7 @@
       background: rgba(255, 255, 255, .08); color: var(--txt); }
     .tsg-check { width: 26px; height: 26px; margin-left: auto; border-radius: 7px; border: 1px solid var(--line);
       background: rgba(255, 255, 255, .05); color: var(--txt2); flex: none; display: grid; place-items: center; }
-    .tsg-check.on { background: var(--accent); border-color: transparent; color: #fff; }
+    .tsg-check.on { background: var(--accent); border-color: transparent; color: var(--on-accent); }
     .tsg-check svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
     #tsg-rsz { position: absolute; right: 1px; bottom: 1px; width: 18px; height: 18px; cursor: nwse-resize;
       touch-action: none; color: var(--txt2); display: grid; place-items: center; }
@@ -521,7 +521,7 @@
 .gal-actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .gal-actions button { width: auto; height: 34px; padding: 0 12px; border-radius: var(--radius); color: var(--txt); font-size: 14px; }
 .gal-actions button:hover { background: var(--accent-soft); }
-.gal-actions button.on { background: var(--accent); color: #fff; }
+.gal-actions button.on { background: var(--accent); color: var(--on-accent); }
 #gal-del { color: var(--danger); }
 .gal-actions button:disabled { opacity: .4; pointer-events: none; }
 #gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 22px; padding: 24px; align-content: start; }
@@ -538,15 +538,15 @@
 /* чек-кружок в углу плитки (виден только в режиме выбора) */
 .gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
   border: 2px solid #fff; background: rgba(0,0,0,.4); box-shadow: 0 1px 4px rgba(0,0,0,.45);
-  display: none; align-items: center; justify-content: center; color: #fff; font-size: 15px; line-height: 1; }
+  display: none; align-items: center; justify-content: center; color: var(--on-accent); font-size: 15px; line-height: 1; }
 #gal-grid.selecting .gal-check { display: flex; }
 .gal-check::after { content: '✓'; opacity: 0; }
 .gal-check.on { background: var(--accent); border-color: var(--accent); }
 .gal-check.on::after { opacity: 1; }
 /* кнопка Stack «загорается», когда выбрано 2+ */
-.gal-actions button.lit { background: var(--accent); color: #fff; }
+.gal-actions button.lit { background: var(--accent); color: var(--on-accent); }
 /* кнопка подтверждения выбора (галочка) */
-.gal-actions button.confirm { background: var(--accent); color: #fff; }
+.gal-actions button.confirm { background: var(--accent); color: var(--on-accent); }
 /* круглые иконочные кнопки (＋, ✓) */
 .gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
 .gal-cap { padding: 8px 2px 0; text-align: center; }
@@ -589,7 +589,7 @@
   color: var(--txt); font-size: 18px; font-weight: 700; }
 .se-title:focus { background: var(--surface); border-radius: 8px; }
 .se-btn { color: var(--txt2); font-size: 14px; padding: 6px 8px; flex: none; }
-.se-ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 17px; flex: none; }
+.se-ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 17px; flex: none; }
 .se-body { padding: 4px 0 8px; }
 .se-row { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
 .se-row:first-child { border-top: none; }
@@ -602,7 +602,7 @@
 .swipe-row { position: relative; overflow: hidden; }
 .swipe-front { position: relative; z-index: 1; transition: transform var(--anim-fast) var(--ease-out); will-change: transform; }
 .swipe-acts { position: absolute; top: 0; right: 0; height: 100%; display: flex; z-index: 0; }
-.swipe-act { height: 100%; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; color: #fff;
+.swipe-act { height: 100%; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; color: var(--on-accent);
   background: var(--txt2); cursor: pointer; }
 .swipe-act.danger { background: var(--danger); }
 .swipe-act.on { background: var(--accent); }
@@ -619,8 +619,8 @@
 /* кнопки действий — того же цвета, что строка слоя, чтобы не выбивались;
    состояния (активно/удаление) остаются акцентом/красным, как в Procreate */
 .lrow .swipe-act { padding: 0 14px; font-size: 13px; background: var(--row); color: var(--txt); }
-.lrow .swipe-act.on { background: var(--accent); color: #fff; }
-.lrow .swipe-act.danger { background: var(--danger); color: #fff; }
+.lrow .swipe-act.on { background: var(--accent); color: var(--on-accent); }
+.lrow .swipe-act.danger { background: var(--danger); color: var(--on-accent); }
 .lrow .swipe-act + .swipe-act { box-shadow: inset 1px 0 0 var(--line); }  /* тонкий разделитель между кнопками */
 .lrow .swipe-act.icon { width: 56px; padding: 0; }
 /* обтравочная маска: сдвиг строки вправо + стрелка слева (работает и на десктопе) */
@@ -628,7 +628,7 @@
 .clip-arrow { position: absolute; left: 6px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--txt2); }
 .clip-arrow svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 /* индикатор замка / альфа-замка */
-.lrow.on .lsym, .lrow.on .eye { color: #fff; } /* на активном слое — белые иконки */
+.lrow.on .lsym, .lrow.on .eye { color: var(--on-accent); } /* на активном слое — белые иконки */
 
 /* ── Строки настроек (шестерёнка в галерее) ── */
 .set-row { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 12px; cursor: pointer; border-radius: 9px; }
@@ -639,11 +639,11 @@
 /* === Эффекты слоя (панель, окно, строки в списке) === */
 #fx-panel { position: fixed; left: 50%; transform: translateX(-50%);
   top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 18; width: 232px; display: none; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); overflow: hidden; }
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--win-shadow); overflow: hidden; }
 #fx-panel.on { display: flex; animation: pop .18s ease-out; }
 #fx-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
 #fx-types button { height: 46px; border-radius: 11px; background: var(--row); color: var(--txt); }
-#fx-types button:hover, #fx-types button.on { background: var(--accent); color: #fff; } /* выбранная — единый стиль: акцент + белая иконка */
+#fx-types button:hover, #fx-types button.on { background: var(--accent); color: var(--on-accent); } /* выбранная — единый стиль: акцент + белая иконка */
 #fx-types button svg { width: 22px; height: 22px; }
 #fx-rsz { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; color: var(--txt2); cursor: nwse-resize; touch-action: none; }
 #fx-rsz svg { width: 18px; height: 18px; }
@@ -651,8 +651,8 @@
 .fxrow:hover { background: var(--accent-soft); }
 .fxrow.fxoff { opacity: .5; }
 .fxrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }
-.fxrow.on { background: var(--accent); color: #fff; }
-.fxrow.on .lname, .fxrow.on .fxstar, .fxrow.on .eye { color: #fff; }
+.fxrow.on { background: var(--accent); color: var(--on-accent); }
+.fxrow.on .lname, .fxrow.on .fxstar, .fxrow.on .eye { color: var(--on-accent); }
 .fxrow.fxdrop { box-shadow: inset 0 2px 0 var(--accent); }
 .lrow.fxdrop { outline: 2px solid var(--accent); outline-offset: -2px; }
 .fxrow .fxstar { display: grid; place-items: center; width: 22px; height: 22px; color: var(--txt); flex: none; }
