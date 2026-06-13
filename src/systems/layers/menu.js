@@ -3,7 +3,7 @@
 import { S, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { $, showMenuAt } from '../../core/dom.js';
+import { $, showMenuBeside } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
 import { symmetrizeGrid } from '../../logic/raster.js';
 import { markDirty } from '../../core/layer-cache.js';
@@ -27,7 +27,7 @@ export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   $('lctx-rotate').textContent = t(isFolder ? 'menu.transformFolder' : 'menu.transform');
   if (isLayer) { $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + t('menu.clip');
     $('lctx-lock').textContent = (ref.lock ? '✓ ' : '') + t('menu.lock'); $('lctx-alpha').textContent = (ref.alphaLock ? '✓ ' : '') + t('menu.alphaLock'); }
-  showMenuAt($('lctx'), x, y); }
+  showMenuBeside($('lctx'), $('lay-pop'), y); }
 
 export function openRename(ref) { renRef = ref; $('ren-name').value = ref.name; $('ren-ovl').classList.add('on'); setTimeout(() => { $('ren-name').focus(); $('ren-name').select(); }, 80); }
 

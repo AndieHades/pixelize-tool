@@ -4,7 +4,7 @@
 import { S, cloneFx } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
-import { $, showMenuAt, toast, t } from '../../core/dom.js';
+import { $, showMenuBeside, toast, t } from '../../core/dom.js';
 import { openFxEdit } from './settings.js';
 import { pasteTargets, getFxClip, setFxClip, ownerOf, selectedEffects } from './shared.js';
 
@@ -26,7 +26,7 @@ export function pasteFx() { const clip = getFxClip(); if (!clip.length) { toast(
   const targets = pasteTargets(); if (!targets.length) return; snapshot();
   for (const tg of targets) tg.effects.push(...cloneFx(clip)); refresh(); toast(t('toast.fxPasted')); }
 
-export function openFxMenu(x, y, target, eff) { ref = { target, eff }; showMenuAt($('fxctx'), x, y); }
+export function openFxMenu(x, y, target, eff) { ref = { target, eff }; showMenuBeside($('fxctx'), $('lay-pop'), y); }
 
 export function mountClipboard() {
   const close = () => $('fxctx').classList.remove('on');

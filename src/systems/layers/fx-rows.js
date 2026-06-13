@@ -10,7 +10,8 @@ import { t } from '../../core/dom.js';
 import { longPress, EYE, layList } from './list.js';
 import { fxDrag } from './fx-drag.js';
 
-const STAR = '<svg viewBox="0 0 24 24"><path d="M12 3.2l1.9 5.5 5.7.2-4.5 3.4 1.6 5.5L12 14.9l-4.7 2.9 1.6-5.5L4.4 8.9l5.7-.2z"/></svg>';
+// ромбовидная «искра» — та же иконка, что на кнопке вызова меню эффектов (#fx-btn)
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z"/></svg>';
 const INDENT = 16;
 
 function selectFx(eff, additive) {

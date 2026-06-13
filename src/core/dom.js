@@ -33,3 +33,15 @@ export function showMenuAt(m, ax, ay, above = false) {
     arrow.style.left = (Math.max(16, Math.min(ax - left, r.width - 16)) - 6) + 'px';
     m.style.visibility = ''; });
 }
+
+// Меню сбоку от опорного элемента (панель слоёв): справа, если влезает, иначе
+// слева — чтобы никогда не перекрывать панель. По вертикали — у ay, в экране.
+export function showMenuBeside(m, anchorEl, ay) {
+  m.style.visibility = 'hidden'; m.classList.add('on');
+  const arrow = m.querySelector(':scope > .menu-arrow'); if (arrow) arrow.remove();
+  requestAnimationFrame(() => { const r = m.getBoundingClientRect(), a = anchorEl.getBoundingClientRect(), gap = 8;
+    let left = a.right + gap; if (left + r.width > innerWidth - 8) left = a.left - gap - r.width;
+    left = Math.max(8, Math.min(left, innerWidth - r.width - 8));
+    const top = Math.max(8, Math.min(ay - r.height / 2, innerHeight - r.height - 8));
+    m.style.left = left + 'px'; m.style.top = top + 'px'; m.style.visibility = ''; });
+}
