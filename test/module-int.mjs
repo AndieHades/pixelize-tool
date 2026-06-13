@@ -506,6 +506,11 @@ t('transform: enter строит превью, exit применяет', () => {
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: Ctrl-клик добавляет к выделению, активный слой не меняется', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
+  const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
+  target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(S.cur, 0); assert.ok(S.marked.has(2)); }); // primary остался 0, второй добавлен в marked
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
 t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
