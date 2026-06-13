@@ -10,7 +10,7 @@ export const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)
 
 function snapState() {
   return { cur: S.cur, W: S.W, H: S.H, folderSeq: S.folderSeq, folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })),
-    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, reference: !!L.reference, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) })) };
+    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) })) };
 }
 
 export function snapshot() { S.undoStack.push(snapState());
@@ -20,6 +20,7 @@ export function snapshot() { S.undoStack.push(snapState());
 
 export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folders = s.folders; S.folderSeq = s.folderSeq;
   S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); S.fxSel.clear(); S.fxCur = null;
+  S.fxDraft = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 // перехватчик undo: система (напр. трансформация) может на время «забрать» отмену

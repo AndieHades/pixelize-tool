@@ -334,7 +334,8 @@ t('import: ImageData → пиксель-документ', () => {
   for (const [px, py] of [[1, 1], [2, 1], [1, 2], [2, 2]]) { const o = (py * 4 + px) * 4; data[o] = 200; data[o + 1] = 30; data[o + 2] = 30; data[o + 3] = 255; }
   imp.setImpData({ width: 4, height: 4, data }); imp.setImportMode('replace');
   imp.impConvert(); imp.applyImport();
-  assert.equal(S.layers.length, 1); assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
+  assert.equal(S.layers.length, 1); assert.equal(S.cur, 0);
+  assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
 });
 
 t('import: drag в редактор — Pixelize верхним слоем, документ не стирается', () => {
@@ -422,12 +423,13 @@ t('tint-shade: без активного цвета в палитре — окн
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
-t('effects: панель открывается, иконка добавляет черновик-эффект с превью', () => { effects.mount(); adjust.mount();
+t('effects: новый эффект до Apply остаётся черновиком без строки в списке', () => { effects.mount(); adjust.mount();
   resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('fx.panel'); assert.ok(document.getElementById('fx-panel').classList.contains('on'));
-  document.querySelector('#fx-types button[data-fx="glow"]').click();
-  assert.equal(S.layers[0].effects.length, 1); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
-  document.getElementById('fx-cancel').click(); assert.equal(S.layers[0].effects.length, 0); });
+  document.querySelector('#fx-types button[data-fx="glow"]').click(); layList();
+  assert.equal(S.layers[0].effects.length, 0); assert.ok(S.fxDraft && S.fxDraft.eff.type === 'glow');
+  assert.equal(document.querySelectorAll('#lay-list .fxrow').length, 0); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
+  document.getElementById('fx-cancel').click(); assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 0); });
 
 t('effects: Apply фиксирует эффект, undo убирает', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   document.querySelector('#fx-types button[data-fx="stroke"]').click(); document.getElementById('fx-apply').click();
@@ -473,7 +475,7 @@ t('effects: list рисует строку эффекта под слоем', ()
 t('effects: цвет эффекта — наш #colpop, не системный input[type=color]', () => { cp.mount();
   assert.equal(document.querySelectorAll('#fx-edit input[type=color]').length, 0); // системного пикера в окне эффекта нет
   resetWH(8, 8); document.querySelector('#fx-types button[data-fx="stroke"]').click(); // черновик stroke
-  const eff = S.layers[S.cur].effects[0], before = eff.params.color;
+  const eff = S.fxDraft.eff, before = eff.params.color;
   document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on')); // открылся НАШ пикер
   const active0 = S.active.slice();
   const h = document.getElementById('col-h'); h.value = '200'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -570,16 +572,20 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: единственный слой не удаляется', () => { resetWH(8, 8);
+  lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0);
+  lops.doAddLayer(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
+  lops.deleteLayerRef(S.layers[1]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); });
 t('layers-ui: reference-кнопка синяя на выбранном reference-слое', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].reference = true; layList();
   assert.ok(document.getElementById('lay-ref').classList.contains('on')); assert.equal(document.querySelectorAll('#lay-list .lref').length, 1);
   document.querySelector('#lay-list .lref').click(); layList();
   assert.equal(S.layers[0].reference, false); assert.ok(!document.getElementById('lay-ref').classList.contains('on')); });
-t('layers-ui: Ctrl-клик добавляет к выделению, активный слой не меняется', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+t('layers-ui: Ctrl-клик выделяет диапазон до активного слоя', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
   target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(S.cur, 0); assert.ok(S.marked.has(2)); }); // primary остался 0, второй добавлен в marked
+  assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
 t('layers-ui: после удаления активного слоя выбирается слой ниже', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();

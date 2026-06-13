@@ -32,13 +32,13 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   // folderSeq всегда впереди реальных id — иначе новые папки могут получить чужой id (старые проекты)
   S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
   S.docName = rec.name; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = null;
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); }
 
 function blankWork(w, h, name) { curId = uid('d'); curFolder = null;
   S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer(t('layer.name') + ' 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
   S.palette = defaultPalette(); S.active = S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
-  S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = null; }
+  S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null; }
 
 export function newWork(w, h, name) { blankWork(w, h, name);
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }

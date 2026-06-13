@@ -25,7 +25,7 @@ import { en } from '../src/i18n/locales/en.js';
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
-t('state: дефолты документа', () => { assert.equal(S.W, 32); assert.equal(S.layers.length, 1); assert.equal(MAX_LAYERS, Infinity); });
+t('state: дефолты документа', () => { assert.equal(S.W, 32); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(MAX_LAYERS, Infinity); });
 t('state: blank/newLayer', () => { const L = newLayer('x', 4, 3); assert.equal(L.grid.length, 3); assert.equal(L.grid[0].length, 4); assert.equal(L.grid[0][0], null); });
 t('state: G() — сетка текущего слоя', () => { assert.equal(G(), S.layers[S.cur].grid); });
 
@@ -178,5 +178,4 @@ t('config: S берёт дефолты из config', () => { assert.equal(S.pale
 
 t('i18n: t() даёт строку ru по умолчанию', () => { assert.equal(tr('tool.pencil'), ru['tool.pencil']); assert.equal(tr('нет.такого'), 'нет.такого'); });
 t('i18n: ключи ru и en совпадают', () => { assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort()); });
-
 console.log(`\nВсе ${n} юнит-тестов прошли ✓`);

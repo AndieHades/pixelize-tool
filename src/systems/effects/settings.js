@@ -1,7 +1,6 @@
 // Окно настроек эффекта: живое превью на холсте, затем Применить/Отмена.
-// Открытие нового эффекта сразу кладёт черновик в цель (превью + строка в списке);
-// Отмена убирает черновик / откатывает параметры, Применить фиксирует в историю.
-import { newEffect } from '../../core/state.js';
+// Новый эффект живёт черновиком до Apply; строка в списке появляется после фиксации.
+import { S, newEffect } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
@@ -36,22 +35,22 @@ function readForm() { if (!ses) return; const p = ses.eff.params;
 function setColor(hex) { if (!ses) return; ses.eff.params.color = hex; $('fx-colsw').style.background = hex; bus.emit('render'); }
 
 function revert() { if (!ses) return;
-  if (ses.isNew) { const i = ses.target.effects.indexOf(ses.eff); if (i >= 0) ses.target.effects.splice(i, 1); }
-  else ses.eff.params = { ...ses.original }; }
+  if (ses.isNew) S.fxDraft = null; else ses.eff.params = { ...ses.original }; }
 
-const close = () => { $('fx-edit').classList.remove('on'); $('colpop').classList.remove('on'); ses = null; };
+const close = () => { if (ses && ses.isNew) S.fxDraft = null; $('fx-edit').classList.remove('on'); $('colpop').classList.remove('on'); ses = null; };
 
 function open(target, eff, isNew) { if (ses) { revert(); close(); } // переключение окна — тихо отменить прежнее
+  if (isNew) S.fxDraft = { target, eff };
   ses = { target, eff, isNew, original: { ...eff.params } }; fill(eff); $('fx-edit').classList.add('on');
   bus.emit('layers'); bus.emit('render'); }
 
 export function openFxNew(type) { const target = activeTarget(); if (!target) return;
-  const eff = newEffect(type); target.effects.push(eff); open(target, eff, true); }
+  const eff = newEffect(type); open(target, eff, true); }
 export function openFxEdit(target, eff) { if (target && eff) open(target, eff, false); }
 
 export function fxCancel() { if (!ses) return; revert(); close(); bus.emit('layers'); bus.emit('render'); }
 export function fxApply() { if (!ses) return; const { target, eff, isNew, original } = ses;
-  if (isNew) { const i = target.effects.indexOf(eff); target.effects.splice(i, 1); snapshot(); target.effects.splice(i, 0, eff); }
+  if (isNew) { snapshot(); target.effects.push(eff); S.fxDraft = null; }
   else { const cur = { ...eff.params }; eff.params = { ...original }; snapshot(); eff.params = cur; }
   expandForEffects(target); // если эффекту не хватает места — раздвинуть холст под тем же снимком
   close(); bus.emit('layers'); bus.emit('render'); }

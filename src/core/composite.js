@@ -4,7 +4,7 @@
 import { S } from './state.js';
 import { effVis, clipBase, folderChain } from './layers.js';
 import { layerSrcCanvas, clippedShift } from './layer-cache.js';
-import { folderFx, layerMoveCanvas } from './effects-render.js';
+import { folderFx, folderEffectsFor, layerMoveCanvas } from './effects-render.js';
 
 const memberOf = (i, fid) => folderChain(S.layers[i].fid).some((f) => f.id === fid);
 const folderVis = (f) => folderChain(f.id).every((x) => x.visible);
@@ -13,7 +13,7 @@ const depth = (f) => folderChain(f.id).length;
 // папки с эффектами: границы поддерева (нижний/верхний индекс слоёв в стопке).
 // opt.inc ограничивает состав (экспорт подмножества), opt.showHidden — игнор видимости.
 function fxGroups(opt) { const res = [];
-  for (const f of S.folders) { if (!f.effects || !f.effects.length) continue;
+  for (const f of S.folders) { if (!folderEffectsFor(f).length) continue;
     if (!opt.showHidden && !folderVis(f)) continue;
     let bottom = Infinity, top = -1;
     for (let i = 0; i < S.layers.length; i++) if (memberOf(i, f.id) && opt.inc(i)) { if (i < bottom) bottom = i; if (i > top) top = i; }

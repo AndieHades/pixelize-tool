@@ -90,6 +90,12 @@ function activeInside(f) {
   return layerIn || folderIn;
 }
 
+function selectLayerRange(i) {
+  const a = Math.min(S.cur, i), b = Math.max(S.cur, i);
+  S.marked = new Set(); for (let k = a; k <= b; k++) if (k !== S.cur && S.layers[k]) S.marked.add(k);
+  S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList();
+}
+
 function layerRow(L, i, depth) {
   // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
   // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
@@ -111,7 +117,7 @@ function layerRow(L, i, depth) {
     fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
   row.append(vis);
   row.addEventListener('click', (ev) => { if (layDragSquelch) return;
-    if (ev.ctrlKey || ev.metaKey) { if (S.marked.has(i)) S.marked.delete(i); else S.marked.add(i); layList(); return; } // ctrl/cmd-клик — мультивыбор
+    if (ev.ctrlKey || ev.metaKey) { selectLayerRange(i); return; } // ctrl/cmd-клик — диапазон от активного слоя до кликнутого
     const now = performance.now();
     if (lastClick.idx === i && now - lastClick.t < 350) { lastClick.idx = -1; startInlineRename(nm, L); return; } // двойной клик — переименование
     lastClick = { idx: i, t: now }; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); }); // клик без Ctrl — сбросить общее выделение, выбрать только этот слой

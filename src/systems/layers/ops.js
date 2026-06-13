@@ -24,7 +24,7 @@ function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).
   for (let j = 1; j < idx.length; j++) { const L = S.layers[idx[j]];
     for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const t2 = L.grid[y][x]; if (t2) out[y][x] = mergeCells(out[y][x], t2, L.opacity); }
     for (const [k, c] of L.ext) ext.set(k, c); }
-  const merged = { name: S.layers[base].name, grid: out, opacity: 1, visible: true, fid: S.layers[base].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext };
+  const merged = { name: S.layers[base].name, grid: out, opacity: 1, visible: true, fid: S.layers[base].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext, effects: [] };
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
   S.layers.splice(base, 0, merged); S.cur = base; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
 
