@@ -444,7 +444,7 @@
     #tsg-grip button { width: 24px; height: 24px; color: var(--txt2); flex: none; }
     #tsg-grip button svg { width: 14px; height: 14px; }
     #tsg-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 4px; scrollbar-width: thin; }
-    .tsg-base { display: flex; align-items: center; gap: 8px; }
+    .tsg-base { display: flex; align-items: center; gap: 8px; padding-right: 7px; }
     #tsg-baseprev { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); flex: none; }
     #tsg-basehex { font-size: 13px; letter-spacing: .5px; }
     .tsg-htitle { font-size: 11px; color: var(--txt2); margin-top: 2px; }
@@ -464,8 +464,9 @@
     .tsg-dot { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line); flex: none; }
     #tsg-selprev { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
     .tsg-chip { width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--line); }
-    .tsg-act { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
-    .tsg-act .txtbtn { width: 100%; height: 40px; }
+    .tsg-act { display: flex; gap: 6px; margin-top: 2px; }
+    .tsg-act .txtbtn { flex: 1; min-width: 0; height: 36px; padding: 0 6px; font-size: 13px;
+      background: rgba(255, 255, 255, .08); color: var(--txt); }
     .tsg-check { width: 26px; height: 26px; margin-left: auto; border-radius: 7px; border: 1px solid var(--line);
       background: rgba(255, 255, 255, .05); color: var(--txt2); flex: none; display: grid; place-items: center; }
     .tsg-check.on { background: var(--accent); border-color: transparent; color: #fff; }
