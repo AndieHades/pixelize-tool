@@ -26,6 +26,7 @@ const { stamp } = await import('../src/systems/draw/stamp.js');
 const stroke = await import('../src/systems/draw/stroke.js');
 const { flood } = await import('../src/systems/draw/fill.js');
 const { commitLine } = await import('../src/systems/draw/shapes.js');
+const { SHAPE_SNAP_MS } = await import('../src/config/timings.js');
 const { rotateCanvas } = await import('../src/systems/rotate-canvas.js');
 const { flipLayer } = await import('../src/systems/flip.js');
 const { trimCanvas } = await import('../src/systems/trim.js');
@@ -168,6 +169,11 @@ t('draw: эллипс фиксируется в слой, shift — круг', (
   assert.deepEqual(S.linePrev, [0, 0, 3, 3]); h.up({});
   assert.ok(S.layers[0].grid[0][1] && S.layers[0].grid[3][1]); // контур слева и справа
   assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая
+await ta('draw: удержание фигуры на месте → ровный квадрат/круг', async () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect';
+  const h = toolHandler('rect'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 1, gy: 3, e: {} }); // тянем узкий бокс 1×3
+  assert.deepEqual(S.linePrev, [1, 1, 1, 3]);
+  await new Promise((r) => setTimeout(r, SHAPE_SNAP_MS + 60)); // держим на месте — должно снапнуться в квадрат
+  assert.deepEqual(S.linePrev, [1, 1, 3, 3]); h.up({}); });
 t('draw: пипетка берёт цвет в активный', () => { reset4(); S.layers[0].grid[1][1] = [40, 50, 60, 255]; cache.dirtyAll();
   S.tool = 'pick'; stamp(1, 1); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 

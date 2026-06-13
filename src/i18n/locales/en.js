@@ -121,6 +121,7 @@ export const en = {
   'toast.transformHint': 'Corners rotate · sides scale · Enter/right-click apply',
   'toast.canvasEmpty': 'Canvas is empty',
   'toast.colorAdded': 'Color added to palette',
+  'toast.shapeSquare': 'Square', 'toast.shapeCircle': 'Circle',
   'toast.colorFromRef': 'Color from reference added',
   'toast.colorPicked': 'Color picked',
   'toast.colorRemoved': 'Color removed from palette',

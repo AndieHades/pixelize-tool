@@ -123,6 +123,7 @@ export const ru = {
   'toast.transformHint': 'Углы — поворот · стороны — растяжение · Enter/ПКМ — применить',
   'toast.canvasEmpty': 'Холст пуст',
   'toast.colorAdded': 'Цвет добавлен в палитру',
+  'toast.shapeSquare': 'Квадрат', 'toast.shapeCircle': 'Круг',
   'toast.colorFromRef': 'Цвет из референса добавлен в палитру',
   'toast.colorPicked': 'Цвет подобран',
   'toast.colorRemoved': 'Цвет удалён из палитры',
