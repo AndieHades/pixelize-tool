@@ -582,6 +582,10 @@ t('layers-ui: Ctrl-клик добавляет к выделению, актив
   assert.equal(S.cur, 0); assert.ok(S.marked.has(2)); }); // primary остался 0, второй добавлен в marked
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
+t('layers-ui: после удаления активного слоя выбирается слой ниже', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.cur = 1; lops.deleteLayerRef(S.layers[1]); assert.equal(S.cur, 0); });
+t('layers-ui: удаление неактивного слоя сохраняет активный слой', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  const active = S.layers[2]; S.cur = 2; lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers[S.cur], active); });
 t('layers-ui: добавление слоёв не останавливается на восьми', () => { resetWH(8, 8);
   for (let i = 0; i < 9; i++) lops.doAddLayer();
   assert.equal(S.layers.length, 10); });

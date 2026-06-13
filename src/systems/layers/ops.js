@@ -35,6 +35,12 @@ export function doMerge() { let idx = selectedIdx();
 // слить диапазон слоёв [a..b] (щипок), независимо от выбора
 export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
 
+function activeAfterDelete(idx) {
+  const gone = new Set(idx), curObj = S.layers[S.cur]; let target = gone.has(S.cur) ? null : curObj;
+  if (!target) for (let i = S.cur - 1; i >= 0; i--) if (!gone.has(i)) { target = S.layers[i]; break; }
+  return () => { S.cur = target && S.layers.includes(target) ? S.layers.indexOf(target) : 0; };
+}
+
 export function doGroup() { const idx = selectedIdx(); // сгруппировать всё выделенное (активный + отмеченные)
   snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
   const id = nextFolderId(); const f = { id, name: uniqueFolderName(t('folder.name') + ' ' + id), open: true, visible: true, symLock: false, parent, effects: [] };
@@ -58,8 +64,8 @@ export function toggleReference(L) { if (!L) return; snapshot(); const on = !L.r
 export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
   L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerCleared')); }
 export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
-  const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot(); S.layers.splice(idx, 1);
-  S.cur = Math.min(S.cur, S.layers.length - 1); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  const idx = S.layers.indexOf(L); if (idx < 0) return; const restoreActive = activeAfterDelete([idx]);
+  snapshot(); S.layers.splice(idx, 1); restoreActive(); S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.length) return;
   if (S.layers.length + kids.length > MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
@@ -90,10 +96,10 @@ export function deleteLayer() {
     for (const L of folderLayers(f)) { const i = S.layers.indexOf(L); if (i >= 0) allIdx.add(i); } }
   const idx = [...allIdx].filter((i) => S.layers[i]).sort((a, b) => a - b);
   if (S.layers.length - idx.length < 1) { toast(t('toast.onlyLayer')); return; }
-  snapshot();
+  const restoreActive = activeAfterDelete(idx); snapshot();
   if (markedFids.length) S.folders = S.folders.filter((sf) => !markedFids.includes(sf.id) && !folderChain(sf.id).some((x) => markedFids.includes(x.id)));
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
-  S.cur = Math.max(0, Math.min(idx[0] ?? 0, S.layers.length - 1));
+  restoreActive();
   S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 actions.register('layer.add', doAddLayer);
