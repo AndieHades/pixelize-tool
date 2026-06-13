@@ -52,6 +52,31 @@ export function fxOnCanvas(src, effects, W, H) {
   if (!effects || !effects.length) return src;
   return build(src, maskFromAlpha(src.getContext('2d').getImageData(0, 0, W, H).data, W, H), effects, W, H); }
 
+// canvas только эффектов папки вокруг готового силуэта grp (which='below' под группой |
+// 'above' внутр.-тени по силуэту). Возвращает прозрачный W×H, если эффектов нет.
+function folderFxOn(grp, effects, which, W, H) {
+  const eff = (effects || []).filter((e) => e.visible !== false && (which === 'above' ? INNER_EFFECTS.has(e.type) : !INNER_EFFECTS.has(e.type)));
+  const out = cv(W, H); if (!eff.length) return out;
+  const mask = maskFromAlpha(grp.getContext('2d').getImageData(0, 0, W, H).data, W, H), ox = out.getContext('2d');
+  for (const e of eff) { const ec = effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H);
+    if (which === 'above') { const ix = ec.getContext('2d'); ix.globalCompositeOperation = 'destination-in'; ix.drawImage(grp, 0, 0); }
+    ox.drawImage(ec, 0, 0); }
+  return out; }
+
+// Превью трансформации с эффектами: mems = [{ idx, L, content }] — трансформированный
+// контент каждого слоя на полном W×H, снизу вверх. Кладёт эффекты каждого слоя и
+// эффекты папок, чьи члены попали в трансформацию (как в обычном композите).
+export function fxPreview(mems, W, H) { const out = cv(W, H), ox = out.getContext('2d'); ox.imageSmoothingEnabled = false;
+  const inF = (L, fid) => folderChain(L.fid).some((f) => f.id === fid);
+  const folders = S.folders.filter((f) => f.effects && f.effects.length && mems.some((m) => inF(m.L, f.id)));
+  const grpCanvas = (f) => { const g = cv(W, H), gx = g.getContext('2d'); gx.imageSmoothingEnabled = false;
+    for (const m of mems) if (inF(m.L, f.id)) gx.drawImage(m.content, 0, 0); return g; };
+  const byDepth = (a, b) => folderChain(a.id).length - folderChain(b.id).length;
+  for (const f of folders.slice().sort(byDepth)) ox.drawImage(folderFxOn(grpCanvas(f), f.effects, 'below', W, H), 0, 0);
+  for (const m of mems) ox.drawImage(fxOnCanvas(m.content, m.L.effects, W, H), 0, 0);
+  for (const f of folders.slice().sort((a, b) => byDepth(b, a))) ox.drawImage(folderFxOn(grpCanvas(f), f.effects, 'above', W, H), 0, 0);
+  return out; }
+
 // слои поддерева папки (с их эффектами) в один canvas — силуэт группы для её эффектов
 function groupCanvas(fid) { const c = cv(S.W, S.H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i];
@@ -67,9 +92,5 @@ export function folderFx(folder, which) { const eff = (folder.effects || []).fil
   if (!eff.length) return null;
   const key = folder.id + '|' + which, sig = S.W + 'x' + S.H + '|' + memberSig(folder.id) + '|' + JSON.stringify(eff);
   const hit = fcache.get(key); if (hit && hit.sig === sig) return hit.canvas;
-  const grp = groupCanvas(folder.id), gx = grp.getContext('2d'), W = S.W, H = S.H;
-  const mask = maskFromAlpha(gx.getImageData(0, 0, W, H).data, W, H), out = cv(W, H), ox = out.getContext('2d');
-  for (const e of eff) { const ec = effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H);
-    if (which === 'above') { const ix = ec.getContext('2d'); ix.globalCompositeOperation = 'destination-in'; ix.drawImage(grp, 0, 0); }
-    ox.drawImage(ec, 0, 0); }
+  const out = folderFxOn(groupCanvas(folder.id), folder.effects, which, S.W, S.H);
   fcache.set(key, { sig, canvas: out }); return out; }

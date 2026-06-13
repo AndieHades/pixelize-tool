@@ -9,25 +9,24 @@ import { expandCanvas } from '../../core/document.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { registerMode } from '../../core/canvas-handlers.js';
 import { gridBounds } from '../../logic/raster.js';
-import { fxOnCanvas } from '../../core/effects-render.js';
+import { fxPreview } from '../../core/effects-render.js';
 import { rotBuildCells, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame } from './drag.js';
 
 let rotRAF = 0;
 
-function rotRebuild() { if (!S.rotMode) return; let res = null, all = [];
-  for (const s of S.rotMode.sources) { const r = rotBuildCells(S.rotMode, s.src); if (!r) continue;
-    all = all.concat(r.cells); res = res ? { cells: all, minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : { ...r, cells: all }; }
-  if (!res) { S.rotPrev = { idx: S.rotMode.idx, canvas: null }; bus.emit('render'); return; }
-  const c = document.createElement('canvas'), w2 = res.maxx - res.minx + 1, h2 = res.maxy - res.miny + 1;
-  c.width = w2; c.height = h2; const x2 = c.getContext('2d'), id = x2.createImageData(w2, h2);
-  for (const [x, y, cc] of res.cells) { const o = ((y - res.miny) * w2 + (x - res.minx)) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
-  x2.putImageData(id, 0, 0);
-  const L = S.layers[S.rotMode.idx]; // эффекты слоя должны быть видны и при трансформации — пересчитываем по новой форме
-  if (L && L.effects && L.effects.length) { const W = S.W, H = S.H, full = document.createElement('canvas'); full.width = W; full.height = H;
-    const fx = full.getContext('2d'); fx.imageSmoothingEnabled = false; fx.drawImage(c, res.minx, res.miny);
-    S.rotPrev = { idx: S.rotMode.idx, canvas: fxOnCanvas(full, L.effects, W, H), px: 0, py: 0, ow: W, oh: H }; }
-  else S.rotPrev = { idx: S.rotMode.idx, canvas: c, px: res.minx, py: res.miny, ow: w2, oh: h2 };
+// трансформированный контент одного слоя на полном W×H (вне холста — обрезается,
+// при применении холст расширяется); эффекты накладываются в fxPreview по новой форме
+function memberCanvas(cells, W, H) { const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'), id = x.createImageData(W, H);
+  for (const [px, py, cc] of cells) { if (px < 0 || py < 0 || px >= W || py >= H) continue;
+    const o = (py * W + px) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
+  x.putImageData(id, 0, 0); return c; }
+
+function rotRebuild() { if (!S.rotMode) return; const W = S.W, H = S.H, mems = []; let any = false;
+  for (const s of S.rotMode.sources) { const r = rotBuildCells(S.rotMode, s.src); if (!r) continue; any = true;
+    const L = S.layers[s.idx]; if (L) mems.push({ idx: s.idx, L, content: memberCanvas(r.cells, W, H) }); }
+  S.rotPrev = any ? { idx: S.rotMode.idx, canvas: fxPreview(mems, W, H), px: 0, py: 0, ow: W, oh: H } : { idx: S.rotMode.idx, canvas: null };
   bus.emit('render'); }
 const rotRebuildSoon = () => { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); };
 

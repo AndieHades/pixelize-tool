@@ -252,6 +252,11 @@ t('effects-render: fx-канвас едет с поднятым фрагмент
   const a = fxr.layerFxCanvas(0); assert.equal(fxr.layerFxCanvas(0), a); // тот же фрагмент → кеш
   S.selFloat.x = 5; assert.notEqual(fxr.layerFxCanvas(0), a); // фрагмент сдвинут → обводка пересчитана
   S.selFloat = null; S.layers[0].effects = []; });
+t('effects-render: fxOnCanvas накладывает эффект (новый канвас), без эффектов — исходный', () => {
+  const src = document.createElement('canvas'); src.width = 8; src.height = 8;
+  assert.equal(fxr.fxOnCanvas(src, [], 8, 8), src); // нет эффектов → тот же канвас (без работы)
+  const out = fxr.fxOnCanvas(src, [{ type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }], 8, 8);
+  assert.notEqual(out, src); assert.equal(out.width, 8); }); // эффект → новый полнохолстовый канвас
 
 t('recolor: меняет цвет на слоях и в палитре', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.palette = [[9, 9, 9]]; cache.dirtyAll();
   recolorAll([9, 9, 9, 255], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.palette[0], [200, 100, 50]); });
@@ -522,6 +527,15 @@ t('selection-float: повторный перенос не стирает под
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
+
+t('transform: превью строится с эффектами слоя и папки (обводка не пропадает)', () => { resetWH(8, 8);
+  S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[4][3] = [1, 1, 1, 255];
+  S.layers[0].effects = [{ id: 'e1', type: 'stroke', visible: true, params: { size: 1, color: '#ff7a18' } }];
+  S.folders = [{ id: 1, name: 'g', visible: true, parent: null, effects: [{ id: 'e2', type: 'stroke', visible: true, params: { size: 2, color: '#5aa6f2' } }] }];
+  S.layers[0].fid = 1; cache.dirtyAll();
+  tf.enterRotMode(S.layers[0]); assert.ok(S.rotPrev && S.rotPrev.canvas); // полнохолстовое превью с эффектами слоя+папки
+  assert.equal(S.rotPrev.canvas.width, S.W); assert.equal(S.rotPrev.ow, S.W);
+  tf.exitRotMode(false); S.layers[0].effects = []; S.layers[0].fid = null; S.folders = []; });
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
