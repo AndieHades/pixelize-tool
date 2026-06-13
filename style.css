@@ -480,9 +480,9 @@
     .tsg-block { border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
     .tsg-bhead { display: flex; align-items: center; gap: 6px; font-size: 12px; }
     .tsg-dot { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line); flex: none; }
-    #tsg-selprev { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
+    #tsg-selprev { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px; min-height: 22px; max-height: 96px; overflow-y: auto; scrollbar-width: thin; }
     .tsg-chip { width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--line); }
-    .tsg-act { display: flex; gap: 6px; margin-top: 2px; }
+    .tsg-act { display: flex; gap: 6px; margin-top: 2px; flex: none; }
     .tsg-act .txtbtn { flex: 1; min-width: 0; height: 36px; padding: 0 6px; font-size: 13px;
       background: rgba(255, 255, 255, .08); color: var(--txt); }
     .tsg-check { width: 26px; height: 26px; margin-left: auto; border-radius: 7px; border: 1px solid var(--line);
