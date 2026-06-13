@@ -567,13 +567,12 @@
 /* ── Диалог «Новый холст» (список, как в Procreate) ── */
 /* New Canvas и конвертер показываются ПОВЕРХ галереи (галерея — z-index 100). */
 #new-ovl, #imp-ovl { z-index: 130; }
-/* список выезжает сверху-справа (под кнопкой ＋ галереи); карточка правки — по центру */
-#new-ovl { align-items: flex-start; justify-content: flex-end; }
-#new-ovl.editing { align-items: center; justify-content: center; }
-#new-ovl .new-panel { margin: 54px 14px 0 0; }
-.new-panel { width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 5px rgba(0,0,0,.4); overflow: hidden; }
-.new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; }
+/* окна «Новый холст» (пресеты и редактор) — перетаскиваемые, по центру, как все */
+.new-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--win-shadow); overflow: hidden; }
+.new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.new-head:active { cursor: grabbing; }
 .new-head h3 { margin: 0; font-size: 22px; font-weight: 700; color: var(--txt); }
 .new-head .gal-round { background: var(--accent-soft); color: var(--txt); }
 .new-list { overflow: auto; padding: 4px 0; }
@@ -583,24 +582,19 @@
 .new-name { color: var(--txt); font-size: 16px; }
 .new-size { margin-left: auto; color: var(--txt2); font-size: 13px; background: var(--surface); padding: 4px 10px; border-radius: 8px; }
 .new-row:hover .new-name { color: var(--accent); }
-/* компактное окошко создания/правки размера (имя + ширина/высота + ✓/отмена) */
+/* в #new-ovl две панели: пресеты (.new-panel) и редактор (#new-custom); переключение по .editing */
+#new-custom { display: none; }
+#new-ovl.editing #new-custom { display: block; }
 #new-ovl.editing .new-panel { display: none; }
-.size-edit { display: none; width: min(420px, 92vw); flex-direction: column; overflow: hidden;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
-#new-ovl.editing .size-edit { display: flex; }
-.se-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.se-title { flex: 1; min-width: 0; text-align: center; background: transparent; border: none; outline: none;
-  color: var(--txt); font-size: 18px; font-weight: 700; }
-.se-title:focus { background: var(--surface); border-radius: 8px; }
-.se-btn { color: var(--txt2); font-size: 14px; padding: 6px 8px; flex: none; }
-.se-ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 17px; flex: none; }
-.se-body { padding: 4px 0 8px; }
-.se-row { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
-.se-row:first-child { border-top: none; }
-.se-row > span { color: var(--txt); font-size: 15px; }
-.se-row input { margin-left: auto; width: 96px; text-align: right; padding: 7px 10px; font-size: 15px;
+.se-dims { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 14px; }
+.se-row { display: flex; align-items: center; gap: 10px; }
+.se-row > span { color: var(--txt2); font-size: 13px; min-width: 104px; }
+.se-row input { margin-left: auto; width: 90px; text-align: right; padding: 7px 10px; font-size: 15px;
   color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; }
 .se-row em { color: var(--txt2); font-style: normal; font-size: 13px; width: 16px; }
+.se-link { align-self: center; width: 30px; height: 30px; border-radius: 8px; background: var(--row); color: var(--txt2); }
+.se-link.on { background: var(--accent); color: var(--on-accent); }
+.se-link svg { width: 18px; height: 18px; }
 
 /* ── Свайп-действия по строке (переиспользуемо: новый холст, слои) ── */
 .swipe-row { position: relative; overflow: hidden; }

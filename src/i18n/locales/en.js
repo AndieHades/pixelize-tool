@@ -23,7 +23,7 @@ export const en = {
   'export.bounds': 'File size', 'export.sameBounds': 'Same size', 'export.trimEach': 'Trim each',
   'export.format': 'Format', 'export.png': 'PNG', 'export.psd': 'PSD',
   'export.canvas': 'Canvas', 'export.current': 'Current size', 'export.trim': 'Trim to pixels', 'export.hidden': 'Hidden layers',
-  'new.addCustom': 'Custom size',
+  'new.addCustom': 'Custom size', 'new.lockRatio': 'Keep aspect ratio', 'label.name': 'Name',
   'dialog.done': 'Done', 'dialog.rename': 'Rename', 'dialog.panels': 'Panel buttons',
   'pop.color': 'Color', 'pop.bc': 'Brightness/contrast', 'pop.adjust': 'Adjust brush', 'pop.glow': 'Glow',
   'pop.shadow': 'Drop shadow', 'pop.outline': 'Outline',

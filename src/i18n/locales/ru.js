@@ -22,7 +22,7 @@ export const ru = {
   'dialog.newCanvas': 'Новый холст', 'dialog.export': 'Экспорт', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
   'export.scope': 'Что', 'export.selected': 'Выделенное', 'export.folder': 'Папка', 'export.project': 'Проект', 'export.mode': 'Как', 'export.flattened': 'Склеить', 'export.layered': 'Со слоями', 'export.separateFiles': 'Раздельно', 'export.separate': 'Раздельно', 'export.top': 'Верхний уровень', 'export.leaves': 'Все слои',
   'export.foldersFlat': 'Папки картинками', 'export.bounds': 'Размер файлов', 'export.sameBounds': 'Один размер', 'export.trimEach': 'Обрезать каждый', 'export.format': 'Формат', 'export.png': 'PNG', 'export.psd': 'PSD', 'export.canvas': 'Холст', 'export.current': 'Текущий размер', 'export.trim': 'По пикселям', 'export.hidden': 'Скрытые слои',
-  'new.addCustom': 'Свой размер',
+  'new.addCustom': 'Свой размер', 'new.lockRatio': 'Сохранять пропорции', 'label.name': 'Имя',
   'dialog.done': 'Готово', 'dialog.rename': 'Переименовать', 'dialog.panels': 'Кнопки панелей',
   'pop.color': 'Цвет', 'pop.bc': 'Яркость/контраст', 'pop.adjust': 'Кисть-коррекция', 'pop.glow': 'Свечение',
   'pop.shadow': 'Тень (Drop Shadow)', 'pop.outline': 'Обводка',

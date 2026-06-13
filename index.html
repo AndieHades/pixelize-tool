@@ -341,16 +341,15 @@
       <button id="new-add" class="gal-round" data-i18n-title="new.addCustom" title="Свой размер">＋</button></header>
     <div id="new-list" class="new-list"></div>
   </div>
-  <div id="new-custom" class="size-edit">
-    <header class="se-top">
-      <button id="new-cancel" class="se-btn" data-i18n="btn.cancel">Отмена</button>
-      <input id="new-name-in" class="se-title" maxlength="24" />
-      <button id="new-create" class="se-ok gal-round" title="OK">✓</button>
-    </header>
-    <div class="se-body">
+  <div id="new-custom" class="sheet">
+    <h3 id="new-title" data-i18n="new.addCustom">Свой размер</h3>
+    <div class="irow"><label data-i18n="label.name">Имя</label><input id="new-name-in" type="text" maxlength="24" style="flex:1" /></div>
+    <div class="se-dims">
       <div class="se-row"><span data-i18n="label.width">Ширина</span><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
+      <button id="new-link" class="se-link" data-i18n-title="new.lockRatio" title="Сохранять пропорции"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
       <div class="se-row"><span data-i18n="label.height">Высота</span><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
     </div>
+    <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="new-create" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">

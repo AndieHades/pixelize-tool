@@ -39,8 +39,17 @@ function buildList() { const box = $('new-list'); if (!box) return; closeSwipe()
   SIZE_PRESETS.forEach((p) => box.appendChild(row(p, null)));
   custom().forEach((p, i) => box.appendChild(row(p, i))); }
 
-// компактное окошко правки размера (имя + ширина/высота + ✓/отмена)
+// окно создания/правки размера (имя + ширина/высота + связка пропорций)
+let linked = false, ratio = 1;
+const clampSize = (v) => Math.max(2, Math.min(MAX_SIZE, Math.round(v)));
+function setLinked(on) { linked = on; $('new-link').classList.toggle('on', on);
+  if (on) { const w = +$('new-w').value, h = +$('new-h').value; ratio = (w > 0 && h > 0) ? w / h : 1; } }
+function syncRatio(which) { if (!linked) return;
+  if (which === 'w') { const w = +$('new-w').value; if (w > 0) $('new-h').value = clampSize(w / ratio); }
+  else { const h = +$('new-h').value; if (h > 0) $('new-w').value = clampSize(h * ratio); } }
+
 function openEditor(name, w, h) { $('new-name-in').value = name; $('new-w').value = w; $('new-h').value = h;
+  if (linked) setLinked(true); // пересчитать пропорцию под новые значения
   $('new-ovl').classList.add('editing'); setTimeout(() => { $('new-w').focus(); $('new-w').select(); }, 30); }
 function closeEditor() { $('new-ovl').classList.remove('editing'); }
 function editCustom(i) { editIdx = i; const c = custom()[i]; if (!c) return; openEditor(c.label || `${c.w}×${c.h}`, c.w, c.h); }
@@ -61,5 +70,8 @@ export function mount() {
   $('new-add').onclick = () => { editIdx = null; openEditor('32×32', 32, 32); };
   $('new-cancel').onclick = () => { editIdx = null; closeEditor(); };
   $('new-create').onclick = create;
+  $('new-link').onclick = () => setLinked(!linked);
+  $('new-w').addEventListener('input', () => syncRatio('w'));
+  $('new-h').addEventListener('input', () => syncRatio('h'));
   ['new-w', 'new-h', 'new-name-in'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); create(); } }));
 }
