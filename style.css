@@ -602,8 +602,13 @@
 .lrow.on .swipe-front { background: var(--accent); }                                                 /* активный — ярко-синий */
 .lrow.swiping-right .swipe-front { box-shadow: inset 3px 0 0 var(--accent); }
 .lrow .swipe-acts { border-radius: 0; }
-.lrow .swipe-act { padding: 0 14px; font-size: 13px; }
-.lrow .swipe-act.icon { width: 52px; padding: 0; }
+/* кнопки действий — того же цвета, что строка слоя, чтобы не выбивались;
+   состояния (активно/удаление) остаются акцентом/красным, как в Procreate */
+.lrow .swipe-act { padding: 0 14px; font-size: 13px; background: var(--row); color: var(--txt); }
+.lrow .swipe-act.on { background: var(--accent); color: #fff; }
+.lrow .swipe-act.danger { background: var(--danger); color: #fff; }
+.lrow .swipe-act + .swipe-act { box-shadow: inset 1px 0 0 var(--line); }  /* тонкий разделитель между кнопками */
+.lrow .swipe-act.icon { width: 56px; padding: 0; }
 /* обтравочная маска: сдвиг строки вправо + стрелка слева (работает и на десктопе) */
 .lrow.clip .swipe-front, .lrow.clip:not(.swipe-row) { padding-left: 30px; }
 .clip-arrow { position: absolute; left: 6px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--txt2); }
