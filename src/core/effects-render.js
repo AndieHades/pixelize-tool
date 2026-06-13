@@ -24,11 +24,17 @@ function build(src, mask, effects, W, H) { const c = cv(W, H), x = c.getContext(
   return c; }
 
 const lcache = new Map(); // i → { sig, canvas }
-export function layerFxCanvas(i) { const L = S.layers[i], src = layerFloatCanvas(i);
+export function layerFxCanvas(i) { const L = S.layers[i], src = layerFloatCanvas(i), W = S.W, H = S.H;
   if (!L.effects || !L.effects.length) return src;
-  const sig = S.W + 'x' + S.H + '|' + layerRev(i) + '|' + JSON.stringify(L.effects);
+  // поднятый фрагмент выделения этого слоя: при его движении силуэт берём из src
+  // (вместе с фрагментом на текущем месте) — иначе обводка/тень над выделенной
+  // областью пропадают и «застывают» на месте подъёма (кеш по подписи).
+  const f = S.selFloat && (S.selFloat.li ?? S.cur) === i ? S.selFloat : null;
+  const fsig = f ? '|f' + (f.symItems ? f.dx + ',' + f.dy : f.x + ',' + f.y + ',' + f.w + ',' + f.h) : '';
+  const sig = W + 'x' + H + '|' + layerRev(i) + '|' + JSON.stringify(L.effects) + fsig;
   const hit = lcache.get(i); if (hit && hit.sig === sig) return hit.canvas;
-  const c = build(src, maskFromGrid(L.grid, S.W, S.H), L.effects, S.W, S.H); lcache.set(i, { sig, canvas: c }); return c; }
+  const mask = f ? maskFromAlpha(src.getContext('2d').getImageData(0, 0, W, H).data, W, H) : maskFromGrid(L.grid, W, H);
+  const c = build(src, mask, L.effects, W, H); lcache.set(i, { sig, canvas: c }); return c; }
 
 // Превью слоя i при перетаскивании на (dx,dy): содержимое (grid + запас ext) и
 // его эффекты, пересчитанные для нового положения. Иначе при заезде из-за края

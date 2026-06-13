@@ -226,6 +226,13 @@ t('layer-effects: effectReach — обводка во все стороны, т�
 t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
+t('effects-render: fx-канвас едет с поднятым фрагментом выделения (обводка не пропадает/не застывает)', () => {
+  resetWH(8, 8); S.layers[0].grid[4][4] = [9, 9, 9, 255]; cache.dirtyAll();
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
+  S.selFloat = { cells: new Map([['0,0', [9, 9, 9, 255]]]), w: 1, h: 1, x: 4, y: 4, ox: 4, oy: 4, li: 0 };
+  const a = fxr.layerFxCanvas(0); assert.equal(fxr.layerFxCanvas(0), a); // тот же фрагмент → кеш
+  S.selFloat.x = 5; assert.notEqual(fxr.layerFxCanvas(0), a); // фрагмент сдвинут → обводка пересчитана
+  S.selFloat = null; S.layers[0].effects = []; });
 
 t('recolor: меняет цвет на слоях и в палитре', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.palette = [[9, 9, 9]]; cache.dirtyAll();
   recolorAll([9, 9, 9, 255], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.palette[0], [200, 100, 50]); });
