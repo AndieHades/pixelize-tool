@@ -5,6 +5,7 @@ import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
+import { selHit } from '../../core/selection.js';
 import { toolHandler, modeHandler } from '../../core/canvas-handlers.js';
 import { STABILIZE, DRAG_THRESHOLD } from '../../config/timings.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
@@ -29,6 +30,7 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
   if (e.altKey) { actions.run('draw.pickAt', gx, gy); bus.emit('render'); return; }
   stabPt = { x: e.clientX, y: e.clientY };
   const m = activeMode(); if (m) { m.down({ gx, gy, e }); drawing = true; return; }
+  if (S.sel && S.tool !== 'select' && !selHit(gx, gy)) { actions.run('select.none'); return; }
   const h = toolHandler(S.tool); if (h && h.down) { h.down({ gx, gy, e }); drawing = true; }
 }
 

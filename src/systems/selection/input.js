@@ -4,6 +4,7 @@ import * as bus from '../../core/bus.js';
 import { symA, symHA } from '../../core/layers.js';
 import { snapshot } from '../../core/history.js';
 import { registerTool } from '../../core/canvas-handlers.js';
+import { selHit } from '../../core/selection.js';
 import { $, toast, t } from '../../core/dom.js';
 import { normSel, symmetrizeSelection, selHasPixels, deselect } from './model.js';
 import { liftSelection, liftSelectionSym, commitFloat, symFloatBounds } from './float.js';
@@ -24,14 +25,15 @@ function down({ gx, gy, e }) {
       if (S.selFloat && S.selFloat.symItems) commitFloat(); // sym-фрагмент масштабируем уже осевшим
       if (!S.selFloat) { snapshot(); liftSelection(); }     // обычный плавающий масштабируется «в воздухе»
       selDrag = { mode: 'scale', zn, src: new Map(S.selFloat.cells), sw: S.selFloat.w, sh: S.selFloat.h, x0: S.sel.x0, y0: S.sel.y0, x1: S.sel.x1, y1: S.sel.y1, symX: sX, symY: sY }; return; } }
-  const inSel = S.sel && gx >= S.sel.x0 && gx <= S.sel.x1 && gy >= S.sel.y0 && gy <= S.sel.y1;
+  const inSel = selHit(gx, gy);
   if (S.selFloat && inSel) { // фрагмент уже в воздухе — продолжаем нести, не трогая слой
     if (S.selFloat.symItems) selDrag = { mode: 'move', sx: gx, sy: gy, lifted: true, moved: false, bdx: S.selFloat.dx, bdy: S.selFloat.dy };
     else { S.selFloat.ox = S.selFloat.x; S.selFloat.oy = S.selFloat.y; selDrag = { mode: 'move', sx: gx, sy: gy, lifted: true, moved: false }; }
     return; }
   if (S.selFloat) commitFloat(); // клик мимо фрагмента — он оседает
-  if (inSel && (!S.selMask || S.selMask.has(gx + ',' + gy)))
+  if (inSel)
     selDrag = { mode: 'move', sx: gx, sy: gy, lifted: false, moved: false, sym: !!(S.selMask && (symA() || symHA())) };
+  else if (S.sel) deselect();
   else { S.selMask = null; selDrag = { mode: 'new', sx: gx, sy: gy, moved: false }; }
 }
 

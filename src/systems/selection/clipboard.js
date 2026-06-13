@@ -7,7 +7,7 @@ import { clearLayer } from '../../core/document.js';
 import { markDirty, dirtyAll } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
-import { normSel, fragFromSel, deleteSelContent, deselect } from './model.js';
+import { fragFromSel, deleteSelContent, deselect } from './model.js';
 import { commitFloat } from './float.js';
 
 let clip = null;
@@ -23,7 +23,7 @@ export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; 
   else g = G(); // достигнут лимит слоёв — в активный
   for (let y = 0; y < clip.length; y++) for (let x = 0; x < clip[y].length; x++) { const c = clip[y][x]; if (!c) continue;
     const yy = py + y, xx = px + x; if (xx < 0 || yy < 0 || xx >= S.W || yy >= S.H) continue; g[yy][xx] = c.slice(); }
-  S.sel = normSel(px, py, px + clip[0].length - 1, py + clip.length - 1);
+  S.sel = null; S.selMask = null;
   markDirty(S.cur); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); toast(asNew ? t('toast.pastedNew') : t('toast.pasted')); }
 
 export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удалить эффект, а не чистить слой

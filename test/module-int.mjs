@@ -284,7 +284,7 @@ t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
-  assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); });
+  assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
 
 // --- единый Export: дерево, форматы, пайплайн (Scope→Doc→Mode→Format→Save) ---
 t('export-tree: scope=project — все верхние узлы (папка + слой)', () => { exportProject();
@@ -520,6 +520,9 @@ t('input: ПКМ пан холста работает и с инструмент
   input.move({ pointerType: 'mouse', button: 2, clientX: 140, clientY: 100 });
   assert.equal(S.view.ox, 40); // правая кнопка сдвинула холст, а не «съелась» move-инструментом
   input.up({ pointerType: 'mouse', button: 2, pointerId: 1 }); });
+t('input: ЛКМ вне выделения снимает его у любого инструмента', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+  const undo = overCv(); input.down({ pointerType: 'mouse', button: 0, clientX: 6, clientY: 6, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
+  assert.equal(S.sel, null); assert.equal(S.layers[0].grid[6][6], null); });
 
 t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно
@@ -529,6 +532,12 @@ t('selection-input: select-инструмент тянет рамку', () => { 
 t('selection-input: пустая рамка не создаётся', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
   assert.equal(S.sel, null); });
+t('selection-input: клик в свободное место снимает активное выделение', () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  const h = toolHandler('select'); h.down({ gx: 6, gy: 6, e: null }); h.move({ gx: 7, gy: 7, e: null }); h.up({});
+  assert.equal(S.sel, null); });
+t('selection-input: клик в пустую клетку маски снимает выделение', () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = new Set(['2,2']);
+  const h = toolHandler('select'); h.down({ gx: 3, gy: 3, e: null }); h.up({});
+  assert.equal(S.sel, null); assert.equal(S.selMask, null); });
 t('selection-input: hover внутри рамки — курсор move', () => { resetWH(8, 8); S.tool = 'select';
   S.sel = { x0: 2, y0: 2, x1: 5, y1: 5 }; S.selMask = null;
   const h = toolHandler('select');
