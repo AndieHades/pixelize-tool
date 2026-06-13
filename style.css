@@ -318,7 +318,7 @@
     .menu-arrow.up { top: -7px; border-right: none; border-bottom: none; }
     .menu-arrow.down { bottom: -7px; border-left: none; border-top: none; }
     .sw.drop { box-shadow: inset 0 0 0 2px var(--accent); }
-    .sw.plus { background: transparent; border: 1px solid var(--txt2); color: var(--txt2); display: grid; place-items: center; margin-left: 5px; }
+    .sw.plus { background: transparent; box-shadow: inset 0 0 0 1px var(--txt2); color: var(--txt2); display: grid; place-items: center; }
     .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
     .dragging { opacity: .4; } /* галерея и прочие объекты — чуть прозрачные */
     /* Ghost строки слоя — непрозрачный, слегка приподнят */
