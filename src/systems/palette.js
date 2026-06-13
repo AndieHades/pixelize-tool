@@ -77,6 +77,8 @@ function palDragMove(e) { if (!palDrag) return; const pal = $('pal'), chip = $('
 function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
   const d = palDrag; palDrag = null; d.b.classList.remove('dragging'); $('paldrag').classList.remove('on');
   if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
+    const tgt = document.elementFromPoint(e.clientX, e.clientY), onPal = tgt && tgt.closest && tgt.closest('#pal');
+    if (!onPal) { actions.run('edit.dropColorAt', S.palette[d.idx], e.clientX, e.clientY); buildPalette(); return; } // бросок мимо палитры → заливка холста
     S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); buildPalette(); }
   else if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); }
 

@@ -50,10 +50,7 @@ export function mount() {
     if (drop.moved) { $('swdrop').style.left = e.clientX + 'px'; $('swdrop').style.top = e.clientY + 'px'; } });
   $('activewrap').addEventListener('pointerup', (e) => { if (!drop) return; const moved = drop.moved; drop = null; $('swdrop').classList.remove('on');
     if (!moved) { openColPop(); return; }
-    const cv = $('cv');
-    if (document.elementFromPoint(e.clientX, e.clientY) === cv) { const r = cv.getBoundingClientRect();
-      const gx = Math.floor((e.clientX - r.left - S.view.ox) / S.view.zoom), gy = Math.floor((e.clientY - r.top - S.view.oy) / S.view.zoom);
-      if (gx >= 0 && gy >= 0 && gx < S.W && gy < S.H) actions.run('edit.floodAt', gx, gy); } });
+    actions.run('edit.dropColorAt', S.active, e.clientX, e.clientY); });
   $('activewrap').addEventListener('pointercancel', () => { if (drop) { drop = null; $('swdrop').classList.remove('on'); } });
   $('col-h').addEventListener('input', () => { colH = +$('col-h').value; syncColUI(); colApply(); });
   $('col-s').addEventListener('input', () => { colS = +$('col-s').value; syncColUI(); colApply(); });
