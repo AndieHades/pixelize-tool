@@ -14,6 +14,7 @@ import { computeGlow } from '../src/logic/glow.js';
 import { outlineRings } from '../src/logic/outline.js';
 import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
 import { generateTints, generateShades, generateHarmonyBaseColors, generateTintShadeScalesForHarmony } from '../src/logic/tint-shade.js';
+import { sortPalette } from '../src/logic/palette-sort.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -155,6 +156,12 @@ t('tint-shade: каждая шкала гармонии — база + 4 тин�
   const scales = generateTintShadeScalesForHarmony([200, 80, 60], 'triadic');
   assert.equal(scales.length, 2);
   for (const s of scales) { assert.equal(s.tints.length, 5); assert.equal(s.shades.length, 5); assert.deepEqual(s.tints[0], s.base); }
+});
+
+t('palette-sort: тон группами (коричневый не лезет к зелёным), серые впереди, внутри светлое→тёмное', () => {
+  const gray = [128, 128, 128], brown = [139, 90, 43], gLight = [168, 208, 141], gDark = [78, 107, 58];
+  const out = sortPalette([gDark, brown, gLight, gray]);
+  assert.deepEqual(out, [gray, brown, gLight, gDark]); // серый, затем коричневый (тон ~30), затем зелёные (тон ~95) светлый→тёмный
 });
 
 // --- конфигурация ---

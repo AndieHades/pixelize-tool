@@ -6,6 +6,7 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, toast, t, copyText, showMenuAt } from '../core/dom.js';
 import { rgb, rgbToHex, hexToRgb, eqc } from '../logic/color.js';
+import { sortPalette } from '../logic/palette-sort.js';
 import { setTool } from '../core/tools.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
 
@@ -30,6 +31,8 @@ export function setActiveColor(c, pickTool = true) {
 export function addColor(hex) { const c = hexToRgb(hex); if (!S.palette.some((p) => eqc(p, c))) S.palette.push(c); setActiveColor(c); }
 
 actions.register('palette.add', addColor);
+// упорядочить палитру по тону и светлоте (кнопку добавим позже — пока через action)
+actions.register('palette.sort', () => { S.palette = sortPalette(S.palette); bus.emit('palette'); });
 
 function openCtx(x, y, idx) { ctxIdx = idx; showMenuAt($('ctx'), x, y, true); }
 
