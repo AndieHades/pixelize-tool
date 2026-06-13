@@ -5,6 +5,7 @@ import { newEffect } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
+import { expandForEffects } from '../../core/document.js';
 import { $, t } from '../../core/dom.js';
 import { EFFECT_FIELDS } from '../../config/defaults.js';
 import { activeTarget } from './shared.js';
@@ -52,6 +53,7 @@ export function fxCancel() { if (!ses) return; revert(); close(); bus.emit('laye
 export function fxApply() { if (!ses) return; const { target, eff, isNew, original } = ses;
   if (isNew) { const i = target.effects.indexOf(eff); target.effects.splice(i, 1); snapshot(); target.effects.splice(i, 0, eff); }
   else { const cur = { ...eff.params }; eff.params = { ...original }; snapshot(); eff.params = cur; }
+  expandForEffects(target); // если эффекту не хватает места — раздвинуть холст под тем же снимком
   close(); bus.emit('layers'); bus.emit('render'); }
 
 const syncLabels = () => { $('fx-sizev').textContent = $('fx-size').value; $('fx-intv').textContent = $('fx-int').value + '%';

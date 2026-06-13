@@ -44,3 +44,14 @@ export function innerShadowPixels(mask, W, H, p) { const size = Math.max(1, p.si
 export const EFFECT_PIXELS = { stroke: strokePixels, glow: glowPixels, dropShadow: dropShadowPixels, innerShadow: innerShadowPixels };
 // эффекты, рисуемые ПОД слоем (наружу) vs ВНУТРИ поверх контента (по маске слоя)
 export const INNER_EFFECTS = new Set(['innerShadow']);
+
+// Насколько эффекты вылезают за силуэт наружу по каждой стороне (в пикселях):
+// внутренние не вылезают; обводка/свечение — на радиус size; тень добавляет
+// своё смещение к радиусу. Нужно, чтобы при применении раздвинуть холст.
+export function effectReach(effects) { const R = { l: 0, r: 0, t: 0, b: 0 };
+  for (const e of effects || []) { if (e.visible === false || INNER_EFFECTS.has(e.type)) continue;
+    const p = e.params, s = Math.max(0, p.size | 0); let l = s, r = s, t = s, b = s;
+    if (e.type === 'dropShadow') { const dx = p.dx | 0, dy = p.dy | 0;
+      r += Math.max(0, dx); l += Math.max(0, -dx); b += Math.max(0, dy); t += Math.max(0, -dy); }
+    R.l = Math.max(R.l, l); R.r = Math.max(R.r, r); R.t = Math.max(R.t, t); R.b = Math.max(R.b, b); }
+  return R; }

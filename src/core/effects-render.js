@@ -3,7 +3,7 @@
 import { S } from './state.js';
 import { hexToRgb } from '../logic/color.js';
 import { EFFECT_PIXELS, INNER_EFFECTS, maskFromGrid, maskFromAlpha } from '../logic/layer-effects.js';
-import { layerFloatCanvas, layerSrcCanvas, layerRev } from './layer-cache.js';
+import { layerFloatCanvas, layerSrcCanvas, layerExtCanvas, layerRev } from './layer-cache.js';
 import { effVis, folderChain } from './layers.js';
 
 const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -29,6 +29,16 @@ export function layerFxCanvas(i) { const L = S.layers[i], src = layerFloatCanvas
   const sig = S.W + 'x' + S.H + '|' + layerRev(i) + '|' + JSON.stringify(L.effects);
   const hit = lcache.get(i); if (hit && hit.sig === sig) return hit.canvas;
   const c = build(src, maskFromGrid(L.grid, S.W, S.H), L.effects, S.W, S.H); lcache.set(i, { sig, canvas: c }); return c; }
+
+// Превью слоя i при перетаскивании на (dx,dy): содержимое (grid + запас ext) и
+// его эффекты, пересчитанные для нового положения. Иначе при заезде из-за края
+// обводка/тень показывались бы «обрезанными» (как раньше само изображение).
+export function layerMoveCanvas(i, dx, dy) { const L = S.layers[i], W = S.W, H = S.H;
+  const src = cv(W, H), sx = src.getContext('2d'); sx.imageSmoothingEnabled = false;
+  sx.drawImage(layerFloatCanvas(i), dx, dy);
+  const ex = layerExtCanvas(i); if (ex) sx.drawImage(ex.canvas, ex.ox + dx, ex.oy + dy);
+  if (!L.effects || !L.effects.length) return src;
+  return build(src, maskFromAlpha(sx.getImageData(0, 0, W, H).data, W, H), L.effects, W, H); }
 
 // слои поддерева папки (с их эффектами) в один canvas — силуэт группы для её эффектов
 function groupCanvas(fid) { const c = cv(S.W, S.H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;

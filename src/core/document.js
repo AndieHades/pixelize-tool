@@ -2,7 +2,9 @@
 // Меняет размеры/слои, сдвигает запасные пиксели, сбрасывает выделение.
 import { S, blank, newLayer } from './state.js';
 import * as bus from './bus.js';
-import { parseKey } from '../logic/raster.js';
+import { parseKey, gridBounds } from '../logic/raster.js';
+import { effectReach } from '../logic/layer-effects.js';
+import { folderChain } from './layers.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
 import { toast, t } from './dom.js';
@@ -21,6 +23,30 @@ export function expandCanvas(pl, pt, pr, pb) {
     L.grid = out; L.ext = ne; }
   S.view.ox -= pl * S.view.zoom; S.view.oy -= pt * S.view.zoom;
   S.sel = null; bus.emit('selection'); dirtyAll();
+}
+
+// границы силуэта цели (слой или папка) в координатах холста; null — если пусто
+function targetBounds(target) {
+  if ('grid' in target) return gridBounds(target.grid);
+  let b = null; // папка: объединить границы слоёв поддерева
+  for (const L of S.layers) { if (!folderChain(L.fid).some((f) => f.id === target.id)) continue;
+    const lb = gridBounds(L.grid); if (!lb) continue;
+    b = b ? { minx: Math.min(b.minx, lb.minx), miny: Math.min(b.miny, lb.miny), maxx: Math.max(b.maxx, lb.maxx), maxy: Math.max(b.maxy, lb.maxy) } : lb; }
+  return b;
+}
+
+// при применении эффекта раздвинуть холст ровно настолько, чтобы эффект влез
+// по краям (обводка/свечение/тень не обрезались). Без своего snapshot —
+// вызывается под общим снимком применения. true — если холст вырос.
+export function expandForEffects(target) {
+  if (!target || !target.effects || !target.effects.length) return false;
+  const b = targetBounds(target); if (!b) return false;
+  const R = effectReach(target.effects);
+  const pl = Math.max(0, R.l - b.minx), pt = Math.max(0, R.t - b.miny);
+  const pr = Math.max(0, b.maxx + R.r - (S.W - 1)), pb = Math.max(0, b.maxy + R.b - (S.H - 1));
+  if (!(pl || pt || pr || pb)) return false;
+  expandCanvas(pl, pt, pr, pb); bus.emit('layers'); bus.emit('render');
+  toast(t('toast.canvasSize', { w: S.W, h: S.H })); return true;
 }
 
 // кадрировать холст прямоугольником (может выходить за край — тогда обрезает/

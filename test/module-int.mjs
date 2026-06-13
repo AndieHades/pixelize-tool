@@ -127,6 +127,12 @@ t('document: expandCanvas растит холст и сдвигает пиксе
   assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
 });
+t('document: expandForEffects раздвигает холст под обводку у края', () => { reset4();
+  S.layers[0].grid[0][0] = [9, 9, 9, 255]; // пиксель в углу — обводке size 2 не хватает места
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 2, color: '#ff0000' } }];
+  const grew = doc.expandForEffects(S.layers[0]);
+  assert.equal(grew, true); assert.equal(S.W, 6); assert.equal(S.H, 6); // +2 слева и сверху (справа/снизу место уже есть)
+  assert.deepEqual(S.layers[0].grid[2][2], [9, 9, 9, 255]); S.layers[0].effects = []; });
 t('render: рисует и шлёт событие overlay', () => { reset4();
   S.layers[0].grid[1][2] = [10, 20, 30, 255]; cache.dirtyAll();
   let ov = 0; const off = bus.on('overlay', () => ov++); render.render(); off();
@@ -213,6 +219,10 @@ t('layer-effects: обводка даёт кольцо вокруг силуэт
 t('layer-effects: внутренняя тень только по силуэту', () => { const g = [[[1, 1, 1, 1], [1, 1, 1, 1]], [[1, 1, 1, 1], [1, 1, 1, 1]]];
   const mask = fxlogic.maskFromGrid(g, 2, 2); const px = fxlogic.innerShadowPixels(mask, 2, 2, { size: 1, dx: 1, dy: 0, intensity: 1 });
   assert.ok(px.length && px.every(([x, y]) => x >= 0 && x < 2 && y >= 0 && y < 2)); });
+t('layer-effects: effectReach — обводка во все стороны, тень добавляет смещение, внутр. не вылезает', () => {
+  assert.deepEqual(fxlogic.effectReach([{ type: 'stroke', params: { size: 3 } }]), { l: 3, r: 3, t: 3, b: 3 });
+  assert.deepEqual(fxlogic.effectReach([{ type: 'dropShadow', params: { size: 2, dx: 5, dy: -3 } }]), { l: 2, r: 7, t: 5, b: 2 });
+  assert.deepEqual(fxlogic.effectReach([{ type: 'innerShadow', params: { size: 4 } }]), { l: 0, r: 0, t: 0, b: 0 }); });
 t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
