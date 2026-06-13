@@ -16,6 +16,7 @@ export function t(key, vars) { const dict = LOCALES[current] || ru;
 
 export const getLocale = () => current;
 export const locales = () => Object.keys(LOCALES);
+export const localeValues = (key) => [...new Set(Object.values(LOCALES).map((dict) => dict[key]).filter(Boolean))];
 
 export function applyDom() {
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);

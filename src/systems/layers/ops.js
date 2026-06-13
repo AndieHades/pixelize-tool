@@ -8,12 +8,21 @@ import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
+import { localeValues } from '../../i18n/index.js';
 import { folderLayers, topOfFolder, commonParent, selectedIdx, nextFolderId, uniqueFolderName } from './helpers.js';
+
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function nextLayerName() {
+  const bases = localeValues('layer.name').map(escRe), re = new RegExp('^(?:' + bases.join('|') + ')\\s+(\\d+)$');
+  let max = 0;
+  for (const L of S.layers) { const m = (L.name || '').trim().match(re); if (m) max = Math.max(max, +m[1]); }
+  S.layerSeq = max + 1; return t('layer.name') + ' ' + S.layerSeq;
+}
 
 export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   snapshot(); const cur = S.layers[S.cur], chain = cur ? folderChain(cur.fid) : [];
   const inOpenFolder = !S.selFolder && cur && cur.fid != null && chain.every((f) => f.open);
-  const nl = newLayer(t('layer.name') + ' ' + (++S.layerSeq), S.W, S.H); nl.fid = inOpenFolder ? cur.fid : null;
+  const nl = newLayer(nextLayerName(), S.W, S.H); nl.fid = inOpenFolder ? cur.fid : null;
   const at = inOpenFolder ? S.cur + 1 : S.layers.length;
   S.layers.splice(at, 0, nl); S.cur = at; S.selFolder = null; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }

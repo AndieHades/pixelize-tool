@@ -673,6 +673,13 @@ t('layers-ui: удаление неактивного слоя сохраняе�
 t('layers-ui: добавление слоёв не останавливается на восьми', () => { resetWH(8, 8);
   for (let i = 0; i < 9; i++) lops.doAddLayer();
   assert.equal(S.layers.length, 10); });
+t('layers-ui: имя нового слоя сбрасывается к 1 без номерных слоёв', () => { resetWH(8, 8);
+  S.layerSeq = 34; S.layers[0].name = 'Sketch';
+  lops.doAddLayer(); assert.equal(S.layers[S.cur].name, 'Слой 1'); assert.equal(S.layerSeq, 1); });
+t('layers-ui: имя нового слоя учитывает номерные слои любой локали', () => { resetWH(8, 8);
+  i18n.setLocale('en'); S.layerSeq = 34; S.layers[0].name = 'Слой 3';
+  lops.doAddLayer(); assert.equal(S.layers[S.cur].name, 'Layer 4'); assert.equal(S.layerSeq, 4);
+  i18n.setLocale('ru'); });
 t('layers-ui: закрытая папка с активным слоем становится активной строкой', () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0;
   document.getElementById('lay-pop').classList.add('on'); layList(); document.querySelector('#lay-list .frow .caret').click();
