@@ -441,11 +441,20 @@
 
     /* ---- менеджер палитр ---- */
     #pal-menu svg { width: 18px; height: 18px; }
-    .prow { display: flex; align-items: center; gap: 8px; min-height: 46px; }
-    .prow .pname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .prow .pdots { display: flex; gap: 3px; flex: none; }
-    .prow .pdots i { width: 14px; height: 14px; border-radius: 4px; display: block; }
-    .prow button { width: auto; padding: 0 12px; height: 34px; background: rgba(255, 255, 255, .08); border-radius: 9px; font-size: 13px; }
+    /* сохранённая палитра: имя сверху, ниже — вся палитра целиком как в #pal
+       (квадраты без обводки, отступов и скругления); клик по полосе — загрузить */
+    .prow { display: flex; flex-direction: column; gap: 5px; }
+    .prow + .prow { margin-top: 12px; }
+    .prow-top { display: flex; align-items: center; gap: 8px; }
+    .prow .pname { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .prow-del { width: 26px; height: 26px; border-radius: 7px; background: var(--row); color: var(--txt2); flex: none; }
+    .prow-del:hover { color: var(--txt); }
+    .prow-del svg { width: 14px; height: 14px; }
+    .pswatches { display: flex; flex-wrap: wrap; cursor: pointer; }
+    .pswatches i { width: 26px; height: 26px; display: block; }
+    /* окно палитр — единая шапка как у плавающих окон (заголовок + крестик) */
+    #pal-sheet { padding-top: 0; }
+    #pal-sheet .pop-head { margin: 0 -18px 12px; padding: 11px 10px 11px 18px; border-radius: 16px 16px 0 0; }
 
     /* ---- Tint & Shade Generator ---- */
     #tsg-btn svg { width: 18px; height: 18px; }

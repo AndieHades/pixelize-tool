@@ -225,12 +225,12 @@
     <div class="iact"><button id="ex-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="ex-run" data-i18n="btn.export" class="txtbtn primary">Экспорт</button></div>
   </div></div>
 
-  <div id="pal-ovl" class="ovl"><div class="sheet">
-    <h3 data-i18n="dialog.palettes">Палитры</h3>
+  <div id="pal-ovl" class="ovl"><div class="sheet" id="pal-sheet">
+    <div class="pop-head"><span class="pop-title" data-i18n="dialog.palettes">Палитры</span>
+      <span class="pop-acts"><button id="pal-close" class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
     <div class="irow"><label data-i18n="label.current">Текущая</label><input id="pal-name" type="text" maxlength="20" placeholder="Имя палитры" style="flex:1" /><button id="pal-save" data-i18n="btn.save" class="txtbtn" style="height:40px">Сохранить</button></div>
     <div class="iact" style="margin-top:6px"><button id="pal-from-img" class="txtbtn" data-i18n="btn.fromImage">Палитра из изображения…</button></div>
     <div id="pal-list"></div>
-    <div class="iact"><button id="pal-close" data-i18n="btn.close" class="txtbtn">Закрыть</button></div>
   </div></div>
 
   <div id="selbar">

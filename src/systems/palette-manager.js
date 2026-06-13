@@ -16,13 +16,16 @@ function palListUI() { const box = $('pal-list'); box.innerHTML = '';
   const st = palStore(), names = Object.keys(st);
   if (!names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('palette.none') + '</p>'; return; }
   for (const nm of names) { const row = document.createElement('div'); row.className = 'prow';
-    const dots = document.createElement('span'); dots.className = 'pdots';
-    st[nm].slice(0, 6).forEach((c) => { const i = document.createElement('i'); i.style.background = rgb(c); dots.appendChild(i); });
-    const t = document.createElement('span'); t.className = 'pname'; t.textContent = nm;
-    const load = document.createElement('button'); load.textContent = 'Загрузить'; load.onclick = () => loadPalette(st[nm], nm);
-    const del = document.createElement('button'); del.textContent = '✕'; del.style.minWidth = '36px'; del.style.padding = '0';
-    del.onclick = () => { const s2 = palStore(); delete s2[nm]; saveStore(s2); palListUI(); };
-    row.append(dots, t, load, del); box.appendChild(row); } }
+    const head = document.createElement('div'); head.className = 'prow-top'; // имя сверху + удаление
+    const name = document.createElement('span'); name.className = 'pname'; name.textContent = nm;
+    const del = document.createElement('button'); del.className = 'prow-del'; del.title = t('gallery.delete');
+    del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    del.onclick = (e) => { e.stopPropagation(); const s2 = palStore(); delete s2[nm]; saveStore(s2); palListUI(); };
+    head.append(name, del);
+    const sw = document.createElement('div'); sw.className = 'pswatches'; sw.title = t('btn.addPalette'); // вся палитра целиком, квадраты как в #pal; клик — загрузить
+    st[nm].forEach((c) => { const i = document.createElement('i'); i.style.background = rgb(c); sw.appendChild(i); });
+    sw.onclick = () => loadPalette(st[nm], nm);
+    row.append(head, sw); box.appendChild(row); } }
 
 export function mount() {
   $('pal-menu').addEventListener('pointerdown', (e) => e.stopPropagation());
