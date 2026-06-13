@@ -36,7 +36,7 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); }
 
 function blankWork(w, h, name) { curId = uid('d'); curFolder = null;
-  S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer('Слой 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
+  S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer(t('layer.name') + ' 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
   S.palette = defaultPalette(); S.active = S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
   S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = null; }
 
@@ -48,8 +48,8 @@ export function newWorkFromImage(w, h, data, name) { blankWork(w, h, name);
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }
 
 export function newWorkFromLayers(w, h, layers, name) { blankWork(w, h, name);
-  S.layers = layers.map((L, i) => ({ name: L.name || ('Слой ' + (i + 1)), grid: L.grid, opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map(), effects: [] }));
-  if (!S.layers.length) S.layers = [newLayer('Слой 1', w, h)];
+  S.layers = layers.map((L, i) => ({ name: L.name || (t('layer.name') + ' ' + (i + 1)), grid: L.grid, opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, ext: new Map(), effects: [] }));
+  if (!S.layers.length) S.layers = [newLayer(t('layer.name') + ' 1', w, h)];
   S.cur = S.layers.length - 1;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }
 

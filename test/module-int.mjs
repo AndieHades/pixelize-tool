@@ -69,6 +69,7 @@ const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
+const i18n = await import('../src/i18n/index.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
@@ -570,6 +571,11 @@ t('layers-ui: Ctrl-клик добавляет к выделению, актив
   assert.equal(S.cur, 0); assert.ok(S.marked.has(2)); }); // primary остался 0, второй добавлен в marked
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
+t('i18n: новые слой/папка получают имя из текущей локали', () => { resetWH(8, 8);
+  i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer')); // англ. локаль → «Layer N»
+  S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));
+  i18n.setLocale('ru'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Слой')); // рус. локаль → «Слой N»
+  i18n.setLocale('ru'); });
 t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
   S.folders = []; S.folderSeq = 0; S.layers = [S.layers[0], { ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) }, { ...S.layers[0], name: 'c', grid: S.layers[0].grid.map((r) => r.slice()) }]; S.cur = 0; S.marked = new Set([1, 2]);
   lops.doGroup(); const A = S.folders[0]; assert.equal(A.parent ?? null, null);

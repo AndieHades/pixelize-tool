@@ -70,7 +70,7 @@ export function applyImport() {
   const g = cropEmpty(impGrid.map((r) => r.map((c) => (c ? c.slice() : null))));
   if (importMode === 'layer') { insertGridAsLayer(g); return; } // в редактор — верхним слоем
   S.W = g[0].length; S.H = g.length;
-  S.layerSeq = 1; S.layers = [{ name: 'Слой 1', grid: g, opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }]; S.cur = 0;
+  S.layerSeq = 1; S.layers = [{ name: t('layer.name') + ' 1', grid: g, opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }]; S.cur = 0;
   S.folders = []; S.folderSeq = 0; S.marked.clear();
   // при квантовании держим в палитре ВСЕ цвета результата (включая редкие — белые
   // остатки в волосах и т.п.), чтобы их можно было найти через «Выбрать все пиксели»

@@ -25,9 +25,9 @@ export function insertPsd(psd, name) {
   for (const r of psd.layers) { // PSD-порядок снизу вверх — совпадает с порядком массива слоёв
     if (r.section === 3) { const f = mkFolder(stack[stack.length - 1].id); folders.push(f); stack.push(f); continue; } // нижняя граница группы
     if (r.section === 1 || r.section === 2) { const f = stack.length > 1 ? stack.pop() : null; // заголовок группы (имя/видимость)
-      if (f) { f.name = r.name || ('Папка ' + f.id); f.open = r.section === 1; f.visible = r.visible !== false; } continue; }
+      if (f) { f.name = r.name || (t('folder.name') + ' ' + f.id); f.open = r.section === 1; f.visible = r.visible !== false; } continue; }
     const { grid, ext } = remap(r.grid, ox, oy);
-    const L = newLayer(r.name || 'Слой', S.W, S.H); L.grid = grid; L.ext = ext; L.fid = stack[stack.length - 1].id;
+    const L = newLayer(r.name || t('layer.name'), S.W, S.H); L.grid = grid; L.ext = ext; L.fid = stack[stack.length - 1].id;
     L.visible = r.visible !== false; L.effects = mkEffects(r.effects);
     if (r.warnings && r.warnings.length) warnings.push(...r.warnings);
     layers.push(L);

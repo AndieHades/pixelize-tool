@@ -1,6 +1,7 @@
 // Хранилище галереи поверх IndexedDB: элементы (kind 'doc'/'folder'), папки,
 // перемещение, переименование, дублирование, рекурсивное удаление.
 import { saveDoc, getDoc, listDocs, removeDoc } from '../../core/storage.js';
+import { t } from '../../i18n/index.js';
 
 export const uid = (p = 'd') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const pad = (i) => String(i).padStart(2, '0');
@@ -33,7 +34,7 @@ export async function renameItem(id, name) { const d = await getDoc(id); if (d) 
 export async function removeItem(id) { for (const k of await childrenOf(id)) await removeItem(k.id); await removeDoc(id); }
 
 export async function duplicateItem(id, parent) { const d = await getDoc(id); if (!d) return;
-  const nid = uid(d.kind === 'folder' ? 'f' : 'd'), name = await uniqueName(d.name + ' копия');
+  const nid = uid(d.kind === 'folder' ? 'f' : 'd'), name = await uniqueName(d.name + ' ' + t('layer.copySuffix'));
   await saveDoc({ ...d, id: nid, folder: parent ?? d.folder ?? null, name, updated: Date.now(), order: Date.now() });
   if (d.kind === 'folder') for (const k of await childrenOf(id)) await duplicateItem(k.id, nid);
 }

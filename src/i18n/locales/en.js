@@ -52,6 +52,7 @@ export const en = {
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…',
   'menu.deleteLayer': 'Delete layer', 'menu.deleteFolder': 'Delete folder',
+  'layer.name': 'Layer', 'folder.name': 'Folder', 'layer.pasteName': 'Pasted', 'layer.copySuffix': 'copy', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Theme', 'ui.language': 'Language', 'ui.settings': 'Settings', 'ui.lightTheme': 'Light theme',
   'gallery.untitled': 'Untitled',
   'gallery.select': 'Select',

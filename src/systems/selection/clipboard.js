@@ -18,7 +18,7 @@ export function doCut() { clip = S.sel ? fragFromSel() : cloneGrid(G()); toast((
 export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; } commitFloat(); snapshot();
   const px = S.sel ? S.sel.x0 : 0, py = S.sel ? S.sel.y0 : 0, asNew = S.layers.length < MAX_LAYERS;
   let g;
-  if (asNew) { const nl = newLayer('Вставка', S.W, S.H); nl.fid = S.layers[S.cur].fid; // вставка — на новый слой
+  if (asNew) { const nl = newLayer(t('layer.pasteName'), S.W, S.H); nl.fid = S.layers[S.cur].fid; // вставка — на новый слой
     S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); g = nl.grid; }
   else g = G(); // достигнут лимит слоёв — в активный
   for (let y = 0; y < clip.length; y++) for (let x = 0; x < clip[y].length; x++) { const c = clip[y][x]; if (!c) continue;
