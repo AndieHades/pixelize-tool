@@ -15,9 +15,11 @@ function hide() { $('gallery').classList.remove('on'); }
 function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
 
-function photo() { pick('image/*', (f) => { const im = new Image(); im.onerror = () => {};
+// картинка → новый проект: пиксель-арт сразу как есть, иначе через Pixelize (конвертер)
+function fromFile(f) { const im = new Image(); im.onerror = () => {};
   im.onload = () => { if (looksPixelArt(im)) { const d = imageData(im, im.naturalWidth, im.naturalHeight, false); hide(); newWorkFromImage(d.width, d.height, d.data, f.name.replace(/\.\w+$/, '')); }
-    else { beginConvertedWork(); actions.run('import.openFile', f); } }; im.src = URL.createObjectURL(f); }); } // конвертер поверх галереи; уйдём по «Применить»
+    else { beginConvertedWork(); actions.run('import.openFile', f); } }; im.src = URL.createObjectURL(f); } // конвертер поверх галереи; уйдём по «Применить»
+function photo() { pick('image/*', fromFile); }
 function convert() { pick('image/*', (f) => { beginConvertedWork(); actions.run('import.openFile', f); }); }
 function importPsd() { pick('.psd,image/vnd.adobe.photoshop', async (f) => { try { const psd = readPsd(await f.arrayBuffer());
   if (psd && psd.layers.length) { hide(); newWorkFromLayers(psd.W, psd.H, psd.layers, f.name.replace(/\.psd$/i, '')); } } catch (e) {} }); }
@@ -30,6 +32,7 @@ export async function mount() {
   $('gal-back').onclick = goBack;
   $('docsbtn').onclick = show;
   actions.register('gallery.hide', hide); // конвертер/импорт после «Применить» уводят с галереи в редактор
+  actions.register('gallery.importDrop', fromFile); // drop картинки в галерею → новый проект (через Pixelize)
   bus.on('snapshot', autosave); bus.on('layers', autosave);
   try { const docs = (await listAll()).filter((d) => d.kind !== 'folder'); // последнюю работу грузим под галереей (для «продолжить»)
     if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); } } catch (e) {}

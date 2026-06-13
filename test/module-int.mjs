@@ -283,9 +283,21 @@ await ta('export: новый формат без переписывания па
 t('import: ImageData → пиксель-документ', () => {
   const data = new Uint8ClampedArray(4 * 4 * 4); // 2×2 красный блок в центре 4×4
   for (const [px, py] of [[1, 1], [2, 1], [1, 2], [2, 2]]) { const o = (py * 4 + px) * 4; data[o] = 200; data[o + 1] = 30; data[o + 2] = 30; data[o + 3] = 255; }
-  imp.setImpData({ width: 4, height: 4, data });
+  imp.setImpData({ width: 4, height: 4, data }); imp.setImportMode('replace');
   imp.impConvert(); imp.applyImport();
   assert.equal(S.layers.length, 1); assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
+});
+
+t('import: drag в редактор — Pixelize верхним слоем, документ не стирается', () => {
+  resetWH(6, 6); S.layers[0].grid[1][1] = [9, 9, 9, 255]; cache.dirtyAll();
+  const baseLayers = S.layers.length, baseW = S.W, baseH = S.H;
+  const data = new Uint8ClampedArray(2 * 2 * 4); for (let i = 0; i < 4; i++) { data[i * 4] = 200; data[i * 4 + 3] = 255; }
+  imp.setImpData({ width: 2, height: 2, data }); imp.setImportMode('layer'); imp.impConvert(); imp.applyImport();
+  assert.equal(S.W, baseW); assert.equal(S.H, baseH); // холст НЕ заменён
+  assert.equal(S.layers.length, baseLayers + 1); // добавлен верхний слой
+  assert.equal(S.cur, S.layers.length - 1); // активен новый верхний
+  assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9, 255]); // прежний контент цел
+  imp.setImportMode('replace');
 });
 
 t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.palette = [[1, 1, 1], [2, 2, 2]]; S.active = [1, 1, 1];
