@@ -11,7 +11,7 @@
 | `G()` | сетка текущего слоя (`S.layers[S.cur].grid`) |
 | `blank(w,h)` | пустая `h×w` сетка из `null` |
 | `newLayer(name,w,h)` | новый слой со стандартными полями |
-| `MAX_LAYERS`,`MAX_SIZE`,`BP_SMAX` | потолок слоёв / стороны холста / размера кисти |
+| `MAX_LAYERS`,`MAX_SIZE`,`BP_SMAX` | число слоёв (`Infinity`) / сторона холста / размер кисти |
 
 ## `core/bus.js` — события
 

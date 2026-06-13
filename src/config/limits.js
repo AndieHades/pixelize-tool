@@ -1,5 +1,5 @@
 // Жёсткие пределы приложения. Менять — здесь.
-export const MAX_LAYERS = 8;     // потолок числа слоёв в документе
+export const MAX_LAYERS = Infinity; // слои не ограничиваем искусственным потолком
 export const MAX_SIZE = 640;     // максимальная сторона холста, px
 export const BP_SMAX = 8;        // максимальный размер кисти/ластика, px
 export const ZOOM_MIN = 1;       // минимальный зум холста

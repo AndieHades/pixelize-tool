@@ -582,6 +582,9 @@ t('layers-ui: Ctrl-клик добавляет к выделению, актив
   assert.equal(S.cur, 0); assert.ok(S.marked.has(2)); }); // primary остался 0, второй добавлен в marked
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
+t('layers-ui: добавление слоёв не останавливается на восьми', () => { resetWH(8, 8);
+  for (let i = 0; i < 9; i++) lops.doAddLayer();
+  assert.equal(S.layers.length, 10); });
 t('i18n: новые слой/папка получают имя из текущей локали', () => { resetWH(8, 8);
   i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer')); // англ. локаль → «Layer N»
   S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));
