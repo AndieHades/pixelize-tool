@@ -442,6 +442,11 @@ t('input: mount + диспетч pencil рисует', () => { resetWH(8, 8); S.
   input.down({ pointerType: 'mouse', button: 0, clientX: 2, clientY: 2 }); input.up({ pointerType: 'mouse', button: 0 });
   // координаты зависят от view; проверяем, что хоть одна клетка закрашена
   assert.ok(S.layers[0].grid.some((r) => r.some((c) => c))); });
+t('input: ПКМ пан холста работает и с инструментом move', () => { resetWH(8, 8); S.tool = 'move'; S.view.ox = 0; S.view.oy = 0;
+  input.down({ pointerType: 'mouse', button: 2, clientX: 100, clientY: 100, pointerId: 1 });
+  input.move({ pointerType: 'mouse', button: 2, clientX: 140, clientY: 100 });
+  assert.equal(S.view.ox, 40); // правая кнопка сдвинула холст, а не «съелась» move-инструментом
+  input.up({ pointerType: 'mouse', button: 2, pointerId: 1 }); });
 
 t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно

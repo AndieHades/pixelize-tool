@@ -22,7 +22,7 @@ function smooth(e) { if (!S.stabOn) return [e.clientX, e.clientY];
   stabPt.x += (e.clientX - stabPt.x) * STABILIZE; stabPt.y += (e.clientY - stabPt.y) * STABILIZE; return [stabPt.x, stabPt.y]; }
 
 export function down(e) { if (e.pointerId != null) capture(e.pointerId);
-  if (e.pointerType === 'mouse' && (e.button === 1 || (e.button === 2 && S.tool !== 'move')) && !S.cropMode && !S.rotMode) {
+  if (e.pointerType === 'mouse' && (e.button === 1 || e.button === 2) && !S.cropMode && !S.rotMode) {
     rdrag = { x: e.clientX, y: e.clientY, ox: S.view.ox, oy: S.view.oy, moved: false, btn: e.button }; return; }
   if (e.pointerType === 'mouse' && e.button) return;
   const [gx, gy] = toGrid(e);
