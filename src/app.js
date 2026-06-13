@@ -58,6 +58,7 @@ export function start() {
   applyDom(); // проставить переводы в статичный UI
 
   floatingWindow($('palbar'), { grip: $('palgrip'), handle: $('palrsz'), storeKey: 'palwin', clampBottom: 50,
+    onClose: () => $('palbar').classList.add('closed'), // крестик прячет палитру; вернуть — кружком цвета
     onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
     onResize: (w, h) => { $('sidebar').style.width = Math.max(48, Math.min(innerWidth - 12, w)) + 'px'; $('sidebar').style.maxHeight = Math.max(80, Math.min(innerHeight - 12, h)) + 'px'; } });

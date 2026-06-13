@@ -89,9 +89,8 @@
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
       border: 1px solid var(--line); border-radius: 16px; padding: 0 8px 8px;
       box-shadow: 0 12px 36px rgba(0, 0, 0, .45); }
-    #palgrip { height: 24px; display: flex; align-items: center; justify-content: center;
-      cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; letter-spacing: .4px;
-      flex: none; -webkit-user-select: none; user-select: none; }
+    #palbar.closed { display: none; } /* палитру можно закрыть крестиком; открыть снова — кружком цвета */
+    #palgrip { flex: none; -webkit-user-select: none; user-select: none; } /* остальное — общий .pop-head */
     #palgrip:active { cursor: grabbing; }
     #pal { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: center; gap: 0;
       padding: 2px; overflow-y: auto; min-height: 38px; scrollbar-width: none; }
@@ -440,8 +439,7 @@
     #refrsz svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
     /* ---- менеджер палитр ---- */
-    #pal-menu { position: absolute; right: 1px; top: 1px; width: 22px; height: 22px; color: var(--txt2); }
-    #pal-menu svg { width: 15px; height: 15px; }
+    #pal-menu svg { width: 18px; height: 18px; }
     .prow { display: flex; align-items: center; gap: 8px; min-height: 46px; }
     .prow .pname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .prow .pdots { display: flex; gap: 3px; flex: none; }
@@ -449,8 +447,7 @@
     .prow button { width: auto; padding: 0 12px; height: 34px; background: rgba(255, 255, 255, .08); border-radius: 9px; font-size: 13px; }
 
     /* ---- Tint & Shade Generator ---- */
-    #tsg-btn { position: absolute; right: 25px; top: 1px; width: 22px; height: 22px; color: var(--txt2); }
-    #tsg-btn svg { width: 15px; height: 15px; }
+    #tsg-btn svg { width: 18px; height: 18px; }
     #tsg-win { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 14;
       width: 340px; height: 460px; display: none; flex-direction: column; background: var(--panel-solid);
       border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 36px rgba(0, 0, 0, .5); padding: 0 6px 6px; }

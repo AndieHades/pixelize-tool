@@ -38,7 +38,7 @@ function openCtx(x, y, idx) { ctxIdx = idx; showMenuAt($('ctx'), x, y, true); }
 
 export function buildPalette() {
   const box = $('pal'); box.innerHTML = '';
-  $('palgrip').textContent = t('label.paletteN', { n: S.palette.length });
+  $('palgrip-label').textContent = t('label.paletteN', { n: S.palette.length });
   let activeShown = false;
   S.palette.forEach((c, idx) => {
     const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;

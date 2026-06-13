@@ -139,11 +139,15 @@
   <div id="status">32×32 px</div>
 
   <footer id="palbar">
-    <div id="palgrip" title="Перетащить палитру">Палитра</div>
+    <div id="palgrip" class="pop-head" title="Перетащить палитру"><span class="pop-title" id="palgrip-label">Палитра</span>
+      <span class="pop-acts">
+        <button id="tsg-btn" data-i18n-title="tool.tsg" title="Генератор тинтов и теней"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="4"/><circle cx="15.5" cy="15.5" r="4"/><path d="M8.5 4.5v8M4.5 8.5h8"/></svg></button>
+        <button id="pal-menu" title="Палитры: сохранить, загрузить, из изображения"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
+        <button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </span>
+    </div>
     <div id="pal"></div>
     <div id="palrsz" title="Изменить размер окна"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
-    <button id="pal-menu" title="Палитры: сохранить, загрузить, из изображения"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.7" fill="currentColor" stroke="none"/></svg></button>
-    <button id="tsg-btn" data-i18n-title="tool.tsg" title="Генератор тинтов и теней"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="4"/><circle cx="15.5" cy="15.5" r="4"/><path d="M8.5 4.5v8M4.5 8.5h8"/></svg></button>
   </footer>
 
   <div id="prevwin">

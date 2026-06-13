@@ -24,8 +24,11 @@ function colApply() { if (onPick) { onPick(rgbToHex(hsvToRgb(colH, colS, colV)))
 
 export function syncColFromActive() { const [h, s, v] = rgbToHsv(S.active[0], S.active[1], S.active[2]); colH = h; colS = s; colV = v; syncColUI(); }
 
-function openColPop() { if ($('colpop').classList.contains('on')) { $('colpop').classList.remove('on'); onPick = null; return; }
-  replaceFrom = null; onPick = null; setAddLabel(); $('fx-edit').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
+// кружок цвета открывает СРАЗУ пикер и палитру (это два отдельных перетаскиваемых
+// окна — можно растащить); повторный тап при обоих открытых — прячет оба.
+function openColPop() { const pb = $('palbar'), cp = $('colpop');
+  if (!pb.classList.contains('closed') && cp.classList.contains('on')) { pb.classList.add('closed'); cp.classList.remove('on'); onPick = null; return; }
+  pb.classList.remove('closed'); replaceFrom = null; onPick = null; setAddLabel(); $('fx-edit').classList.remove('on'); syncColFromActive(); cp.classList.add('on'); }
 
 // открыть наш пикер для выбора нового цвета в палитру (вместо нативного input)
 export function openColPick() { replaceFrom = null; onPick = null; setAddLabel(); $('fx-edit').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
