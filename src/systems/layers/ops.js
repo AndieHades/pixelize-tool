@@ -1,4 +1,4 @@
-// Операции над слоями: добавить, слить отмеченные, сгруппировать, дублировать.
+// Операции над слоями: добавить, слить отмеченные/диапазон, сгруппировать, дублировать.
 import { S, newLayer, cloneFx, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
@@ -18,22 +18,24 @@ export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toa
   S.layers.splice(at, 0, nl); S.cur = at; S.selFolder = null; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
-function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
+function mergeIndices(idx, placeTop = false) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
   snapshot();
-  const base = idx[0], out = cloneGrid(S.layers[base].grid), ext = new Map(S.layers[base].ext);
+  const base = idx[0], meta = placeTop ? idx[idx.length - 1] : base, out = cloneGrid(S.layers[base].grid), ext = new Map(S.layers[base].ext);
   for (let j = 1; j < idx.length; j++) { const L = S.layers[idx[j]];
     for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const t2 = L.grid[y][x]; if (t2) out[y][x] = mergeCells(out[y][x], t2, L.opacity); }
     for (const [k, c] of L.ext) ext.set(k, c); }
-  const merged = { name: S.layers[base].name, grid: out, opacity: 1, visible: true, fid: S.layers[base].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext, effects: [] };
+  const merged = { name: S.layers[meta].name, grid: out, opacity: 1, visible: true, fid: S.layers[meta].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext, effects: [] };
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
-  S.layers.splice(base, 0, merged); S.cur = base; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
+  const at = placeTop ? meta - idx.length + 1 : base;
+  S.layers.splice(at, 0, merged); S.cur = at; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
 
 export function doMerge() { let idx = selectedIdx();
   if (idx.length < 2) { if (S.cur > 0) idx = [S.cur - 1, S.cur]; else { toast(t('toast.markLayers')); return; } }
   mergeIndices(idx); }
 
 // слить диапазон слоёв [a..b] (щипок), независимо от выбора
-export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
+export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx, true); }
 
 function activeAfterDelete(idx) {
   const gone = new Set(idx), curObj = S.layers[S.cur]; let target = gone.has(S.cur) ? null : curObj;

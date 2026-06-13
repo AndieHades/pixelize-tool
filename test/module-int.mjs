@@ -597,6 +597,13 @@ t('layers-ui: Ctrl-клик выделяет диапазон до активн�
   assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
+t('layers-ui: pinch-merge сливает диапазон и оставляет результат наверху', () => { resetWH(4, 4);
+  const mk = (name) => ({ name, grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] });
+  S.layers = ['below', 'low', 'middle', 'top', 'above'].map(mk); S.cur = 1;
+  S.layers[1].grid[0][0] = [10, 0, 0, 255]; S.layers[2].grid[2][2] = [1, 1, 1, 255]; S.layers[3].grid[1][1] = [0, 0, 10, 255];
+  lops.mergeRange(1, 3);
+  assert.equal(S.layers.length, 3); assert.equal(S.cur, 1); assert.deepEqual(S.layers.map((L) => L.name), ['below', 'top', 'above']);
+  assert.deepEqual(S.layers[1].grid[0][0], [10, 0, 0, 255]); assert.deepEqual(S.layers[1].grid[2][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][1], [0, 0, 10, 255]); });
 t('layers-ui: после удаления активного слоя выбирается слой ниже', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 1; lops.deleteLayerRef(S.layers[1]); assert.equal(S.cur, 0); });
 t('layers-ui: удаление неактивного слоя сохраняет активный слой', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
