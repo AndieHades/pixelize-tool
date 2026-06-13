@@ -23,7 +23,7 @@
       display: flex; justify-content: space-between; align-items: center; gap: 6px;
       padding: calc(env(safe-area-inset-top, 0px) + 6px) max(10px, env(safe-area-inset-right, 0px)) 6px max(10px, env(safe-area-inset-left, 0px));
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border-bottom: 1px solid var(--line); }
+      border-bottom: 1px solid var(--line); box-shadow: var(--win-shadow); }
     .tb-group { display: flex; align-items: center; gap: 4px; }
     .tb-sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; flex: none; }
     #activewrap { position: relative; width: 34px; height: 34px; margin-left: 6px; flex: none;
@@ -35,14 +35,14 @@
     #swtip { position: fixed; z-index: 90; transform: translate(-50%, -100%); display: none;
       background: rgba(20, 20, 24, .96); border: 1px solid var(--line); color: var(--txt);
       font: 12px/1 ui-monospace, monospace; padding: 6px 9px; border-radius: 8px; cursor: pointer;
-      white-space: nowrap; box-shadow: 0 4px 14px rgba(0, 0, 0, .5); }
+      white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
     #swtip::after { content: " ⧉"; color: var(--txt2); }
     #swtip.on { display: block; }
     #swdrop { position: fixed; z-index: 95; display: none; width: 30px; height: 30px; border-radius: 50%;
-      transform: translate(-50%, -50%); border: 2px solid #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .5); pointer-events: none; }
+      transform: translate(-50%, -50%); border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.4); pointer-events: none; }
     #swdrop.on { display: block; }
     #paldrag { position: fixed; z-index: 95; display: none; width: 32px; height: 32px; border-radius: 8px;
-      transform: translate(-50%, -50%) scale(1.15); border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .55); pointer-events: none; }
+      transform: translate(-50%, -50%) scale(1.15); border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.4); pointer-events: none; }
     #paldrag.on { display: block; }
     #dropmask { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center;
       background: rgba(13, 13, 16, .72); backdrop-filter: blur(2px); pointer-events: none; }
@@ -189,10 +189,10 @@
     @keyframes lrow-drop-in { 0% { transform: scaleY(.2); opacity: 0; } 65% { transform: scaleY(1.04); } 100% { transform: scaleY(1); opacity: 1; } }
     /* Единый призрак перетаскивания (плитки, слои) — клон объекта под курсором. */
     .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: 1;
-      transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 14px 38px rgba(0, 0, 0, .5); border-radius: 12px; }
+      transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 2px 5px rgba(0,0,0,.4); border-radius: 12px; }
     /* перестановка кнопок панелей (как цвета в палитре) */
     .reorder-ghost { position: fixed; z-index: 300; pointer-events: none; opacity: .9;
-      transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+      transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 2px 5px rgba(0,0,0,.4); }
     .pbtn.reordering { opacity: .3; }
 
     /* ---- слайдеры ---- */
@@ -332,8 +332,8 @@
     .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
     .dragging { opacity: .4; } /* галерея и прочие объекты — чуть прозрачные */
     /* Ghost строки слоя — непрозрачный, слегка приподнят */
-    .drag-ghost[data-stack] { box-shadow: 0 16px 40px rgba(0,0,0,.6), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line); }
-    .drag-ghost[data-stack="3"] { box-shadow: 0 16px 40px rgba(0,0,0,.6), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line), 14px 20px 0 var(--panel-solid), 14px 20px 0 1px var(--line); }
+    .drag-ghost[data-stack] { box-shadow: 0 2px 5px rgba(0,0,0,.4), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line); }
+    .drag-ghost[data-stack="3"] { box-shadow: 0 2px 5px rgba(0,0,0,.4), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line), 14px 20px 0 var(--panel-solid), 14px 20px 0 1px var(--line); }
 
     /* ---- попапы настроек инструментов ---- */
     .toolpop { position: fixed; left: 50%; transform: translateX(-50%);
@@ -353,7 +353,7 @@
       width: 54px; background: var(--panel);
       backdrop-filter: blur(22px) saturate(1.25); -webkit-backdrop-filter: blur(22px) saturate(1.25);
       border: 1px solid var(--line); border-radius: 23px;
-      box-shadow: 0 14px 34px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .06); }
+      box-shadow: 0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255, 255, 255, .06); }
     #bb-pick { width: 34px; height: 34px; flex: none; border: 2px solid var(--txt2);
       border-radius: 10px; color: var(--txt); background: transparent; }
     #bb-pick svg { width: 18px; height: 18px; }
@@ -381,14 +381,14 @@
     #bb-val { position: fixed; z-index: 90; display: none; transform: translateY(-50%);
       background: var(--panel-solid); border: 1px solid var(--line); color: var(--txt);
       font: 13px/1 ui-monospace, monospace; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .5); pointer-events: none; }
+      box-shadow: 0 2px 5px rgba(0,0,0,.4); pointer-events: none; }
     #bb-val.on { display: block; }
     @media (min-width: 768px) { .vsl { height: 22vh; max-height: 240px; } } /* чуть выше на планшете */
     /* ---- режим пипетки очевиден ---- */
     body.picking #cv { cursor: crosshair; }
     #pickflag { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 60px); transform: translateX(-50%);
       z-index: 80; display: none; align-items: center; gap: 8px; background: var(--accent); color: var(--on-accent);
-      font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
+      font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,.4); pointer-events: none; }
     body.picking #pickflag { display: flex; }
     #pickflag svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
     .outcolwrap { position: relative; width: 42px; height: 32px; margin-left: auto; }
@@ -527,14 +527,14 @@
 #gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 22px; padding: 24px; align-content: start; }
 .gal-tile { cursor: pointer; user-select: none; }
 .gal-thumb { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,.4); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
   transition: transform var(--anim-fast) var(--ease-out), border-color var(--anim-fast), box-shadow var(--anim-fast); }
 .gal-tile:not(.folder) .gal-thumb { display: block; }
 .gal-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { gap: 2px; padding: 6px; background: var(--panel-solid); }
 .gal-tile.folder .gal-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 .gal-tile:hover .gal-thumb { border-color: var(--accent); }
-.gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, 0 6px 18px rgba(0,0,0,.35); }
+.gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, 0 2px 5px rgba(0,0,0,.4); }
 /* чек-кружок в углу плитки (виден только в режиме выбора) */
 .gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
   border: 2px solid #fff; background: rgba(0,0,0,.4); box-shadow: 0 1px 4px rgba(0,0,0,.45);
@@ -568,7 +568,7 @@
 #new-ovl.editing { align-items: center; justify-content: center; }
 #new-ovl .new-panel { margin: 54px 14px 0 0; }
 .new-panel { width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); overflow: hidden; }
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 5px rgba(0,0,0,.4); overflow: hidden; }
 .new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; }
 .new-head h3 { margin: 0; font-size: 22px; font-weight: 700; color: var(--txt); }
 .new-head .gal-round { background: var(--accent-soft); color: var(--txt); }
@@ -582,7 +582,7 @@
 /* компактное окошко создания/правки размера (имя + ширина/высота + ✓/отмена) */
 #new-ovl.editing .new-panel { display: none; }
 .size-edit { display: none; width: min(420px, 92vw); flex-direction: column; overflow: hidden;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
 #new-ovl.editing .size-edit { display: flex; }
 .se-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .se-title { flex: 1; min-width: 0; text-align: center; background: transparent; border: none; outline: none;
