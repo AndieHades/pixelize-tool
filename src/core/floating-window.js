@@ -4,6 +4,7 @@ let zTop = 30; // общий счётчик: окно, за которое вз�
 const bringToFront = (el) => { el.style.zIndex = ++zTop; };
 
 export function floatingWindow(el, opts = {}) {
+  if (el.__fw) return; el.__fw = true; // идемпотентно: окно делается перетаскиваемым один раз
   const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize, onClose } = opts;
   const place = (l, t) => {
     el.style.left = Math.max(4, Math.min(l, innerWidth - clampRight)) + 'px';

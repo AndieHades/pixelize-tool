@@ -63,6 +63,11 @@ export function start() {
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
     onResize: (w, h) => { $('sidebar').style.width = Math.max(48, Math.min(innerWidth - 12, w)) + 'px'; $('sidebar').style.maxHeight = Math.max(80, Math.min(innerHeight - 12, h)) + 'px'; } });
 
+  // ЕДИНО: любой модальный диалог (.ovl .sheet) — перетаскиваемое окно за заголовок.
+  // Уже подключённые окна (конвертер/экспорт) пропускаются идемпотентным floatingWindow.
+  // Новые диалоги достаточно сверстать как <div class="ovl"><div class="sheet"><h3>…
+  for (const win of document.querySelectorAll('.ovl .sheet')) floatingWindow(win, { grip: win.querySelector('h3') || win, storeKey: win.id ? 'win-' + win.id : undefined });
+
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'pal-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // imp-ovl/export-ovl (окна) не закрываем по фону
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
     for (const id of ['ctx', 'lctx', 'cctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);

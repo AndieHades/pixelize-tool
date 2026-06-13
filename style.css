@@ -219,12 +219,16 @@
     .ovl { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 60;
       display: none; align-items: flex-end; justify-content: center; }
     .ovl.on { display: flex; }
-    .sheet { width: 100%; max-width: 520px; background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: 20px 20px 0 0;
-      padding: 18px 18px calc(env(safe-area-inset-bottom, 0px) + 16px);
-      max-height: 92vh; overflow-y: auto; animation: up .28s cubic-bezier(.2, .9, .25, 1); }
+    /* модальный диалог = перетаскиваемое окно (фикс. по центру, тащим за h3) */
+    .sheet { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0;
+      width: min(92vw, 520px); background: var(--panel-solid);
+      border: 1px solid var(--line); border-radius: 16px;
+      padding: 14px 18px calc(env(safe-area-inset-bottom, 0px) + 16px);
+      max-height: 88vh; overflow-y: auto; box-shadow: var(--win-shadow); animation: fadein .15s ease-out; }
     @keyframes up { from { transform: translateY(48px); opacity: .5; } }
-    .sheet h3 { margin: 2px 0 14px; font-size: 17px; font-weight: 700; }
+    @keyframes fadein { from { opacity: 0; } }
+    .sheet h3 { margin: 0 0 14px; font-size: 17px; font-weight: 700; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .sheet h3:active { cursor: grabbing; }
     /* конвертер — перетаскиваемое окно по центру (а не «шторка»), без закрытия по фону.
        Всё помещается без прокрутки: превью гибкое и ужимается на низких экранах */
     #imp-box { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
