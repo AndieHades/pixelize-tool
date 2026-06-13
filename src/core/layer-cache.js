@@ -6,10 +6,10 @@ import { parseKey } from '../logic/raster.js';
 import { layerFxCanvas } from './effects-render.js';
 import { paintStack } from './composite.js';
 
-let lcs = []; const dirtySet = new Set(), revs = [];
+let lcs = []; const dirtySet = new Set(), revs = [], extCache = [];
 let revAll = 0; // глобальный счётчик инвалидации — для подписи кеша эффектов
 export const markDirty = (i) => { dirtySet.add(i); revs[i] = (revs[i] || 0) + 1; revAll++; };
-export function dirtyAll() { lcs = []; dirtySet.clear(); revs.length = 0; revAll++; }
+export function dirtyAll() { lcs = []; extCache.length = 0; dirtySet.clear(); revs.length = 0; revAll++; }
 // версия содержимого слоя i (растёт при правках) — подпись для кеша эффектов
 export const layerRev = (i) => (revs[i] || 0) + revAll;
 // источник для композита: слой с эффектами рисуется через fx-канвас, иначе как есть
@@ -23,6 +23,23 @@ export function layerCanvas(i) { let c = lcs[i];
       const o = (y * S.W + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
     x.putImageData(id, 0, 0); dirtySet.delete(i); }
   return c; }
+
+// запас ext (то, что за краем холста) слоя i, упакованный в canvas по своим
+// границам + смещение (ox,oy). Нужен для живого превью Move: заехавшее из-за
+// края показываем сразу, а не «обрезанным». null — если запаса нет.
+export function layerExtCanvas(i) {
+  const L = S.layers[i]; if (!L.ext || !L.ext.size) return null;
+  const hit = extCache[i]; if (hit && hit.rev === layerRev(i)) return hit;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const k of L.ext.keys()) { const [x, y] = parseKey(k);
+    if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
+  const w = maxX - minX + 1, h = maxY - minY + 1;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), id = x.createImageData(w, h);
+  for (const [k, cc] of L.ext) { const [px, py] = parseKey(k); const o = ((py - minY) * w + (px - minX)) * 4;
+    id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
+  x.putImageData(id, 0, 0);
+  const res = { canvas: c, ox: minX, oy: minY, rev: layerRev(i) }; extCache[i] = res; return res; }
 
 // слой i вместе с «висящим» фрагментом выделения (если фрагмент поднят с него):
 // обтравка и композит видят фрагмент так, будто он уже лежит в слое
@@ -45,6 +62,7 @@ export function clippedShift(i, base, dix, diy, dbx, dby) {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   x.drawImage(layerSrcCanvas(i), dix, diy); // слой с его эффектами, обрезанный по силуэту базы
+  const ex = layerExtCanvas(i); if (ex) x.drawImage(ex.canvas, ex.ox + dix, ex.oy + diy); // запас из-за края едет вместе со слоем
   x.globalCompositeOperation = 'destination-in'; x.drawImage(layerFloatCanvas(base), dbx, dby); return c; }
 
 // итоговый цвет точки (x,y) по всем видимым слоям, либо null

@@ -3,7 +3,7 @@
 // Единая точка для видимого рендера, экспорта и окна-превью.
 import { S } from './state.js';
 import { effVis, clipBase, folderChain } from './layers.js';
-import { layerSrcCanvas, clippedShift } from './layer-cache.js';
+import { layerSrcCanvas, clippedShift, layerExtCanvas } from './layer-cache.js';
 import { folderFx } from './effects-render.js';
 
 const memberOf = (i, fid) => folderChain(S.layers[i].fid).some((f) => f.id === fid);
@@ -44,5 +44,7 @@ function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vi
   const md = live ? S.moveDrag : null, di = (md && md.idxs.includes(i)) ? md : null;
   if (cb >= 0) { const db = (md && md.idxs.includes(cb)) ? md : null;
     ctx.drawImage(clippedShift(i, cb, di ? di.dx : 0, di ? di.dy : 0, db ? db.dx : 0, db ? db.dy : 0), iox, ioy);
-  } else ctx.drawImage(layerSrcCanvas(i), iox + (di ? di.dx : 0), ioy + (di ? di.dy : 0));
+  } else { ctx.drawImage(layerSrcCanvas(i), iox + (di ? di.dx : 0), ioy + (di ? di.dy : 0));
+    // при перетаскивании показываем и запас из-за края — иначе заехавшее видно «обрезанным»
+    if (di) { const ex = layerExtCanvas(i); if (ex) ctx.drawImage(ex.canvas, iox + ex.ox + di.dx, ioy + ex.oy + di.dy); } }
 }
