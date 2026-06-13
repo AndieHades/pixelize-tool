@@ -58,7 +58,7 @@ export function buildPalette() {
       else if (e.button === 2) { e.preventDefault(); palDrag = { b, idx, rmb: true, x: e.clientX, y: e.clientY, moved: false }; } });
     box.appendChild(b);
   });
-  const add = document.createElement('button'); add.className = 'sw plus'; add.title = 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый';
+  const add = document.createElement('button'); add.className = 'sw plus'; add.title = t('palette.addActiveTitle');
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
   add.addEventListener('click', () => { if (S.palette.some((p) => eqc(p, S.active))) { toast(t('toast.colorExists')); return; }
     S.palette.push(S.active.slice()); buildPalette(); toast(t('toast.colorAdded')); });
@@ -94,5 +94,6 @@ export function mount() {
     else if (act === 'select') actions.run('selection.byColor', col);
     else if (act === 'replace') actions.run('color.replace', col); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
+  bus.on('locale', buildPalette);
   refreshActive(); buildPalette();
 }

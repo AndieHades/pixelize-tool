@@ -630,6 +630,19 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: два бара действий по 6 кнопок и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
+  const top = [...document.querySelectorAll('#lay-act-top > button')], bot = [...document.querySelectorAll('#lay-act-bottom > button')];
+  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']);
+  assert.deepEqual(bot.map((b) => b.id), ['lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
+  assert.equal(document.querySelector('#lay-head #lay-add'), null);
+  assert.equal(document.querySelectorAll('.lay-action-btn').length, 12);
+  S.layers[0].grid[0][0] = [9, 9, 9, 255]; document.getElementById('lay-symm').click(); assert.deepEqual(S.layers[0].grid[0][7], [9, 9, 9, 255]);
+  document.getElementById('lay-alpha').click(); document.getElementById('lay-clip').click(); document.getElementById('lay-ref').click(); layList();
+  assert.ok(document.getElementById('lay-alpha').classList.contains('on')); assert.ok(document.getElementById('lay-clip').classList.contains('on')); assert.ok(document.getElementById('lay-ref').classList.contains('on'));
+  document.getElementById('lay-clean').click(); assert.equal(S.layers[0].grid[0][0], null);
+  document.getElementById('lay-lock').click(); assert.equal(S.layers[0].lock, true); assert.ok(document.getElementById('lay-lock').classList.contains('on'));
+  document.getElementById('lay-dup').click(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
+  document.getElementById('lay-del').click(); assert.equal(S.layers.length, 1); });
 t('layers-ui: единственный слой не удаляется', () => { resetWH(8, 8);
   lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0);
   lops.doAddLayer(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
@@ -675,6 +688,29 @@ t('i18n: новые слой/папка получают имя из текущ�
   S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));
   i18n.setLocale('ru'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Слой')); // рус. локаль → «Слой N»
   i18n.setLocale('ru'); });
+t('i18n: английская локаль убирает русский из title и placeholder', () => {
+  i18n.setLocale('en');
+  pal.buildPalette();
+  const bad = [...document.querySelectorAll('[title]')].filter((el) => /[А-Яа-яЁё]/.test(el.title)).map((el) => el.id || el.className || el.tagName);
+  assert.deepEqual(bad, []);
+  assert.equal(document.getElementById('pal-name').placeholder, 'Palette name');
+  assert.equal(document.getElementById('ovlimg').alt, 'result');
+  assert.equal(document.querySelector('#pickflag span').textContent, 'Eyedropper');
+  i18n.setLocale('ru');
+});
+t('i18n: html-шаблон не хранит локализованные fallback-строки', () => {
+  const doc = makeDom().window.document;
+  const textLeaks = [...doc.querySelectorAll('[data-i18n]')].flatMap((el) => [...el.childNodes]
+    .filter((n) => n.nodeType === 3 && n.textContent.trim())
+    .map(() => el.id || el.dataset.i18n));
+  const attrLeaks = [
+    ...doc.querySelectorAll('[data-i18n-title][title]'),
+    ...doc.querySelectorAll('[data-i18n-ph][placeholder]'),
+    ...doc.querySelectorAll('[data-i18n-alt][alt]'),
+  ].map((el) => el.id || el.dataset.i18nTitle || el.dataset.i18nPh || el.dataset.i18nAlt);
+  assert.deepEqual(textLeaks, []);
+  assert.deepEqual(attrLeaks, []);
+});
 t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
   S.folders = []; S.folderSeq = 0; S.layers = [S.layers[0], { ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) }, { ...S.layers[0], name: 'c', grid: S.layers[0].grid.map((r) => r.slice()) }]; S.cur = 0; S.marked = new Set([1, 2]);
   lops.doGroup(); const A = S.folders[0]; assert.equal(A.parent ?? null, null);

@@ -6,6 +6,7 @@ import { MAX_LAYERS, MAX_SIZE, BP_SMAX } from '../config/limits.js';
 import { DEFAULT_DOC } from '../config/presets.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
 import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT, EFFECT_DEFAULTS } from '../config/defaults.js';
+import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
 export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
@@ -21,7 +22,7 @@ const pal0 = defaultPalette();
 // единый контейнер изменяемого состояния
 export const S = {
   W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1, docName: '',
-  layers: [newLayer('Слой 1', DEFAULT_DOC.w, DEFAULT_DOC.h)], cur: 0,
+  layers: [newLayer(t('layer.name') + ' 1', DEFAULT_DOC.w, DEFAULT_DOC.h)], cur: 0,
   folders: [], folderSeq: 0, marked: new Set(), selFolder: null, markedFolders: new Set(),
   fxSel: new Set(), fxCur: null, fxDraft: null, // выделенные строки эффектов + черновик окна
 

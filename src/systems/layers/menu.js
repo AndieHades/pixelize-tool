@@ -5,11 +5,10 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $, showMenuBeside } from '../../core/dom.js';
 import { snapshot } from '../../core/history.js';
-import { symmetrizeGrid } from '../../logic/raster.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { t } from '../../i18n/index.js';
 import { folderLayers } from './helpers.js';
-import { duplicateLayer, duplicateFolder, toggleLock, toggleAlphaLock, toggleClip, toggleReference, deleteLayerRef, deleteFolder } from './ops.js';
+import { duplicateLayer, duplicateFolder, symmetrizeLayerRefs, toggleLock, toggleAlphaLock, toggleClip, toggleReference, deleteLayerRef, deleteFolder } from './ops.js';
 
 let lctxRef = null, renRef = null;
 const targets = () => (!lctxRef ? [] : (lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref])).filter((L) => S.layers.includes(L));
@@ -41,12 +40,11 @@ export function mountMenu() {
     for (const L of ts) { for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) L.grid[y][x] = a.slice(); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
   $('lctx-clear').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot();
     for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
-  $('lctx-symm').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot(); const v = S.sym || (!S.sym && !S.symH), h = S.symH;
-    for (const L of ts) { symmetrizeGrid(L.grid, v, h); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
+  $('lctx-symm').onclick = () => { close(); symmetrizeLayerRefs(targets()); };
   $('lctx-rotate').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('transform.enterTargets', ts); };
   $('lctx-paste-fx').onclick = () => { close(); actions.run('fx.paste'); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
-  $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, 'Яркость/контраст'); };
+  $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, t('pop.bc')); };
   $('lctx-clip').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleClip(lctxRef.ref); };
   $('lctx-lock').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleLock(lctxRef.ref); };
   $('lctx-alpha').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleAlphaLock(lctxRef.ref); };

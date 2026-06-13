@@ -12,6 +12,7 @@ import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { mountGestures } from './gestures.js';
 
 const cv = () => $('cv');
+const PICK_CURSOR = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'28\' height=\'28\' viewBox=\'0 0 28 28\'%3E%3Cpath d=\'M18.5 3.5l6 6-3 3-6-6zM16 7L6.5 16.5 4.5 23.5l7-2L21 12z\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'4.2\' stroke-linejoin=\'round\' stroke-linecap=\'round\'/%3E%3Cpath d=\'M18.5 3.5l6 6-3 3-6-6zM16 7L6.5 16.5 4.5 23.5l7-2L21 12z\' fill=\'none\' stroke=\'%23111111\' stroke-width=\'2\' stroke-linejoin=\'round\' stroke-linecap=\'round\'/%3E%3C/svg%3E") 5 23, crosshair';
 export const toGrid = (e) => { const r = cv().getBoundingClientRect();
   return [Math.floor((e.clientX - r.left - S.view.ox) / S.view.zoom), Math.floor((e.clientY - r.top - S.view.oy) / S.view.zoom)]; };
 const activeMode = () => (S.cropMode ? modeHandler('crop') : S.rotMode ? modeHandler('transform') : null);
@@ -42,6 +43,7 @@ export function move(e) {
     let cur = over ? 'crosshair' : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)
     const ht = toolHandler(S.tool), gh = globalHandlers().map((h) => h.hover && h.hover({ gx: hx, gy: hy, e })).find(Boolean);
     if (!drawing && !rdrag && !activeMode()) { if (gh) cur = gh; else if (ht && ht.hover) { const c2 = ht.hover({ gx: hx, gy: hy, e }); if (c2) cur = c2; } }
+    if (S.tool === 'pick') cur = PICK_CURSOR;
     cv().style.cursor = cur; }
   if (rdrag) { const dx = e.clientX - rdrag.x, dy = e.clientY - rdrag.y; if (Math.hypot(dx, dy) > DRAG_THRESHOLD) rdrag.moved = true;
     if (rdrag.moved) { S.view.ox = rdrag.ox + dx; S.view.oy = rdrag.oy + dy; bus.emit('render'); } return; }

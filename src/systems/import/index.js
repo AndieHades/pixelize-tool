@@ -66,7 +66,7 @@ export function mount() {
   let timer = null; const soon = () => { clearTimeout(timer); timer = setTimeout(impConvert, 60); };
   $('imp-colors').addEventListener('input', () => { $('imp-colorsv').textContent = +$('imp-colors').value || t('label.noQuant'); soon(); }); // 0 = без квантования
   $('imp-bgtol').addEventListener('input', () => { $('imp-bgtolv').textContent = $('imp-bgtol').value; soon(); });
-  $('imp-cell').addEventListener('input', () => { const v = +$('imp-cell').value; $('imp-cellv').textContent = v || 'Авто'; soon(); });
+  $('imp-cell').addEventListener('input', () => { const v = +$('imp-cell').value; $('imp-cellv').textContent = v || t('import.auto'); soon(); });
   ['imp-clean', 'imp-sym'].forEach((id) => $(id).addEventListener('change', impConvert));
   $('imp-apply').onclick = applyImport; $('imp-rot').onclick = rotateImp;
   $('imp-cancel').onclick = () => { $('imp-ovl').classList.remove('on'); setImportMode('replace'); };

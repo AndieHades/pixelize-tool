@@ -8,7 +8,7 @@ import { snapshot } from '../../core/history.js';
 import { effVis } from '../../core/layers.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { layList } from './list.js';
-import { doAddLayer, doMerge, doGroup, deleteLayer, clearLayerRef, toggleReference } from './ops.js';
+import { mountActionBars } from './actions-bar.js';
 import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
 
@@ -21,22 +21,17 @@ function openLayerMenu(px, py) { const m = $('cctx'); m.innerHTML = '';
 
 export function mount() {
   $('layers').addEventListener('click', () => { const p = $('lay-pop'); const on = p.classList.toggle('on'); $('layers').classList.toggle('on', on); if (on) layList(); });
-  $('lay-add').addEventListener('click', doAddLayer);
-  $('lay-merge').addEventListener('click', doMerge);
-  $('lay-group').addEventListener('click', doGroup);
-  $('lay-del').addEventListener('click', deleteLayer);
-  $('lay-select').addEventListener('click', () => actions.run('selection.layer'));
-  $('lay-ref').addEventListener('click', () => toggleReference(S.layers[S.cur]));
-  $('lay-clean').addEventListener('click', () => clearLayerRef(S.layers[S.cur]));
+  mountActionBars();
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });
   floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220,
     onClose: () => { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); },
     onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';
-      $('lay-list').style.maxHeight = Math.max(80, h - 156) + 'px'; } }); // высота окна — по содержимому; ресайз тянет область списка
+      $('lay-list').style.maxHeight = Math.max(80, h - 198) + 'px'; } }); // высота окна — по содержимому; ресайз тянет область списка
   mountMenu();
   mountPinch();
   bus.on('layers', layList);
+  bus.on('locale', layList);
   bus.on('canvas-menu', (e) => openLayerMenu(e.clientX, e.clientY));
   actions.register('ui.layers', () => $('layers').click());
 }

@@ -28,6 +28,6 @@ export function gridToCanvas(grid, x0, y0, w, h) {
 }
 
 export function saveCanvas(c, name) {
-  c.toBlob((b) => saveFile(b, name, 'image/png', 'PNG-изображение',
+  c.toBlob((b) => saveFile(b, name, 'image/png', t('file.pngDesc'),
     matchMedia('(pointer: coarse)').matches ? c.toDataURL('image/png') : null), 'image/png');
 }

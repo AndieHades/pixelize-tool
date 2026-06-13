@@ -11,6 +11,7 @@ import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
 import { appendEffects } from './fx-rows.js';
+import { syncLayerActionButtons } from './actions-bar.js';
 
 const INDENT = 16; // отступ на уровень вложенности
 
@@ -140,5 +141,5 @@ export function layList() {
     box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
-  const ref = $('lay-ref'); if (ref) ref.classList.toggle('on', !!cur.reference);
+  syncLayerActionButtons();
 }

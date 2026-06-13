@@ -3,7 +3,7 @@ import { S, newLayer, cloneFx, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot, cloneGrid } from '../../core/history.js';
-import { mergeCells } from '../../logic/raster.js';
+import { mergeCells, symmetrizeGrid } from '../../logic/raster.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
@@ -55,6 +55,11 @@ export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
   S.layers.splice(idx + 1, 0, { name: L.name + ' ' + t('layer.copySuffix'), opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: false, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) });
   S.cur = idx + 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerDup')); }
+
+export function symmetrizeLayerRefs(layers) { const ts = layers.filter((L) => S.layers.includes(L)); if (!ts.length) return;
+  snapshot(); const v = S.sym || (!S.sym && !S.symH), h = S.symH;
+  for (const L of ts) { symmetrizeGrid(L.grid, v, h); markDirty(S.layers.indexOf(L)); }
+  bus.emit('layers'); bus.emit('render'); }
 
 // переключатели свойств слоя — общие для свайпов и контекстного меню
 export function toggleLock(L) { snapshot(); L.lock = !L.lock; bus.emit('layers'); }

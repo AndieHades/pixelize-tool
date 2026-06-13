@@ -5,7 +5,7 @@ import * as actions from '../core/actions.js';
 import { snapshot, cloneGrid } from '../core/history.js';
 import { bcAdjust, contrastFactor } from '../logic/bc.js';
 import { dirtyAll } from '../core/layer-cache.js';
-import { $ } from '../core/dom.js';
+import { $, t } from '../core/dom.js';
 
 let bcBackup = null;
 
@@ -38,4 +38,4 @@ export function mount() {
   $('bcpop').querySelector('.win-x').onclick = bcCancel; // крестик = отмена
 }
 
-actions.register('effect.bc', (targets, title) => openBcPop(targets && targets.length ? targets : S.layers, title || 'Яркость/контраст — всё изображение'));
+actions.register('effect.bc', (targets, title) => openBcPop(targets && targets.length ? targets : S.layers, title || t('bc.titleAll')));

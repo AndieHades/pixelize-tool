@@ -39,6 +39,7 @@ export function mount() {
   $('tsg-create').onclick = () => { if (!tsg.sel.length) { toast(t('toast.nothingSelected')); return; }
     createNewPaletteFromSelected(tsg.sel); toast(t('toast.tsgNewPalette', { n: tsg.sel.length })); }; // окно остаётся — закрыть можно крестиком
   $('tsg-clear').onclick = () => { tsg.sel = []; render(); };
+  bus.on('locale', () => { if (tsg.base) render(); });
   floatingWindow($('tsg-win'), { grip: $('tsg-grip'), handle: $('tsg-rsz'), storeKey: 'tsgwin', clampRight: 80,
     onResize: (w) => { $('tsg-win').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px'; } }); // высота — по содержимому, окно растёт вниз
 }

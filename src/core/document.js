@@ -69,7 +69,7 @@ export function applyCropRect(x0, y0, x1, y1) {
 
 // вставить RGBA-картинку w×h новым слоем по центру холста (без snapshot/UI)
 export function placeImageLayer(w, h, d) {
-  const nl = newLayer('Картинка', S.W, S.H); nl.fid = S.layers[S.cur].fid;
+  const nl = newLayer(t('layer.imageName'), S.W, S.H); nl.fid = S.layers[S.cur].fid;
   const ox = (S.W - w) >> 1, oy = (S.H - h) >> 1;
   for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const o = (y * w + xx) * 4;
     if (d[o + 3] < 8) continue; nl.grid[oy + y][ox + xx] = [d[o], d[o + 1], d[o + 2], d[o + 3]]; }
@@ -79,7 +79,7 @@ export function placeImageLayer(w, h, d) {
 // вставить RGBA-картинку w×h САМЫМ ВЕРХНИМ слоем (конец массива), по центру холста;
 // то, что не влезло, хранится в ext (реальные границы) — не разрушаем, Trim откроет
 export function addImageLayerTop(w, h, d, name) {
-  const nl = newLayer(name || 'Картинка', S.W, S.H); nl.fid = null;
+  const nl = newLayer(name || t('layer.imageName'), S.W, S.H); nl.fid = null;
   const ox = (S.W - w) >> 1, oy = (S.H - h) >> 1;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = (y * w + x) * 4; if (d[o + 3] < 8) continue;
     const px = ox + x, py = oy + y, c = [d[o], d[o + 1], d[o + 2], d[o + 3]];

@@ -31,8 +31,9 @@ export function mount() {
   $('pal-menu').addEventListener('pointerdown', (e) => e.stopPropagation());
   $('pal-menu').addEventListener('click', () => { $('pal-name').value = ''; palListUI(); $('pal-ovl').classList.add('on'); });
   $('pal-close').onclick = () => $('pal-ovl').classList.remove('on');
-  $('pal-save').onclick = () => { const nm = ($('pal-name').value.trim() || 'Палитра').slice(0, 20);
+  $('pal-save').onclick = () => { const nm = ($('pal-name').value.trim() || t('label.palette')).slice(0, 20);
     const s2 = palStore(); s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
+  bus.on('locale', palListUI);
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
   $('pal-from-img').onclick = () => palImg.click();
   palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
