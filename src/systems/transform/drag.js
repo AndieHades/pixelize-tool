@@ -22,9 +22,13 @@ export function rotGrab({ e }) { const hit = rotHit(e); if (!hit) { S.rotMode.gr
 
 export function rotDrag(e, rebuild) { const g = S.rotMode && S.rotMode.grab; if (!g) return; const p = rotPointer(e);
   if (!g.logged) { S.rotMode.hist.push(rotState(S.rotMode)); g.logged = true; }
-  if (g.kind === 'rotate') { let a = g.ang + Math.atan2(p.y - g.cy, p.x - g.cx) - g.a0; if (e.shiftKey) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12); S.rotMode.ang = a; }
-  else if (g.kind === 'scale-x') { const ax = { x: Math.cos(g.ang), y: Math.sin(g.ang) }; const d = ((p.x - g.start.x) * ax.x + (p.y - g.start.y) * ax.y) * g.sign; S.rotMode.sx = Math.max(ROT_MIN_SCALE, (g.w0 + d * 2) / S.rotMode.b.w); }
-  else if (g.kind === 'scale-y') { const ay = { x: -Math.sin(g.ang), y: Math.cos(g.ang) }; const d = ((p.x - g.start.x) * ay.x + (p.y - g.start.y) * ay.y) * g.sign; S.rotMode.sy = Math.max(ROT_MIN_SCALE, (g.h0 + d * 2) / S.rotMode.b.h); }
+  if (g.kind === 'rotate') { let a = g.ang + Math.atan2(p.y - g.cy, p.x - g.cx) - g.a0; if (e.shiftKey) a = Math.round(a / (Math.PI / 4)) * (Math.PI / 4); S.rotMode.ang = a; } // Shift — строго по 45°
+  else if (g.kind === 'scale-x') { const ax = { x: Math.cos(g.ang), y: Math.sin(g.ang) }; const d = ((p.x - g.start.x) * ax.x + (p.y - g.start.y) * ax.y) * g.sign;
+    const nsx = Math.max(ROT_MIN_SCALE, (g.w0 + d * 2) / S.rotMode.b.w); S.rotMode.sx = nsx;
+    if (e.shiftKey && g.sx) S.rotMode.sy = Math.max(ROT_MIN_SCALE, g.sy * nsx / g.sx); } // Shift — пропорционально
+  else if (g.kind === 'scale-y') { const ay = { x: -Math.sin(g.ang), y: Math.cos(g.ang) }; const d = ((p.x - g.start.x) * ay.x + (p.y - g.start.y) * ay.y) * g.sign;
+    const nsy = Math.max(ROT_MIN_SCALE, (g.h0 + d * 2) / S.rotMode.b.h); S.rotMode.sy = nsy;
+    if (e.shiftKey && g.sy) S.rotMode.sx = Math.max(ROT_MIN_SCALE, g.sx * nsy / g.sy); } // Shift — пропорционально
   else if (g.kind === 'move') { S.rotMode.tx = g.tx + p.x - g.start.x; S.rotMode.ty = g.ty + p.y - g.start.y; }
   S.rotMode.changed = rotHasChanges(S.rotMode); rebuild(); }
 
