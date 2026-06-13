@@ -386,6 +386,8 @@
     .outcolwrap input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
     .outcolwrap span { display: block; width: 100%; height: 100%; border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, .25); pointer-events: none; background: #ff7a18; }
+    .fx-colbtn { width: 42px; height: 32px; margin-left: auto; padding: 0; border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .25); background: #ff7a18; }
 
     /* ---- статус-бар ---- */
     #status { position: fixed; left: max(8px, env(safe-area-inset-left, 0px));

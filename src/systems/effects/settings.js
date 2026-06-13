@@ -3,6 +3,7 @@
 // Отмена убирает черновик / откатывает параметры, Применить фиксирует в историю.
 import { newEffect } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { $, t } from '../../core/dom.js';
 import { EFFECT_FIELDS } from '../../config/defaults.js';
@@ -21,20 +22,23 @@ function fill(eff) { const p = eff.params; showRows(eff.type); $('fx-edit-title'
   if (p.intensity != null) { const v = Math.round(p.intensity * 100); $('fx-int').value = v; $('fx-intv').textContent = v + '%'; }
   if (p.dx != null) { $('fx-dx').value = p.dx; $('fx-dxv').textContent = p.dx; }
   if (p.dy != null) { $('fx-dy').value = p.dy; $('fx-dyv').textContent = p.dy; }
-  $('fx-col').value = p.color; $('fx-colsw').style.background = p.color; }
+  $('fx-colsw').style.background = p.color; }
 
 function readForm() { if (!ses) return; const p = ses.eff.params;
   if (p.size != null) p.size = +$('fx-size').value;
   if (p.intensity != null) p.intensity = +$('fx-int').value / 100;
   if (p.dx != null) p.dx = +$('fx-dx').value;
   if (p.dy != null) p.dy = +$('fx-dy').value;
-  p.color = $('fx-col').value; bus.emit('render'); }
+  bus.emit('render'); }
+
+// цвет выбирается нашим HSV-пикером (никаких системных input[type=color])
+function setColor(hex) { if (!ses) return; ses.eff.params.color = hex; $('fx-colsw').style.background = hex; bus.emit('render'); }
 
 function revert() { if (!ses) return;
   if (ses.isNew) { const i = ses.target.effects.indexOf(ses.eff); if (i >= 0) ses.target.effects.splice(i, 1); }
   else ses.eff.params = { ...ses.original }; }
 
-const close = () => { $('fx-edit').classList.remove('on'); ses = null; };
+const close = () => { $('fx-edit').classList.remove('on'); $('colpop').classList.remove('on'); ses = null; };
 
 function open(target, eff, isNew) { if (ses) { revert(); close(); } // переключение окна — тихо отменить прежнее
   ses = { target, eff, isNew, original: { ...eff.params } }; fill(eff); $('fx-edit').classList.add('on');
@@ -55,5 +59,5 @@ const syncLabels = () => { $('fx-sizev').textContent = $('fx-size').value; $('fx
 
 export function mountSettings() {
   for (const id of ['fx-size', 'fx-int', 'fx-dx', 'fx-dy']) $(id).addEventListener('input', () => { syncLabels(); readForm(); });
-  $('fx-col').addEventListener('input', () => { $('fx-colsw').style.background = $('fx-col').value; readForm(); });
+  $('fx-colsw').onclick = () => { if (ses) actions.run('color.for', ses.eff.params.color, setColor); }; // наш пикер, не системный
   $('fx-apply').onclick = fxApply; $('fx-cancel').onclick = fxCancel; }

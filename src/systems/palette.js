@@ -9,9 +9,7 @@ import { rgb, rgbToHex, hexToRgb, eqc } from '../logic/color.js';
 import { setTool } from '../core/tools.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
 
-const PANEL_TARGETS = [
-  { pop: 'fx-edit', input: 'fx-col', sw: 'fx-colsw' },
-];
+const PANEL_TARGETS = []; // нативных панелей с input[type=color] больше нет — цвет везде через наш #colpop
 let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1;
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };

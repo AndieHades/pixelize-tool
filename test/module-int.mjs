@@ -372,6 +372,17 @@ t('effects: дублирование/удаление выделенных эф�
 t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });
 
+t('effects: цвет эффекта — наш #colpop, не системный input[type=color]', () => { cp.mount();
+  assert.equal(document.querySelectorAll('#fx-edit input[type=color]').length, 0); // системного пикера в окне эффекта нет
+  resetWH(8, 8); document.querySelector('#fx-types button[data-fx="stroke"]').click(); // черновик stroke
+  const eff = S.layers[S.cur].effects[0], before = eff.params.color;
+  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on')); // открылся НАШ пикер
+  const active0 = S.active.slice();
+  const h = document.getElementById('col-h'); h.value = '200'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.notEqual(eff.params.color, before); // цвет эффекта обновился через наш пикер
+  assert.deepEqual(S.active, active0); // активный цвет не тронут
+  document.getElementById('fx-cancel').click(); });
+
 t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
 
