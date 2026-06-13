@@ -194,6 +194,10 @@ t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[
 t('trim: расширяет холст до пикселей за краем (включая скрытые)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].visible = false; S.layers[0].ext.set('6,6', [1, 1, 1, 255]); trimCanvas();
   assert.equal(S.W, 7); assert.equal(S.H, 7); assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.layers[0].visible = true; });
+t('trim: расширяет холст под охват эффекта (обводка не обрезается)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 2, color: '#ffffff' } }]; trimCanvas();
+  assert.equal(S.W, 5); assert.equal(S.H, 5); // пиксель (0,0) + обводка 2px по краям → bbox (-2..2)
+  assert.deepEqual(S.layers[0].grid[2][2], [9, 9, 9, 255]); S.layers[0].effects = []; });
 t('document: addImageLayerTop кладёт картинку верхним слоем', () => { resetWH(6, 6); const n = S.layers.length;
   const d = new Uint8ClampedArray(2 * 2 * 4); for (let i = 0; i < 4; i++) { d[i * 4] = 200; d[i * 4 + 3] = 255; }
   doc.addImageLayerTop(2, 2, d, 'pic'); assert.equal(S.layers.length, n + 1); assert.equal(S.cur, S.layers.length - 1);
