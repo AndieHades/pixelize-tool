@@ -5,6 +5,7 @@
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
+import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { setSquelch } from './list.js';
@@ -28,7 +29,7 @@ export function fxDrop(blk, row, below) { let owner, at;
   else { owner = rowTarget(row); if (!owner) return; if (!owner.effects) owner.effects = []; at = owner.effects.length; }
   snapshot();
   for (const e of blk) { const [o, k] = ownerIndex(e); if (o) { o.effects.splice(k, 1); if (o === owner && k < at) at--; } }
-  owner.effects.splice(at, 0, ...blk); bus.emit('layers'); bus.emit('render'); }
+  owner.effects.splice(at, 0, ...blk); dirtyAll(); bus.emit('layers'); bus.emit('render'); } // dirtyAll — гарантированно сбросить кеш эффектов на старом и новом владельце
 
 const findRow = (x, y) => { const t = document.elementFromPoint(x, y);
   return t && t.closest ? t.closest('#lay-list .fxrow:not(.dragging), #lay-list .lrow:not(.dragging)') : null; };
@@ -46,7 +47,7 @@ export function fxDrag(el) {
       const pr = ($('lay-pop') || box).getBoundingClientRect();
       const gx = Math.max(pr.left + 8, Math.min(ev.clientX, pr.right - 8)), gy = Math.max(pr.top + 8, Math.min(ev.clientY, pr.bottom - 8));
       ghost.move(gx, gy);
-      const row = findRow(gx, gy); if (!row || blk.includes(row.__eff)) { clear(); return; }
+      const row = findRow(gx, gy); if (!row || blk.includes(row.__eff)) return; // над открытым слотом/пустотой/своей строкой — держим текущую цель (иначе слот мигает)
       const r = row.getBoundingClientRect(), lower = gy > r.top + r.height / 2;
       if (row === hot && lower === below) return; clear(); hot = row; below = lower;
       if (row.classList.contains('fxrow')) row.classList.add(lower ? 'drop-below' : 'drop-above'); else row.classList.add('fxdrop'); };
