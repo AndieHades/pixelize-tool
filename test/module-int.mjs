@@ -372,6 +372,15 @@ t('tint-shade: addSelected/createNew меняют палитру', () => {
   tsg.createNewPaletteFromSelected([[7, 7, 7], [8, 8, 8]]);
   assert.deepEqual(S.palette, [[7, 7, 7], [8, 8, 8]]); assert.deepEqual(S.active, [7, 7, 7]);
 });
+t('tint-shade: кнопка New не закрывает окно (закрывается только крестиком)', () => {
+  tsg.mount(); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [200, 100, 50];
+  document.getElementById('tsg-btn').click(); // открыть окно
+  document.querySelector('#tsg-scales .tsg-sw').click(); // выбрать цвет, иначе New ничего не делает
+  document.getElementById('tsg-create').click();
+  assert.ok(document.getElementById('tsg-win').classList.contains('on')); // окно осталось
+  document.getElementById('tsg-x').click();
+  assert.ok(!document.getElementById('tsg-win').classList.contains('on')); // крестик закрывает
+});
 t('tint-shade: без активного цвета в палитре — окно не открывается', () => {
   document.getElementById('tsg-win').classList.remove('on');
   S.palette = [[1, 2, 3]]; S.active = [200, 200, 200]; // нет в палитре

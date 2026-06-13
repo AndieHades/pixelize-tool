@@ -37,7 +37,7 @@ export function mount() {
   $('tsg-add').onclick = () => { if (!tsg.sel.length) { toast(t('toast.nothingSelected')); return; }
     const n = addSelectedToCurrentPalette(tsg.sel); toast(t('toast.tsgAdded', { n })); };
   $('tsg-create').onclick = () => { if (!tsg.sel.length) { toast(t('toast.nothingSelected')); return; }
-    createNewPaletteFromSelected(tsg.sel); toast(t('toast.tsgNewPalette', { n: tsg.sel.length })); close(); };
+    createNewPaletteFromSelected(tsg.sel); toast(t('toast.tsgNewPalette', { n: tsg.sel.length })); }; // окно остаётся — закрыть можно крестиком
   $('tsg-clear').onclick = () => { tsg.sel = []; render(); };
   floatingWindow($('tsg-win'), { grip: $('tsg-grip'), handle: $('tsg-rsz'), storeKey: 'tsgwin', clampRight: 80,
     onResize: (w, h) => { $('tsg-win').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';
