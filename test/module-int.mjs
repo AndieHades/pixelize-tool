@@ -585,6 +585,16 @@ t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 
 t('layers-ui: добавление слоёв не останавливается на восьми', () => { resetWH(8, 8);
   for (let i = 0; i < 9; i++) lops.doAddLayer();
   assert.equal(S.layers.length, 10); });
+t('layers-ui: закрытая папка с активным слоем становится активной строкой', () => { resetWH(8, 8);
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0;
+  document.getElementById('lay-pop').classList.add('on'); layList(); document.querySelector('#lay-list .frow .caret').click();
+  assert.equal(S.folders[0].open, false); assert.equal(S.selFolder, 1); assert.ok(document.querySelector('#lay-list .frow').classList.contains('on')); });
+t('layers-ui: плюс на активной папке создаёт активный верхний слой вне папки', () => { resetWH(8, 8);
+  S.folders = [{ id: 1, name: 'G', open: false, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.selFolder = 1; S.markedFolders = new Set([1]);
+  lops.doAddLayer(); assert.equal(S.cur, S.layers.length - 1); assert.equal(S.layers[S.cur].fid, null); assert.equal(S.selFolder, null); });
+t('layers-ui: плюс на видимом слое папки создаёт слой в этой папке', () => { resetWH(8, 8);
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0; S.selFolder = null;
+  lops.doAddLayer(); assert.equal(S.cur, 1); assert.equal(S.layers[S.cur].fid, 1); });
 t('i18n: новые слой/папка получают имя из текущей локали', () => { resetWH(8, 8);
   i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer')); // англ. локаль → «Layer N»
   S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));

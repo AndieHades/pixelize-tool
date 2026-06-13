@@ -65,7 +65,9 @@ function folderRow(f, depth) {
   fr.className = 'lrow frow' + (f.open ? ' open' : '') + (f.id === S.selFolder && !S.fxCur ? ' on' : isSel ? ' marked' : '');
   const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   car.addEventListener('pointerdown', (e) => e.stopPropagation());
-  car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; f.open = !f.open; layList(); });
+  car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return;
+    if (f.open && activeInside(f)) { S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; }
+    f.open = !f.open; layList(); });
   const nm = nameSpan(f.name);
   const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
   fr.append(car, nm);
@@ -80,6 +82,12 @@ function folderRow(f, depth) {
       else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
     S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); }); // обычный клик — только эта папка активна
   longPress(fr, (x, y) => openLctx(x, y, 'folder', f)); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
+}
+
+function activeInside(f) {
+  const cur = S.layers[S.cur], layerIn = cur && folderChain(cur.fid).some((x) => x.id === f.id);
+  const folderIn = S.selFolder != null && folderChain(S.selFolder).some((x) => x.id === f.id);
+  return layerIn || folderIn;
 }
 
 function layerRow(L, i, depth) {

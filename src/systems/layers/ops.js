@@ -11,8 +11,12 @@ import { folderChain } from '../../core/layers.js';
 import { folderLayers, topOfFolder, commonParent, selectedIdx, nextFolderId, uniqueFolderName } from './helpers.js';
 
 export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
-  snapshot(); const nl = newLayer(t('layer.name') + ' ' + (++S.layerSeq), S.W, S.H); nl.fid = S.layers[S.cur].fid;
-  S.layers.splice(S.cur + 1, 0, nl); S.cur++; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  snapshot(); const cur = S.layers[S.cur], chain = cur ? folderChain(cur.fid) : [];
+  const inOpenFolder = !S.selFolder && cur && cur.fid != null && chain.every((f) => f.open);
+  const nl = newLayer(t('layer.name') + ' ' + (++S.layerSeq), S.W, S.H); nl.fid = inOpenFolder ? cur.fid : null;
+  const at = inOpenFolder ? S.cur + 1 : S.layers.length;
+  S.layers.splice(at, 0, nl); S.cur = at; S.selFolder = null; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
   snapshot();
