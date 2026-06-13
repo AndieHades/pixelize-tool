@@ -4,7 +4,7 @@ let zTop = 30; // общий счётчик: окно, за которое вз�
 const bringToFront = (el) => { el.style.zIndex = ++zTop; };
 
 export function floatingWindow(el, opts = {}) {
-  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize } = opts;
+  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize, onClose } = opts;
   const place = (l, t) => {
     el.style.left = Math.max(4, Math.min(l, innerWidth - clampRight)) + 'px';
     el.style.top = Math.max(4, Math.min(t, innerHeight - clampBottom)) + 'px';
@@ -15,7 +15,13 @@ export function floatingWindow(el, opts = {}) {
   const applySize = (w, h) => { if (onResize) onResize(w, h); else { el.style.width = Math.max(minW, w) + 'px'; el.style.height = Math.max(minH, h) + 'px'; } };
 
   if (storeKey) try { const s = JSON.parse(localStorage.getItem(storeKey));
-    if (s && s.l != null) { place(s.l, s.t); if (s.w) applySize(s.w, s.h); } } catch (e) {}
+    // размер восстанавливаем только у растягиваемых окон; иначе фикс. высота режет
+    // контент с переменным числом строк (окна эффектов) — «пол-окна нет»
+    if (s && s.l != null) { place(s.l, s.t); if (s.w && (handle || onResize)) applySize(s.w, s.h); } } catch (e) {}
+
+  // крестик закрытия в шапке (общий для всех окон): прячет окно / зовёт onClose
+  const xb = el.querySelector('.win-x');
+  if (xb) xb.addEventListener('click', (e) => { e.stopPropagation(); if (onClose) onClose(); else el.classList.remove('on'); });
 
   el.addEventListener('pointerdown', () => bringToFront(el), true); // любой тык по окну — наверх стопки
   let d = null;

@@ -109,11 +109,17 @@
       box-shadow: 0 14px 44px rgba(0, 0, 0, .55); display: none; overflow: hidden; }
     #lay-pop.on { display: block; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
-    .pop-head { display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 8px 10px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
+    .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
       cursor: grab; touch-action: none; }
-    .pop-head button { width: 34px; height: 34px; background: rgba(255, 255, 255, .08); }
-    .pop-head button svg { width: 19px; height: 19px; }
+    .pop-title, .bp-title { flex: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pop-acts { display: flex; align-items: center; gap: 4px; flex: none; }
+    /* единые кнопки в шапке любого окна: новый слой, меню палитры, тинты, закрытие */
+    .pop-head button, .bp-head button, .pop-acts button, #pal-menu, #tsg-btn {
+      width: 32px; height: 32px; border-radius: 9px; background: var(--row); color: var(--txt2); flex: none; }
+    .pop-head button:hover, .bp-head button:hover, .pop-acts button:hover, #pal-menu:hover, #tsg-btn:hover { color: var(--txt); }
+    .pop-head button svg, .bp-head button svg, .pop-acts button svg, #pal-menu svg, #tsg-btn svg { width: 18px; height: 18px; }
+    .win-x:hover { background: var(--accent); color: #fff; }
     #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: 12px; }
     .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer;
       margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
@@ -335,8 +341,12 @@
       top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 16; display: none; flex-direction: column;
       width: min(92vw, 330px); padding: 10px 16px 14px; background: var(--panel-solid);
       border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+    .toolpop { overflow: hidden; } /* шапка с border-bottom не торчит из скруглённых углов */
     .toolpop.on { display: flex; }
-    .bp-head { font-weight: 700; padding: 4px 0 6px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+    /* шапка toolpop приведена к виду #lay-pop: тянется на всю ширину (компенсируем падинг) */
+    .bp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin: -10px -16px 12px; padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line);
+      font-weight: 600; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
     .bp-head:active { cursor: grabbing; }
     /* ---- левая полоса кисти (как в Procreate) ---- */
     #brushbar { position: fixed; left: max(6px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%);

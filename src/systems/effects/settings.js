@@ -60,4 +60,5 @@ const syncLabels = () => { $('fx-sizev').textContent = $('fx-size').value; $('fx
 export function mountSettings() {
   for (const id of ['fx-size', 'fx-int', 'fx-dx', 'fx-dy']) $(id).addEventListener('input', () => { syncLabels(); readForm(); });
   $('fx-colsw').onclick = () => { if (ses) actions.run('color.for', ses.eff.params.color, setColor); }; // наш пикер, не системный
-  $('fx-apply').onclick = fxApply; $('fx-cancel').onclick = fxCancel; }
+  $('fx-apply').onclick = fxApply; $('fx-cancel').onclick = fxCancel;
+  $('fx-edit').querySelector('.win-x').onclick = fxCancel; } // крестик = отмена (откат черновика)

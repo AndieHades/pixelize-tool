@@ -97,14 +97,14 @@
   <div id="pickflag"><svg viewBox="0 0 24 24"><path d="M15.4 4.3l.9-.9a2.33 2.33 0 0 1 3.3 3.3l-.9.9"/><path d="M13.3 6.4l4.3 4.3"/><path d="M15.1 9.2L6.9 17.4c-.5.5-2.5 1.1-3.2.8-.3-.7.3-2.7.8-3.2l8.2-8.2 2.4 2.4z"/></svg>Пипетка</div>
   <div id="bb-val"></div>
   <div id="bcpop" class="toolpop">
-    <div class="bp-head" id="bc-title">Яркость/контраст</div>
+    <div class="bp-head"><span class="bp-title" id="bc-title">Яркость/контраст</span><button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="irow"><label data-i18n="label.brightness">Яркость</label><input id="bc-bri" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-briv">0</b></div>
     <div class="irow"><label data-i18n="label.contrast">Контраст</label><input id="bc-con" type="range" min="-100" max="100" step="1" value="0" /><b id="bc-conv">0</b></div>
     <div class="iact"><button id="bc-cancel" data-i18n="btn.cancel" class="txtbtn">Отмена</button><button id="bc-apply" data-i18n="btn.apply" class="txtbtn primary">Применить</button></div>
   </div>
 
   <div id="adjpop" class="toolpop">
-    <div class="bp-head">Кисть-коррекция</div>
+    <div class="bp-head"><span class="bp-title" data-i18n="pop.adjust">Кисть-коррекция</span><button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="chips" id="adj-modes">
       <button data-m="dodge" class="on" data-i18n="adj.dodge">Осветлить</button>
       <button data-m="burn" data-i18n="adj.burn">Затемнить</button>
@@ -115,7 +115,8 @@
   </div>
 
   <div id="fx-panel">
-    <div class="pop-head" id="fx-head"><span data-i18n="label.effects">Эффекты</span></div>
+    <div class="pop-head" id="fx-head"><span class="pop-title" data-i18n="label.effects">Эффекты</span>
+      <span class="pop-acts"><button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
     <div id="fx-types">
       <button data-fx="stroke" data-i18n-title="fx.stroke" title="Обводка"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/><rect x="3.5" y="3.5" width="17" height="17" rx="3"/></svg></button>
       <button data-fx="glow" data-i18n-title="fx.glow" title="Свечение"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
@@ -126,7 +127,7 @@
   </div>
 
   <div id="fx-edit" class="toolpop">
-    <div class="bp-head" id="fx-edit-title">Эффект</div>
+    <div class="bp-head"><span class="bp-title" id="fx-edit-title">Эффект</span><button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="irow fxf-size"><label data-i18n="label.size">Размер</label><input id="fx-size" type="range" min="1" max="16" step="1" value="1" /><b id="fx-sizev">1</b></div>
     <div class="irow fxf-intensity"><label data-i18n="label.intensity">Интенсивность</label><input id="fx-int" type="range" min="5" max="100" step="5" value="80" /><b id="fx-intv">80%</b></div>
     <div class="irow fxf-offset"><label data-i18n="label.offsetX">Смещение X</label><input id="fx-dx" type="range" min="-12" max="12" step="1" value="2" /><b id="fx-dxv">2</b></div>
@@ -237,10 +238,10 @@
   </div>
 
   <div id="lay-pop">
-    <div class="pop-head" id="lay-head"><span data-i18n="label.layers">Слои</span>
-      <span style="display:flex; gap:2px">
-        <button id="lay-img" title="Картинка на новый слой"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="13" height="11" rx="2"/><path d="M5.5 14.5l3-3 2.3 2.3 2-2 3.2 2.7"/><path d="M19.5 13.5v6M16.5 16.5h6"/></svg></button>
-        <button id="lay-add" title="Новый слой (Ctrl+A)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+    <div class="pop-head" id="lay-head"><span class="pop-title" data-i18n="label.layers">Слои</span>
+      <span class="pop-acts">
+        <button id="lay-add" data-i18n-title="menu.dupLayer" title="Новый слой (Ctrl+A)"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+        <button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </span>
     </div>
     <div id="lay-list"></div>
@@ -271,7 +272,7 @@
   <div id="dropmask"><div>Отпусти картинку<small>пиксель-арт вставится как есть, фото — в пикселизатор</small></div></div>
 
   <div id="colpop" class="toolpop">
-    <div class="bp-head">Цвет</div>
+    <div class="bp-head"><span class="bp-title" data-i18n="pop.color">Цвет</span><button class="win-x" data-i18n-title="btn.close" title="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="col-row"><span id="col-sw"></span><input id="col-hex" type="text" maxlength="7" spellcheck="false" /></div>
     <div class="irow"><label data-i18n="label.hue">Тон</label><input id="col-h" type="range" min="0" max="360" step="1" class="hue" /><b id="col-hv">0</b></div>
     <div class="irow"><label data-i18n="label.saturation">Насыщенность</label><input id="col-s" type="range" min="0" max="100" step="1" /><b id="col-sv">0</b></div>

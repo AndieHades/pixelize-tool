@@ -62,6 +62,7 @@ export function mount() {
     if (replaceFrom) { const from = replaceFrom; replaceFrom = null; setAddLabel(); $('colpop').classList.remove('on'); actions.run('recolor.all', from, c); return; }
     if (S.palette.some((p) => eqc(p, c))) return; S.palette.push(c.slice()); S.active = c.slice(); bus.emit('palette'); bus.emit('render'); };
   bus.on('color-sync', () => { if (onPick) return; if ($('colpop').classList.contains('on')) syncColFromActive(); }); // в режиме цели не сбрасываем на активный
+  $('colpop').querySelector('.win-x').onclick = () => { onPick = null; $('colpop').classList.remove('on'); };
 }
 
 actions.register('color.pick', openColPick);     // выбрать новый цвет в палитру (вместо нативного input)

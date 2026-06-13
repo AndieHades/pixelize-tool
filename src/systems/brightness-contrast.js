@@ -35,6 +35,7 @@ export function mount() {
   $('bc-bri').addEventListener('input', () => { $('bc-briv').textContent = $('bc-bri').value; bcPreview(); });
   $('bc-con').addEventListener('input', () => { $('bc-conv').textContent = $('bc-con').value; bcPreview(); });
   $('bc-apply').onclick = bcApply; $('bc-cancel').onclick = bcCancel;
+  $('bcpop').querySelector('.win-x').onclick = bcCancel; // крестик = отмена
 }
 
 actions.register('effect.bc', (targets, title) => openBcPop(targets && targets.length ? targets : S.layers, title || 'Яркость/контраст — всё изображение'));
