@@ -10,7 +10,7 @@ export const ru = {
   'tool.importMenu': 'Импорт в проект', 'import.photo': 'Фото', 'import.file': 'Файл', 'import.pixelize': 'Pixelize',
   'tool.rect': 'Прямоугольник (K) · ПКМ — залитый · Shift — квадрат', 'tool.rectFill': 'Залитый прямоугольник (K) · ПКМ — контур · Shift — квадрат',
   'tool.ellipse': 'Эллипс (Q) · ПКМ — залитый · Shift — круг', 'tool.ellipseFill': 'Залитый эллипс (Q) · ПКМ — контур · Shift — круг',
-  'tool.move': 'Перемещение слоя (ЛКМ-перетаскивание)', 'tool.adjust': 'Кисть-коррекция: осветлить / затемнить / тон',
+  'tool.move': 'Свободная трансформация (носить / размер / поворот) — Ctrl+T', 'tool.adjust': 'Кисть-коррекция: осветлить / затемнить / тон',
   'tool.select': 'Выделение (M)', 'tool.layers': 'Слои (L) · ПКМ по холсту — выбор слоя', 'tool.color': 'Цвет (HSV)',
   'tool.copy': 'Копировать', 'tool.cut': 'Вырезать', 'tool.paste': 'Вставить', 'tool.deleteSel': 'Удалить выделенное', 'tool.deselect': 'Снять выделение',
   // боковая панель

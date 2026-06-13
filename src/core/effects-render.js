@@ -46,6 +46,12 @@ export function layerMoveCanvas(i, dx, dy) { const L = S.layers[i], W = S.W, H =
   if (!L.effects || !L.effects.length) return src;
   return build(src, maskFromAlpha(sx.getImageData(0, 0, W, H).data, W, H), L.effects, W, H); }
 
+// эффекты поверх произвольного W×H-контента (превью трансформации): силуэт — по альфе,
+// толщина обводки/тени постоянна (эффект пересчитывается под текущую форму)
+export function fxOnCanvas(src, effects, W, H) {
+  if (!effects || !effects.length) return src;
+  return build(src, maskFromAlpha(src.getContext('2d').getImageData(0, 0, W, H).data, W, H), effects, W, H); }
+
 // слои поддерева папки (с их эффектами) в один canvas — силуэт группы для её эффектов
 function groupCanvas(fid) { const c = cv(S.W, S.H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i];

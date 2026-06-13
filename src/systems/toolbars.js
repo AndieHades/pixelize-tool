@@ -32,7 +32,7 @@ export function mount() {
   $('t-line').onclick = () => setTool('line');
   wireShape('rect', 'tool.rect', 'tool.rectFill');
   wireShape('ellipse', 'tool.ellipse', 'tool.ellipseFill');
-  $('t-move').onclick = () => setTool('move');
+  $('t-move').onclick = () => actions.run('transform.enter'); // Move = свободная трансформация (носить + размер + поворот), как Ctrl+T
   $('t-select').onclick = () => setTool('select');
   $('t-fill').onclick = () => { if (S.sel) actions.run('selection.fill'); else setTool('fill'); };
   $('t-adjust').onclick = () => { if (S.tool === 'adjust') $('adjpop').classList.toggle('on'); else setTool('adjust'); };

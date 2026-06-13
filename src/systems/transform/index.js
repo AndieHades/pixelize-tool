@@ -9,6 +9,7 @@ import { expandCanvas } from '../../core/document.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { registerMode } from '../../core/canvas-handlers.js';
 import { gridBounds } from '../../logic/raster.js';
+import { fxOnCanvas } from '../../core/effects-render.js';
 import { rotBuildCells, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame } from './drag.js';
 
@@ -21,7 +22,13 @@ function rotRebuild() { if (!S.rotMode) return; let res = null, all = [];
   const c = document.createElement('canvas'), w2 = res.maxx - res.minx + 1, h2 = res.maxy - res.miny + 1;
   c.width = w2; c.height = h2; const x2 = c.getContext('2d'), id = x2.createImageData(w2, h2);
   for (const [x, y, cc] of res.cells) { const o = ((y - res.miny) * w2 + (x - res.minx)) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
-  x2.putImageData(id, 0, 0); S.rotPrev = { idx: S.rotMode.idx, canvas: c, px: res.minx, py: res.miny, ow: w2, oh: h2 }; bus.emit('render'); }
+  x2.putImageData(id, 0, 0);
+  const L = S.layers[S.rotMode.idx]; // эффекты слоя должны быть видны и при трансформации — пересчитываем по новой форме
+  if (L && L.effects && L.effects.length) { const W = S.W, H = S.H, full = document.createElement('canvas'); full.width = W; full.height = H;
+    const fx = full.getContext('2d'); fx.imageSmoothingEnabled = false; fx.drawImage(c, res.minx, res.miny);
+    S.rotPrev = { idx: S.rotMode.idx, canvas: fxOnCanvas(full, L.effects, W, H), px: 0, py: 0, ow: W, oh: H }; }
+  else S.rotPrev = { idx: S.rotMode.idx, canvas: c, px: res.minx, py: res.miny, ow: w2, oh: h2 };
+  bus.emit('render'); }
 const rotRebuildSoon = () => { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); };
 
 export function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => S.layers.includes(L));

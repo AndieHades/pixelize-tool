@@ -8,7 +8,7 @@ export const en = {
   'tool.rect': 'Rectangle (K) · right-click — filled · Shift — square', 'tool.rectFill': 'Filled rectangle (K) · right-click — outline · Shift — square',
   'tool.importMenu': 'Import to project', 'import.photo': 'Photo', 'import.file': 'File', 'import.pixelize': 'Pixelize',
   'tool.ellipse': 'Ellipse (Q) · right-click — filled · Shift — circle', 'tool.ellipseFill': 'Filled ellipse (Q) · right-click — outline · Shift — circle',
-  'tool.move': 'Move layer (left-drag)', 'tool.adjust': 'Adjust brush: dodge / burn / tone',
+  'tool.move': 'Free transform (move / resize / rotate) — Ctrl+T', 'tool.adjust': 'Adjust brush: dodge / burn / tone',
   'tool.select': 'Selection (M)', 'tool.layers': 'Layers (L) · right-click canvas — pick layer', 'tool.color': 'Color (HSV)',
   'tool.copy': 'Copy', 'tool.cut': 'Cut', 'tool.paste': 'Paste', 'tool.deleteSel': 'Delete selection', 'tool.deselect': 'Deselect',
   'side.symV': 'Horizontal symmetry (S)', 'side.symH': 'Vertical symmetry (Shift+S)', 'side.pp': 'Pixel-perfect (P)',
