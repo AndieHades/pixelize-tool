@@ -56,6 +56,7 @@ const fxr = await import('../src/core/effects-render.js');
 const fxlogic = await import('../src/logic/layer-effects.js');
 const adjust = await import('../src/systems/draw/adjust.js');
 const crop = await import('../src/systems/crop.js');
+const status = await import('../src/systems/status.js');
 await import('../src/systems/draw/tools.js');
 await import('../src/systems/move-tool.js');
 const { toolHandler } = await import('../src/core/canvas-handlers.js');
@@ -367,6 +368,12 @@ t('effects: list рисует строку эффекта под слоем', ()
 
 t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
+
+t('status: при кропе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); status.mount();
+  bus.emit('layers'); assert.equal(document.getElementById('status').textContent, '8×8 px');
+  S.cropMode = { x0: 2, y0: 1, x1: 5, y1: 5, idx: 0, idy: 0 }; bus.emit('render');
+  assert.equal(document.getElementById('status').textContent, '8×8 → 4×5 px');
+  S.cropMode = null; bus.emit('render'); assert.equal(document.getElementById('status').textContent, '8×8 px'); });
 
 t('canvas-handlers: pencil рисует через обработчик', () => { resetWH(8, 8); S.active = [1, 2, 3]; S.tool = 'pencil';
   const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2, e: {} }); h.move({ gx: 4, gy: 2, e: {} }); h.up({});
