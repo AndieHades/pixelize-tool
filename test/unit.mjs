@@ -5,6 +5,7 @@ import { S, MAX_LAYERS, blank, newLayer, G } from '../src/core/state.js';
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
 import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill } from '../src/logic/raster.js';
+import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
 import { medianCut, nearest, paletteFromGrid, dedupePal } from '../src/logic/quantize.js';
@@ -60,6 +61,10 @@ t('raster: ellipseFill заполняет середину', () => { const c = n
   assert.ok(c.has('4,3')); const edge = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => edge.add(x + ',' + y));
   assert.ok(c.size > edge.size); });
 t('raster: symmetrizeGrid', () => { const g = blank(8, 4); g[0][0] = [1, 2, 3, 255]; symmetrizeGrid(g, true, false); assert.deepEqual(g[0][7], [1, 2, 3, 255]); });
+t('flood: область останавливается на непрозрачном контуре', () => { const g = blank(5, 5), line = [1, 1, 1, 255];
+  for (let y = 0; y < 5; y++) g[y][2] = line;
+  const cells = floodRegion(g, 0, 0); assert.equal(cells.length, 10);
+  assert.ok(cells.every(([x]) => x < 2)); });
 
 // --- логика импорта/поворота ---
 t('sample: сетка из картинки', () => {

@@ -13,6 +13,12 @@ export const effVis = (i) => { const L = S.layers[i]; if (!L.visible) return fal
 
 export const layerSymLocked = (L) => !!(L && (L.symLock || folderChain(L.fid).some((f) => f.symLock)));
 
+// ближайший видимый reference-слой над target; он задаёт границы заливки
+export function referenceIndexFor(target) {
+  for (let i = target + 1; i < S.layers.length; i++) if (S.layers[i].reference && effVis(i)) return i;
+  return -1;
+}
+
 // база обтравки: ближайший необтравочный слой ниже (или -1)
 export function clipBase(i) { if (!S.layers[i].clip) return -1;
   let j = i - 1; while (j >= 0 && S.layers[j].clip) j--; return j; }

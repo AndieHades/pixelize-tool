@@ -167,6 +167,12 @@ t('draw: ластик стирает', () => { reset4(); S.layers[0].grid[2][2] 
   stroke.beginStroke(); stamp(2, 2); assert.equal(S.layers[0].grid[2][2], null); });
 t('draw: заливка заполняет холст', () => { reset4(); S.active = [1, 2, 3]; S.tool = 'fill'; flood(0, 0);
   assert.deepEqual(S.layers[0].grid[3][3], [1, 2, 3]); assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3]); });
+t('draw: reference-слой задаёт контур заливки для нижнего слоя', () => { resetWH(5, 5); const r = blank(5, 5), line = [0, 0, 0, 255];
+  for (let i = 1; i <= 3; i++) { r[1][i] = line; r[3][i] = line; r[i][1] = line; r[i][3] = line; }
+  S.layers.push({ name: 'ref', grid: r, opacity: 1, visible: true, fid: null, clip: false, reference: true, ext: new Map(), effects: [] });
+  S.cur = 0; S.active = [8, 9, 10]; flood(2, 2);
+  assert.deepEqual(S.layers[0].grid[2][2], [8, 9, 10]); assert.equal(S.layers[0].grid[0][0], null);
+  assert.equal(S.layers[0].grid[1][2], null); assert.deepEqual(S.layers[1].grid[1][2], line); });
 const overCv = () => { const cv = document.getElementById('cv'); S.view = { zoom: 1, ox: 0, oy: 0 };
   cv.getBoundingClientRect = () => ({ left: 0, top: 0, right: S.W, bottom: S.H, width: S.W, height: S.H });
   const prev = document.elementFromPoint; document.elementFromPoint = () => cv; return () => { document.elementFromPoint = prev; }; };
@@ -564,6 +570,11 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: reference-кнопка синяя на выбранном reference-слое', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on');
+  S.layers[0].reference = true; layList();
+  assert.ok(document.getElementById('lay-ref').classList.contains('on')); assert.equal(document.querySelectorAll('#lay-list .lref').length, 1);
+  document.querySelector('#lay-list .lref').click(); layList();
+  assert.equal(S.layers[0].reference, false); assert.ok(!document.getElementById('lay-ref').classList.contains('on')); });
 t('layers-ui: Ctrl-клик добавляет к выделению, активный слой не меняется', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);

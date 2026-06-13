@@ -9,7 +9,7 @@ import { folderChain } from '../../core/layers.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
-import { toggleLock, toggleAlphaLock } from './ops.js';
+import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
 import { appendEffects } from './fx-rows.js';
 
 const INDENT = 16; // отступ на уровень вложенности
@@ -18,6 +18,7 @@ export const EYE = '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 
 const CLIP_IC = '<svg viewBox="0 0 24 24"><path d="M16 5h-4.5A2.5 2.5 0 0 0 9 7.5V15"/><path d="M5.5 11.5l3.5 4 3.5-4"/></svg>'; // обтравка: стрелка вниз на слой ниже
 const LOCK_IC = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const ALPHA_IC = '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M12 4.5v15M4.5 12h15"/></svg>';
+const REF_IC = '<svg viewBox="0 0 24 24"><path d="M6 4.5h12v15l-6-3.5-6 3.5z"/><path d="M9 8.5h6M9 12h4"/></svg>';
 const SYM_IC = '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2.5 2.5"/><path d="M8.5 8.5L5 12l3.5 3.5M15.5 8.5L19 12l-3.5 3.5"/><path class="slash" d="M4 4l16 16"/></svg>';
 let lastClick = { idx: -1, t: 0 };
 export let layDragSquelch = false;
@@ -94,6 +95,9 @@ function layerRow(L, i, depth) {
   if (S.sym || S.symH) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (L.symLock ? ' off' : ''); sy.innerHTML = SYM_IC; // симметрия на слое (можно выключить)
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.symLock = !L.symLock; sy.classList.toggle('off', L.symLock); bus.emit('render'); }); row.append(sy); }
+  if (L.reference) { const rf = document.createElement('button'); rf.className = 'eye lref'; rf.innerHTML = REF_IC;
+    rf.addEventListener('pointerdown', (e) => e.stopPropagation());
+    rf.addEventListener('click', (ev) => { ev.stopPropagation(); toggleReference(L); }); row.append(rf); }
   if (L.lock || L.alphaLock) { const fl = document.createElement('button'); fl.className = 'eye'; fl.innerHTML = L.lock ? LOCK_IC : ALPHA_IC; // замок/альфа — клик снимает
     fl.addEventListener('pointerdown', (e) => e.stopPropagation());
     fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
@@ -122,4 +126,5 @@ export function layList() {
     box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
   }
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
+  const ref = $('lay-ref'); if (ref) ref.classList.toggle('on', !!cur.reference);
 }

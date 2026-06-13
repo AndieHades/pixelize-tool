@@ -8,7 +8,7 @@ import { snapshot } from '../../core/history.js';
 import { effVis } from '../../core/layers.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { layList } from './list.js';
-import { doAddLayer, doMerge, doGroup, deleteLayer, clearLayerRef } from './ops.js';
+import { doAddLayer, doMerge, doGroup, deleteLayer, clearLayerRef, toggleReference } from './ops.js';
 import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
 
@@ -26,6 +26,7 @@ export function mount() {
   $('lay-group').addEventListener('click', doGroup);
   $('lay-del').addEventListener('click', deleteLayer);
   $('lay-select').addEventListener('click', () => actions.run('selection.layer'));
+  $('lay-ref').addEventListener('click', () => toggleReference(S.layers[S.cur]));
   $('lay-clean').addEventListener('click', () => clearLayerRef(S.layers[S.cur]));
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });

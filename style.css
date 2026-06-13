@@ -133,6 +133,7 @@
     .lname.editing { overflow: visible; text-overflow: clip; outline: none; cursor: text; color: var(--txt);
       background: var(--surface); border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 0 2px var(--accent); -webkit-user-select: text; user-select: text; }
     .eye { width: 30px; height: 24px; color: var(--txt2); flex: none; }
+    .eye svg { width: 22px; height: 22px; }
     .eye.off { opacity: .4; }
     .eye .slash { display: none; }
     .eye.off .slash { display: block; }
@@ -148,7 +149,7 @@
     .lay-act button { width: 34px; height: 36px; color: var(--txt2); }
     .lay-act button svg { width: 20px; height: 20px; }
     .lay-act button:active { color: var(--txt); }
-    .lay-act button.on { color: var(--on-accent); } /* активная — синий фон (button.on) + белая иконка, как везде */
+    .lay-act button.on { background: var(--accent); color: var(--on-accent); } /* активная — синий фон + белая иконка */
     #lay-rsz { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; cursor: nwse-resize;
       touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #lay-rsz svg { width: 16px; height: 16px; }
@@ -632,6 +633,7 @@
 .clip-arrow { position: absolute; left: 6px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--txt2); }
 .clip-arrow svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 /* индикатор замка / альфа-замка */
+.lref { color: var(--accent); }
 .lrow.on .lsym, .lrow.on .eye { color: var(--on-accent); } /* на активном слое — белые иконки */
 
 /* ── Строки настроек (шестерёнка в галерее) ── */
