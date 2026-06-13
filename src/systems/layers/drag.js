@@ -28,7 +28,7 @@ function canIntoFolder(info, fid) {
   if (info.kind === 'layer') return true;
   return !dragFolderBlock(info.fid).some((f) => folderChain(fid).some((x) => x.id === f.id)); }
 
-function layDrop(src, row, into) { const tIsFolder = row.classList.contains('frow');
+function layDrop(src, row, into, below) { const tIsFolder = row.classList.contains('frow');
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
     const block = dragBlock(src.idx);
     if (tL && block.includes(tL)) return;
@@ -36,7 +36,8 @@ function layDrop(src, row, into) { const tIsFolder = row.classList.contains('fro
     for (const L of block) { const i = S.layers.indexOf(L); if (i >= 0) S.layers.splice(i, 1); }
     const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
     for (const L of block) L.fid = dstFid;
-    let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : S.layers.indexOf(tL) + 1; if (dstIdx < 0) dstIdx = S.layers.length;
+    // список рисуется сверху вниз от большего индекса к меньшему: «над целью» = индекс цели+1, «под целью» = индекс цели
+    let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : S.layers.indexOf(tL) + (below ? 0 : 1); if (dstIdx < 0) dstIdx = S.layers.length;
     S.layers.splice(dstIdx, 0, ...block);
     const ni = block.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0); // сохранить выделение на новом месте
     S.cur = ni[ni.length - 1]; S.marked = ni.length > 1 ? new Set(ni) : new Set(); S.markedFolders.clear(); S.selFolder = null;
@@ -57,17 +58,18 @@ export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
-    let started = false, ghost = null, dropRow = null, holdTimer = null;
+    let started = false, ghost = null, dropRow = null, dropBelow = false, holdTimer = null;
 
-    // Gap (drop-above) открывается сразу на любой строке. Над папкой после
-    // FOLDER_HOLD_MS добавляется drop-into (синий) — но зазор НЕ закрываем, иначе
-    // папка съезжает вверх и выскальзывает из-под курсора. Сброс — только при смене цели.
-    const setDrop = (row) => {
-      if (row === dropRow) return;
+    // Зазор открывается сразу на любой строке: drop-above (над строкой) или
+    // drop-below (под строкой — единственный способ встать ниже самой нижней).
+    // Над папкой после FOLDER_HOLD_MS добавляется drop-into (синий) — зазор НЕ
+    // закрываем, иначе папка съезжает и выскальзывает из-под курсора.
+    const setDrop = (row, below) => {
+      if (row === dropRow && below === dropBelow) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      if (dropRow) dropRow.classList.remove('drop-above', 'drop-into');
-      dropRow = row; if (!row) return;
-      row.classList.add('drop-above');
+      if (dropRow) dropRow.classList.remove('drop-above', 'drop-below', 'drop-into');
+      dropRow = row; dropBelow = below; if (!row) return;
+      row.classList.add(below ? 'drop-below' : 'drop-above');
       if (row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid)) {
         holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS);
       }
@@ -97,7 +99,9 @@ export function dragRow(el, info) {
       const t = document.elementFromPoint(gx, gy);
       const row = t && t.closest ? t.closest('#lay-list .lrow:not(.dragging)') : null;
       if (!row) return; // над открытым зазором/пустотой — держим текущую цель, не дёргаемся
-      setDrop(row);
+      // нижняя половина строки-слоя → встать под неё (для папок — только над/внутрь)
+      const r = row.getBoundingClientRect();
+      setDrop(row, row.dataset.li !== undefined && gy > r.top + r.height / 2);
     };
 
     const up = () => {
@@ -105,10 +109,11 @@ export function dragRow(el, info) {
       if (holdTimer) clearTimeout(holdTimer);
       if (ghost) ghost.remove();
       box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
-      const intoEl = box.querySelector('.drop-into'), aboveEl = box.querySelector('.drop-above'), target = intoEl || aboveEl;
-      box.querySelectorAll('.drop-above,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-into'));
+      const intoEl = box.querySelector('.drop-into'), slotEl = box.querySelector('.drop-above, .drop-below'), target = intoEl || slotEl;
+      const below = !intoEl && !!slotEl && slotEl.classList.contains('drop-below');
+      box.querySelectorAll('.drop-above,.drop-below,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-below', 'drop-into'));
       if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0);
-      if (target) { layDrop(info, target, !!intoEl);
+      if (target) { layDrop(info, target, !!intoEl, below);
         const dropped = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]');
         if (dropped) { dropped.classList.add('dropped'); dropped.addEventListener('animationend', () => dropped.classList.remove('dropped'), { once: true }); } }
     };

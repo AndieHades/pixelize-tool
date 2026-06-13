@@ -172,6 +172,11 @@
     .lrow.drop-above::before { content: ''; position: absolute; left: 6px; right: 6px; top: -48px; height: 44px;
       border-radius: 10px; background: color-mix(in srgb, var(--accent) 16%, transparent);
       border: 1.5px dashed var(--accent); pointer-events: none; }
+    /* drop-below — слот под строкой (единственный способ встать ниже самой нижней строки) */
+    .lrow.drop-below { margin-bottom: 52px; }
+    .lrow.drop-below::after { content: ''; position: absolute; left: 6px; right: 6px; bottom: -48px; height: 44px;
+      border-radius: 10px; background: color-mix(in srgb, var(--accent) 16%, transparent);
+      border: 1.5px dashed var(--accent); pointer-events: none; }
     /* Перетаскиваемые строки исчезают — они «висят» на курсоре */
     .lrow.dragging { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; pointer-events: none; }
     /* Приземление: строка «садится» на место */

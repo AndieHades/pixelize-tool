@@ -61,7 +61,7 @@ function wireVis(vis, obj) {
 function folderRow(f, depth) {
   const isSel = S.markedFolders.has(f.id);
   const fr = document.createElement('div'); fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
-  fr.className = 'lrow frow' + (f.open ? ' open' : '') + (f.id === S.selFolder ? ' on' : isSel ? ' marked' : '');
+  fr.className = 'lrow frow' + (f.open ? ' open' : '') + (f.id === S.selFolder && !S.fxCur ? ' on' : isSel ? ' marked' : '');
   const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   car.addEventListener('pointerdown', (e) => e.stopPropagation());
   car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; f.open = !f.open; layList(); });
@@ -82,8 +82,9 @@ function folderRow(f, depth) {
 }
 
 function layerRow(L, i, depth) {
-  // активный слой ярко-синий, только если не выбрана папка; слабый синий — лишь у ctrl-отмеченных
-  const isCurPrim = i === S.cur && !S.selFolder;
+  // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
+  // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
+  const isCurPrim = i === S.cur && !S.selFolder && !S.fxCur;
   const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name);
