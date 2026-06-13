@@ -53,11 +53,13 @@ export function openImport(file) {
 function centerImpBox() { const b = $('imp-box'); if (!b) return;
   b.style.left = '50%'; b.style.top = '50%'; b.style.right = 'auto'; b.style.bottom = 'auto'; b.style.transform = 'translate(-50%, -50%)'; }
 
-// drop в галерею → Pixelize как новый проект; drop в редактор → Pixelize верхним
-// слоем (не стирая текущий документ). Конвертер показывает «Вставить как есть».
+// drop в галерею → новый проект; drop в редактор → верхним слоем (не стирая холст).
+// Точный пиксель-арт вставляется как есть — конвертер не открывается ни в каком случае.
 export function dropImage(file) { if (!file) return;
   if ($('gallery').classList.contains('on')) { setImportMode('replace'); actions.run('gallery.importDrop', file); return; }
-  setImportMode('layer'); openImport(file); }
+  const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
+  im.onload = () => { if (looksPixelArt(im)) insertImageTop(im); else { setImportMode('layer'); openImport(file); } };
+  im.src = URL.createObjectURL(file); }
 
 export function mount() {
   // кнопка импорта редактора и хоткей живут в ./editor.js (единый путь Import)
