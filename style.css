@@ -645,7 +645,8 @@
 #fx-types button svg { width: 22px; height: 22px; }
 #fx-rsz { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; color: var(--txt2); cursor: nwse-resize; touch-action: none; }
 #fx-rsz svg { width: 18px; height: 18px; }
-.fxrow { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 9px; cursor: pointer; touch-action: none; }
+.fxrow { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 9px; cursor: pointer; touch-action: none;
+  margin-bottom: 3px; background: color-mix(in srgb, var(--row) 55%, var(--surface)); /* строка-чип под слоем + тот же зазор, что у слоёв */ }
 .fxrow:hover { background: var(--accent-soft); }
 .fxrow.fxoff { opacity: .5; }
 .fxrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }
