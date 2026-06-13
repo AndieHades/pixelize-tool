@@ -123,6 +123,10 @@ t('history: undoGuard перехватывает отмену', () => {
   history.setUndoGuard(null);
   assert.equal(guarded, 1); assert.deepEqual(S.layers[0].grid[1][1], [1, 1, 1, 255]); // не откатилось — перехвачено
 });
+t('history: undo сначала снимает активное выделение', () => { reset4(); S.undoStack.length = 0; S.redoStack.length = 0;
+  S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.layers[0].grid[0][0] = [3, 3, 3, 255]; history.snapshot();
+  S.layers[0].grid[0][0] = [9, 9, 9, 255]; history.doUndo();
+  assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); assert.equal(S.undoStack.length, 1); });
 
 t('document: expandCanvas растит холст и сдвигает пиксель', () => { reset4();
   S.layers[0].grid[1][1] = [5, 5, 5, 255];
@@ -595,6 +599,18 @@ t('transform: Ctrl+T с Selection трансформирует фрагмент 
   S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
   assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
+t('transform: undo закрывает активную трансформацию без отката истории', () => { resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
+  S.layers[0].grid[2][2] = [4, 4, 4, 255]; history.snapshot(); actions.run('transform.enter');
+  S.rotMode.tx = 2; S.rotMode.changed = true; history.doUndo();
+  assert.equal(S.rotMode, null); assert.deepEqual(S.layers[0].grid[2][2], [4, 4, 4, 255]); assert.equal(S.undoStack.length, 1); });
+t('transform: preview clipping mask режется base-слоем', () => { resetWH(8, 8);
+  S.layers.push({ name: 'clip', grid: blank(8, 8), opacity: 1, visible: true, fid: null, clip: true, ext: new Map(), effects: [] });
+  S.layers[0].grid[4][4] = [255, 255, 255, 255]; S.layers[1].grid[1][1] = [9, 9, 9, 255]; S.layers[1].grid[4][4] = [9, 9, 9, 255];
+  let clips = 0; const proto = HTMLCanvasElement.prototype, orig = proto.getContext;
+  proto.getContext = function (...args) { const ctx = orig.apply(this, args);
+    return new Proxy(ctx, { set(tg, p, v) { if (p === 'globalCompositeOperation' && v === 'destination-in') clips++; tg[p] = v; return true; } }); };
+  try { tf.enterRotMode(S.layers[1]); } finally { if (S.rotMode) tf.exitRotMode(false); proto.getContext = orig; }
+  assert.ok(clips > 0); });
 t('transform: выбранная папка строит рамку по скрытым слоям', () => { resetWH(8, 8);
   S.layers = [
     { name: 'v', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },

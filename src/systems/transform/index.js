@@ -130,7 +130,7 @@ export function mount() {
   registerMode('transform', { down: rotGrab, move: ({ e }) => rotDrag(e, rotRebuildSoon), up: () => { if (S.rotMode) S.rotMode.grab = null; }, hover: rotHover });
   bus.on('overlay', ({ ctx }) => drawTransformFrame(ctx));
   bus.on('transform-menu', (e) => { if (S.rotMode && e) showMenuAt($('trctx'), e.clientX, e.clientY, true); });
-  setUndoGuard(() => (S.rotMode ? undoRotStep() : false));
+  setUndoGuard(() => { if (!S.rotMode) return false; exitRotMode(false); return true; });
   window.addEventListener('keydown', (e) => { if (!S.rotMode) return;
     if (e.key === 'Enter') { e.preventDefault(); exitRotMode(true); }
     else if (e.key === 'Escape') { e.preventDefault(); exitRotMode(false); } });
@@ -138,3 +138,4 @@ export function mount() {
 
 actions.register('transform.enter', () => { if (!enterSelectionRotMode()) enterRotMode(activeTargets()); });
 actions.register('transform.enterTargets', (targets) => enterRotMode(targets));
+actions.register('transform.cancel', () => exitRotMode(false));

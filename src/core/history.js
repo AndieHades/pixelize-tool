@@ -2,6 +2,7 @@
 // шлёт события 'layers'/'render' — история не знает про системы визуала.
 import { S, cloneFx } from './state.js';
 import * as bus from './bus.js';
+import * as actions from './actions.js';
 import { toast, t } from './dom.js';
 import { dirtyAll } from './layer-cache.js';
 import { historyCap } from '../config/limits.js';
@@ -27,7 +28,9 @@ export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folder
 let undoGuard = null;
 export const setUndoGuard = (fn) => { undoGuard = fn; };
 
-export function doUndo() { if (undoGuard && undoGuard()) return;
+export function doUndo() { if (S.rotMode && actions.run('transform.cancel')) return;
+  if ((S.sel || S.selFloat) && actions.run('select.none')) return;
+  if (undoGuard && undoGuard()) return;
   bus.emit('before-undo'); // незавершённые жесты (плавающее выделение) оседают до снимка
   if (!S.undoStack.length) { toast(t('toast.nothingUndo')); return; }
   S.redoStack.push(snapState()); restore(S.undoStack.pop()); toast(t('toast.undone')); }

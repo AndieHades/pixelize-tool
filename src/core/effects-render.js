@@ -4,7 +4,7 @@ import { S } from './state.js';
 import { hexToRgb } from '../logic/color.js';
 import { EFFECT_PIXELS, INNER_EFFECTS, maskFromGrid, maskFromAlpha } from '../logic/layer-effects.js';
 import { layerFloatCanvas, layerSrcCanvas, layerExtCanvas, layerRev } from './layer-cache.js';
-import { effVis, folderChain } from './layers.js';
+import { effVis, clipBase, folderChain } from './layers.js';
 
 const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
@@ -57,6 +57,15 @@ export function fxOnCanvas(src, effects, W, H) {
   if (!effects || !effects.length) return src;
   return build(src, maskFromAlpha(src.getContext('2d').getImageData(0, 0, W, H).data, W, H), effects, W, H); }
 
+function clipPreview(m, memByIdx, src, W, H) {
+  if (!m.L.clip) return src;
+  const bi = clipBase(m.idx); if (bi < 0 || !effVis(bi)) return null;
+  const mask = memByIdx.get(bi)?.content || layerFloatCanvas(bi);
+  const out = cv(W, H), x = out.getContext('2d'); x.imageSmoothingEnabled = false;
+  x.drawImage(src, 0, 0); x.globalCompositeOperation = 'destination-in';
+  x.drawImage(mask, 0, 0); x.globalCompositeOperation = 'source-over'; return out;
+}
+
 // canvas только эффектов папки вокруг готового силуэта grp (which='below' под группой |
 // 'above' внутр.-тени по силуэту). Возвращает прозрачный W×H, если эффектов нет.
 function folderFxOn(grp, effects, which, W, H) {
@@ -73,12 +82,14 @@ function folderFxOn(grp, effects, which, W, H) {
 // эффекты папок, чьи члены попали в трансформацию (как в обычном композите).
 export function fxPreview(mems, W, H) { const out = cv(W, H), ox = out.getContext('2d'); ox.imageSmoothingEnabled = false;
   const inF = (L, fid) => folderChain(L.fid).some((f) => f.id === fid);
+  const memByIdx = new Map(mems.map((m) => [m.idx, m]));
   const folders = S.folders.filter((f) => folderEffectsFor(f).length && mems.some((m) => inF(m.L, f.id)));
   const grpCanvas = (f) => { const g = cv(W, H), gx = g.getContext('2d'); gx.imageSmoothingEnabled = false;
-    for (const m of mems) if (inF(m.L, f.id)) gx.drawImage(m.content, 0, 0); return g; };
+    for (const m of mems) if (inF(m.L, f.id) && !m.L.clip) gx.drawImage(m.content, 0, 0); return g; };
   const byDepth = (a, b) => folderChain(a.id).length - folderChain(b.id).length;
   for (const f of folders.slice().sort(byDepth)) ox.drawImage(folderFxOn(grpCanvas(f), folderEffectsFor(f), 'below', W, H), 0, 0);
-  for (const m of mems) ox.drawImage(fxOnCanvas(m.content, layerEffectsFor(m.L), W, H), 0, 0);
+  for (const m of mems) { const c = clipPreview(m, memByIdx, fxOnCanvas(m.content, layerEffectsFor(m.L), W, H), W, H);
+    if (c) ox.drawImage(c, 0, 0); }
   for (const f of folders.slice().sort((a, b) => byDepth(b, a))) ox.drawImage(folderFxOn(grpCanvas(f), folderEffectsFor(f), 'above', W, H), 0, 0);
   return out; }
 
