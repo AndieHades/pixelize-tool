@@ -68,6 +68,7 @@ const tf = await import('../src/systems/transform/index.js');
 const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
+const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set();
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
@@ -435,6 +436,29 @@ t('effects: дублирование/удаление выделенных эф�
   S.layers[0].effects = [{ id: 11, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.duplicate'); assert.equal(S.layers[0].effects.length, 2);
   S.fxSel = new Set(S.layers[0].effects); actions.run('fx.delete'); assert.equal(S.layers[0].effects.length, 0); });
+
+t('effects: drag — перенос на слой и переупорядочивание', () => { resetWH(8, 8); lops.doAddLayer();
+  const A = { id: 21, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } };
+  const B = { id: 22, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } };
+  S.layers[0].effects = [A, B]; S.layers[1].effects = []; S.fxSel = new Set();
+  const lrow = document.createElement('div'); lrow.dataset.li = '1'; // строка второго слоя
+  fxdrag.fxDrop([A], lrow, false); // тащим A на строку слоя → эффект применяется к нему
+  assert.deepEqual(S.layers[0].effects, [B]); assert.equal(S.layers[1].effects[0], A);
+  const bRow = document.createElement('div'); bRow.className = 'fxrow'; bRow.__eff = B; // строка эффекта B (в слое 0)
+  fxdrag.fxDrop([A], bRow, false); // тащим A над B (верх стека) — назад в слой 0
+  assert.deepEqual(S.layers[0].effects, [B, A]); assert.equal(S.layers[1].effects.length, 0);
+  S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null; });
+
+t('effects: удаление при выбранном эффекте бьёт по эффекту, а не по слою', () => { resetWH(8, 8);
+  S.layers[0].effects = [{ id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }];
+  S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]);
+  lops.deleteLayer(); // корзина в панели слоёв при выбранном эффекте
+  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0); // слой цел, эффект удалён
+  S.layers[0].effects = [{ id: 32, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } }];
+  S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]);
+  actions.run('edit.delete'); // клавиатурный Delete при выбранном эффекте
+  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0);
+  S.fxSel.clear(); S.fxCur = null; });
 
 t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });

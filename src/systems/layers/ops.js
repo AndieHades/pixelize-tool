@@ -75,6 +75,7 @@ export function deleteFolder(f) {
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
 export function deleteLayer() {
+  if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удаляем эффект, а не слой
   // удалить всё выделенное: слои S.marked+S.cur и содержимое выделенных папок
   const allIdx = new Set(selectedIdx());
   const markedFids = [...S.markedFolders];

@@ -26,7 +26,8 @@ export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; 
   S.sel = normSel(px, py, px + clip[0].length - 1, py + clip.length - 1);
   markDirty(S.cur); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); toast(asNew ? t('toast.pastedNew') : t('toast.pasted')); }
 
-export function doDelete() { if (S.sel ? deleteSelContent() : clearLayer()) toast(S.sel ? t('toast.selDeleted') : t('toast.layerCleared')); }
+export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удалить эффект, а не чистить слой
+  if (S.sel ? deleteSelContent() : clearLayer()) toast(S.sel ? t('toast.selDeleted') : t('toast.layerCleared')); }
 
 actions.register('edit.copy', doCopy); actions.register('edit.cut', doCut);
 actions.register('edit.paste', doPaste); actions.register('edit.delete', doDelete);

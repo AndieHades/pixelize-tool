@@ -7,7 +7,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { t } from '../../core/dom.js';
-import { longPress, EYE, layList } from './list.js';
+import { longPress, EYE, layList, layDragSquelch } from './list.js';
 import { fxDrag } from './fx-drag.js';
 
 // ромбовидная «искра» — та же иконка, что на кнопке вызова меню эффектов (#fx-btn)
@@ -33,7 +33,7 @@ function effectRow(target, eff, depth) {
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); eff.visible = eff.visible === false;
     vis.classList.toggle('off', eff.visible === false); row.classList.toggle('fxoff', eff.visible === false); bus.emit('render'); });
   row.append(star, nm, vis);
-  row.addEventListener('click', (e) => { e.stopPropagation(); selectFx(eff, e.ctrlKey || e.metaKey); });
+  row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); });
   row.addEventListener('dblclick', (e) => { e.stopPropagation(); actions.run('fx.edit', target, eff); });
   longPress(row, (x, y) => { if (!S.fxSel.has(eff)) selectFx(eff, false); actions.run('fx.menu', x, y, target, eff); });
   fxDrag(row); return row;
