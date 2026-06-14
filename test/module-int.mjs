@@ -62,7 +62,7 @@ const crop = await import('../src/systems/crop.js');
 const status = await import('../src/systems/status.js');
 await import('../src/systems/draw/tools.js');
 await import('../src/systems/move-tool.js');
-const { toolHandler } = await import('../src/core/canvas-handlers.js');
+const { toolHandler, globalHandlers } = await import('../src/core/canvas-handlers.js');
 const input = await import('../src/systems/input/index.js');
 await import('../src/systems/selection/input.js');
 await import('../src/systems/selection/handles.js');
@@ -596,6 +596,9 @@ t('canvas-handlers: move двигает все выделенные слои', (
   assert.deepEqual(S.layers[0].grid[2][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[3][3], [2, 2, 2, 255]);
   S.layers.pop(); S.marked = new Set(); });
 
+t('selection-handles: ручки активны и для лассо (перехватывают клик по области)', () => { resetWH(8, 8); S.tool = 'lasso'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = new Set(['2,2']); S.selFloat = null;
+  const gh = globalHandlers().find((h) => h.down); assert.equal(gh.down({ gx: 2, gy: 2, e: null }), true); // клик по выделению лассо → ручки (трансформ области), не новый контур
+  gh.up({}); S.sel = S.selMask = null; });
 t('canvas-handlers: move двигает рамку выделения вместе со слоем', () => { resetWH(8, 8); S.tool = 'move'; S.marked = new Set();
   S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = new Set(['2,2']);
   const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 2, gy: 1, e: {} }); h.up({});

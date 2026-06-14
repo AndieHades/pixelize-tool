@@ -112,7 +112,7 @@ export function undoRotStep() { if (!S.rotMode) return false;
   rotRestoreState(S.rotMode, S.rotMode.hist.pop()); rotRebuild(); toast(t('toast.transformStepUndone')); return true; }
 
 export function exitRotMode(apply) { if (!S.rotMode) return; const m = S.rotMode, changed = rotHasChanges(m);
-  S.rotMode = null; S.rotPrev = null; $('rotbar').classList.remove('on'); $('cv').style.cursor = '';
+  S.rotMode = null; S.rotPrev = null; S.rotQuad = null; $('rotbar').classList.remove('on'); $('cv').style.cursor = '';
   bus.emit('tool', S.tool);
   if (m.selection && !changed) { restoreSelectionMode(m); bus.emit('selection'); bus.emit('render'); if (apply) toast(t('toast.transformApplied')); }
   else if (apply && changed) { if (applyRotMode(m)) toast(t('toast.transformApplied')); }

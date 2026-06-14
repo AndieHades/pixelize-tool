@@ -61,7 +61,7 @@ function move(gx, gy) { const a = drag.startSel, dx = gx - drag.gx, dy = gy - dr
   const s = { x0, y0, x1: x0 + w, y1: y0 + h }; setSel(s, shiftMask(drag.startMask, x0 - a.x0, y0 - a.y0)); }
 
 function down({ gx, gy, e }) {
-  if (!S.sel || S.selFloat || S.tool === 'lasso') return false; // лассо рисует контур поверх выделения — ручки не перехватывают жест
+  if (!S.sel || S.selFloat) return false; // ручки трансформируют область выделения (в т.ч. у лассо); рисование нового контура — клик вне выделения
   const kind = hit(e) || (selHit(gx, gy) ? 'move' : null);
   if (!kind) return false;
   drag = { kind, gx, gy, startSel: cloneSel(S.sel), startMask: cloneMask(S.selMask) }; return true;
@@ -78,7 +78,7 @@ registerGlobal({
   down,
   move: ({ gx, gy }) => { if (!drag) return; if (drag.kind === 'move') move(gx, gy); else resize(gx, gy); },
   up: () => { drag = null; },
-  hover: ({ gx, gy, e }) => { if (!S.sel || S.selFloat || S.tool === 'lasso') return null;
+  hover: ({ gx, gy, e }) => { if (!S.sel || S.selFloat) return null;
     const kind = hit(e) || (selHit(gx, gy) ? 'move' : null); return kind ? cursor(kind) : null; },
 });
 

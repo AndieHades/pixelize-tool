@@ -44,7 +44,7 @@ export const S = {
   // общая интерактивная/превью-стейт, которую читает рендер и пишут системы
   // (system-private мелочь вроде ppPath/strokeSeen живёт внутри своих систем)
   qsShape: null, // QuickShape: распознанная ровная форма для превью/коммита
-  cropMode: null, rotMode: null, rotPrev: null, moveDrag: null,
+  cropMode: null, rotMode: null, rotPrev: null, rotQuad: null, moveDrag: null,
   hoverPx: null, lineStart: null, linePrev: null,
   replaceMode: null,
 };

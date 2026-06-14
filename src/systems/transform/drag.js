@@ -1,6 +1,7 @@
 // Экранное взаимодействие трансформации: захват ручек, перетаскивание, рамка.
 import { S } from '../../core/state.js';
 import { $ } from '../../core/dom.js';
+import { C } from '../../styles/canvas-colors.js';
 import { ROT_MIN_SCALE } from '../../config/limits.js';
 import { rotFrame, rotCenter, rotWorldToLocal, rotState, rotHasChanges } from './math.js';
 
@@ -35,9 +36,11 @@ export function rotDrag(e, rebuild) { const g = S.rotMode && S.rotMode.grab; if 
 export function rotHover({ e }) { const h = rotHit(e);
   cv().style.cursor = !h ? '' : h.kind === 'move' ? 'move' : h.kind === 'rotate' ? 'grab' : h.kind === 'scale-x' ? 'ew-resize' : 'ns-resize'; }
 
-export function drawTransformFrame(ctx) { if (!S.rotMode) return; const f = rotFrame(S.rotMode), pts = f.p.map(rotScreen);
-  ctx.save(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
-  const sq = (p, s) => { ctx.fillStyle = '#0d0d10'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s); ctx.strokeRect(p.x - s / 2, p.y - s / 2, s, s); };
-  for (const p of pts) { ctx.beginPath(); ctx.fillStyle = '#0d0d10'; ctx.strokeStyle = '#6fdb8b'; ctx.lineWidth = 2; ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-  for (const s of f.sides) sq(rotScreen(s.p), 9); ctx.restore(); }
+// рамка трансформации: те же синие кружки + бегущий пунктир, что и у выделения
+// (контур рисует SVG-ants по S.rotQuad — бег обеспечивает CSS, как у выделения)
+export function drawTransformFrame(ctx) { if (!S.rotMode) return; const f = rotFrame(S.rotMode);
+  S.rotQuad = f.p.map((p) => [p.x, p.y]);
+  const dot = (p) => { const s = rotScreen(p); ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); };
+  for (const p of f.p) dot(p);          // углы — поворот
+  for (const s of f.sides) dot(s.p); }  // стороны — масштаб

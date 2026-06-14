@@ -23,6 +23,10 @@ function maskPath(ox, oy, z, dx, dy) { const seg = [];
   return seg.join(''); }
 
 export function updateAnts(ox, oy, z) {
+  if (S.rotMode && S.rotQuad) { const q = S.rotQuad; // рамка трансформации — тот же бегущий пунктир, что у выделения
+    let d = 'M' + (ox + q[0][0] * z) + ' ' + (oy + q[0][1] * z);
+    for (let i = 1; i < q.length; i++) d += 'L' + (ox + q[i][0] * z) + ' ' + (oy + q[i][1] * z);
+    d += 'Z'; el().style.display = ''; bgP.setAttribute('d', d); fgP.setAttribute('d', d); return; }
   if (!S.sel) { if (svg) svg.style.display = 'none'; return; }
   // при перетаскивании слоя инструментом move рамка едет вместе с содержимым
   const mdx = (S.moveDrag && S.tool === 'move') ? S.moveDrag.dx * z : 0;
