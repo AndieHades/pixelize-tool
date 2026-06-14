@@ -28,3 +28,13 @@ export async function addSet(name) {
   lib.sets.push(s); lib.curSet = s.id; await saveSet(s); return s;
 }
 export async function delSet(id) { for (const b of brushesOf(id)) await delBrush(b.id); lib.sets = lib.sets.filter((s) => s.id !== id); await removeSet(id); }
+
+// перенос кисти в набор (в конец)
+export async function moveToSet(b, setId) { if (b.setId === setId) return; b.setId = setId; b.order = nextOrder(setId); await saveBrush(b); }
+// перестановка кисти внутри набора относительно цели (below — встать ниже цели)
+export async function reorder(b, targetId, below) {
+  const arr = brushesOf(b.setId).filter((x) => x.id !== b.id);
+  let to = arr.findIndex((x) => x.id === targetId); if (to < 0) return;
+  arr.splice(below ? to + 1 : to, 0, b);
+  for (let i = 0; i < arr.length; i++) if (arr[i].order !== i) { arr[i].order = i; await saveBrush(arr[i]); }
+}

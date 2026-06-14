@@ -8,6 +8,7 @@ import { previewStroke } from '../../logic/brush-preview.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
 import { attachSwipe } from '../../core/swipe-actions.js';
 import { isDesktop } from '../../core/env.js';
+import { dragBrush } from './drag.js';
 
 let cb = {}; // { rerender, dup, del, menu, mode() }
 export function bindList(c) { cb = c; }
@@ -43,6 +44,7 @@ export function renderBrushes() {
     else attachSwipe(row, { actions: [
       { label: t('menu.duplicate'), onClick: () => cb.dup(b) },
       { label: t('menu.delete'), danger: true, onClick: () => cb.del(b) }] });
+    dragBrush(row, b, cb.rerender);
     host.appendChild(row);
   }
 }
