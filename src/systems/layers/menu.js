@@ -42,6 +42,7 @@ export function mountMenu() {
     for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
   $('lctx-symm').onclick = () => { close(); symmetrizeLayerRefs(targets()); };
   $('lctx-rotate').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('transform.enterTargets', ts); };
+  $('lctx-copy-fx').onclick = () => { close(); if (lctxRef) actions.run('fx.copyAll', lctxRef.ref); };
   $('lctx-paste-fx').onclick = () => { close(); actions.run('fx.paste'); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
   $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, t('pop.bc')); };

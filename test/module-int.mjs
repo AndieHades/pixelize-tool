@@ -259,6 +259,10 @@ t('layer-effects: effectReach — обводка во все стороны, т�
   assert.deepEqual(fxlogic.effectReach([{ type: 'stroke', params: { size: 3 } }]), { l: 3, r: 3, t: 3, b: 3 });
   assert.deepEqual(fxlogic.effectReach([{ type: 'dropShadow', params: { size: 2, dx: 5, dy: -3 } }]), { l: 2, r: 7, t: 5, b: 2 });
   assert.deepEqual(fxlogic.effectReach([{ type: 'innerShadow', params: { size: 4 } }]), { l: 0, r: 0, t: 0, b: 0 }); });
+t('layer-effects: effectLayerPixels(stroke) — кольцо и координаты за краем (для ext)', () => {
+  const W = 4, H = 4, mask = Array.from({ length: H }, () => new Array(W).fill(false)); mask[0][0] = true; // пиксель в углу
+  const px = fxlogic.effectLayerPixels(mask, W, H, { type: 'stroke', visible: true, params: { size: 1, color: '#fff' } });
+  assert.ok(px.length > 0 && px.some(([x, y]) => x < 0 || y < 0)); }); // обводка вышла за холст — не обрезана
 t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
@@ -550,6 +554,23 @@ t('effects: copy/paste переносит эффект на выбранные �
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.copy');
   S.cur = 1; S.marked = new Set([0, 1]); actions.run('fx.paste');
   assert.ok(S.layers[1].effects.length >= 1 && S.layers[1].effects[0].type === 'stroke'); S.marked = new Set(); S.fxSel.clear(); S.fxCur = null; });
+
+t('fx: Convert To Layer — новый слой только с эффектом, источник цел', () => { resetWH(8, 8); const L = S.layers[0]; L.grid[4][4] = [1, 1, 1, 255];
+  L.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }]; cache.dirtyAll();
+  const eff = L.effects[0], n0 = S.layers.length; actions.run('fx.convert', L, eff);
+  assert.equal(S.layers.length, n0 + 1); assert.equal(L.effects.length, 0); // эффект снят с источника
+  const nl = S.layers[S.layers.indexOf(L) - 1]; // слой под источником
+  assert.ok(nl && nl.grid.some((r) => r.some((c) => c && c[0] === 255))); // в новом слое только пиксели обводки
+  assert.deepEqual(L.grid[4][4], [1, 1, 1, 255]); }); // исходный пиксель не тронут
+t('fx: Copy Effects + Paste копирует все эффекты, копии независимы', () => { resetWH(8, 8); const src = S.layers[0];
+  src.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }, { id: 2, type: 'glow', visible: false, params: { size: 3, intensity: 0.5, color: '#00ff00' } }];
+  lops.doAddLayer(); const tgt = S.layers[S.cur]; actions.run('fx.copyAll', src); actions.run('fx.paste');
+  assert.equal(tgt.effects.length, 2); assert.equal(tgt.effects[1].visible, false); // порядок и visibility сохранены
+  tgt.effects[0].params.size = 9; assert.equal(src.effects[0].params.size, 1); }); // вставленные эффекты независимы
+t('fx: Delete удаляет только выбранный эффект', () => { resetWH(8, 8); const L = S.layers[0];
+  L.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }, { id: 2, type: 'glow', visible: true, params: { size: 3, intensity: 0.5, color: '#0f0' } }];
+  S.fxCur = L.effects[0]; S.fxSel = new Set([L.effects[0]]); actions.run('fx.delete');
+  assert.equal(L.effects.length, 1); assert.equal(L.effects[0].type, 'glow'); S.fxSel.clear(); S.fxCur = null; });
 
 t('effects: дублирование/удаление выделенных эффектов', () => { resetWH(8, 8);
   S.layers[0].effects = [{ id: 11, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];

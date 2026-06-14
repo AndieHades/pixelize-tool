@@ -55,3 +55,12 @@ export function effectReach(effects) { const R = { l: 0, r: 0, t: 0, b: 0 };
       r += Math.max(0, dx); l += Math.max(0, -dx); b += Math.max(0, dy); t += Math.max(0, -dy); }
     R.l = Math.max(R.l, l); R.r = Math.max(R.r, r); R.t = Math.max(R.t, t); R.b = Math.max(R.b, b); }
   return R; }
+
+// renderEffectOnly: пиксели одного эффекта по силуэту mask в координатах холста
+// (с запасом наружу — могут быть < 0 или >= W/H, чтобы эффект не обрезался).
+// Возвращает [x, y, alpha]; цвет берёт вызывающий. Для Convert To Layer/экспорта.
+export function effectLayerPixels(mask, W, H, eff) { const fn = EFFECT_PIXELS[eff.type]; if (!fn) return [];
+  const R = effectReach([{ ...eff, visible: true }]), W2 = W + R.l + R.r, H2 = H + R.t + R.b;
+  const m2 = Array.from({ length: H2 }, () => new Array(W2).fill(false));
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (mask[y][x]) m2[y + R.t][x + R.l] = true;
+  return fn(m2, W2, H2, eff.params).map(([x, y, a]) => [x - R.l, y - R.t, a]); }

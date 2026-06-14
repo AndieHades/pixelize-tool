@@ -45,8 +45,9 @@ export const ru = {
   'label.range': 'Диапазон', 'label.intensity': 'Интенсивность', 'label.offsetX': 'Смещение X', 'label.offsetY': 'Смещение Y',
   'label.size': 'Размер', 'label.effect': 'Эффект', 'label.effects': 'Эффекты', 'label.result': 'результат', 'tool.effects': 'Эффекты слоя',
   'fx.stroke': 'Обводка', 'fx.glow': 'Свечение', 'fx.dropShadow': 'Внешняя тень', 'fx.innerShadow': 'Внутренняя тень',
-  'menu.fxCopy': 'Скопировать', 'menu.pasteEffect': 'Вставить эффект',
+  'menu.fxCopy': 'Скопировать эффект', 'menu.fxAsLayer': 'Как слой', 'menu.copyEffects': 'Скопировать эффекты', 'menu.pasteEffect': 'Вставить эффект',
   'toast.fxCopied': 'Эффект скопирован', 'toast.fxPasted': 'Эффект вставлен', 'toast.noFxClipboard': 'Эффект не скопирован', 'toast.fxAdded': 'Эффект добавлен',
+  'toast.noFxToCopy': 'Нет эффектов для копирования', 'toast.fxToLayer': 'Эффект превращён в слой',
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
   'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки

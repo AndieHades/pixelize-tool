@@ -6,6 +6,7 @@ import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
 import { $, showMenuBeside, toast, t } from '../../core/dom.js';
 import { openFxEdit } from './settings.js';
+import { convertFxToLayer } from './convert.js';
 import { pasteTargets, getFxClip, setFxClip, ownerOf, selectedEffects } from './shared.js';
 
 let ref = null; // { target, eff } — по какой строке открыто меню
@@ -22,6 +23,11 @@ export function duplicateFx() { const list = selectedEffects(); if (!list.length
 
 export function copyFx() { const list = selectedEffects(); if (!list.length) return; setFxClip(cloneFx(list)); toast(t('toast.fxCopied')); }
 
+// Copy Effect — один эффект (по строке меню); Copy Effects — все эффекты слоя/папки
+export function copyOneFx(eff) { if (!eff) return; setFxClip(cloneFx([eff])); toast(t('toast.fxCopied')); }
+export function copyEffectsOf(target) { const list = (target && target.effects) || [];
+  if (!list.length) { toast(t('toast.noFxToCopy')); return; } setFxClip(cloneFx(list)); toast(t('toast.fxCopied')); }
+
 export function pasteFx() { const clip = getFxClip(); if (!clip.length) { toast(t('toast.noFxClipboard')); return; }
   const targets = pasteTargets(); if (!targets.length) return; snapshot();
   for (const tg of targets) tg.effects.push(...cloneFx(clip)); refresh(); toast(t('toast.fxPasted')); }
@@ -31,7 +37,8 @@ export function openFxMenu(x, y, target, eff) { ref = { target, eff }; showMenuB
 export function mountClipboard() {
   const close = () => $('fxctx').classList.remove('on');
   $('fxctx-edit').onclick = () => { close(); if (ref) openFxEdit(ref.target, ref.eff); };
-  $('fxctx-copy').onclick = () => { close(); copyFx(); };
+  $('fxctx-aslayer').onclick = () => { close(); if (ref) convertFxToLayer(ref.target, ref.eff); };
+  $('fxctx-copy').onclick = () => { close(); if (ref) copyOneFx(ref.eff); };
   $('fxctx-dup').onclick = () => { close(); duplicateFx(); };
   $('fxctx-del').onclick = () => { close(); deleteFx(); };
 }

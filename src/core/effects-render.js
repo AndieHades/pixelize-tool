@@ -8,6 +8,12 @@ import { effVis, clipBase, folderChain } from './layers.js';
 
 const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
+// булев силуэт цели (слой — по сетке, папка — по композиту поддерева): нужен
+// для расчёта пикселей одного эффекта (Convert To Layer). groupCanvas — ниже (hoisted).
+export function targetSilhouette(target) { const W = S.W, H = S.H;
+  if (target.grid) return maskFromGrid(target.grid, W, H);
+  const g = groupCanvas(target.id); return maskFromAlpha(g.getContext('2d').getImageData(0, 0, W, H).data, W, H); }
+
 const effectsFor = (target) => { const base = target.effects || [], d = S.fxDraft;
   return d && d.target === target && !base.includes(d.eff) ? [...base, d.eff] : base; };
 export const layerEffectsFor = (L) => effectsFor(L);
