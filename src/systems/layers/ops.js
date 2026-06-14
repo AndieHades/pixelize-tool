@@ -3,8 +3,9 @@ import { S, newLayer, cloneFx, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot, cloneGrid } from '../../core/history.js';
-import { mergeCells, symmetrizeGrid } from '../../logic/raster.js';
+import { symmetrizeGrid } from '../../logic/raster.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
+import { bakeFolder, bakeLayerIndices } from '../../core/layer-bake.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
@@ -27,24 +28,32 @@ export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toa
   S.layers.splice(at, 0, nl); S.cur = at; S.selFolder = null; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
-function mergeIndices(idx, placeTop = false) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
+function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
   snapshot();
-  const base = idx[0], meta = placeTop ? idx[idx.length - 1] : base, out = cloneGrid(S.layers[base].grid), ext = new Map(S.layers[base].ext);
-  for (let j = 1; j < idx.length; j++) { const L = S.layers[idx[j]];
-    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const t2 = L.grid[y][x]; if (t2) out[y][x] = mergeCells(out[y][x], t2, L.opacity); }
-    for (const [k, c] of L.ext) ext.set(k, c); }
+  const meta = idx[idx.length - 1], out = bakeLayerIndices(idx), ext = new Map();
   const merged = { name: S.layers[meta].name, grid: out, opacity: 1, visible: true, fid: S.layers[meta].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext, effects: [] };
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
-  const at = placeTop ? meta - idx.length + 1 : base;
+  const at = meta - idx.length + 1;
   S.layers.splice(at, 0, merged); S.cur = at; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
 
-export function doMerge() { let idx = selectedIdx();
+function selectedFolder() { const id = S.selFolder ?? (S.markedFolders.size === 1 ? [...S.markedFolders][0] : null);
+  return id == null ? null : S.folders.find((f) => f.id === id); }
+
+function mergeFolder(f) { const baked = bakeFolder(f); if (baked.idx.length < 1) return;
+  snapshot(); const at = Math.min(...baked.idx), parent = f.parent ?? null;
+  const merged = { name: f.name, grid: baked.grid, opacity: 1, visible: true, fid: parent, clip: false, lock: false, alphaLock: false, reference: false, ext: new Map(), effects: [] };
+  for (let j = baked.idx.length - 1; j >= 0; j--) S.layers.splice(baked.idx[j], 1);
+  S.folders = S.folders.filter((sf) => !folderChain(sf.id).some((x) => x.id === f.id));
+  S.layers.splice(at, 0, merged); S.cur = at; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layersMerged')); }
+
+export function doMerge() { const f = selectedFolder(); if (f) { mergeFolder(f); return; } let idx = selectedIdx();
   if (idx.length < 2) { if (S.cur > 0) idx = [S.cur - 1, S.cur]; else { toast(t('toast.markLayers')); return; } }
   mergeIndices(idx); }
 
 // слить диапазон слоёв [a..b] (щипок), независимо от выбора
-export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx, true); }
+export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) idx.push(i); mergeIndices(idx); }
 
 function activeAfterDelete(idx) {
   const gone = new Set(idx), curObj = S.layers[S.cur]; let target = gone.has(S.cur) ? null : curObj;
