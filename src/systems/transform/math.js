@@ -31,3 +31,13 @@ export function rotBuildCells(m, src) { const f = rotFrame(m), xs = f.p.map((p) 
     const c = src[sy][sx]; if (!c) continue;
     cells.push([x, y, c]); if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
   return cells.length ? { cells, minx, miny, maxx, maxy } : null; }
+
+// результат трансформации + его зеркальные копии (m.sym = {sx,sy}); источник —
+// одна сторона, зеркала достраиваются → перенос/масштаб/поворот выходят симметричными
+export function rotBuildCellsSym(m, src, W, H) { const r = rotBuildCells(m, src), sx = m.sym && m.sym.sx, sy = m.sym && m.sym.sy;
+  if (!r || (!sx && !sy)) return r;
+  const seen = new Set(), cells = []; let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  const put = (x, y, c) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const k = x + ',' + y; if (seen.has(k)) return; seen.add(k);
+    cells.push([x, y, c]); if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; };
+  for (const [x, y, c] of r.cells) { put(x, y, c); if (sx) put(W - 1 - x, y, c); if (sy) put(x, H - 1 - y, c); if (sx && sy) put(W - 1 - x, H - 1 - y, c); }
+  return cells.length ? { cells, minx, miny, maxx, maxy } : null; }

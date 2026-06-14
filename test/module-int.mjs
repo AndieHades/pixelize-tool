@@ -305,6 +305,13 @@ t('symmetry: вырезание зеркального выделения вст
   S.layers[0].grid[1][1] = [5, 5, 5, 255]; S.layers[0].grid[1][6] = [5, 5, 5, 255]; S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1']); cache.dirtyAll();
   const n0 = S.layers.length; clip.doCut(); assert.equal(S.layers[0].grid[1][1], null); assert.equal(S.layers[0].grid[1][6], null); // обе стороны вырезаны
   clip.doPaste(); assert.equal(S.layers.length, n0 + 2); S.sym = false; }); // две стороны → два слоя
+t('symmetry: transform двигает стороны зеркально', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.selFloat = null;
+  S.layers[0].grid[3][1] = [5, 5, 5, 255]; S.layers[0].grid[3][6] = [5, 5, 5, 255]; cache.dirtyAll();
+  S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,3', '6,3']);
+  actions.run('transform.enter'); assert.ok(S.rotMode && S.rotMode.sym); // трансформация выделения симметрична
+  S.rotMode.tx = -1; S.rotMode.changed = true; tf.exitRotMode(true);
+  assert.ok(S.layers[0].grid[3][0] && S.layers[0].grid[3][7]); // лево ушло влево, право — зеркально вправо
+  assert.equal(S.layers[0].grid[3][1], null); assert.equal(S.layers[0].grid[3][6], null); S.sym = false; });
 t('selection: applySelectionOp add объединяет рамку и новую область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   sel.applySelectionOp(new Set(['5,5']), 'add'); assert.ok(S.selMask.has('1,1') && S.selMask.has('5,5')); });
 t('selection: applySelectionOp subtract вычитает область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
