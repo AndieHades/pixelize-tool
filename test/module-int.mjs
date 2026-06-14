@@ -333,6 +333,13 @@ t('brush-resize: колесо при зажатом D меняет размер'
   brKey('keydown', 'd'); wheel(-1); assert.equal(S.brushes.pencil.size, 5); wheel(1); assert.equal(S.brushes.pencil.size, 4); brKey('keyup', 'd'); });
 t('brush-resize: без зажатого D колесо размер не трогает', () => { resetWH(8, 8); S.brushes.pencil.size = 4;
   wheel(-1); assert.equal(S.brushes.pencil.size, 4); });
+
+const penButton = await import('../src/systems/pen-button.js'); penButton.mount();
+const penBtn = (button = 2) => { const ev = new window.MouseEvent('pointerdown', { button, bubbles: true }); Object.defineProperty(ev, 'pointerType', { value: 'pen' }); window.dispatchEvent(ev); };
+t('pen-button: кнопка стилуса переключает кисть↔ластик', () => { resetWH(8, 8); S.tool = 'pencil';
+  penBtn(); assert.equal(S.tool, 'eraser'); penBtn(); assert.equal(S.tool, 'pencil'); });
+t('pen-button: контакт пера (button 0) инструмент не переключает', () => { resetWH(8, 8); S.tool = 'pencil';
+  penBtn(0); assert.equal(S.tool, 'pencil'); });
 eyedropper.mount(); // вешает слушатели Eyedropper System один раз
 const bbTap = () => { const pk = document.getElementById('bb-pick'); pk.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true })); pk.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true })); };
 t('eyedropper: короткий клик по bb-pick включает залипающий режим (ПК)', () => { resetWH(8, 8); document.body.classList.remove('picking');
