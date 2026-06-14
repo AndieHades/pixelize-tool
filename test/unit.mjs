@@ -18,6 +18,12 @@ import { generateTints, generateShades, generateHarmonyBaseColors, generateTintS
 import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
+import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
+import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
+import { importAbr } from '../src/core/brush-import/abr.js';
+import { previewStroke } from '../src/logic/brush-preview.js';
+import { packSet, unpackSet } from '../src/core/brush-pack.js';
+import { brushMode, stampSize, planDab } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { expandMask, mirrorDeltas } from '../src/logic/symmetry.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
@@ -217,6 +223,90 @@ t('quickshape: круговой штрих → ellipse с равными сто�
 t('quickshape: каракули и короткий штрих не распознаются (raw остаётся)', () => {
   assert.equal(recognizeShape([[0, 0], [9, 1], [1, 8], [8, 2], [2, 9], [0, 4]]), null);
   assert.equal(recognizeShape([[0, 0], [1, 1]]), null); });
+
+// --- импорт кистей (brush-mask) ---
+t('brush-mask: круглый кончик 1×1 — одна клетка', () => { const m = maskRound(1); assert.deepEqual([m.w, m.h], [1, 1]); assert.equal(m.data[0], 1); });
+t('brush-mask: круглый кончик 5×5 — центр вкл, углы выкл', () => { const m = maskRound(5);
+  assert.equal(m.data[2 * 5 + 2], 1); assert.equal(m.data[0], 0); assert.equal(m.data[4], 0); });
+t('brush-mask: точечный кончик (1×1 покрытие) → сплошной квадрат size×size', () => {
+  const m = coverageToMask({ w: 1, h: 1, data: new Uint8Array([254]) }, 4);
+  assert.deepEqual([m.w, m.h], [4, 4]); assert.ok(m.data.every((v) => v === 1)); });
+t('brush-mask: сохраняет пропорции по большей стороне', () => {
+  const data = new Uint8Array(8 * 2).fill(255); // широкий кончик 8×2
+  const m = coverageToMask({ w: 8, h: 2, data }, 8); assert.equal(Math.max(m.w, m.h), 8); assert.ok(m.h < m.w); });
+t('brush-mask: пустое покрытие → null', () => { assert.equal(coverageToMask({ w: 4, h: 4, data: new Uint8Array(16) }, 4), null); });
+t('brush-mask: дизер-тайл сводится к фундаментальному периоду (шахматка → 2×2)', () => {
+  const d = new Uint8Array(64); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) d[y * 8 + x] = (x + y) % 2 ? 255 : 0;
+  const tile = coverageToTile({ w: 8, h: 8, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
+  assert.deepEqual([...tile.data], [0, 1, 1, 0]); });
+t('brush-mask: дизер 4×4 (.#../пусто) → период 2×2', () => {
+  const d = new Uint8Array([0, 255, 0, 255, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 0, 0]);
+  const tile = coverageToTile({ w: 4, h: 4, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
+  assert.deepEqual([...tile.data], [0, 1, 0, 0]); });
+t('brush-mask: вырожденный grain (всё вкл/выкл) → null', () => {
+  assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array([255, 255, 255, 255]) }), null);
+  assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array(4) }), null); });
+
+// --- bplist (Brush.archive → параметры) ---
+t('bplist: распаковка NSKeyedArchiver → имя и параметры', () => {
+  // минимальный bplist00: обёртка {$top,$objects}; CF$UID индексируют $objects.
+  const str = (s) => Uint8Array.from([0x50 | s.length, ...[...s].map((c) => c.charCodeAt(0))]);
+  const real = (v) => { const b = new Uint8Array(9); b[0] = 0x23; new DataView(b.buffer).setFloat64(1, v); return b; };
+  const uid = (n) => Uint8Array.from([0x80, n]);
+  const arr = (r) => Uint8Array.from([0xa0 | r.length, ...r]);
+  const dict = (k, v) => Uint8Array.from([0xd0 | k.length, ...k, ...v]);
+  const parts = [
+    dict([1, 2], [3, 6]), str('$top'), str('$objects'), dict([4], [5]), str('root'), uid(0),
+    arr([7, 14, 15, 16]), dict([8, 9, 10], [11, 12, 13]), str('name'), str('plotSpacing'), str('plotJitter'),
+    uid(1), uid(2), uid(3), str('Test'), real(1), real(2.5),
+  ];
+  const offs = []; let pos = 8; for (const p of parts) { offs.push(pos); pos += p.length; }
+  const tr = new Uint8Array(32), dv = new DataView(tr.buffer); tr[6] = 1; tr[7] = 1;
+  dv.setBigUint64(8, BigInt(parts.length)); dv.setBigUint64(16, 0n); dv.setBigUint64(24, BigInt(pos));
+  const blocks = [new TextEncoder().encode('bplist00'), ...parts, Uint8Array.from(offs), tr];
+  const buf = new Uint8Array(blocks.reduce((a, b) => a + b.length, 0)); let o = 0; for (const b of blocks) { buf.set(b, o); o += b.length; }
+  const a = unarchiveBrush(buf);
+  assert.equal(a.name, 'Test'); assert.equal(a.plotSpacing, 1); assert.equal(a.plotJitter, 2.5);
+});
+
+await (async () => { // .abr v1: один семплированный кончик 2×2 (raw)
+  const ab = new Uint8Array(48), dv = new DataView(ab.buffer); let q = 0;
+  dv.setUint16(q, 1); q += 2; dv.setUint16(q, 1); q += 2; // version=1, count=1
+  dv.setUint16(q, 2); q += 2; dv.setUint32(q, 38); q += 4; // type=sampled, len=38
+  q += 4; dv.setUint16(q, 25); q += 2; ab[q++] = 0; q += 8; // misc, spacing, antialias, bounds(short)
+  dv.setInt32(q, 0); q += 4; dv.setInt32(q, 0); q += 4; dv.setInt32(q, 2); q += 4; dv.setInt32(q, 2); q += 4; // top,left,bottom,right
+  dv.setUint16(q, 8); q += 2; ab[q++] = 0; // depth=8, comp=raw
+  ab[q++] = 10; ab[q++] = 250; ab[q++] = 250; ab[q++] = 10; // 2×2 bitmap
+  const list = await importAbr(ab.buffer);
+  assert.equal(list.length, 1); assert.equal(list[0].source, 'abr');
+  assert.deepEqual([list[0].cov.w, list[0].cov.h], [2, 2]);
+  n++; console.log('  ok   abr: v1 sampled tip → запись кисти');
+})();
+
+t('brush-pack: round-trip набора кистей (маска Uint8Array)', () => {
+  const brushes = [{ name: 'Star', source: 'custom', shape: 'shape', baseSize: 6, params: { spacing: 1, jitter: 0 },
+    cov: { w: 2, h: 2, data: new Uint8Array([0, 255, 200, 0]) }, grain: { w: 2, h: 2, data: new Uint8Array([1, 0, 0, 1]) } }];
+  const out = unpackSet(packSet('Decor', brushes));
+  assert.equal(out.name, 'Decor'); assert.equal(out.brushes.length, 1);
+  const b = out.brushes[0]; assert.equal(b.name, 'Star'); assert.equal(b.baseSize, 6); assert.equal(b.params.spacing, 1);
+  assert.ok(b.cov.data instanceof Uint8Array); assert.deepEqual([...b.cov.data], [0, 255, 200, 0]); assert.deepEqual([...b.grain.data], [1, 0, 0, 1]);
+});
+t('brush-pack: чужой файл отвергается', () => { assert.throws(() => unpackSet('{"format":"other"}')); });
+
+t('brush-stamp: режим выводится по параметрам и переопределяется явно', () => {
+  assert.equal(brushMode({}), 'flow'); assert.equal(brushMode({ spacing: 1 }), 'single');
+  assert.equal(brushMode({ jitter: 2 }), 'scatter'); assert.equal(brushMode({ mode: 'flow', jitter: 2 }), 'flow'); });
+t('brush-stamp: stampSize — натуральный для кисти из выделения, иначе слайдер', () => {
+  assert.equal(stampSize({ baseSize: 20 }, 8, 8), 20); assert.equal(stampSize({ baseSize: 20 }, 4, 8), 10); assert.equal(stampSize({}, 5, 8), 5); });
+t('brush-stamp: planDab — flow штампует всегда, single соблюдает spacing', () => {
+  assert.deepEqual(planDab({}, 4, { acc: 0 }, 3, 7), { cx: 3, cy: 7, size: 4 }); // flow
+  const st = { acc: 0 }; const a = planDab({ mode: 'single', spacing: 1 }, 4, st, 0, 0); // gap=4
+  assert.ok(a && a.cx === 0); assert.equal(planDab({ mode: 'single', spacing: 1 }, 4, st, 1, 0), null); });
+
+t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
+  const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;
+  assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'мазок непустой');
+});
 
 // --- Symmetry mapper ---
 t('symmetry: expandMask зеркалит по X (лево-право)', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);

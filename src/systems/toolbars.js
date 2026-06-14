@@ -26,8 +26,8 @@ function syncToolButtons() {
 function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 
 export function mount() {
-  $('t-pencil').onclick = () => setTool('pencil');
-  $('t-eraser').onclick = () => setTool('eraser');
+  $('t-pencil').onclick = () => { if (S.tool === 'pencil') actions.run('ui.brushLibrary', 'pencil'); else setTool('pencil'); };
+  $('t-eraser').onclick = () => { if (S.tool === 'eraser') actions.run('ui.brushLibrary', 'eraser'); else setTool('eraser'); };
   $('t-line').onclick = () => setTool('line');
   wireShape('rect', 'tool.rect', 'tool.rectFill');
   wireShape('ellipse', 'tool.ellipse', 'tool.ellipseFill');

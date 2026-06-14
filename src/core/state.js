@@ -32,7 +32,7 @@ export const S = {
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   tool: 'pencil', sym: false, symH: false,
   fillShape: { rect: false, ellipse: false }, // ПКМ по иконке фигуры — рисовать залитой
-  brushes: BRUSH_DEFAULTS(),
+  brushes: BRUSH_DEFAULTS(), stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)
   ppOn: FLAGS_DEFAULT.pixelPerfect, stabOn: FLAGS_DEFAULT.stabilize, stroke: false,
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
   sel: null, selMask: null, selFloat: null,

@@ -35,5 +35,6 @@ export function mount() {
   window.addEventListener('resize', syncBars);
   bus.on('tool', syncBars);
   bus.on('brush', syncBars); // живое обновление ползунка при жесте Brush Size Modifier
+  bus.on('brushlib', syncBars); // размер мог поменяться (кисть из выделения)
   syncBars();
 }
