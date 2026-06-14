@@ -77,7 +77,7 @@
 | `systems/panels.js` | перестановка кнопок тулбара/сайдбара (ПКМ-удержание/долгий тап) | ✅ | (новое) |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
-| `systems/brush-resize.js` | Brush Size Modifier: зажатый Hot Key + движение курсора (без рисования) плавно меняет размер кисти | ✅ | (новое) |
+| `systems/brush-resize.js` | Brush Size Modifier: зажатый Hot Key или удержание экранной пипетки + движение курсора (без рисования) плавно меняет размер кисти | ✅ | (новое) |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |

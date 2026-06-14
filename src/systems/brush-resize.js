@@ -1,7 +1,7 @@
-// Brush Size Modifier: пока зажат Hot Key (по умолчанию D) и кнопка/перо НЕ
-// касаются холста, движение курсора плавно меняет размер кисти. Работает
-// поверх любого инструмента рисования — не меняет инструмент, не блокирует
-// штрих, не открывает панели. Правит лишь S.brushes[…].size.
+// Brush Size Modifier: пока зажат Hot Key (по умолчанию D) ИЛИ удерживается
+// экранная кнопка пипетки (планшет), и перо/кнопка НЕ касаются холста, движение
+// курсора плавно меняет размер кисти. Работает поверх любого инструмента
+// рисования — не меняет инструмент, не блокирует штрих. Правит лишь size.
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
@@ -12,6 +12,7 @@ import { SENS_PRESETS, DIRECTIONS } from '../config/brush-resize.js';
 
 const STORE = 'brushResize';
 let active = false, acc = 0, last = null;
+let holdBtn = false, usedHold = false, suppressClick = false; // удержание экранной пипетки
 const R = S.brushResize;
 const typing = (t) => !!((t && t.matches && t.matches('input, textarea')) || (t && t.isContentEditable));
 
@@ -19,7 +20,7 @@ try { const s = JSON.parse(localStorage.getItem(STORE)); if (s) Object.assign(R,
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify({ key: R.key, sensitivity: R.sensitivity, direction: R.direction })); } catch (e) {} };
 
 function setSize(n) { const k = brushKey(), v = Math.max(1, Math.min(BP_SMAX, n));
-  if (v !== S.brushes[k].size) { S.brushes[k].size = v; bus.emit('brush'); bus.emit('render'); } } // ползунок + курсор кисти обновляются в реальном времени
+  if (v !== S.brushes[k].size) { S.brushes[k].size = v; if (holdBtn) usedHold = true; bus.emit('brush'); bus.emit('render'); } } // ползунок + курсор кисти обновляются в реальном времени
 
 function onMove(e) { if (!active || R.capturing) return;
   if (e.buttons !== 0) { last = null; return; }                 // идёт штрих (ЛКМ/касание) — размер не трогаем
@@ -37,7 +38,13 @@ function onDown(e) { if (e.type === 'keydown' && e.repeat) return;
   active = true; acc = S.brushes[brushKey()].size; last = null; } // запоминаем текущий размер как старт
 
 function onUp(e) { if ((e.key || '').toLowerCase() === R.key) { active = false; last = null; } }
-const stop = () => { active = false; last = null; };
+const stop = () => { active = false; holdBtn = false; last = null; };
+
+// удержание экранной пипетки (планшет): держишь её пальцем, водишь пером над
+// холстом — размер меняется. Короткий тап остаётся выбором пипетки; клик после
+// использованного жеста подавляем, чтобы инструмент случайно не сменился.
+function btnDown() { if (active) return; active = true; holdBtn = true; usedHold = false; acc = S.brushes[brushKey()].size; last = null; }
+function btnUp() { if (!holdBtn) return; active = false; holdBtn = false; last = null; if (usedHold) suppressClick = true; }
 
 actions.register('brushResize.capture', () => { R.capturing = true; bus.emit('brushResize'); });
 actions.register('brushResize.cycleDir', () => { R.direction = DIRECTIONS[(DIRECTIONS.indexOf(R.direction) + 1) % DIRECTIONS.length]; persist(); bus.emit('brushResize'); });
@@ -48,4 +55,7 @@ export function mount() {
   window.addEventListener('keydown', onDown); window.addEventListener('keyup', onUp);
   window.addEventListener('blur', stop); // потеря фокуса — клавиша «отпускается», иначе жест залипнет
   $('cv').addEventListener('pointermove', onMove);
+  const pk = $('bb-pick'); if (!pk) return;
+  pk.addEventListener('pointerdown', btnDown); pk.addEventListener('pointerup', btnUp); pk.addEventListener('pointercancel', btnUp);
+  pk.addEventListener('click', (e) => { if (suppressClick) { e.stopImmediatePropagation(); e.preventDefault(); suppressClick = false; } }, true); // capture: гасим клик до onclick кнопки
 }

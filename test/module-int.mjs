@@ -327,6 +327,18 @@ t('brush-resize: без зажатого Hot Key размер не меняет�
 t('brush-resize: направление и чувствительность переключаются циклически', () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
   actions.run('brushResize.cycleDir'); assert.equal(S.brushResize.direction, 'horizontal');
   actions.run('brushResize.cycleSens'); assert.notEqual(S.brushResize.sensitivity, 0.05); });
+const brBtn = (type) => document.getElementById('bb-pick').dispatchEvent(new window.MouseEvent(type, { bubbles: true }));
+t('brush-resize: удержание экранной пипетки меняет размер пером над холстом', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1;
+  brBtn('pointerdown'); brPtr(100, 100, 0); brPtr(180, 100, 0); assert.ok(S.brushes.pencil.size > 1); brBtn('pointerup'); });
+t('brush-resize: использованный жест на пипетке подавляет клик-выбор', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1;
+  const pk = document.getElementById('bb-pick'); let clicked = false; pk.onclick = () => { clicked = true; };
+  brBtn('pointerdown'); brPtr(100, 100, 0); brPtr(180, 100, 0); brBtn('pointerup'); brBtn('click');
+  assert.equal(clicked, false); pk.onclick = null; }); // жест использован — клик подавлен
+t('brush-resize: короткий тап пипетки клик не подавляет', () => { resetWH(8, 8);
+  const pk = document.getElementById('bb-pick'); let clicked = false; pk.onclick = () => { clicked = true; };
+  brBtn('pointerdown'); brBtn('pointerup'); brBtn('click'); assert.equal(clicked, true); pk.onclick = null; });
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
