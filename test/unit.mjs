@@ -20,6 +20,7 @@ import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
 import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
 import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
+import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke } from '../src/logic/brush-preview.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
@@ -260,6 +261,20 @@ t('bplist: распаковка NSKeyedArchiver → имя и параметры
   const a = unarchiveBrush(buf);
   assert.equal(a.name, 'Test'); assert.equal(a.plotSpacing, 1); assert.equal(a.plotJitter, 2.5);
 });
+
+await (async () => { // .abr v1: один семплированный кончик 2×2 (raw)
+  const ab = new Uint8Array(48), dv = new DataView(ab.buffer); let q = 0;
+  dv.setUint16(q, 1); q += 2; dv.setUint16(q, 1); q += 2; // version=1, count=1
+  dv.setUint16(q, 2); q += 2; dv.setUint32(q, 38); q += 4; // type=sampled, len=38
+  q += 4; dv.setUint16(q, 25); q += 2; ab[q++] = 0; q += 8; // misc, spacing, antialias, bounds(short)
+  dv.setInt32(q, 0); q += 4; dv.setInt32(q, 0); q += 4; dv.setInt32(q, 2); q += 4; dv.setInt32(q, 2); q += 4; // top,left,bottom,right
+  dv.setUint16(q, 8); q += 2; ab[q++] = 0; // depth=8, comp=raw
+  ab[q++] = 10; ab[q++] = 250; ab[q++] = 250; ab[q++] = 10; // 2×2 bitmap
+  const list = await importAbr(ab.buffer);
+  assert.equal(list.length, 1); assert.equal(list[0].source, 'abr');
+  assert.deepEqual([list[0].cov.w, list[0].cov.h], [2, 2]);
+  n++; console.log('  ok   abr: v1 sampled tip → запись кисти');
+})();
 
 t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;

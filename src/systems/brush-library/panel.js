@@ -14,10 +14,11 @@ let loaded = false, mode = 'pencil';
 function rerender() { renderSets(); renderBrushes(); }
 async function ensure() { if (loaded) return; loaded = true; await loadLib(); }
 
-function pickBrush(fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.brush';
+function pickBrush(fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.brush,.abr';
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
 function importBrush() { pickBrush((f) => importBrushFile(f)
-  .then(async (list) => { const b = await addBrush(list[0]); setStampBrush(mode, b); rerender(); }).catch(() => {})); }
+  .then(async (list) => { let first = null; for (const rec of list) { const b = await addBrush(rec); first = first || b; } // .abr — набор кистей
+    if (first) setStampBrush(mode, first); rerender(); }).catch(() => {})); }
 
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
