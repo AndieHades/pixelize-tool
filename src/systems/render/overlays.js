@@ -54,17 +54,22 @@ export function drawOverlays(ctx, ox, oy, z) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.strokeRect(bx - .5, by2 - .5, s * z + 1, s * z + 1); }
 }
 
-// строящийся контур лассо: пунктир по траектории, старт/конец точками, при
-// близости к старту — подсветка и предпросмотр замыкания (Continuous/Segment)
-function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts;
-  const px = (p) => ox + (p[0] + 0.5) * z, py = (p) => oy + (p[1] + 0.5) * z, end = pts[pts.length - 1];
-  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.strokeStyle = C.accent;
-  ctx.beginPath(); ctx.moveTo(px(pts[0]), py(pts[0]));
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(px(pts[i]), py(pts[i])); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(px(end), py(end)); ctx.lineTo(px(pts[0]), py(pts[0])); // замыкающий сегмент
-  ctx.globalAlpha = lp.near ? 0.9 : 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
-  const R = lp.near ? 6 : 4; // стартовая точка — крупнее и залита при близости (сигнал «можно замкнуть»)
-  ctx.beginPath(); ctx.arc(px(pts[0]), py(pts[0]), R, 0, Math.PI * 2);
+// строящийся контур лассо: пунктир по траектории + зеркальные контуры (симметрия)
+// в реальном времени; старт/конец точками с подсветкой замыкания (Continuous/Segment)
+function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts, W = S.W, H = S.H, end = pts[pts.length - 1];
+  const sx = (p) => ox + (p[0] + 0.5) * z, sy = (p) => oy + (p[1] + 0.5) * z;
+  const tfs = [(p) => p]; // оригинал + зеркальные копии по активным осям
+  if (symA()) tfs.push((p) => [W - 1 - p[0], p[1]]);
+  if (symHA()) tfs.push((p) => [p[0], H - 1 - p[1]]);
+  if (symA() && symHA()) tfs.push((p) => [W - 1 - p[0], H - 1 - p[1]]);
+  ctx.lineWidth = 1.5; ctx.strokeStyle = C.accent;
+  for (const tf of tfs) { const a = tf(pts[0]), e = tf(end);
+    ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(sx(a), sy(a));
+    for (let i = 1; i < pts.length; i++) { const b = tf(pts[i]); ctx.lineTo(sx(b), sy(b)); } ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(e), sy(e)); ctx.lineTo(sx(a), sy(a)); // замыкающий сегмент
+    ctx.globalAlpha = lp.near ? 0.9 : 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]); }
+  const R = lp.near ? 6 : 4, a0 = pts[0]; // точки старта/конца — на оригинале
+  ctx.beginPath(); ctx.arc(sx(a0), sy(a0), R, 0, Math.PI * 2);
   ctx.fillStyle = lp.near ? C.accent : '#fff'; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = lp.near ? '#fff' : C.accent; ctx.stroke();
-  ctx.beginPath(); ctx.arc(px(end), py(end), 3, 0, Math.PI * 2); ctx.fillStyle = C.accent; ctx.fill();
+  ctx.beginPath(); ctx.arc(sx(end), sy(end), 3, 0, Math.PI * 2); ctx.fillStyle = C.accent; ctx.fill();
 }

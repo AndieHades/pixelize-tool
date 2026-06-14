@@ -292,6 +292,19 @@ t('selection: selectColorPixels строит маску', () => { resetWH(6, 6);
 t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null; sel.invertSelection();
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
 
+t('symmetry: applySelectionOp создаёт зеркальную копию (X)', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.sel = S.selMask = null;
+  sel.applySelectionOp(new Set(['1,1']), 'replace'); assert.ok(S.selMask.has('1,1') && S.selMask.has('6,1')); S.sym = false; });
+t('symmetry: Subtract вычитает оригинал и зеркало', () => { resetWH(8, 8); S.sym = true; S.symH = false;
+  S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1', '2,2', '5,2']);
+  sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.ok(!S.selMask.has('1,1') && !S.selMask.has('6,1') && S.selMask.has('2,2')); S.sym = false; });
+t('symmetry: заливка зеркалит обе стороны', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.active = [9, 9, 9]; S.sel = S.selMask = null;
+  for (let y = 0; y < 8; y++) { S.layers[0].grid[y][3] = [1, 1, 1, 255]; S.layers[0].grid[y][4] = [1, 1, 1, 255]; } cache.dirtyAll(); // стенка делит лево/право
+  flood(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9]); assert.deepEqual(S.layers[0].grid[1][6], [9, 9, 9]); // правая сторона залита зеркально
+  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); S.sym = false; }); // стенка цела
+t('symmetry: вырезание зеркального выделения вставляет стороны отдельными слоями', () => { resetWH(8, 8); S.sym = true; S.symH = false;
+  S.layers[0].grid[1][1] = [5, 5, 5, 255]; S.layers[0].grid[1][6] = [5, 5, 5, 255]; S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1']); cache.dirtyAll();
+  const n0 = S.layers.length; clip.doCut(); assert.equal(S.layers[0].grid[1][1], null); assert.equal(S.layers[0].grid[1][6], null); // обе стороны вырезаны
+  clip.doPaste(); assert.equal(S.layers.length, n0 + 2); S.sym = false; }); // две стороны → два слоя
 t('selection: applySelectionOp add объединяет рамку и новую область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   sel.applySelectionOp(new Set(['5,5']), 'add'); assert.ok(S.selMask.has('1,1') && S.selMask.has('5,5')); });
 t('selection: applySelectionOp subtract вычитает область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;

@@ -5,6 +5,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { parseKey } from '../../logic/raster.js';
 import { combineMask } from '../../logic/mask-ops.js';
+import { expandMask } from '../../logic/symmetry.js';
 import { eqc } from '../../logic/color.js';
 import { symA, symHA } from '../../core/layers.js';
 import { inMask } from '../../core/selection.js';
@@ -41,19 +42,14 @@ export function selAsSet() { if (S.selMask) return new Set(S.selMask);
 // применить построенную маску с операцией (replace/add/subtract/intersect).
 // Общая точка входа для всех инструментов выделения — не знает, как построен контур.
 export function applySelectionOp(addition, op) { commitFloat();
-  const out = combineMask(op === 'replace' ? null : selAsSet(), addition, op);
+  const add = expandMask(addition, S.W, S.H, symA(), symHA()); // симметрия: оригинал + зеркальные копии области
+  const out = combineMask(op === 'replace' ? null : selAsSet(), add, op);
   if (!out || !out.size) { deselect(); return false; }
   maskFromCells(out); return true; }
 
+// добавить зеркальные копии области выделения через общий mapper (без дублей логики)
 export function symmetrizeSelection() { const sa = symA(), sha = symHA(); if (!S.sel || (!sa && !sha)) return;
-  const base = new Set();
-  if (S.selMask) for (const k of S.selMask) base.add(k);
-  else for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) base.add(x + ',' + y);
-  const out = new Set(base), g = G();
-  const add = (xx, yy) => { if (g[yy] && g[yy][xx]) out.add(xx + ',' + yy); }; // зеркалим только по существующим пикселям — не выделяем пустоту
-  for (const k of base) { const [x, y] = parseKey(k);
-    if (sa) add(S.W - 1 - x, y); if (sha) add(x, S.H - 1 - y); if (sa && sha) add(S.W - 1 - x, S.H - 1 - y); }
-  maskFromCells(out); }
+  maskFromCells(expandMask(selAsSet(), S.W, S.H, sa, sha)); }
 
 export function selectColorPixels(col) { commitFloat(); const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = g[y][x];

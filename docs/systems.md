@@ -50,6 +50,7 @@
 | `logic/poly-mask.js` | растеризует замкнутый многоугольник в множество клеток выделения | ✅ | (выделение) |
 | `logic/mask-ops.js` | булевы операции над масками (replace/add/subtract/intersect) | ✅ | (выделение) |
 | `logic/quickshape.js` | распознаёт форму штриха (line/rect/ellipse) по точкам или null | ✅ | (QuickShape) |
+| `logic/symmetry.js` | SymmetryOperationMapper: маска/точка/дельта → оригинал + зеркальные копии по осям | ✅ | (симметрия) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -67,7 +68,7 @@
 | `systems/brightness-contrast.js` | правит яркость/контраст | ✅ | 05-draw |
 | `systems/free-rotate.js` | применяет чистый поворот к слою | ✅ | 05-draw |
 | `systems/crop.js` | интерактивно кадрирует холст | ✅ | 05-draw |
-| `systems/selection/model.js` | держит выделение, маски, операции содержимого | ✅ | 06-selection |
+| `systems/selection/model.js` | держит выделение, маски, операции содержимого (симметрия через `logic/symmetry`) | ✅ | 06-selection |
 | `systems/selection/input.js` + `float.js` | тянет/тащит/растягивает выделение | ✅ | 06-selection |
 | `systems/selection/clipboard.js` | копирует/вырезает/вставляет/удаляет | ✅ | 06-selection |
 | `systems/freehand/*` | Freehand Selection: инструмент (input) + контур (path) + мост к маске (apply) + панель (panel) | ✅ | (выделение) |
