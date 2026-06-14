@@ -2,22 +2,16 @@
 // Всё вставляется в ТЕКУЩИЙ документ верхним слоем/папкой; новый холст/проект не
 // создаём. Photo/File — прямая вставка, Pixelize — открыть конвертер.
 import * as actions from '../../core/actions.js';
-import * as bus from '../../core/bus.js';
 import { $, showMenuAt, toast, t } from '../../core/dom.js';
 import { readPsd } from '../../logic/psd.js';
 import { insertPsd } from './psd-insert.js';
 import { insertImageTop } from './index.js';
-import { importBrushFile } from '../../core/brush-import/index.js';
-import { setStampBrush } from '../../core/stamp-brush.js';
 
 function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
 function loadImg(f, cb) { const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail')); im.onload = () => cb(im); im.src = URL.createObjectURL(f); }
 const baseName = (n) => n.replace(/\.[^.]+$/, '');
 
-const brush = () => pick('.brush', (f) => importBrushFile(f)
-  .then((list) => { setStampBrush(list[0]); bus.emit('render'); toast(t('toast.brushImported', { name: list[0].name })); })
-  .catch(() => toast(t('toast.brushImportFail'))));
 const photo = () => pick('image/*', (f) => loadImg(f, (im) => insertImageTop(im, baseName(f.name))));
 const pixelize = () => pick('image/*', (f) => actions.run('import.openFile', f)); // конвертер как новый проект
 function file(f0) { const go = (f) => { if (/\.psd$/i.test(f.name) || f.type === 'image/vnd.adobe.photoshop')
@@ -32,6 +26,5 @@ export function mount() {
   $('impmenu-photo').onclick = () => { close(); photo(); };
   $('impmenu-file').onclick = () => { close(); file(); };
   $('impmenu-pix').onclick = () => { close(); pixelize(); };
-  $('impmenu-brush').onclick = () => { close(); brush(); };
   actions.register('file.import', () => file());
 }

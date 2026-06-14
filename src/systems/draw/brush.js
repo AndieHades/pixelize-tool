@@ -10,14 +10,14 @@ import { BRUSH_MASK, BRUSH_SCATTER } from '../../config/brush-import.js';
 let cTok = -1, cSize = -1, cMask = null, gTok = -1, gTile = null, acc = 0; // кеши + счётчик spacing
 export function resetScatter() { acc = 0; } // вызывается в начале штриха
 
-function activeMask(size) {
-  const sb = S.stampBrush; if (!sb) return null;
+function activeMask(sb, size) {
+  if (!sb) return null;
   if (sb.tok === cTok && size === cSize) return cMask;
   cMask = sb.cov ? coverageToMask(sb.cov, size, BRUSH_MASK) : maskRound(size);
   cTok = sb.tok; cSize = size; return cMask;
 }
-function activeGrain() {
-  const sb = S.stampBrush; if (!sb || !sb.grain) return null;
+function activeGrain(sb) {
+  if (!sb || !sb.grain) return null;
   if (sb.tok === gTok) return gTile;
   gTile = coverageToTile(sb.grain, BRUSH_MASK.threshold); gTok = sb.tok; return gTile;
 }
@@ -34,8 +34,8 @@ function footprint(cx, cy, erase, m, ok) { const ox = m.w >> 1, oy = m.h >> 1;
   for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, ok); }
 
 export function brushStamp(x, y, erase) {
-  const s = S.brushes[erase ? 'eraser' : 'pencil'].size, sb = S.stampBrush;
-  const m = activeMask(s), g = activeGrain();
+  const tool = erase ? 'eraser' : 'pencil', s = S.brushes[tool].size, sb = S.stampBrush[tool];
+  const m = activeMask(sb, s), g = activeGrain(sb);
   const ok = g ? (px, py) => g.data[(((py % g.h) + g.h) % g.h) * g.w + (((px % g.w) + g.w) % g.w)] : null;
   const p = sb && sb.params;
   if (m && p && (p.spacing > 0 || p.jitter > 0)) { // режим разброса (shatter)

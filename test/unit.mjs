@@ -20,6 +20,7 @@ import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
 import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
 import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
+import { previewStroke } from '../src/logic/brush-preview.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
@@ -258,6 +259,11 @@ t('bplist: распаковка NSKeyedArchiver → имя и параметры
   const buf = new Uint8Array(blocks.reduce((a, b) => a + b.length, 0)); let o = 0; for (const b of blocks) { buf.set(b, o); o += b.length; }
   const a = unarchiveBrush(buf);
   assert.equal(a.name, 'Test'); assert.equal(a.plotSpacing, 1); assert.equal(a.plotJitter, 2.5);
+});
+
+t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
+  const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;
+  assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'мазок непустой');
 });
 
 // --- конфигурация ---

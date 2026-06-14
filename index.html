@@ -287,6 +287,28 @@
     <div id="lay-rsz" data-i18n-title="ui.resizePanel"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </div>
 
+  <div id="brush-pop">
+    <div class="pop-head" id="brush-head"><span class="pop-title" data-i18n="brush.library"></span>
+      <span class="pop-acts">
+        <button id="brush-add" data-i18n-title="brush.add"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+        <button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </span>
+    </div>
+    <div id="brush-body">
+      <div id="brush-sets"></div>
+      <div id="brush-list"></div>
+    </div>
+    <div id="brush-rsz" data-i18n-title="ui.resizePanel"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
+  </div>
+  <div id="brush-plus">
+    <button id="brush-new-set" data-i18n="brush.newSet"></button>
+    <button id="brush-import" data-i18n="brush.import"></button>
+  </div>
+  <div id="brush-ctx">
+    <button data-act="dup" data-i18n="menu.duplicate"></button>
+    <button data-act="del" data-i18n="menu.delete"></button>
+  </div>
+
   <div id="ctx">
     <button data-act="copy" data-i18n="menu.copyHex"></button>
     <button data-act="replace" data-i18n="menu.replace"></button>
@@ -344,7 +366,6 @@
     <button id="impmenu-photo" data-i18n="import.photo"></button>
     <button id="impmenu-file" data-i18n="import.file"></button>
     <button id="impmenu-pix" data-i18n="import.pixelize"></button>
-    <button id="impmenu-brush" data-i18n="import.brush"></button>
   </div>
   <div id="fxctx">
     <button id="fxctx-edit" data-i18n="menu.edit"></button>

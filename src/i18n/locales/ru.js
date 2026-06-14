@@ -9,6 +9,8 @@ export const ru = {
   'tool.pick': 'Пипетка (удерживай Alt)', 'tool.pickShort': 'Пипетка', 'tool.line': 'Линия (U)',
   'tool.importMenu': 'Импорт в проект', 'import.photo': 'Фото', 'import.file': 'Файл', 'import.pixelize': 'Pixelize',
   'import.auto': 'Авто', 'import.brush': 'Кисть…',
+  'brush.library': 'Кисти', 'brush.add': 'Набор / импорт', 'brush.newSet': 'Создать набор', 'brush.import': 'Импорт из файла',
+  'brush.imported': 'Импортированные', 'brush.set': 'Набор',
   'tool.rect': 'Прямоугольник (K) · ПКМ — залитый · Shift — квадрат', 'tool.rectFill': 'Залитый прямоугольник (K) · ПКМ — контур · Shift — квадрат',
   'tool.ellipse': 'Эллипс (Q) · ПКМ — залитый · Shift — круг', 'tool.ellipseFill': 'Залитый эллипс (Q) · ПКМ — контур · Shift — круг',
   'tool.move': 'Свободная трансформация (носить / размер / поворот) — Ctrl+T', 'tool.adjust': 'Кисть-коррекция: осветлить / затемнить / тон',
