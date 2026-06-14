@@ -11,7 +11,7 @@ export const ru = {
   'import.auto': 'Авто', 'import.brush': 'Кисть…',
   'brush.library': 'Кисти', 'brush.add': 'Набор / импорт', 'brush.newSet': 'Создать набор', 'brush.import': 'Импорт из файла',
   'brush.imported': 'Импортированные', 'brush.set': 'Набор', 'brush.fromSelection': 'Из выделения', 'brush.stampName': 'Штамп',
-  'menu.export': 'Экспорт набора', 'brush.packDesc': 'Набор кистей',
+  'menu.export': 'Экспорт набора', 'brush.exportLib': 'Экспорт кистей', 'brush.packDesc': 'Набор кистей',
   'brush.settings': 'Настройки кисти', 'brush.size': 'Размер', 'brush.spacing': 'Расстояние', 'brush.scatter': 'Разброс',
   'brush.modeSingle': 'Штамп', 'brush.modeScatter': 'Разброс', 'brush.modeFlow': 'Поток', 'brush.testHint': 'Рисуй здесь для проверки',
   'brush.round': 'Круглая', 'brush.square': 'Квадратная', 'brush.dither': 'Дизеринг',

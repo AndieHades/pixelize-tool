@@ -10,7 +10,7 @@ import { paintStack } from '../../core/composite.js';
 import { inMask } from '../../core/selection.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
 import { BP_SMAX } from '../../config/limits.js';
-import { ensureLib, lib, addBrush, brushesOf } from './data.js';
+import { ensureLib, lib, addBrush, allBrushes } from './data.js';
 
 // приоритет: активное выделение → рамка трансформации → null
 function region() {
@@ -23,7 +23,7 @@ function region() {
 function composite() { const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false; paintStack(x, false);
   return x.getImageData(0, 0, S.W, S.H).data; }
-function uniqueName(setId) { const base = t('brush.stampName'), used = new Set(brushesOf(setId).map((b) => b.name));
+function uniqueName() { const base = t('brush.stampName'), used = new Set(allBrushes().map((b) => b.name));
   let i = 1; const mk = (n) => base + ' ' + String(n).padStart(2, '0'); while (used.has(mk(i))) i++; return mk(i); }
 
 export async function createFromSelection() {
@@ -38,7 +38,7 @@ export async function createFromSelection() {
   const w = bx1 - bx0 + 1, h = by1 - by0 + 1, cov = new Uint8Array(w * h);
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const x = bx0 + i, y = by0 + j;
     if (inReg(x, y)) cov[j * w + i] = d[(y * S.W + x) * 4 + 3]; } // альфа = маска (цвет берётся активный при рисовании)
-  const setId = lib.curSet, name = uniqueName(setId);
+  const setId = lib.curSet, name = uniqueName();
   const brush = await addBrush({ name, source: 'custom', shape: 'shape', cov: { w, h, data: cov }, grain: null, baseSize: Math.max(w, h), params: { spacing: 1, jitter: 0 } }, setId);
   const tool = S.tool === 'eraser' ? 'eraser' : 'pencil';
   setStampBrush(tool, brush); S.brushes[tool].size = BP_SMAX; // штамп в натуральном размере (слайдер масштабирует)
