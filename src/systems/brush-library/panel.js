@@ -3,12 +3,12 @@
 // «+» — новый набор / импорт из файла; ПКМ/смахивание — дублировать/удалить.
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { $, showMenuAt } from '../../core/dom.js';
+import { $, showMenuAt, t } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { importBrushFile } from '../../core/brush-import/index.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
-import { loadLib, addBrush, dupBrush, delBrush, addSet } from './data.js';
-import { renderSets, renderBrushes, bindList } from './list.js';
+import { loadLib, addBrush, dupBrush, delBrush, addSet, delSet, renameBrush, renameSet } from './data.js';
+import { renderSets, renderBrushes, bindList, startEdit } from './list.js';
 
 let loaded = false, mode = 'pencil';
 function rerender() { renderSets(); renderBrushes(); }
@@ -22,9 +22,15 @@ function importBrush() { pickBrush((f) => importBrushFile(f)
 
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
-function menu(b, x, y) { const m = $('brush-ctx');
-  m.querySelector('[data-act=dup]').onclick = () => { m.classList.remove('on'); dup(b); };
-  m.querySelector('[data-act=del]').onclick = () => { m.classList.remove('on'); del(b); };
+const removeSet = (s) => delSet(s.id).then(rerender);
+const rename = (kind, item, name) => (kind === 'set' ? renameSet(item, name) : renameBrush(item, name)).then(rerender);
+
+function menu(item, kind, x, y) { const m = $('brush-ctx'); m.innerHTML = '';
+  const add = (label, fn, danger) => { const b = document.createElement('button'); b.textContent = label; if (danger) b.dataset.act = 'del';
+    b.onclick = () => { m.classList.remove('on'); fn(); }; m.appendChild(b); };
+  add(t('menu.rename'), () => startEdit(item.id));
+  if (kind === 'brush') add(t('menu.duplicate'), () => dup(item));
+  add(t('menu.delete'), () => (kind === 'set' ? removeSet(item) : del(item)), true);
   showMenuAt(m, x, y); }
 
 async function open(which) { mode = which; await ensure(); $('brush-pop').classList.add('on'); rerender(); }
@@ -32,7 +38,7 @@ export function toggle(which) { const p = $('brush-pop');
   if (p.classList.contains('on') && which === mode) p.classList.remove('on'); else open(which); }
 
 export function mount() {
-  bindList({ rerender, dup, del, menu, mode: () => mode });
+  bindList({ rerender, dup, del, menu, rename, delSet: removeSet, mode: () => mode });
   floatingWindow($('brush-pop'), { grip: $('brush-head'), handle: $('brush-rsz'), storeKey: 'brushwin', minW: 320, minH: 260,
     onClose: () => $('brush-pop').classList.remove('on') });
   $('brush-add').addEventListener('click', (e) => { const r = e.currentTarget.getBoundingClientRect(); showMenuAt($('brush-plus'), r.left, r.bottom); });

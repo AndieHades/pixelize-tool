@@ -27,7 +27,14 @@ export async function addSet(name) {
   const s = { id: uid('s'), name: name || '', order: lib.sets.reduce((m, x) => Math.max(m, x.order), -1) + 1 };
   lib.sets.push(s); lib.curSet = s.id; await saveSet(s); return s;
 }
-export async function delSet(id) { for (const b of brushesOf(id)) await delBrush(b.id); lib.sets = lib.sets.filter((s) => s.id !== id); await removeSet(id); }
+export async function delSet(id) {
+  for (const b of brushesOf(id)) await delBrush(b.id);
+  lib.sets = lib.sets.filter((s) => s.id !== id); await removeSet(id);
+  if (!lib.sets.length) await loadLib(); // не оставляем библиотеку без наборов
+  if (!lib.sets.some((s) => s.id === lib.curSet)) lib.curSet = lib.sets[0].id;
+}
+export async function renameBrush(b, name) { b.name = name || b.name; await saveBrush(b); }
+export async function renameSet(s, name) { s.name = name; s.imported = false; await saveSet(s); }
 
 // перенос кисти в набор (в конец)
 export async function moveToSet(b, setId) { if (b.setId === setId) return; b.setId = setId; b.order = nextOrder(setId); await saveBrush(b); }
