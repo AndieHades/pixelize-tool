@@ -27,7 +27,7 @@ export const ru = {
   'side.symV': 'Симметрия лево-право (S)', 'side.symH': 'Симметрия верх-низ (Shift+S)', 'side.pp': 'Пиксель-перфект (P)',
   'side.stab': 'Стабилизация штриха (T)', 'side.outline': 'Обводка контуром (O)', 'side.flipH': 'Отразить по горизонтали (H)',
   'side.flipV': 'Отразить по вертикали (V)', 'side.rotate': 'Поворот холста 90° (R)', 'side.mono': 'Монохром (всё изображение)',
-  'side.bc': 'Яркость/контраст (всё изображение)', 'side.crop': 'Кроп (C): рамка → Enter', 'side.trim': 'Trim — обрезать пустые поля впритык к рисунку',
+  'side.bc': 'Яркость/контраст (всё изображение)', 'side.crop': 'Кроп (C): рамка → Enter', 'side.trim': 'Trim — обрезать пустые поля впритык к рисунку', 'side.center': 'Центрировать объект (в выделении, если есть)',
   // заголовки диалогов и попапов
   'dialog.newCanvas': 'Новый холст', 'dialog.export': 'Экспорт', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
   'export.scope': 'Что', 'export.selected': 'Выделенное', 'export.folder': 'Папка', 'export.project': 'Проект', 'export.mode': 'Как', 'export.flattened': 'Склеить', 'export.layered': 'Со слоями', 'export.separateFiles': 'Раздельно', 'export.separate': 'Раздельно', 'export.top': 'Верхний уровень', 'export.leaves': 'Все слои',
@@ -142,7 +142,7 @@ export const ru = {
   'toast.layerMono': 'Слой в монохроме',
   'toast.layerRotated': 'Слой повёрнут',
   'toast.layerDup': 'Слой продублирован',
-  'toast.layerEmpty': 'Слой пуст',
+  'toast.layerEmpty': 'Слой пуст', 'toast.centered': 'Объект отцентрирован',
   'toast.transformCancelled': 'Трансформация отменена',
   'toast.transformApplied': 'Трансформация применена',
   'toast.transformEmpty': 'Трансформация пустая',

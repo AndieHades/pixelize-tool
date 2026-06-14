@@ -51,6 +51,7 @@ import './systems/freehand/input.js';
 import './systems/rotate-canvas.js';
 import './systems/flip.js';
 import './systems/trim.js';
+import './systems/layer-center.js';
 import './systems/mono.js';
 import './systems/recolor.js';
 import './systems/free-rotate.js';
