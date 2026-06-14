@@ -308,6 +308,10 @@ t('lasso: Segment продолжает контур и замыкается у �
   const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(fhpath.pathActive() && !S.selMask); // сегмент начат, не замкнут
   h.down({ gx: 5, gy: 1 }); h.up({}); h.down({ gx: 5, gy: 5 }); h.up({}); h.down({ gx: 1, gy: 5 }); h.up({}); assert.ok(fhpath.pathActive());
   h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); }); // возврат к старту — замыкание
+t('lasso: New Selection сбрасывает старое выделение сразу на старте контура', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  toolHandler('lasso').down({ gx: 5, gy: 5 }); assert.equal(S.sel, null); }); // старое исчезло немедленно
+t('lasso: режим Add сохраняет старое выделение во время нового контура', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'add'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  toolHandler('lasso').down({ gx: 5, gy: 5 }); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); actions.run('lasso.cancel'); });
 t('lasso: cancel убирает контур, не трогая существующее выделение', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   const h = toolHandler('lasso'); h.down({ gx: 5, gy: 5 }); h.move({ gx: 6, gy: 6 }); assert.ok(fhpath.pathActive());
   actions.run('lasso.cancel'); assert.ok(!fhpath.pathActive()); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); });
@@ -666,6 +670,10 @@ t('selection-float: повторный перенос не стирает под
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
+t('transform: ЛКМ вне рамки завершает трансформацию', () => { tf.mount(); resetWH(8, 8); S.tool = 'move'; S.view = { zoom: 10, ox: 0, oy: 0 }; S.layers[0].grid[2][2] = [1, 2, 3, 255]; cache.dirtyAll();
+  actions.run('transform.enter'); assert.ok(S.rotMode); // вошли в свободную трансформацию
+  input.down({ pointerType: 'mouse', button: 0, clientX: -100, clientY: -100, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
+  assert.equal(S.rotMode, null); }); // клик вне рамки применил и закрыл
 t('transform: Ctrl+T с Selection трансформирует фрагмент и гасит выделение', () => { resetWH(8, 8);
   S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[5][5] = [1, 1, 1, 255];
   S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null; actions.run('transform.enter');

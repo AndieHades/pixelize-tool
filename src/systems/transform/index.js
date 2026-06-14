@@ -12,7 +12,7 @@ import { effVis, folderChain } from '../../core/layers.js';
 import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
 import { rotBuildCells, rotHasChanges, rotRestoreState } from './math.js';
-import { rotGrab, rotDrag, rotHover, drawTransformFrame } from './drag.js';
+import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.js';
 
 let rotRAF = 0;
 
@@ -127,7 +127,12 @@ export function mount() {
   $('trctx-flip-v').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.sy *= -1; }); };
   $('trctx-rot-r').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.ang += Math.PI / 2; }); };
   $('trctx-rot-l').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.ang -= Math.PI / 2; }); };
-  registerMode('transform', { down: rotGrab, move: ({ e }) => rotDrag(e, rotRebuildSoon), up: () => { if (S.rotMode) S.rotMode.grab = null; }, hover: rotHover });
+  registerMode('transform', {
+    down: ({ e }) => { if (e && e.pointerType !== 'touch' && !rotHit(e)) { if (S.rotMode) S.rotMode.exitOnUp = true; return; } // ЛКМ/перо вне рамки — применить (как клик вне выделения)
+      if (S.rotMode) S.rotMode.exitOnUp = false; rotGrab({ e }); },
+    move: ({ e }) => rotDrag(e, rotRebuildSoon),
+    up: () => { if (!S.rotMode) return; if (S.rotMode.exitOnUp) { exitRotMode(true); return; } S.rotMode.grab = null; },
+    hover: rotHover });
   bus.on('overlay', ({ ctx }) => drawTransformFrame(ctx));
   bus.on('transform-menu', (e) => { if (S.rotMode && e) showMenuAt($('trctx'), e.clientX, e.clientY, true); });
   setUndoGuard(() => { if (!S.rotMode) return false; exitRotMode(false); return true; });

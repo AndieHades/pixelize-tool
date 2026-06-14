@@ -12,8 +12,9 @@ const clampX = (x) => Math.max(0, Math.min(S.W - 1, x));
 const clampY = (y) => Math.max(0, Math.min(S.H - 1, y));
 
 function down({ gx, gy }) { const x = clampX(gx), y = clampY(gy);
-  if (S.lassoMode === 'segment' && pathActive()) addPoint(x, y); // продолжаем из конца предыдущего сегмента
-  else beginPath(x, y); }
+  if (S.lassoMode === 'segment' && pathActive()) { addPoint(x, y); return; } // продолжаем из конца предыдущего сегмента
+  if (S.lassoOp === 'replace' && S.sel) actions.run('select.none'); // New Selection — старое выделение сбрасывается сразу, не дожидаясь нового
+  beginPath(x, y); }
 
 function move({ gx, gy }) { if (pathActive()) addPoint(clampX(gx), clampY(gy)); }
 

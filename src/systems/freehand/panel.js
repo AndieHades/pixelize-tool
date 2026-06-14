@@ -16,6 +16,5 @@ function sync() {
 export function mount() {
   for (const b of $('lasso-mode').children) b.onclick = () => { S.lassoMode = b.dataset.v; actions.run('lasso.cancel'); sync(); };
   for (const b of $('lasso-op').children) b.onclick = () => { S.lassoOp = b.dataset.v; sync(); };
-  $('lasso-cancel').onclick = () => actions.run('lasso.cancel');
   bus.on('tool', sync); sync();
 }
