@@ -19,6 +19,7 @@ import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
+import { expandMask, mirrorDeltas } from '../src/logic/symmetry.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -216,6 +217,19 @@ t('quickshape: круговой штрих → ellipse с равными сто�
 t('quickshape: каракули и короткий штрих не распознаются (raw остаётся)', () => {
   assert.equal(recognizeShape([[0, 0], [9, 1], [1, 8], [8, 2], [2, 9], [0, 4]]), null);
   assert.equal(recognizeShape([[0, 0], [1, 1]]), null); });
+
+// --- Symmetry mapper ---
+t('symmetry: expandMask зеркалит по X (лево-право)', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);
+  assert.ok(m.has('1,2') && m.has('6,2')); assert.equal(m.size, 2); });
+t('symmetry: expandMask зеркалит по Y (верх-низ)', () => { const m = expandMask(new Set(['1,2']), 8, 8, false, true);
+  assert.ok(m.has('1,2') && m.has('1,5')); });
+t('symmetry: двойная симметрия даёт 4 копии', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, true);
+  assert.equal(m.size, 4); assert.ok(m.has('6,5')); });
+t('symmetry: без осей маска не меняется', () => { assert.deepEqual([...expandMask(new Set(['1,2']), 8, 8, false, false)], ['1,2']); });
+t('symmetry: mirrorDeltas инвертирует знак по активной оси', () => {
+  assert.deepEqual(mirrorDeltas(3, 2, true, false), [[3, 2], [-3, 2]]);
+  assert.deepEqual(mirrorDeltas(3, 2, false, true), [[3, 2], [3, -2]]);
+  assert.deepEqual(mirrorDeltas(3, 2, true, true), [[3, 2], [-3, 2], [3, -2], [-3, -2]]); });
 
 // --- конфигурация ---
 t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });

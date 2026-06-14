@@ -6,16 +6,20 @@ import { snapshot } from '../../core/history.js';
 import { eqc } from '../../logic/color.js';
 import { floodRegion } from '../../logic/flood.js';
 import { inSel } from '../../core/selection.js';
-import { referenceIndexFor } from '../../core/layers.js';
+import { referenceIndexFor, symA, symHA } from '../../core/layers.js';
+import { mirrorPoints } from '../../logic/symmetry.js';
 import { $ } from '../../core/dom.js';
 import { setCell } from './cells.js';
 
-export function flood(x, y) {
+function floodFrom(x, y) {
   if (x < 0 || y < 0 || x >= S.W || y >= S.H) return;
   const g = G(), ri = referenceIndexFor(S.cur), src = ri >= 0 ? S.layers[ri].grid : g, target = src[y][x], to = S.active;
   if (src === g && eqc(target, to)) return;
   for (const [cx, cy] of floodRegion(src, x, y, inSel)) setCell(cx, cy, to);
 }
+
+// заливка с учётом симметрии: регион под точкой и его зеркала (как у кисти)
+export function flood(x, y) { for (const [mx, my] of mirrorPoints(x, y, S.W, S.H, symA(), symHA())) floodFrom(mx, my); }
 
 // заливка как самостоятельное действие (снимок + перерисовка) — для drop-to-fill
 export function floodAt(x, y) { snapshot(); flood(x, y); bus.emit('render'); bus.emit('layers'); }
