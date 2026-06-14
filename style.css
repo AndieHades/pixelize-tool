@@ -698,7 +698,8 @@
 .brow.set { padding: 11px 12px; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brow.brush .swipe-front, .brow.brush:not(.swipe-row) { padding: 8px 10px; }
 .brow.set.on, .brow.brush.on .swipe-front, .brow.brush.on:not(.swipe-row) { background: var(--accent); color: var(--on-accent); }
-.brush-name { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.brow.brush .bname { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.bname.editing { outline: none; background: var(--surface); color: var(--txt); border-radius: 6px; padding: 1px 5px; box-shadow: 0 0 0 1px var(--accent); cursor: text; }
 .brush-prev { width: 100%; height: auto; display: block; image-rendering: pixelated; }
 #brush-rsz { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; color: var(--txt2); cursor: nwse-resize; }
 #brush-rsz svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }

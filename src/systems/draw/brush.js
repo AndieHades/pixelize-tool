@@ -6,6 +6,7 @@ import { paintCell } from './cells.js';
 import { ppVisit } from './pixel-perfect.js';
 import { coverageToMask, maskRound } from '../../logic/brush-mask.js';
 import { BRUSH_MASK, BRUSH_SCATTER } from '../../config/brush-import.js';
+import { BP_SMAX } from '../../config/limits.js';
 
 let cTok = -1, cSize = -1, cMask = null, acc = 0; // кеш маски + счётчик spacing
 export function resetScatter() { acc = 0; } // вызывается в начале штриха
@@ -29,7 +30,9 @@ function footprint(cx, cy, erase, m, ok) { const ox = m.w >> 1, oy = m.h >> 1;
   for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, ok); }
 
 export function brushStamp(x, y, erase) {
-  const tool = erase ? 'eraser' : 'pencil', s = S.brushes[tool].size, sb = S.stampBrush[tool];
+  const tool = erase ? 'eraser' : 'pencil', slider = S.brushes[tool].size, sb = S.stampBrush[tool];
+  // кисти из выделения штампуются в своём натуральном размере; слайдер 1..BP_SMAX масштабирует
+  const s = sb && sb.baseSize ? Math.max(1, Math.round(sb.baseSize * slider / BP_SMAX)) : slider;
   const m = activeMask(sb, s), g = sb && sb.grain ? sb.grain : null; // grain — уже бинарный дизер-тайл
   const ok = g ? (px, py) => g.data[(((py % g.h) + g.h) % g.h) * g.w + (((px % g.w) + g.w) % g.w)] : null;
   const p = sb && sb.params;

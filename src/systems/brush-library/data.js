@@ -7,6 +7,9 @@ export const lib = { sets: [], brushes: [], curSet: null };
 const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const byOrder = (a, b) => a.order - b.order;
 
+let loaded = false;
+export async function ensureLib() { if (loaded) return; loaded = true; await loadLib(); }
+
 export async function loadLib() {
   lib.sets = (await listSets()).sort(byOrder);
   lib.brushes = (await listBrushes()).sort(byOrder);

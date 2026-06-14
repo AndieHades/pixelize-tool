@@ -19,6 +19,7 @@ export const DEFAULT_KEYMAP = {
   'mod+c': 'edit.copy', 'mod+x': 'edit.cut', 'mod+v': 'edit.paste', 'mod+d': 'select.none',
   // слои и трансформация
   'mod+e': 'layer.merge', 'mod+g': 'layer.group', 'mod+a': 'layer.add', 'mod+t': 'transform.enter',
+  'mod+b': 'brush.fromSelection',
   // файл
   'mod+o': 'file.import', 'mod+s': 'file.exportPng', 'mod+shift+s': 'file.exportPsd',
 };
