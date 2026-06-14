@@ -530,6 +530,10 @@ t('tint-shade: без активного цвета в палитре — окн
 });
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t('toolbars: повторное нажатие Move выключает трансформацию', () => { tb.mount(); resetWH(8, 8); S.tool = 'move'; S.layers[0].grid[2][2] = [1, 1, 1, 255]; cache.dirtyAll();
+  actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); }); // активная кнопка трансформации выключает
+t('toolbars: повторное нажатие выделения снимает выделение', () => { tb.mount(); resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
+  document.getElementById('t-select').click(); assert.equal(S.sel, null); assert.equal(S.tool, 'pencil'); }); // активная кнопка выделения снимает
 t('toolbars: выделение и Free Transform подсвечивают свои кнопки', () => { resetWH(8, 8); S.tool = 'pencil';
   S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; bus.emit('selection');
   assert.ok(document.getElementById('t-select').classList.contains('on'));

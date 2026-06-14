@@ -25,6 +25,8 @@ function syncToolButtons() {
 }
 
 function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
+// повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
+const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };
 
 export function mount() {
   $('t-pencil').onclick = () => setTool('pencil'); // ЛКМ — выбор инструмента
@@ -34,9 +36,9 @@ export function mount() {
   $('t-line').onclick = () => setTool('line');
   wireShape('rect', 'tool.rect', 'tool.rectFill');
   wireShape('ellipse', 'tool.ellipse', 'tool.ellipseFill');
-  $('t-move').onclick = () => actions.run('transform.enter'); // Move = свободная трансформация (носить + размер + поворот), как Ctrl+T
-  $('t-select').onclick = () => setTool('select');
-  $('t-lasso').onclick = () => setTool('lasso');
+  $('t-move').onclick = () => actions.run(S.rotMode ? 'transform.apply' : 'transform.enter'); // повторное нажатие — применить и выключить
+  $('t-select').onclick = () => ((S.tool === 'select' || S.sel) ? selOff() : setTool('select'));
+  $('t-lasso').onclick = () => (S.tool === 'lasso' ? selOff() : setTool('lasso'));
   $('t-fill').onclick = () => { if (S.sel) actions.run('selection.fill'); else setTool('fill'); };
   $('t-adjust').onclick = () => { if (S.tool === 'adjust') $('adjpop').classList.toggle('on'); else setTool('adjust'); };
 

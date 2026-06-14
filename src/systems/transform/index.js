@@ -70,7 +70,7 @@ function enterSelectionRotMode() { const L = S.layers[S.cur], sel = cloneSel(S.s
   const backup = { idx: S.cur, sel, mask, grid: cloneGrid(L.grid), ext: new Map(L.ext) };
   clearSelectionCells(L, sel, mask, 0, 0); S.sel = null; S.selMask = null; markDirty(S.cur);
   S.rotMode = { idx: S.cur, idxs: [S.cur], sources: [{ L, idx: S.cur, src }], src, b: { x0: sel.x0, y0: sel.y0, w: sel.x1 - sel.x0 + 1, h: sel.y1 - sel.y0 + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [], selection: backup, sym };
-  bus.emit('selection'); bus.emit('tool', S.tool); $('rotbar').classList.add('on'); rotRebuild(); toast(t('toast.transformHint')); return true; }
+  bus.emit('selection'); bus.emit('tool', S.tool); rotRebuild(); toast(t('toast.transformHint')); return true; }
 
 export function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => S.layers.includes(L));
   if (!targets.length) return; let b0 = null;
@@ -82,7 +82,7 @@ export function enterRotMode(target) { const targets = (Array.isArray(target) ? 
       const c = L.grid[y] && x >= 0 && x < S.W ? L.grid[y][x] : L.ext.get(x + ',' + y); row.push(c ? c.slice() : null); }
     src.push(row); } return { L, idx: S.layers.indexOf(L), src }; });
   S.rotMode = { idx: i, idxs, sources, src: sources[0].src, b: { x0: b0.minx, y0: b0.miny, w: b0.maxx - b0.minx + 1, h: b0.maxy - b0.miny + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [] };
-  bus.emit('layers'); bus.emit('tool', S.tool); $('rotbar').classList.add('on'); rotRebuild();
+  bus.emit('layers'); bus.emit('tool', S.tool); rotRebuild();
   toast(t('toast.transformHint')); }
 
 function applyRotMode(m) { let res = null, per = [];
@@ -115,7 +115,7 @@ export function undoRotStep() { if (!S.rotMode) return false;
   rotRestoreState(S.rotMode, S.rotMode.hist.pop()); rotRebuild(); toast(t('toast.transformStepUndone')); return true; }
 
 export function exitRotMode(apply) { if (!S.rotMode) return; const m = S.rotMode, changed = rotHasChanges(m);
-  S.rotMode = null; S.rotPrev = null; S.rotQuad = null; $('rotbar').classList.remove('on'); $('cv').style.cursor = '';
+  S.rotMode = null; S.rotPrev = null; S.rotQuad = null; $('cv').style.cursor = '';
   bus.emit('tool', S.tool);
   if (m.selection && !changed) { restoreSelectionMode(m); bus.emit('selection'); bus.emit('render'); if (apply) toast(t('toast.transformApplied')); }
   else if (apply && changed) { if (applyRotMode(m)) toast(t('toast.transformApplied')); }
@@ -125,7 +125,6 @@ export function exitRotMode(apply) { if (!S.rotMode) return; const m = S.rotMode
 function menuStep(fn) { if (!S.rotMode) return; S.rotMode.hist.push({ ang: S.rotMode.ang, sx: S.rotMode.sx, sy: S.rotMode.sy, tx: S.rotMode.tx, ty: S.rotMode.ty }); fn(S.rotMode); S.rotMode.changed = rotHasChanges(S.rotMode); rotRebuild(); }
 
 export function mount() {
-  $('rot-ok').onclick = () => exitRotMode(true); $('rot-x').onclick = () => exitRotMode(false);
   $('trctx-flip-h').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.sx *= -1; }); };
   $('trctx-flip-v').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.sy *= -1; }); };
   $('trctx-rot-r').onclick = () => { $('trctx').classList.remove('on'); menuStep((m) => { m.ang += Math.PI / 2; }); };
@@ -147,3 +146,4 @@ export function mount() {
 actions.register('transform.enter', () => { if (!enterSelectionRotMode()) enterRotMode(activeTargets()); });
 actions.register('transform.enterTargets', (targets) => enterRotMode(targets));
 actions.register('transform.cancel', () => exitRotMode(false));
+actions.register('transform.apply', () => exitRotMode(true)); // повторное нажатие кнопки трансформации — применить и выключить
