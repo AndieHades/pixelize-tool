@@ -10,7 +10,7 @@ export const en = {
   'import.auto': 'Auto', 'import.brush': 'Brush…',
   'brush.library': 'Brushes', 'brush.add': 'Add set / import', 'brush.newSet': 'Create new set', 'brush.import': 'Import from Files',
   'brush.imported': 'Imported', 'brush.set': 'Set', 'brush.fromSelection': 'From Selection', 'brush.stampName': 'Stamp',
-  'menu.export': 'Export set', 'brush.packDesc': 'Brush set',
+  'menu.export': 'Export set', 'brush.exportLib': 'Export brushes', 'brush.packDesc': 'Brush set',
   'brush.settings': 'Brush settings', 'brush.size': 'Size', 'brush.spacing': 'Spacing', 'brush.scatter': 'Scatter',
   'brush.modeSingle': 'Stamp', 'brush.modeScatter': 'Scatter', 'brush.modeFlow': 'Flow', 'brush.testHint': 'Draw here to test the brush',
   'brush.round': 'Round', 'brush.square': 'Square', 'brush.dither': 'Dithering',
