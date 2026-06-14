@@ -18,6 +18,7 @@ import { generateTints, generateShades, generateHarmonyBaseColors, generateTintS
 import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
+import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
@@ -216,6 +217,25 @@ t('quickshape: круговой штрих → ellipse с равными сто�
 t('quickshape: каракули и короткий штрих не распознаются (raw остаётся)', () => {
   assert.equal(recognizeShape([[0, 0], [9, 1], [1, 8], [8, 2], [2, 9], [0, 4]]), null);
   assert.equal(recognizeShape([[0, 0], [1, 1]]), null); });
+
+// --- импорт кистей (brush-mask) ---
+t('brush-mask: круглый кончик 1×1 — одна клетка', () => { const m = maskRound(1); assert.deepEqual([m.w, m.h], [1, 1]); assert.equal(m.data[0], 1); });
+t('brush-mask: круглый кончик 5×5 — центр вкл, углы выкл', () => { const m = maskRound(5);
+  assert.equal(m.data[2 * 5 + 2], 1); assert.equal(m.data[0], 0); assert.equal(m.data[4], 0); });
+t('brush-mask: точечный кончик (1×1 покрытие) → сплошной квадрат size×size', () => {
+  const m = coverageToMask({ w: 1, h: 1, data: new Uint8Array([254]) }, 4);
+  assert.deepEqual([m.w, m.h], [4, 4]); assert.ok(m.data.every((v) => v === 1)); });
+t('brush-mask: сохраняет пропорции по большей стороне', () => {
+  const data = new Uint8Array(8 * 2).fill(255); // широкий кончик 8×2
+  const m = coverageToMask({ w: 8, h: 2, data }, 8); assert.equal(Math.max(m.w, m.h), 8); assert.ok(m.h < m.w); });
+t('brush-mask: пустое покрытие → null', () => { assert.equal(coverageToMask({ w: 4, h: 4, data: new Uint8Array(16) }, 4), null); });
+t('brush-mask: дизер-тайл 4×4 шахматка', () => {
+  const d = new Uint8Array([0, 255, 0, 255, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 0, 0]);
+  const tile = coverageToTile({ w: 4, h: 4, data: d }); assert.deepEqual([tile.w, tile.h], [4, 4]);
+  assert.equal(tile.data[1], 1); assert.equal(tile.data[0], 0); });
+t('brush-mask: вырожденный grain (всё вкл/выкл) → null', () => {
+  assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array([255, 255, 255, 255]) }), null);
+  assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array(4) }), null); });
 
 // --- конфигурация ---
 t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });
