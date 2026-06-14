@@ -8,10 +8,10 @@ import { snapshot, setUndoGuard, cloneGrid } from '../../core/history.js';
 import { expandCanvas } from '../../core/document.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { registerMode } from '../../core/canvas-handlers.js';
-import { effVis, folderChain } from '../../core/layers.js';
+import { effVis, folderChain, symA, symHA } from '../../core/layers.js';
 import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
-import { rotBuildCells, rotHasChanges, rotRestoreState } from './math.js';
+import { rotBuildCellsSym, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.js';
 
 let rotRAF = 0;
@@ -25,7 +25,7 @@ function memberCanvas(cells, W, H) { const c = document.createElement('canvas');
   x.putImageData(id, 0, 0); return c; }
 
 function rotRebuild() { if (!S.rotMode) return; const W = S.W, H = S.H, mems = []; let any = false;
-  for (const s of S.rotMode.sources) { const r = rotBuildCells(S.rotMode, s.src); if (!r) continue; any = true;
+  for (const s of S.rotMode.sources) { const r = rotBuildCellsSym(S.rotMode, s.src, W, H); if (!r) continue; any = true;
     const L = S.layers[s.idx]; if (L && effVis(s.idx) && L.opacity > 0) mems.push({ idx: s.idx, L, content: memberCanvas(r.cells, W, H) }); }
   S.rotPrev = any ? { idx: S.rotMode.idx, canvas: fxPreview(mems, W, H), px: 0, py: 0, ow: W, oh: H } : { idx: S.rotMode.idx, canvas: null };
   bus.emit('render'); }
@@ -34,10 +34,10 @@ const rotRebuildSoon = () => { cancelAnimationFrame(rotRAF); rotRAF = requestAni
 const cloneSel = (s) => (s ? { x0: s.x0, y0: s.y0, x1: s.x1, y1: s.y1 } : null);
 const cloneMask = (m) => (m ? new Set(m) : null);
 
-function selectionSource(L, sel, mask) {
+function selectionSource(L, sel, mask, keep) {
   const src = []; let any = false;
   for (let y = sel.y0; y <= sel.y1; y++) { const row = [];
-    for (let x = sel.x0; x <= sel.x1; x++) { const ok = !mask || mask.has(x + ',' + y), c = ok && L.grid[y][x] ? L.grid[y][x].slice() : null;
+    for (let x = sel.x0; x <= sel.x1; x++) { const ok = (!mask || mask.has(x + ',' + y)) && (!keep || keep(x, y)), c = ok && L.grid[y][x] ? L.grid[y][x].slice() : null;
       if (c) any = true; row.push(c); }
     src.push(row); }
   return any ? src : null;
@@ -62,11 +62,14 @@ function activeTargets() {
 }
 
 function enterSelectionRotMode() { const L = S.layers[S.cur], sel = cloneSel(S.sel), mask = cloneMask(S.selMask);
-  if (!L || !sel || S.selFloat) return false; const src = selectionSource(L, sel, mask);
+  if (!L || !sel || S.selFloat) return false;
+  const sa = symA(), sha = symHA(), sym = (sa || sha) ? { sx: sa, sy: sha } : null; // трансформируем одну сторону, зеркала достраиваются симметрично
+  const keep = sym ? (x, y) => (!sa || x * 2 <= S.W - 1) && (!sha || y * 2 <= S.H - 1) : null;
+  const src = selectionSource(L, sel, mask, keep);
   if (!src) { toast(t('toast.transformEmpty')); return false; }
   const backup = { idx: S.cur, sel, mask, grid: cloneGrid(L.grid), ext: new Map(L.ext) };
   clearSelectionCells(L, sel, mask, 0, 0); S.sel = null; S.selMask = null; markDirty(S.cur);
-  S.rotMode = { idx: S.cur, idxs: [S.cur], sources: [{ L, idx: S.cur, src }], src, b: { x0: sel.x0, y0: sel.y0, w: sel.x1 - sel.x0 + 1, h: sel.y1 - sel.y0 + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [], selection: backup };
+  S.rotMode = { idx: S.cur, idxs: [S.cur], sources: [{ L, idx: S.cur, src }], src, b: { x0: sel.x0, y0: sel.y0, w: sel.x1 - sel.x0 + 1, h: sel.y1 - sel.y0 + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [], selection: backup, sym };
   bus.emit('selection'); bus.emit('tool', S.tool); $('rotbar').classList.add('on'); rotRebuild(); toast(t('toast.transformHint')); return true; }
 
 export function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => S.layers.includes(L));
@@ -83,7 +86,7 @@ export function enterRotMode(target) { const targets = (Array.isArray(target) ? 
   toast(t('toast.transformHint')); }
 
 function applyRotMode(m) { let res = null, per = [];
-  for (const s of m.sources) { const r = rotBuildCells(m, s.src); per.push({ s, r }); if (!r) continue;
+  for (const s of m.sources) { const r = rotBuildCellsSym(m, s.src, S.W, S.H); per.push({ s, r }); if (!r) continue;
     res = res ? { minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : r; }
   if (!res) { toast(t('toast.transformEmpty')); return false; }
   if (m.selection) return applySelectionRotMode(m, per, res);

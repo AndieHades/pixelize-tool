@@ -77,7 +77,7 @@
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
 | `systems/import/*` | импорт в редактор: кнопка Import (Photo/File/Pixelize), конвертер, вставка PSD папкой | ✅ | 10-import |
 | `systems/export/*` | единый Export: Scope→ExportDocument→Mode→Format→Save (PNG/PSD, склейка/слои/раздельно, Trim, скрытые слои) | ✅ | 11-export |
-| `systems/transform/*` | свободно трансформирует слой рамкой | ✅ | 12-app |
+| `systems/transform/*` | свободно трансформирует слой/выделение синей рамкой (перенос/масштаб/поворот; при симметрии — зеркально, `rotBuildCellsSym`) | ✅ | 12-app |
 | `systems/layers/*` | панель слоёв: вложенные группы, список/драг/свайпы/щипок-слияние/операции/меню, строки эффектов (fx-rows) | ✅ | 09-layers-ui |
 | `systems/panels.js` | перестановка кнопок тулбара/сайдбара (ПКМ-удержание/долгий тап) | ✅ | (новое) |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
