@@ -1,0 +1,51 @@
+// Brush Size Modifier: пока зажат Hot Key (по умолчанию D) и кнопка/перо НЕ
+// касаются холста, движение курсора плавно меняет размер кисти. Работает
+// поверх любого инструмента рисования — не меняет инструмент, не блокирует
+// штрих, не открывает панели. Правит лишь S.brushes[…].size.
+import { S } from '../core/state.js';
+import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
+import { $ } from '../core/dom.js';
+import { brushKey } from '../core/tools.js';
+import { BP_SMAX } from '../config/limits.js';
+import { SENS_PRESETS, DIRECTIONS } from '../config/brush-resize.js';
+
+const STORE = 'brushResize';
+let active = false, acc = 0, last = null;
+const R = S.brushResize;
+const typing = (t) => !!((t && t.matches && t.matches('input, textarea')) || (t && t.isContentEditable));
+
+try { const s = JSON.parse(localStorage.getItem(STORE)); if (s) Object.assign(R, { key: s.key || R.key, sensitivity: s.sensitivity || R.sensitivity, direction: s.direction || R.direction }); } catch (e) {}
+const persist = () => { try { localStorage.setItem(STORE, JSON.stringify({ key: R.key, sensitivity: R.sensitivity, direction: R.direction })); } catch (e) {} };
+
+function setSize(n) { const k = brushKey(), v = Math.max(1, Math.min(BP_SMAX, n));
+  if (v !== S.brushes[k].size) { S.brushes[k].size = v; bus.emit('brush'); bus.emit('render'); } } // ползунок + курсор кисти обновляются в реальном времени
+
+function onMove(e) { if (!active || R.capturing) return;
+  if (e.buttons !== 0) { last = null; return; }                 // идёт штрих (ЛКМ/касание) — размер не трогаем
+  if (!last) { last = { x: e.clientX, y: e.clientY }; return; }   // первый кадр после активации/штриха — без скачка
+  const dx = e.clientX - last.x, dy = e.clientY - last.y; last = { x: e.clientX, y: e.clientY };
+  const d = R.direction === 'horizontal' ? dx : R.direction === 'vertical' ? -dy : dx - dy; // вправо/вверх — больше
+  if (!d) return; acc += d * R.sensitivity; setSize(Math.round(acc)); }
+
+function onDown(e) { if (e.type === 'keydown' && e.repeat) return;
+  const k = (e.key || '').toLowerCase();
+  if (R.capturing) { e.preventDefault();                         // режим захвата клавиши из настроек
+    if (k === 'escape') { R.capturing = false; bus.emit('brushResize'); return; }
+    if (k.length === 1) { R.key = k; R.capturing = false; persist(); bus.emit('brushResize'); } return; }
+  if (active || k !== R.key || typing(e.target) || document.querySelector('.ovl.on')) return;
+  active = true; acc = S.brushes[brushKey()].size; last = null; } // запоминаем текущий размер как старт
+
+function onUp(e) { if ((e.key || '').toLowerCase() === R.key) { active = false; last = null; } }
+const stop = () => { active = false; last = null; };
+
+actions.register('brushResize.capture', () => { R.capturing = true; bus.emit('brushResize'); });
+actions.register('brushResize.cycleDir', () => { R.direction = DIRECTIONS[(DIRECTIONS.indexOf(R.direction) + 1) % DIRECTIONS.length]; persist(); bus.emit('brushResize'); });
+actions.register('brushResize.cycleSens', () => { const i = SENS_PRESETS.indexOf(R.sensitivity);
+  R.sensitivity = SENS_PRESETS[(i < 0 ? 0 : i + 1) % SENS_PRESETS.length]; persist(); bus.emit('brushResize'); });
+
+export function mount() {
+  window.addEventListener('keydown', onDown); window.addEventListener('keyup', onUp);
+  window.addEventListener('blur', stop); // потеря фокуса — клавиша «отпускается», иначе жест залипнет
+  $('cv').addEventListener('pointermove', onMove);
+}

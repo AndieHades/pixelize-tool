@@ -77,6 +77,7 @@
 | `systems/panels.js` | перестановка кнопок тулбара/сайдбара (ПКМ-удержание/долгий тап) | ✅ | (новое) |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
+| `systems/brush-resize.js` | Brush Size Modifier: зажатый Hot Key + движение курсора (без рисования) плавно меняет размер кисти | ✅ | (новое) |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
@@ -95,7 +96,7 @@
 |--------|-----------|:--:|-----|
 | `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` (ru/en, паритет) | ✅ | [i18n.md](i18n.md) |
 | `styles/tokens.css` | дизайн-токены темы (синий — один токен `--accent`) | ✅ | [theming.md](theming.md) |
-| `systems/settings.js` | тумблер темы + смена языка (шестерёнка в галерее) | ✅ | i18n/theming |
+| `systems/settings.js` | тема + язык + настройки Brush Size Modifier (шестерёнка в галерее) | ✅ | i18n/theming |
 | `systems/gallery/store.js` | элементы галереи: вложенные папки, перемещение, дубль, удаление, уникальные имена | ✅ | roadmap §5 |
 | `systems/gallery/doc.js` | персистентность активной работы (снимок ↔ запись, автосейв) | ✅ | roadmap §5 |
 | `systems/gallery/drag.js` | перетаскивание плиток (долгий тап → драг → папка) | ✅ | roadmap §5 |
@@ -119,6 +120,7 @@
 | `config/layer-actions.js` | набор кнопок свайпа строки слоя (`LAYER_SWIPE_ACTIONS`) | ✅ |
 | `config/tint-shade.js` | шаги шкал (`TINT_SHADE_STEPS`) и углы гармоний (`HARMONY_OFFSETS`) | ✅ |
 | `config/lasso.js` | дефолты Freehand Selection (режим/операция), порог замыкания, минимум точек | ✅ |
+| `config/brush-resize.js` | дефолты Brush Size Modifier (`BRUSH_RESIZE`), пресеты чувствительности, список направлений | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

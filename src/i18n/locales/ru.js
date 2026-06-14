@@ -62,6 +62,8 @@ export const ru = {
   'menu.deleteLayer': 'Удалить слой', 'menu.deleteFolder': 'Удалить папку',
   'layer.name': 'Слой', 'folder.name': 'Папка', 'layer.imageName': 'Картинка', 'layer.pasteName': 'Вставка', 'layer.copySuffix': 'копия', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Тема', 'ui.language': 'Язык', 'ui.settings': 'Настройки', 'ui.lightTheme': 'Светлая тема',
+  'brsz.key': 'Клавиша размера кисти', 'brsz.dir': 'Направление изменения', 'brsz.sens': 'Чувствительность', 'brsz.press': 'Нажмите клавишу…',
+  'brsz.both': 'Обе оси', 'brsz.horizontal': 'Горизонталь', 'brsz.vertical': 'Вертикаль', 'brsz.low': 'Низкая', 'brsz.medium': 'Средняя', 'brsz.high': 'Высокая',
   'ui.dragPanel': 'Перетащить панель', 'ui.resizePanel': 'Изменить размер панели', 'ui.dragPalette': 'Перетащить палитру', 'ui.resizeWindow': 'Изменить размер окна',
   'gallery.untitled': 'Без названия',
   'gallery.select': 'Выбрать',

@@ -2,11 +2,11 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import { $ } from '../core/dom.js';
-import { setTool } from '../core/tools.js';
+import { setTool, brushKey } from '../core/tools.js';
 import { doUndo, doRedo } from '../core/history.js';
 import { BP_SMAX } from '../config/limits.js';
 
-const curBrush = () => (S.tool === 'eraser' ? 'eraser' : 'pencil');
+const curBrush = brushKey;
 
 function vslPos(fillId, knobId, frac) { const f = Math.max(0, Math.min(1, frac)), knob = $(knobId), sl = knob.parentElement;
   $(fillId).style.height = f * 100 + '%'; knob.style.bottom = Math.max(0, (sl.clientHeight - knob.offsetHeight) * f) + 'px'; }
@@ -35,5 +35,6 @@ export function mount() {
   $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo;
   window.addEventListener('resize', syncBars);
   bus.on('tool', syncBars);
+  bus.on('brush', syncBars); // живое обновление ползунка при жесте Brush Size Modifier
   syncBars();
 }

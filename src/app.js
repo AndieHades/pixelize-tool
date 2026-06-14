@@ -12,6 +12,7 @@ import { refreshColors } from './styles/canvas-colors.js';
 // системы с UI-монтированием
 import * as palette from './systems/palette.js';
 import * as brushBar from './systems/brush-bar.js';
+import * as brushResize from './systems/brush-resize.js';
 import * as colorPicker from './systems/color-picker.js';
 import * as toolbars from './systems/toolbars.js';
 import * as layersUI from './systems/layers/index.js';
@@ -52,7 +53,7 @@ import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, status, toolpops];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();

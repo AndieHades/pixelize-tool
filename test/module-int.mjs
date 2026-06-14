@@ -46,6 +46,7 @@ const { insertPsd } = await import('../src/systems/import/psd-insert.js');
 const pal = await import('../src/systems/palette.js');
 const swipe = await import('../src/core/swipe-actions.js');
 const bb = await import('../src/systems/brush-bar.js');
+const brushResize = await import('../src/systems/brush-resize.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
@@ -309,6 +310,23 @@ t('lasso: Segment продолжает контур и замыкается у �
 t('lasso: cancel убирает контур, не трогая существующее выделение', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   const h = toolHandler('lasso'); h.down({ gx: 5, gy: 5 }); h.move({ gx: 6, gy: 6 }); assert.ok(fhpath.pathActive());
   actions.run('lasso.cancel'); assert.ok(!fhpath.pathActive()); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); });
+
+brushResize.mount(); // вешает слушатели один раз
+const brKey = (type, k) => window.dispatchEvent(new window.KeyboardEvent(type, { key: k }));
+const brPtr = (x, y, buttons) => document.getElementById('cv').dispatchEvent(new window.MouseEvent('pointermove', { clientX: x, clientY: y, buttons }));
+t('brush-resize: движение при зажатом Hot Key меняет размер кисти', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd'; S.brushResize.capturing = false;
+  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); // вправо → больше (до предела)
+  assert.equal(S.brushes.pencil.size, 8); brKey('keyup', 'd'); });
+t('brush-resize: рисование не меняет размер, после штриха снова можно', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 8;
+  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
+  brKey('keydown', 'd'); brPtr(200, 100, 0); brPtr(150, 100, 1); assert.equal(S.brushes.pencil.size, 8); // ЛКМ нажата — штрих, размер цел
+  brPtr(150, 100, 0); brPtr(100, 100, 0); assert.equal(S.brushes.pencil.size, 3); brKey('keyup', 'd'); }); // влево после штриха — уменьшает
+t('brush-resize: без зажатого Hot Key размер не меняется', () => { resetWH(8, 8); S.brushes.pencil.size = 4; S.brushResize.sensitivity = 0.1;
+  brKey('keydown', 'd'); brKey('keyup', 'd'); brPtr(100, 100, 0); brPtr(300, 100, 0); assert.equal(S.brushes.pencil.size, 4); });
+t('brush-resize: направление и чувствительность переключаются циклически', () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
+  actions.run('brushResize.cycleDir'); assert.equal(S.brushResize.direction, 'horizontal');
+  actions.run('brushResize.cycleSens'); assert.notEqual(S.brushResize.sensitivity, 0.05); });
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
