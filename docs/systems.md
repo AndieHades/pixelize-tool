@@ -18,6 +18,7 @@
 | `core/selection.js` | запросы попадания в выделение/маску | ✅ | 06-selection |
 | `core/tools.js` | переключает активный инструмент | ✅ | 08-palette |
 | `core/canvas-handlers.js` | реестр обработчиков холста (инструменты/режимы) | ✅ | 07-input |
+| `core/viewport.js` | экранные координаты → клетка сетки (`gridAt`) — общий для ввода и пипетки | ✅ | (новое) |
 | `core/layer-cache.js` | кеширует слой в canvas и собирает композит | ✅ | 03-render |
 | `core/composite.js` | раскладка композита: слои+обтравка+эффекты слоёв/папок | ✅ | (эффекты) |
 | `core/effects-render.js` | растеризует эффекты слоя/папки в canvas (кеш по подписи) | ✅ | (эффекты) |
@@ -54,7 +55,8 @@
 | Модуль | Одна фраза | Статус | Источник |
 |--------|-----------|:--:|----------|
 | `systems/render/*` | рисует видимый холст (index+overlays+checker) | ✅ | 03-render |
-| `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка/пипетка | ✅ | 05-draw |
+| `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка | ✅ | 05-draw |
+| `systems/eyedropper/*` | единственная пипетка: один pipeline (Alt/клик-залипание/удержание bb-pick/долгое нажатие) → ColorPickSource (холст/референс/палитра) → Active Color Manager | ✅ | (выделение цвета) |
 | `systems/effects/*` | неразрушающие Layer Effects: панель, окно настроек (превью+Apply/Cancel), копипаст/меню | ✅ | (эффекты) |
 | `systems/mono.js` | переводит слой/изображение в монохром | ✅ | 05-draw |
 | `systems/rotate-canvas.js` | поворачивает холст на 90° | ✅ | 05-draw |
@@ -77,9 +79,9 @@
 | `systems/panels.js` | перестановка кнопок тулбара/сайдбара (ПКМ-удержание/долгий тап) | ✅ | (новое) |
 | `systems/color-picker.js` | подбирает цвет в HSV | ✅ | 12-app |
 | `systems/brush-bar.js` | правит размер/непрозрачность кисти | ✅ | 12-app |
-| `systems/brush-resize.js` | Brush Size Modifier: зажатый Hot Key или удержание экранной пипетки + движение курсора (без рисования) плавно меняет размер кисти | ✅ | (новое) |
+| `systems/brush-resize.js` | Brush Size Modifier: зажатый Hot Key (D) или наведение пером при удержании bb-pick + движение курсора (без рисования) плавно меняет размер кисти | ✅ | (новое) |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
-| `systems/reference-window.js` | показывает окно референса | ✅ | 12-app |
+| `systems/reference-window.js` | показывает окно референса (пипетка по нему — Eyedropper System) | ✅ | 12-app |
 | `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
 | `systems/tint-shade/*` | окно Tint & Shade: шкалы тинтов/шейдов + гармонии от базового цвета, выбор → палитра | ✅ | (новое) |
 | `systems/toolbars.js` | кнопки панелей: инструменты/тогглы/эффекты/экспорт | ✅ | 12-app |
@@ -121,6 +123,7 @@
 | `config/tint-shade.js` | шаги шкал (`TINT_SHADE_STEPS`) и углы гармоний (`HARMONY_OFFSETS`) | ✅ |
 | `config/lasso.js` | дефолты Freehand Selection (режим/операция), порог замыкания, минимум точек | ✅ |
 | `config/brush-resize.js` | дефолты Brush Size Modifier (`BRUSH_RESIZE`), пресеты чувствительности, список направлений | ✅ |
+| `config/eyedropper.js` | Hot Key пипетки по умолчанию (`EYEDROPPER` — Alt, переназначается) | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

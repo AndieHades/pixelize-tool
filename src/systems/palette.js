@@ -31,6 +31,7 @@ export function setActiveColor(c, pickTool = true) {
 export function addColor(hex) { const c = hexToRgb(hex); if (!S.palette.some((p) => eqc(p, c))) S.palette.push(c); setActiveColor(c); }
 
 actions.register('palette.add', addColor);
+actions.register('color.setActive', (c) => setActiveColor(c, false)); // Active Color Manager: пипетка/источники ставят активный цвет, не меняя инструмент
 // упорядочить палитру по тону и светлоте (кнопку добавим позже — пока через action)
 actions.register('palette.sort', () => { S.palette = sortPalette(S.palette); bus.emit('palette'); });
 

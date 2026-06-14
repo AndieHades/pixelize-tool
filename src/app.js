@@ -35,6 +35,7 @@ import * as settings from './systems/settings.js';
 import * as panels from './systems/panels.js';
 import * as selBar from './systems/selection/bar.js';
 import * as lasso from './systems/freehand/panel.js';
+import * as eyedropper from './systems/eyedropper/index.js';
 import * as status from './systems/status.js';
 import * as toolpops from './systems/toolpops.js';
 
@@ -53,7 +54,7 @@ import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, status, toolpops];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();

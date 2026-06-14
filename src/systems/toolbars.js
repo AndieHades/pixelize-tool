@@ -6,7 +6,7 @@ import * as actions from '../core/actions.js';
 import { $, toast, t } from '../core/dom.js';
 import { setTool } from '../core/tools.js';
 
-const TOOLS = ['pencil', 'eraser', 'pick', 'fill', 'select', 'lasso', 'line', 'rect', 'ellipse', 'move', 'adjust'];
+const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'line', 'rect', 'ellipse', 'move', 'adjust'];
 
 // фигура (rect/ellipse): клик — выбрать, ПКМ по иконке — контур ↔ залитая
 function wireShape(id, outlineKey, fillKey) { const b = $('t-' + id);
@@ -20,9 +20,7 @@ function syncToolButtons() {
   for (const id of TOOLS) { const b = $('t-' + id); if (b) b.classList.toggle('on', S.tool === id); }
   $('t-select').classList.toggle('on', S.tool === 'select' || !!S.sel);
   $('t-move').classList.toggle('on', !!S.rotMode);
-  $('bb-pick').classList.toggle('on', S.tool === 'pick');
-  document.body.classList.toggle('picking', S.tool === 'pick');
-  $('cv').style.cursor = S.tool === 'move' ? 'move' : '';
+  $('cv').style.cursor = S.tool === 'move' ? 'move' : ''; // пипетка (bb-pick «on», body.picking) — на Eyedropper System
 }
 
 function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
@@ -30,7 +28,6 @@ function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).class
 export function mount() {
   $('t-pencil').onclick = () => setTool('pencil');
   $('t-eraser').onclick = () => setTool('eraser');
-  $('t-pick').onclick = () => setTool('pick');
   $('t-line').onclick = () => setTool('line');
   wireShape('rect', 'tool.rect', 'tool.rectFill');
   wireShape('ellipse', 'tool.ellipse', 'tool.ellipseFill');

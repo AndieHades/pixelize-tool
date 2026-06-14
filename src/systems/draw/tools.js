@@ -41,9 +41,7 @@ const shape = {
 };
 
 const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); bus.emit('render'); afterStroke(); } };
-const pick = { down({ gx, gy }) { stamp(gx, gy); } }; // stamp при tool=pick подбирает цвет и ставит карандаш
 
 for (const t of ['pencil', 'eraser', 'adjust']) registerTool(t, brush);
 for (const t of ['line', 'rect', 'ellipse']) registerTool(t, shape);
 registerTool('fill', fill);
-registerTool('pick', pick);

@@ -4,7 +4,7 @@
 // (буква в нижнем регистре, цифра, или '=', '-', '[', ']', 'delete'…).
 export const DEFAULT_KEYMAP = {
   // инструменты
-  b: 'tool.pencil', e: 'tool.eraser', f: 'tool.fill', i: 'tool.pick',
+  b: 'tool.pencil', e: 'tool.eraser', f: 'tool.fill',
   m: 'tool.select', u: 'tool.line', k: 'tool.rect', q: 'tool.ellipse',
   // переключатели и панели
   l: 'ui.layers', p: 'toggle.pixelPerfect', t: 'toggle.stabilize',

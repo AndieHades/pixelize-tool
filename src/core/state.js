@@ -8,6 +8,7 @@ import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
 import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT, EFFECT_DEFAULTS } from '../config/defaults.js';
 import { LASSO_DEFAULT } from '../config/lasso.js';
 import { BRUSH_RESIZE } from '../config/brush-resize.js';
+import { EYEDROPPER } from '../config/eyedropper.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
@@ -37,6 +38,7 @@ export const S = {
   sel: null, selMask: null, selFloat: null,
   lassoMode: LASSO_DEFAULT.mode, lassoOp: LASSO_DEFAULT.op, lassoPath: null,
   brushResize: { ...BRUSH_RESIZE, capturing: false }, // жест Brush Size Modifier (настройки + захват клавиши)
+  eyedrop: { ...EYEDROPPER, capturing: false }, // Eyedropper System (Hot Key + захват клавиши)
   view: { zoom: 12, ox: 0, oy: 0 },
   undoStack: [], redoStack: [],
   // общая интерактивная/превью-стейт, которую читает рендер и пишут системы

@@ -37,6 +37,7 @@ function build() { const m = $('setmenu'); m.innerHTML = '';
   m.appendChild(langRow);
 
   const R = S.brushResize;
+  valRow(m, 'eye.key', S.eyedrop.capturing ? t('brsz.press') : S.eyedrop.key.toUpperCase(), 'eyedropper.capture');
   valRow(m, 'brsz.key', R.capturing ? t('brsz.press') : R.key.toUpperCase(), 'brushResize.capture');
   valRow(m, 'brsz.dir', t('brsz.' + R.direction), 'brushResize.cycleDir');
   valRow(m, 'brsz.sens', sensLabel(), 'brushResize.cycleSens');
@@ -45,4 +46,5 @@ function build() { const m = $('setmenu'); m.innerHTML = '';
 function openSettings() { build(); const r = $('gal-settings').getBoundingClientRect(); showMenuAt($('setmenu'), r.left + r.width / 2, r.bottom + 2); }
 
 export function mount() { $('gal-settings').onclick = openSettings;
-  bus.on('brushResize', () => { if ($('setmenu').classList.contains('on')) build(); }); } // захват клавиши/смена настроек — обновляем открытое меню
+  const refresh = () => { if ($('setmenu').classList.contains('on')) build(); }; // захват клавиши/смена настроек — обновляем открытое меню
+  bus.on('brushResize', refresh); bus.on('eyedropper', refresh); }

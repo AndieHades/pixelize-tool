@@ -2,7 +2,7 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import { $ } from '../core/dom.js';
-import { setTool, brushKey } from '../core/tools.js';
+import { brushKey } from '../core/tools.js';
 import { doUndo, doRedo } from '../core/history.js';
 import { BP_SMAX } from '../config/limits.js';
 
@@ -31,8 +31,7 @@ export function mount() {
     syncBars(); showBbVal('bp-size-sl', S.brushes[curBrush()].size + ' px'); bus.emit('render'); });
   vslDrag('bp-op-sl', (f) => { S.brushes[curBrush()].op = Math.max(0, Math.min(1, f));
     syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });
-  $('bb-pick').onclick = () => setTool('pick');
-  $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo;
+  $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo; // bb-pick — кнопка пипетки: клик/удержание ведёт Eyedropper System
   window.addEventListener('resize', syncBars);
   bus.on('tool', syncBars);
   bus.on('brush', syncBars); // живое обновление ползунка при жесте Brush Size Modifier

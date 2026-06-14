@@ -1,5 +1,5 @@
-// Окно референса: открыть картинку, пан/зум, поворот, отражение, пипетка по клику.
-import * as actions from '../core/actions.js';
+// Окно референса: открыть картинку, пан/зум, поворот, отражение. Пипетка по
+// референсу — через единую Eyedropper System (читает пиксели #refcv), не здесь.
 import { $, toast, t } from '../core/dom.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
@@ -27,11 +27,6 @@ function rotateRef() { if (!refSrc) return; const c = document.createElement('ca
 function flipRef() { if (!refSrc) return; const c = document.createElement('canvas'); c.width = refSrc.width; c.height = refSrc.height;
   const x = c.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(refSrc, 0, 0); refSrc = c; refRender(); }
 
-function pickFromRef(e) { if (!refSrc) return; const cv = rcv(), dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
-  try { const px = cv.getContext('2d').getImageData(Math.round((e.clientX - r.left) * dpr), Math.round((e.clientY - r.top) * dpr), 1, 1).data;
-    if (px[3] > 10) { const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
-      actions.run('palette.add', hex); toast(t('toast.colorFromRef')); } } catch (err) {} }
-
 export function mount() {
   $('refbtn').onclick = () => toggleRef(); $('ref-x').onclick = () => toggleRef(false);
   $('ref-rot').onclick = rotateRef; $('ref-flip').onclick = flipRef;
@@ -44,5 +39,5 @@ export function mount() {
   floatingWindow($('refwin'), { grip: $('refgrip'), handle: $('refrsz'), clampRight: 70,
     onResize: (w, h) => { $('refwin').style.width = Math.max(140, Math.min(innerWidth - 12, w)) + 'px';
       $('refwin').style.height = Math.max(120, Math.min(innerHeight - 12, h)) + 'px'; refRender(); } });
-  attachPanZoom(rcv(), rv, { min: 0.05, max: 40, render: refRender, onPick: pickFromRef });
+  attachPanZoom(rcv(), rv, { min: 0.05, max: 40, render: refRender });
 }

@@ -47,6 +47,7 @@ const pal = await import('../src/systems/palette.js');
 const swipe = await import('../src/core/swipe-actions.js');
 const bb = await import('../src/systems/brush-bar.js');
 const brushResize = await import('../src/systems/brush-resize.js');
+const eyedropper = await import('../src/systems/eyedropper/index.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
@@ -216,8 +217,8 @@ await ta('draw: удержание фигуры на месте → ровный
   assert.deepEqual(S.linePrev, [1, 1, 1, 3]);
   await new Promise((r) => setTimeout(r, SHAPE_SNAP_MS + 60)); // держим на месте — должно снапнуться в квадрат
   assert.deepEqual(S.linePrev, [1, 1, 3, 3]); h.up({}); });
-t('draw: пипетка берёт цвет в активный', () => { reset4(); S.layers[0].grid[1][1] = [40, 50, 60, 255]; cache.dirtyAll();
-  S.tool = 'pick'; stamp(1, 1); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
+t('eyedropper: color.setActive ставит активный цвет, не меняя инструмент', () => { reset4(); S.tool = 'pencil'; S.active = [1, 2, 3];
+  actions.run('color.setActive', [40, 50, 60]); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 
 t('rotate-canvas: меняет W/H местами', () => { resetWH(4, 6); rotateCanvas(); assert.equal(S.W, 6); assert.equal(S.H, 4); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
@@ -327,18 +328,17 @@ t('brush-resize: без зажатого Hot Key размер не меняет�
 t('brush-resize: направление и чувствительность переключаются циклически', () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
   actions.run('brushResize.cycleDir'); assert.equal(S.brushResize.direction, 'horizontal');
   actions.run('brushResize.cycleSens'); assert.notEqual(S.brushResize.sensitivity, 0.05); });
-const brBtn = (type) => document.getElementById('bb-pick').dispatchEvent(new window.MouseEvent(type, { bubbles: true }));
-t('brush-resize: удержание экранной пипетки меняет размер пером над холстом', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
-  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1;
-  brBtn('pointerdown'); brPtr(100, 100, 0); brPtr(180, 100, 0); assert.ok(S.brushes.pencil.size > 1); brBtn('pointerup'); });
-t('brush-resize: использованный жест на пипетке подавляет клик-выбор', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
-  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1;
-  const pk = document.getElementById('bb-pick'); let clicked = false; pk.onclick = () => { clicked = true; };
-  brBtn('pointerdown'); brPtr(100, 100, 0); brPtr(180, 100, 0); brBtn('pointerup'); brBtn('click');
-  assert.equal(clicked, false); pk.onclick = null; }); // жест использован — клик подавлен
-t('brush-resize: короткий тап пипетки клик не подавляет', () => { resetWH(8, 8);
-  const pk = document.getElementById('bb-pick'); let clicked = false; pk.onclick = () => { clicked = true; };
-  brBtn('pointerdown'); brBtn('pointerup'); brBtn('click'); assert.equal(clicked, true); pk.onclick = null; });
+eyedropper.mount(); // вешает слушатели Eyedropper System один раз
+const bbTap = () => { const pk = document.getElementById('bb-pick'); pk.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true })); pk.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true })); };
+t('eyedropper: короткий клик по bb-pick включает залипающий режим (ПК)', () => { resetWH(8, 8); document.body.classList.remove('picking');
+  bbTap(); assert.ok(document.body.classList.contains('picking')); // пипетка активна без Hot Key
+  bus.emit('tool', 'pencil'); assert.ok(!document.body.classList.contains('picking')); }); // выбор инструмента выключает
+t('eyedropper: повторный клик по bb-pick выключает залипающий режим', () => { document.body.classList.remove('picking');
+  bbTap(); assert.ok(document.body.classList.contains('picking'));
+  bbTap(); assert.ok(!document.body.classList.contains('picking')); });
+t('eyedropper: brush-resize живёт на клавише D отдельно от пипетки', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+  S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
+  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); assert.ok(S.brushes.pencil.size > 1); brKey('keyup', 'd'); });
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
