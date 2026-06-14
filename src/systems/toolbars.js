@@ -53,6 +53,7 @@ export function mount() {
   $('mono').onclick = () => actions.run('effect.mono');
   $('bc').onclick = () => actions.run('effect.bc');
   $('trim').onclick = () => actions.run('canvas.trim');
+  $('center').onclick = () => actions.run('layer.center');
 
   $('zin').onclick = () => actions.run('zoom.in');
   $('zout').onclick = () => actions.run('zoom.out');

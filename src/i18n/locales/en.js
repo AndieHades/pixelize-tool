@@ -24,7 +24,7 @@ export const en = {
   'side.symV': 'Horizontal symmetry (S)', 'side.symH': 'Vertical symmetry (Shift+S)', 'side.pp': 'Pixel-perfect (P)',
   'side.stab': 'Stroke stabilization (T)', 'side.outline': 'Outline (O)', 'side.flipH': 'Flip horizontally (H)',
   'side.flipV': 'Flip vertically (V)', 'side.rotate': 'Rotate canvas 90° (R)', 'side.mono': 'Monochrome (whole image)',
-  'side.bc': 'Brightness/contrast (whole image)', 'side.crop': 'Crop (C): frame → Enter', 'side.trim': 'Trim empty margins to artwork',
+  'side.bc': 'Brightness/contrast (whole image)', 'side.crop': 'Crop (C): frame → Enter', 'side.trim': 'Trim empty margins to artwork', 'side.center': 'Center object (in selection if any)',
   'dialog.newCanvas': 'New canvas', 'dialog.export': 'Export', 'dialog.palettes': 'Palettes', 'dialog.import': 'Import to pixel art',
   // export: four independent parameters + options
   'export.scope': 'What', 'export.selected': 'Selected', 'export.folder': 'Folder', 'export.project': 'Project',
@@ -140,7 +140,7 @@ export const en = {
   'toast.layerMono': 'Layer to monochrome',
   'toast.layerRotated': 'Layer rotated',
   'toast.layerDup': 'Layer duplicated',
-  'toast.layerEmpty': 'Layer is empty',
+  'toast.layerEmpty': 'Layer is empty', 'toast.centered': 'Object centered',
   'toast.transformCancelled': 'Transform cancelled',
   'toast.transformApplied': 'Transform applied',
   'toast.transformEmpty': 'Transform is empty',
