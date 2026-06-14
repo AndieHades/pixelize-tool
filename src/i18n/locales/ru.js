@@ -116,7 +116,7 @@ export const ru = {
   'toast.noTransformUndo': 'В трансформации нечего отменять',
   'toast.redone': 'Возвращено',
   'toast.selInverted': 'Выделение инвертировано',
-  'toast.cropHint': 'Грани наружу — расширить · внутри — сдвиг рисунка · ✓/Enter',
+  'toast.cropHint': 'Грани наружу — расширить · ЛКМ внутри — сдвиг рисунка · ПКМ внутри — сдвиг рамки · ✓/Enter',
   'toast.monoAll': 'Изображение в монохроме',
   'toast.invertAll': 'Инверсия: выделено всё → ничего',
   'toast.imgToLayer': 'Картинка на новом слое',

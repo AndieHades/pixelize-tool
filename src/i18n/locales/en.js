@@ -114,7 +114,7 @@ export const en = {
   'toast.noTransformUndo': 'Nothing to undo in transform',
   'toast.redone': 'Redone',
   'toast.selInverted': 'Selection inverted',
-  'toast.cropHint': 'Edges out — expand · inside — move artwork · ✓/Enter',
+  'toast.cropHint': 'Edges out — expand · LMB inside moves artwork · RMB inside moves frame · ✓/Enter',
   'toast.monoAll': 'Image to monochrome',
   'toast.invertAll': 'Invert: all selected → none',
   'toast.imgToLayer': 'Image on new layer',

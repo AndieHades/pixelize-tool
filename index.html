@@ -78,6 +78,9 @@
 
   <div id="cropbar">
     <button id="crop-sym" data-i18n-title="crop.center"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
+    <div class="crop-size"><span data-i18n="label.width"></span><input id="crop-w" type="number" min="1" max="640" step="1" inputmode="numeric" /></div>
+    <button id="crop-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
+    <div class="crop-size"><span data-i18n="label.height"></span><input id="crop-h" type="number" min="1" max="640" step="1" inputmode="numeric" /></div>
     <button id="crop-ok" data-i18n-title="crop.apply"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
     <button id="crop-cancel" data-i18n-title="crop.cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>

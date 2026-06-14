@@ -676,11 +676,37 @@ t('effects: цвет эффекта — наш #colpop, не системный 
 t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
 
-t('status: при кропе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); status.mount();
+t('crop: поля размера и скрепка меняют рамку', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+  const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
+  cw.value = '4'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 4); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 8);
+  link.click(); ch.value = '6'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 3); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 6);
+  crop.cancelCrop(); });
+
+t('crop: ЛКМ внутри двигает изображение, ПКМ внутри двигает рамку', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
+  input.down({ pointerType: 'mouse', button: 0, clientX: 25, clientY: 25, pointerId: 1 });
+  input.move({ pointerType: 'mouse', button: 0, clientX: 35, clientY: 25, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
+  assert.equal(S.cropMode.idx, 1); assert.equal(S.cropMode.x0, 0);
+  input.down({ pointerType: 'mouse', button: 2, clientX: 25, clientY: 25, pointerId: 2 });
+  input.move({ pointerType: 'mouse', button: 2, clientX: 35, clientY: 25, pointerId: 2 }); input.up({ pointerType: 'mouse', button: 2, pointerId: 2 });
+  assert.equal(S.cropMode.idx, 1); assert.equal(S.cropMode.x0, 1); crop.cancelCrop(); });
+
+t('crop: скрепка держит пропорцию при растягивании ручкой', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
+  const link = document.getElementById('crop-link'); if (!link.classList.contains('on')) link.click();
+  input.down({ pointerType: 'mouse', button: 0, clientX: 80, clientY: 40, pointerId: 1 });
+  input.move({ pointerType: 'mouse', button: 0, clientX: 100, clientY: 40, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 10); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 10); crop.cancelCrop(); });
+
+t('status: при кропе/выделении/трансформе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); status.mount();
   bus.emit('layers'); assert.equal(document.getElementById('status').textContent, '8×8 px');
   S.cropMode = { x0: 2, y0: 1, x1: 5, y1: 5, idx: 0, idy: 0 }; bus.emit('render');
   assert.equal(document.getElementById('status').textContent, '8×8 → 4×5 px');
-  S.cropMode = null; bus.emit('render'); assert.equal(document.getElementById('status').textContent, '8×8 px'); });
+  S.cropMode = null; S.sel = { x0: 1, y0: 2, x1: 6, y1: 4 }; bus.emit('selection');
+  assert.equal(document.getElementById('status').textContent, '8×8 → 6×3 px');
+  S.sel = null; S.rotMode = { b: { w: 3, h: 4 }, sx: 2, sy: 0.5 }; bus.emit('render');
+  assert.equal(document.getElementById('status').textContent, '8×8 → 6×2 px');
+  S.rotMode = null; bus.emit('render'); assert.equal(document.getElementById('status').textContent, '8×8 px'); });
 
 t('canvas-handlers: pencil рисует через обработчик', () => { resetWH(8, 8); S.active = [1, 2, 3]; S.tool = 'pencil';
   const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2, e: {} }); h.move({ gx: 4, gy: 2, e: {} }); h.up({});
