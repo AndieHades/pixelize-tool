@@ -311,16 +311,16 @@
 
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }
-    #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
+    #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx, #brush-plus { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
       box-shadow: var(--win-shadow); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
-    #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on { display: flex; }
-    #ctx button, #lctx button, #cctx button, #sctx button, #trctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button { width: 100%; height: 42px; border-radius: 9px; display: flex;
+    #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on { display: flex; }
+    #ctx button, #lctx button, #cctx button, #sctx button, #trctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button, #brush-plus button { width: 100%; height: 42px; border-radius: 9px; display: flex;
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
     /* подсветка пункта меню при наведении (десктоп) */
-    #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover { background: var(--accent-soft); }
+    #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover, #brush-plus button:hover { background: var(--accent-soft); }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }
@@ -702,12 +702,7 @@
 .bname.editing { outline: none; background: var(--surface); color: var(--txt); border-radius: 5px; padding: 0 4px; box-shadow: 0 0 0 1px var(--accent); cursor: text; }
 #brush-rsz { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; color: var(--txt2); cursor: nwse-resize; }
 #brush-rsz svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-#brush-plus { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px; box-shadow: var(--win-shadow); }
-#brush-plus.on { display: flex; }
-#brush-plus button { width: 100%; height: 42px; border-radius: 9px; display: flex;
-  align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
-#brush-plus button:hover { background: var(--accent-soft); }
+#brush-plus { min-width: 210px; }
 .brow-edit { width: 100%; box-sizing: border-box; background: var(--surface); color: var(--txt);
   border: 1px solid var(--accent); border-radius: 8px; padding: 6px 8px; font-size: 13px; font-weight: 600; }
 #brush-settings { width: 244px; }

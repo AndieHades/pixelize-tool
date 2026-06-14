@@ -1,7 +1,7 @@
 // Жёсткие пределы приложения. Менять — здесь.
 export const MAX_LAYERS = Infinity; // слои не ограничиваем искусственным потолком
 export const MAX_SIZE = 640;     // максимальная сторона холста, px
-export const BP_SMAX = 32;       // максимальный размер кисти/ластика, px
+export const BP_SMAX = 64;       // максимальный размер кисти/ластика, px
 export const BP_SIZE_CURVE = 1.7; // нелинейная шкала: больше точности на малых кистях
 export const ZOOM_MIN = 1;       // минимальный зум холста
 export const ZOOM_MAX = 48;      // максимальный зум холста

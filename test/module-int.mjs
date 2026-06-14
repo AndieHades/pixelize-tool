@@ -78,6 +78,8 @@ const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
+const { showMenuAt } = await import('../src/core/dom.js');
+const { nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
@@ -496,6 +498,13 @@ t('brush-bar: хоткеи размера кисти упираются в по�
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
   actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
+});
+t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
+  const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');
+  do { panel.style.zIndex = nextFloatingZ(); } while (+panel.style.zIndex <= 75);
+  other.classList.add('on'); showMenuAt(menu, 120, 120);
+  assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
+  assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 

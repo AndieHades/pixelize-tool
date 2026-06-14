@@ -1,6 +1,7 @@
 // DOM-помощники: единая точка доступа к элементам, тосты, копирование в буфер.
 // Это сервис фундамента — им пользуются системы визуала, но не logic.
 import { TOAST_MS } from '../config/timings.js';
+import { nextFloatingZ } from './floating-window.js';
 export { t } from '../i18n/index.js'; // реэкспорт для удобства (toast(t('ключ')))
 
 export const $ = (id) => document.getElementById(id);
@@ -19,15 +20,31 @@ export async function copyText(t) {
   }
 }
 
+const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus'];
+const menus = () => MENU_IDS.map($).filter(Boolean);
+export function closeMenus(except = null) { for (const m of menus()) if (m !== except) m.classList.remove('on'); }
+function raiseMenu(m) {
+  const cssZ = +(window.getComputedStyle(m).zIndex || 0);
+  m.style.zIndex = Math.max(cssZ || 0, nextFloatingZ()) + '';
+}
+let menuCloseBound = false;
+function bindMenuClose() { if (menuCloseBound) return; menuCloseBound = true;
+  document.addEventListener('pointerdown', (e) => {
+    if (!menus().some((m) => m.classList.contains('on') && m.contains(e.target))) closeMenus();
+  }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); }, true);
+}
+function showMenu(m) { bindMenuClose(); closeMenus(m); raiseMenu(m); m.style.visibility = 'hidden'; m.classList.add('on'); }
+
 // Всплывающее меню-бабл m у якоря (ax, ay): центрируем по горизонтали на якоре,
 // рисуем треугольник, указывающий на точку вызова. Единый вид для всех меню.
 export function showMenuAt(m, ax, ay, above = false) {
-  m.style.visibility = 'hidden'; m.classList.add('on');
+  showMenu(m);
   let arrow = m.querySelector(':scope > .menu-arrow');
   if (!arrow) { arrow = document.createElement('div'); arrow.className = 'menu-arrow'; m.appendChild(arrow); }
   requestAnimationFrame(() => { const r = m.getBoundingClientRect(), gap = 10;
-    const left = Math.max(8, Math.min(ax - r.width / 2, innerWidth - r.width - 8));
-    const top = Math.max(8, Math.min(above ? ay - r.height - gap : ay + gap, innerHeight - r.height - 8));
+    const left = Math.max(8, Math.min(ax - r.width / 2, window.innerWidth - r.width - 8));
+    const top = Math.max(8, Math.min(above ? ay - r.height - gap : ay + gap, window.innerHeight - r.height - 8));
     m.style.left = left + 'px'; m.style.top = top + 'px';
     arrow.className = 'menu-arrow ' + (above ? 'down' : 'up');
     arrow.style.left = (Math.max(16, Math.min(ax - left, r.width - 16)) - 6) + 'px';
@@ -37,11 +54,11 @@ export function showMenuAt(m, ax, ay, above = false) {
 // Меню сбоку от опорного элемента (панель слоёв): справа, если влезает, иначе
 // слева — чтобы никогда не перекрывать панель. По вертикали — у ay, в экране.
 export function showMenuBeside(m, anchorEl, ay) {
-  m.style.visibility = 'hidden'; m.classList.add('on');
+  showMenu(m);
   const arrow = m.querySelector(':scope > .menu-arrow'); if (arrow) arrow.remove();
   requestAnimationFrame(() => { const r = m.getBoundingClientRect(), a = anchorEl.getBoundingClientRect(), gap = 8;
-    let left = a.right + gap; if (left + r.width > innerWidth - 8) left = a.left - gap - r.width;
-    left = Math.max(8, Math.min(left, innerWidth - r.width - 8));
-    const top = Math.max(8, Math.min(ay - r.height / 2, innerHeight - r.height - 8));
+    let left = a.right + gap; if (left + r.width > window.innerWidth - 8) left = a.left - gap - r.width;
+    left = Math.max(8, Math.min(left, window.innerWidth - r.width - 8));
+    const top = Math.max(8, Math.min(ay - r.height / 2, window.innerHeight - r.height - 8));
     m.style.left = left + 'px'; m.style.top = top + 'px'; m.style.visibility = ''; });
 }
