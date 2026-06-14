@@ -25,7 +25,7 @@ import { previewStroke } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
-import { brushMode, stampSize, planDab } from '../src/logic/brush-stamp.js';
+import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { expandMask, mirrorDeltas } from '../src/logic/symmetry.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
@@ -300,6 +300,13 @@ t('brush-stamp: режим выводится по параметрам и пе�
   assert.equal(brushMode({ jitter: 2 }), 'scatter'); assert.equal(brushMode({ mode: 'flow', jitter: 2 }), 'flow'); });
 t('brush-stamp: stampSize — натуральный для кисти из выделения, иначе слайдер', () => {
   assert.equal(stampSize({ baseSize: 20 }, 8, 8), 20); assert.equal(stampSize({ baseSize: 20 }, 4, 8), 10); assert.equal(stampSize({}, 5, 8), 5); });
+t('brush-stamp: brushHasShape — нестандартные кисти (baseSize/форма), не базовые', () => {
+  assert.equal(brushHasShape({ baseSize: 8 }), true);            // из выделения
+  assert.equal(brushHasShape({ cov: { w: 12, h: 9 } }), true);  // импортированная форма
+  assert.equal(brushHasShape({ cov: { w: 1, h: 1 } }), false);  // базовый квадрат
+  assert.equal(brushHasShape({ cov: null }), false);            // базовый круг/дизер
+  assert.equal(brushHasShape(null), false);
+});
 t('brush-stamp: planDab — flow штампует всегда, single соблюдает spacing', () => {
   assert.deepEqual(planDab({}, 4, { acc: 0 }, 3, 7), { cx: 3, cy: 7, size: 4 }); // flow
   const st = { acc: 0 }; const a = planDab({ mode: 'single', spacing: 1 }, 4, st, 0, 0); // gap=4

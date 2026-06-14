@@ -13,6 +13,11 @@ export const grainAt = (g, x, y) => !g || !!g.data[(((y % g.h) + g.h) % g.h) * g
 // размер штампа: кисти из выделения — натуральный (baseSize × слайдер), иначе слайдер.
 export function stampSize(sb, slider, smax) { return sb && sb.baseSize ? Math.max(1, Math.round(sb.baseSize * slider / smax)) : slider; }
 
+// «нестандартная» кисть: со своей формой/натуральным размером (из выделения или
+// импорта), в отличие от базовых круга/квадрата/дизера. Такие при выборе встают
+// в натуральный размер (слайдер = max), чтобы отпечаток совпадал с видом в палитре.
+export function brushHasShape(b) { return !!(b && (b.baseSize || (b.cov && (b.cov.w > 1 || b.cov.h > 1)))); }
+
 // режим: явный params.mode либо вывод по параметрам (обратная совместимость).
 // 'flow' — непрерывный поток, 'single' — единичный штамп (по spacing),
 // 'scatter' — разброс штампов разного размера.
