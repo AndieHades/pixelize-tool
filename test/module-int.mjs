@@ -328,6 +328,11 @@ t('brush-resize: без зажатого Hot Key размер не меняет�
 t('brush-resize: направление и чувствительность переключаются циклически', () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
   actions.run('brushResize.cycleDir'); assert.equal(S.brushResize.direction, 'horizontal');
   actions.run('brushResize.cycleSens'); assert.notEqual(S.brushResize.sensitivity, 0.05); });
+const wheel = (dy) => window.dispatchEvent(new window.WheelEvent('wheel', { deltaY: dy, cancelable: true }));
+t('brush-resize: колесо при зажатом D меняет размер', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 4; S.brushResize.key = 'd'; S.brushResize.capturing = false;
+  brKey('keydown', 'd'); wheel(-1); assert.equal(S.brushes.pencil.size, 5); wheel(1); assert.equal(S.brushes.pencil.size, 4); brKey('keyup', 'd'); });
+t('brush-resize: без зажатого D колесо размер не трогает', () => { resetWH(8, 8); S.brushes.pencil.size = 4;
+  wheel(-1); assert.equal(S.brushes.pencil.size, 4); });
 eyedropper.mount(); // вешает слушатели Eyedropper System один раз
 const bbTap = () => { const pk = document.getElementById('bb-pick'); pk.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true })); pk.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true })); };
 t('eyedropper: короткий клик по bb-pick включает залипающий режим (ПК)', () => { resetWH(8, 8); document.body.classList.remove('picking');

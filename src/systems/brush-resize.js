@@ -28,6 +28,11 @@ function onMove(e) { if (!active || R.capturing) return;
   const d = R.direction === 'horizontal' ? dx : R.direction === 'vertical' ? -dy : dx - dy; // вправо/вверх — больше
   if (!d) return; acc += d * R.sensitivity; setSize(Math.round(acc)); }
 
+// пока зажат Hot Key — колесо тоже меняет размер (и не зумит холст)
+function onWheel(e) { if (!active || R.capturing) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  acc = S.brushes[brushKey()].size + (e.deltaY < 0 ? 1 : -1); setSize(Math.round(acc)); }
+
 function onDown(e) { if (e.type === 'keydown' && e.repeat) return;
   const k = (e.key || '').toLowerCase();
   if (R.capturing) { e.preventDefault();                         // режим захвата клавиши из настроек
@@ -53,6 +58,7 @@ actions.register('brushResize.cycleSens', () => { const i = SENS_PRESETS.indexOf
 export function mount() {
   window.addEventListener('keydown', onDown); window.addEventListener('keyup', onUp);
   window.addEventListener('blur', stop); // потеря фокуса — клавиша «отпускается», иначе жест залипнет
+  window.addEventListener('wheel', onWheel, { capture: true, passive: false }); // capture+passive:false — перехватываем колесо до зума холста
   $('cv').addEventListener('pointermove', onMove);
   const pk = $('bb-pick'); if (!pk) return;
   pk.addEventListener('pointerdown', btnDown); pk.addEventListener('pointerup', btnUp); pk.addEventListener('pointercancel', btnUp);
