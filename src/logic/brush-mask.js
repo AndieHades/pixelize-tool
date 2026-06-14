@@ -34,12 +34,36 @@ export function coverageToMask(cov, size, opts = {}) {
 // Бинаризует мелкий grain в дизер-тайл (тайлится в координатах холста). Без
 // кадрирования и нормировки — паттерн целиком. null, если тайл вырожден
 // (всё вкл/выкл — дизеринга нет). cov = { w, h, data:Uint8Array(0..255) }.
-export function coverageToTile(cov, threshold = 0.5) {
-  const { w, h, data } = cov, out = new Uint8Array(w * h), cut = threshold * 255;
-  let on = 0;
-  for (let i = 0; i < out.length; i++) { const v = data[i] >= cut ? 1 : 0; out[i] = v; on += v; }
-  if (on === 0 || on === out.length) return null;
-  return { w, h, data: out };
+// наименьший период повтора бинарной сетки по оси (горизонталь/вертикаль), ≤ maxP
+function period(bin, w, h, maxP, horiz) {
+  const lines = Math.min(horiz ? h : w, 8), span = horiz ? w : h;
+  for (let p = 1; p <= maxP && p < span; p++) { let ok = true;
+    for (let l = 0; l < lines && ok; l++) {
+      const fix = (l * (horiz ? h : w) / lines) | 0;
+      for (let k = 0; k + p < span; k++) {
+        const a = horiz ? bin[fix * w + k] : bin[k * w + fix], b = horiz ? bin[fix * w + k + p] : bin[(k + p) * w + fix];
+        if (a !== b) { ok = false; break; } } }
+    if (ok) return p; }
+  return 0;
+}
+
+// grain (покрытие 0..255) → бинарный дизер-тайл. Декод даёт натив; находим
+// фундаментальный период (шахматка 1024² → 2×2), иначе max-pool до maxPeriod.
+// null — вырожденный grain (дизеринга нет).
+export function coverageToTile(cov, threshold = 0.5, maxPeriod = 64) {
+  const { w, h, data } = cov, cut = threshold * 255;
+  const bin = new Uint8Array(w * h); let on = 0;
+  for (let i = 0; i < bin.length; i++) { const v = data[i] >= cut ? 1 : 0; bin[i] = v; on += v; }
+  if (on === 0 || on === bin.length) return null;
+  const px = period(bin, w, h, maxPeriod, true), py = period(bin, w, h, maxPeriod, false);
+  if (px && py) { const out = new Uint8Array(px * py);
+    for (let y = 0; y < py; y++) for (let x = 0; x < px; x++) out[y * px + x] = bin[y * w + x];
+    return { w: px, h: py, data: out }; }
+  if (Math.max(w, h) <= maxPeriod) return { w, h, data: bin };
+  const scale = maxPeriod / Math.max(w, h), tw = Math.max(1, Math.round(w * scale)), th = Math.max(1, Math.round(h * scale)), out = new Uint8Array(tw * th);
+  for (let y = 0; y < h; y++) { const ty = Math.min(th - 1, (y * th / h) | 0);
+    for (let x = 0; x < w; x++) if (bin[y * w + x]) out[ty * tw + Math.min(tw - 1, (x * tw / w) | 0)] = 1; }
+  let on2 = 0; for (const v of out) on2 += v; return on2 === 0 || on2 === out.length ? null : { w: tw, h: th, data: out };
 }
 
 // Круглый кончик size×size (дефолт для Procreate-кистей без Shape.png).

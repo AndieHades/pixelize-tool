@@ -232,10 +232,14 @@ t('brush-mask: сохраняет пропорции по большей сто�
   const data = new Uint8Array(8 * 2).fill(255); // широкий кончик 8×2
   const m = coverageToMask({ w: 8, h: 2, data }, 8); assert.equal(Math.max(m.w, m.h), 8); assert.ok(m.h < m.w); });
 t('brush-mask: пустое покрытие → null', () => { assert.equal(coverageToMask({ w: 4, h: 4, data: new Uint8Array(16) }, 4), null); });
-t('brush-mask: дизер-тайл 4×4 шахматка', () => {
+t('brush-mask: дизер-тайл сводится к фундаментальному периоду (шахматка → 2×2)', () => {
+  const d = new Uint8Array(64); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) d[y * 8 + x] = (x + y) % 2 ? 255 : 0;
+  const tile = coverageToTile({ w: 8, h: 8, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
+  assert.deepEqual([...tile.data], [0, 1, 1, 0]); });
+t('brush-mask: дизер 4×4 (.#../пусто) → период 2×2', () => {
   const d = new Uint8Array([0, 255, 0, 255, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 0, 0]);
-  const tile = coverageToTile({ w: 4, h: 4, data: d }); assert.deepEqual([tile.w, tile.h], [4, 4]);
-  assert.equal(tile.data[1], 1); assert.equal(tile.data[0], 0); });
+  const tile = coverageToTile({ w: 4, h: 4, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
+  assert.deepEqual([...tile.data], [0, 1, 0, 0]); });
 t('brush-mask: вырожденный grain (всё вкл/выкл) → null', () => {
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array([255, 255, 255, 255]) }), null);
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array(4) }), null); });

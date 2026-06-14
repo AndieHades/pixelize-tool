@@ -4,7 +4,8 @@
 import { unzip } from '../zip.js';
 import { blobToCoverage } from '../brush-decode.js';
 import { unarchiveBrush } from './bplist.js';
-import { BRUSH_SRC_MAX, BRUSH_GRAIN_NATIVE_MAX } from '../../config/brush-import.js';
+import { coverageToTile } from '../../logic/brush-mask.js';
+import { BRUSH_MASK, BRUSH_SRC_MAX, BRUSH_GRAIN_DECODE_MAX } from '../../config/brush-import.js';
 
 export async function importProcreate(buf, name) {
   const files = await unzip(buf);
@@ -12,9 +13,8 @@ export async function importProcreate(buf, name) {
   let cov = null, kind = 'round';
   if (shapePng) { cov = await blobToCoverage(new Blob([shapePng]), BRUSH_SRC_MAX); kind = 'shape'; }
   const grainPng = files.get('Grain.png') || files.get('grain.png');
-  let grain = null;
-  if (grainPng) { const gc = await blobToCoverage(new Blob([grainPng]), BRUSH_GRAIN_NATIVE_MAX + 1);
-    if (Math.max(gc.w, gc.h) <= BRUSH_GRAIN_NATIVE_MAX) grain = gc; } // крупный grain — следующая итерация (нужен масштаб)
+  // grain декодим в натив и сразу сводим в бинарный дизер-тайл (поиск периода)
+  const grain = grainPng ? coverageToTile(await blobToCoverage(new Blob([grainPng]), BRUSH_GRAIN_DECODE_MAX), BRUSH_MASK.threshold) : null;
   let title = name, params = {};
   const arch = files.get('Brush.archive');
   if (arch) { try { const a = unarchiveBrush(arch); // имя и параметры штриха из bplist

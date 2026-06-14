@@ -2,5 +2,5 @@
 // Меняешь поведение порога/обрезки — здесь, а не магическими числами в коде.
 export const BRUSH_MASK = { threshold: 0.5, floor: 8, invert: false }; // покрытие→клетка
 export const BRUSH_SRC_MAX = 256; // потолок стороны исходного кончика при декоде, px
-export const BRUSH_GRAIN_NATIVE_MAX = 64; // grain считаем дизер-тайлом только если он мелкий
+export const BRUSH_GRAIN_DECODE_MAX = 2048; // декод grain в натив (точные пиксели для поиска периода дизера)
 export const BRUSH_SCATTER = { jitterScale: 1 }; // множитель радиуса разброса (plotJitter × размер)
