@@ -9,6 +9,7 @@ import { paintStack } from '../../core/composite.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { drawOverlays } from './overlays.js';
+import { drawBrushCursor } from './cursor.js';
 import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -35,6 +36,7 @@ export function render() {
     ctx.stroke(); }
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)
   drawOverlays(ctx, ox, oy, z);
+  drawBrushCursor(ctx, ox, oy, z); // курсор-предпросмотр отпечатка кисти — поверх всего
   updateAnts(ox, oy, z); // «бегущие муравьи» — SVG поверх холста, бег анимирует CSS
 }
 

@@ -22,6 +22,7 @@ import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-ma
 import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke } from '../src/logic/brush-preview.js';
+import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
@@ -306,6 +307,22 @@ t('brush-stamp: planDab — flow штампует всегда, single собл�
 t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;
   assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'мазок непустой');
+});
+
+t('brush-cursor: без кисти — сплошной квадрат size×size', () => {
+  const m = footprintMask(null, 4, 64);
+  assert.deepEqual([m.w, m.h], [4, 4]); let on = 0; for (const v of m.data) on += v; assert.equal(on, 16);
+});
+t('brush-cursor: круглая кисть — непустая маска отпечатка', () => {
+  const m = footprintMask({ cov: null, shape: 'round' }, 8, 64); let on = 0; for (const v of m.data) on += v;
+  assert.ok(m.w === 8 && m.h === 8 && on > 0);
+});
+t('brush-cursor: размер маски следует за натуральным размером кисти', () => {
+  const m = footprintMask({ cov: null, baseSize: 20 }, 64, 64); assert.equal(Math.max(m.w, m.h), 20);
+});
+t('brush-cursor: поворот по умолчанию 0, читается из params', () => {
+  assert.equal(footprintRotation(null), 0); assert.equal(footprintRotation({ params: {} }), 0);
+  assert.equal(footprintRotation({ params: { rotation: 1.5 } }), 1.5);
 });
 
 // --- Symmetry mapper ---

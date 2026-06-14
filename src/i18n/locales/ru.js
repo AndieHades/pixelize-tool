@@ -73,6 +73,7 @@ export const ru = {
   'brsz.key': 'Клавиша размера кисти', 'brsz.dir': 'Направление изменения', 'brsz.sens': 'Чувствительность', 'brsz.press': 'Нажмите клавишу…',
   'brsz.both': 'Обе оси', 'brsz.horizontal': 'Горизонталь', 'brsz.vertical': 'Вертикаль', 'brsz.low': 'Низкая', 'brsz.medium': 'Средняя', 'brsz.high': 'Высокая',
   'eye.key': 'Клавиша пипетки',
+  'cursor.mode': 'Курсор-предпросмотр', 'cursor.real': 'Реальная кисть', 'cursor.circle': 'Круг',
   'ui.dragPanel': 'Перетащить панель', 'ui.resizePanel': 'Изменить размер панели', 'ui.dragPalette': 'Перетащить палитру', 'ui.resizeWindow': 'Изменить размер окна',
   'gallery.untitled': 'Без названия',
   'gallery.select': 'Выбрать',

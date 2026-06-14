@@ -9,6 +9,7 @@ import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT, EFFECT_DEFAULTS } from '
 import { LASSO_DEFAULT } from '../config/lasso.js';
 import { BRUSH_RESIZE } from '../config/brush-resize.js';
 import { EYEDROPPER } from '../config/eyedropper.js';
+import { CURSOR } from '../config/cursor.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
@@ -37,6 +38,7 @@ export const S = {
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
   sel: null, selMask: null, selFloat: null,
   lassoMode: LASSO_DEFAULT.mode, lassoOp: LASSO_DEFAULT.op, lassoPath: null,
+  cursorMode: CURSOR.mode, // Cursor Preview Mode: real | circle | hybrid
   brushResize: { ...BRUSH_RESIZE, capturing: false }, // жест Brush Size Modifier (настройки + захват клавиши)
   eyedrop: { ...EYEDROPPER, capturing: false }, // Eyedropper System (Hot Key + захват клавиши)
   view: { zoom: 12, ox: 0, oy: 0 },

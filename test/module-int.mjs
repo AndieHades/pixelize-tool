@@ -156,6 +156,15 @@ t('render: с выделением и кропом не падает', () => { r
   S.cropMode = null; assert.ok(true);
 });
 t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
+t('cursor: предпросмотр отпечатка рисуется в real/circle без падений', () => { reset4();
+  S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; render.render();
+  S.cursorMode = 'circle'; render.render(); // круг размера
+  S.tool = 'eraser'; S.cursorMode = 'real'; render.render(); // ластик — белый отпечаток
+  S.stampBrush.pencil = { tok: 7, cov: null, params: {} }; S.tool = 'pencil'; render.render(); // штамп-кисть
+  S.hoverPx = null; S.stampBrush.pencil = null; assert.ok(true); });
+t('cursor: cursor.cycleMode гоняет режимы по кругу', () => { reset4();
+  S.cursorMode = 'real'; actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'circle');
+  actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'real'); });
 
 const ev = (code, mods = {}) => ({ code, target: document.body, preventDefault() {}, ...mods });
 t('keyboard: комбо из события', () => {

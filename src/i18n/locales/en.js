@@ -70,6 +70,7 @@ export const en = {
   'brsz.key': 'Brush size key', 'brsz.dir': 'Resize direction', 'brsz.sens': 'Resize sensitivity', 'brsz.press': 'Press a key…',
   'brsz.both': 'Both', 'brsz.horizontal': 'Horizontal', 'brsz.vertical': 'Vertical', 'brsz.low': 'Low', 'brsz.medium': 'Medium', 'brsz.high': 'High',
   'eye.key': 'Eyedropper key',
+  'cursor.mode': 'Cursor preview', 'cursor.real': 'Real brush', 'cursor.circle': 'Circle',
   'ui.dragPanel': 'Drag panel', 'ui.resizePanel': 'Resize panel', 'ui.dragPalette': 'Drag palette', 'ui.resizeWindow': 'Resize window',
   'gallery.untitled': 'Untitled',
   'gallery.select': 'Select',

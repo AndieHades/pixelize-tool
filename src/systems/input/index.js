@@ -10,6 +10,7 @@ import { toolHandler, modeHandler, globalHandlers } from '../../core/canvas-hand
 import { gridAt } from '../../core/viewport.js';
 import { STABILIZE, DRAG_THRESHOLD } from '../../config/timings.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
+import { CURSOR_TOOLS } from '../../config/cursor.js';
 import { mountGestures } from './gestures.js';
 
 const cv = () => $('cv');
@@ -38,7 +39,8 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
 export function move(e) {
   if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const over = hx >= 0 && hy >= 0 && hx < S.W && hy < S.H; // курсор кисти — только над холстом
     S.hoverPx = over ? [hx, hy] : null;
-    let cur = over ? 'crosshair' : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)
+    // под кистью прячем нативный crosshair — наводку рисует Brush Cursor Renderer (прицел + отпечаток)
+    let cur = over ? (CURSOR_TOOLS.includes(S.tool) ? 'none' : 'crosshair') : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)
     const ht = toolHandler(S.tool), gh = globalHandlers().map((h) => h.hover && h.hover({ gx: hx, gy: hy, e })).find(Boolean);
     if (!drawing && !rdrag && !activeMode()) { if (gh) cur = gh; else if (ht && ht.hover) { const c2 = ht.hover({ gx: hx, gy: hy, e }); if (c2) cur = c2; } }
     cv().style.cursor = cur; }

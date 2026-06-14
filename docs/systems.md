@@ -51,12 +51,14 @@
 | `logic/mask-ops.js` | булевы операции над масками (replace/add/subtract/intersect) | ✅ | (выделение) |
 | `logic/quickshape.js` | распознаёт форму штриха (line/rect/ellipse) по точкам или null | ✅ | (QuickShape) |
 | `logic/symmetry.js` | SymmetryOperationMapper: маска/точка/дельта → оригинал + зеркальные копии по осям | ✅ | (симметрия) |
+| `logic/brush-cursor.js` | маска отпечатка следующего штампа (кисть в натуральном размере или квадрат) + поворот | ✅ | (Real Brush Cursor) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
 | Модуль | Одна фраза | Статус | Источник |
 |--------|-----------|:--:|----------|
 | `systems/render/*` | рисует видимый холст (index+overlays+checker) | ✅ | 03-render |
+| `systems/render/cursor.js` | Brush Cursor Renderer: курсор = предпросмотр следующего отпечатка кисти (форма/размер/цвет/opacity) + прицел | ✅ | (Real Brush Cursor) |
 | `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка | ✅ | 05-draw |
 | `systems/draw/quickshape.js` | QuickShape: удержание в конце freehand-штриха → распознать и заменить ровной формой, коммит на отпускании (поверх кисти, без выделения) | ✅ | (новое) |
 | `systems/eyedropper/*` | единственная пипетка: один pipeline (Alt/клик-залипание/удержание bb-pick/долгое нажатие) → ColorPickSource (холст/референс/палитра) → Active Color Manager | ✅ | (выделение цвета) |
@@ -102,7 +104,7 @@
 |--------|-----------|:--:|-----|
 | `i18n/index.js` + `i18n/locales/*` | переводит интерфейс по `t(ключ)` (ru/en, паритет) | ✅ | [i18n.md](i18n.md) |
 | `styles/tokens.css` | дизайн-токены темы (синий — один токен `--accent`) | ✅ | [theming.md](theming.md) |
-| `systems/settings.js` | тема + язык + настройки Brush Size Modifier (шестерёнка в галерее) | ✅ | i18n/theming |
+| `systems/settings.js` | тема + язык + Cursor Preview Mode + настройки Brush Size Modifier (шестерёнка в галерее) | ✅ | i18n/theming |
 | `systems/gallery/store.js` | элементы галереи: вложенные папки, перемещение, дубль, удаление, уникальные имена | ✅ | roadmap §5 |
 | `systems/gallery/doc.js` | персистентность активной работы (снимок ↔ запись, автосейв) | ✅ | roadmap §5 |
 | `systems/gallery/drag.js` | перетаскивание плиток (долгий тап → драг → папка) | ✅ | roadmap §5 |
@@ -129,6 +131,7 @@
 | `config/brush-resize.js` | дефолты Brush Size Modifier (`BRUSH_RESIZE`), пресеты чувствительности, список направлений | ✅ |
 | `config/eyedropper.js` | Hot Key пипетки по умолчанию (`EYEDROPPER` — Alt, переназначается) | ✅ |
 | `config/quickshape.js` | задержка удержания QuickShape (`QUICKSHAPE.holdMs`) | ✅ |
+| `config/cursor.js` | Cursor Preview Mode: режимы (`CURSOR_MODES` real/circle), дефолт (`CURSOR`), инструменты курсора (`CURSOR_TOOLS`) | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

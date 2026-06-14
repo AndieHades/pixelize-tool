@@ -37,6 +37,7 @@ function build() { const m = $('setmenu'); m.innerHTML = '';
   m.appendChild(langRow);
 
   const R = S.brushResize;
+  valRow(m, 'cursor.mode', t('cursor.' + S.cursorMode), 'cursor.cycleMode');
   valRow(m, 'eye.key', S.eyedrop.capturing ? t('brsz.press') : S.eyedrop.key.toUpperCase(), 'eyedropper.capture');
   valRow(m, 'brsz.key', R.capturing ? t('brsz.press') : R.key.toUpperCase(), 'brushResize.capture');
   valRow(m, 'brsz.dir', t('brsz.' + R.direction), 'brushResize.cycleDir');
