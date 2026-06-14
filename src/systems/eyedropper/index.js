@@ -9,6 +9,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { rgb, rgbToHex } from '../../logic/color.js';
+import { eventKey } from '../../logic/key-code.js';
 import { HOLD_PICK_MS, DRAG_THRESHOLD, TAP_MAX_MS } from '../../config/timings.js';
 import { sampleColor } from './sources.js';
 
@@ -66,12 +67,12 @@ function bbUp() { if (via === 'sticky') { setArmed(false); return; }            
   if (performance.now() - btnDownT < TAP_MAX_MS && !btnPicked) setArmed(true, 'sticky'); // короткий клик — залипающий режим
   else setArmed(false); }                                                            // удержание — закончить разовый сеанс
 
-function onKeyDown(e) { const k = (e.key || '').toLowerCase();
-  if (E.capturing) { e.preventDefault(); if (k === 'escape') { E.capturing = false; } else { E.key = k; E.capturing = false; persist(); } bus.emit('eyedropper'); return; }
+function onKeyDown(e) { const k = eventKey(e); // физическая клавиша — не зависит от раскладки
+  if (E.capturing) { e.preventDefault(); if (e.code === 'Escape') { E.capturing = false; } else if (k) { E.key = k; E.capturing = false; persist(); } bus.emit('eyedropper'); return; }
   if (armed || k !== E.key || typing(e.target) || document.querySelector('.ovl.on')) return;
   e.preventDefault(); setArmed(true, 'alt'); }
 
-function onKeyUp(e) { if (via === 'alt' && (e.key || '').toLowerCase() === E.key) setArmed(false); }
+function onKeyUp(e) { if (via === 'alt' && eventKey(e) === E.key) setArmed(false); }
 
 actions.register('eyedropper.capture', () => { E.capturing = true; bus.emit('eyedropper'); });
 bus.on('tool', () => { if (via === 'sticky' || via === 'btn') setArmed(false); }); // выбрал инструмент (кисть и т.п.) — пипетка выключается

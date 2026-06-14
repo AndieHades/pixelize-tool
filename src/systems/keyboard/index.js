@@ -3,16 +3,10 @@
 // его из реестра. Перенастройка — rebind()/resetKeymap(), сохраняется.
 import * as actions from '../../core/actions.js';
 import { DEFAULT_KEYMAP } from './keymap.js';
+import { keyName } from '../../logic/key-code.js';
 
 const STORE = 'keymap';
-const SPECIAL = { Equal: '=', NumpadAdd: '=', Minus: '-', NumpadSubtract: '-',
-  BracketLeft: '[', BracketRight: ']', Delete: 'delete', Backspace: 'backspace', Space: 'space' };
 
-function keyName(code) {
-  if (/^Key[A-Z]$/.test(code)) return code.slice(3).toLowerCase();
-  if (/^(Digit|Numpad)[0-9]$/.test(code)) return code.replace(/^\D+/, '');
-  return SPECIAL[code] || null;
-}
 export function comboOf(e) { const k = keyName(e.code); if (!k) return null;
   return (e.ctrlKey || e.metaKey ? 'mod+' : '') + (e.shiftKey ? 'shift+' : '') + (e.altKey ? 'alt+' : '') + k; }
 

@@ -23,6 +23,7 @@ import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
+import { keyName, eventKey } from '../src/logic/key-code.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
@@ -323,6 +324,16 @@ t('brush-cursor: размер маски следует за натуральн�
 t('brush-cursor: поворот по умолчанию 0, читается из params', () => {
   assert.equal(footprintRotation(null), 0); assert.equal(footprintRotation({ params: {} }), 0);
   assert.equal(footprintRotation({ params: { rotation: 1.5 } }), 1.5);
+});
+
+t('key-code: физическая клавиша не зависит от раскладки (D работает в кириллице)', () => {
+  assert.equal(keyName('KeyD'), 'd'); // e.key был бы 'в' в русской раскладке — code стабилен
+  assert.equal(keyName('Digit5'), '5'); assert.equal(keyName('BracketLeft'), '[');
+  assert.equal(keyName('Delete'), 'delete'); assert.equal(keyName('F7'), null);
+});
+t('key-code: eventKey покрывает и буквы, и модификаторы по позиции', () => {
+  assert.equal(eventKey({ code: 'KeyD' }), 'd'); assert.equal(eventKey({ code: 'AltLeft' }), 'alt');
+  assert.equal(eventKey({ code: 'ControlRight' }), 'control'); assert.equal(eventKey({ code: 'F7' }), null);
 });
 
 // --- Symmetry mapper ---

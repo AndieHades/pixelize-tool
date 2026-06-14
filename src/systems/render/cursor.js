@@ -10,13 +10,13 @@ import { BP_SMAX } from '../../config/limits.js';
 import { CURSOR_MODES, CURSOR_TOOLS } from '../../config/cursor.js';
 import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
 
-const RIM = 'rgba(0,0,0,.85)', RING_DK = 'rgba(0,0,0,.8)', RING_LT = '#fff'; // контраст курсора (как у старой рамки)
+const RING = '#fff'; // курсор без чёрной обводки — только светлый контур-прицел
 
 // под какой инструмент берём кисть/цвет/opacity (что реально положит штамп)
 function inputs() {
   const t = S.tool; if (!CURSOR_TOOLS.includes(t)) return null;
   if (t === 'eraser') return { sb: S.stampBrush.eraser, size: S.brushes.eraser.size, fill: '#fff', op: S.brushes.eraser.op };
-  if (t === 'adjust') return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: null, op: 1 };
+  if (t === 'adjust') return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: '#fff', op: 0.35 };
   return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: rgb(S.active), op: S.brushes.pencil.op };
 }
 
@@ -49,25 +49,22 @@ function blit(ctx, cv, x, y, w, h, rot) {
   ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.drawImage(cv, -w / 2, -h / 2, w, h); ctx.restore();
 }
 
-// форма + тёмный ободок для читаемости (ободок — контур курсора, не его прозрачность)
+// форма отпечатка реальным цветом/непрозрачностью кисти — без обводки
 function drawShape(ctx, m, left, top, z, fill, op, rot) {
-  const shape = silhouette(); if (!shape) return;
-  const w = m.w * z, h = m.h * z, dark = tinted(shape, RIM), d = Math.max(1, z * 0.12);
-  ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
-  for (const [ox, oy] of [[d, 0], [-d, 0], [0, d], [0, -d]]) blit(ctx, dark, left + ox, top + oy, w, h, rot);
-  if (fill) { ctx.globalAlpha = op; blit(ctx, tinted(shape, fill), left, top, w, h, rot); ctx.globalAlpha = 1; }
+  const shape = silhouette(); if (!shape || !fill) return;
+  ctx.imageSmoothingEnabled = false; ctx.globalAlpha = op;
+  blit(ctx, tinted(shape, fill), left, top, m.w * z, m.h * z, rot); ctx.globalAlpha = 1;
 }
 
 function drawRing(ctx, cx, cy, r) {
-  for (const [c, lw] of [[RING_DK, 3], [RING_LT, 1.4]]) { ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.strokeStyle = RING; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
 }
 
 // маленький прицел по центру отпечатка — точка наводки, не закрывает пиксель
 function drawReticle(ctx, cx, cy) {
-  const a = 5, g = 1.5; ctx.lineCap = 'round';
-  for (const [c, lw] of [[RING_DK, 2.6], [RING_LT, 1.1]]) { ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.beginPath();
-    ctx.moveTo(cx - a, cy); ctx.lineTo(cx - g, cy); ctx.moveTo(cx + g, cy); ctx.lineTo(cx + a, cy);
-    ctx.moveTo(cx, cy - a); ctx.lineTo(cx, cy - g); ctx.moveTo(cx, cy + g); ctx.lineTo(cx, cy + a); ctx.stroke(); }
+  const a = 5, g = 1.5; ctx.lineCap = 'round'; ctx.strokeStyle = RING; ctx.lineWidth = 1.2; ctx.beginPath();
+  ctx.moveTo(cx - a, cy); ctx.lineTo(cx - g, cy); ctx.moveTo(cx + g, cy); ctx.lineTo(cx + a, cy);
+  ctx.moveTo(cx, cy - a); ctx.lineTo(cx, cy - g); ctx.moveTo(cx, cy + g); ctx.lineTo(cx, cy + a); ctx.stroke();
 }
 
 export function drawBrushCursor(ctx, ox, oy, z) {

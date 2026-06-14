@@ -355,7 +355,7 @@ t('lasso: cancel убирает контур, не трогая существу
   actions.run('lasso.cancel'); assert.ok(!fhpath.pathActive()); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); });
 
 brushResize.mount(); // вешает слушатели один раз
-const brKey = (type, k) => window.dispatchEvent(new window.KeyboardEvent(type, { key: k }));
+const brKey = (type, k) => window.dispatchEvent(new window.KeyboardEvent(type, { code: 'Key' + k.toUpperCase(), key: k }));
 const brPtr = (x, y, buttons) => document.getElementById('cv').dispatchEvent(new window.MouseEvent('pointermove', { clientX: x, clientY: y, buttons }));
 t('brush-resize: движение при зажатом Hot Key меняет размер кисти', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd'; S.brushResize.capturing = false;

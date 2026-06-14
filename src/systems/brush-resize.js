@@ -9,6 +9,7 @@ import { $ } from '../core/dom.js';
 import { brushKey } from '../core/tools.js';
 import { BP_SMAX } from '../config/limits.js';
 import { SENS_PRESETS, DIRECTIONS } from '../config/brush-resize.js';
+import { eventKey } from '../logic/key-code.js';
 
 const STORE = 'brushResize';
 let active = false, acc = 0, last = null, holdBtn = false; // holdBtn — удержание кнопки bb-pick (планшет)
@@ -34,14 +35,14 @@ function onWheel(e) { if (!active || R.capturing) return;
   acc = S.brushes[brushKey()].size + (e.deltaY < 0 ? 1 : -1); setSize(Math.round(acc)); }
 
 function onDown(e) { if (e.type === 'keydown' && e.repeat) return;
-  const k = (e.key || '').toLowerCase();
+  const k = eventKey(e); // физическая клавиша — не зависит от раскладки (кириллица и т.п.)
   if (R.capturing) { e.preventDefault();                         // режим захвата клавиши из настроек
-    if (k === 'escape') { R.capturing = false; bus.emit('brushResize'); return; }
-    if (k.length === 1) { R.key = k; R.capturing = false; persist(); bus.emit('brushResize'); } return; }
+    if (e.code === 'Escape') { R.capturing = false; bus.emit('brushResize'); return; }
+    if (k) { R.key = k; R.capturing = false; persist(); bus.emit('brushResize'); } return; }
   if (active || k !== R.key || typing(e.target) || document.querySelector('.ovl.on')) return;
   active = true; acc = S.brushes[brushKey()].size; last = null; } // запоминаем текущий размер как старт
 
-function onUp(e) { if ((e.key || '').toLowerCase() === R.key) { active = false; last = null; } }
+function onUp(e) { if (eventKey(e) === R.key) { active = false; last = null; } }
 const stop = () => { active = false; holdBtn = false; last = null; };
 
 // удержание кнопки bb-pick (планшет): держишь её пальцем, водишь пером НАД
