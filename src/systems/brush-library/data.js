@@ -2,6 +2,7 @@
 // (как слои). Грузится из IndexedDB, мутации сразу персистятся. Активная кисть
 // живёт в S.stampBrush — тут только каталог.
 import { listBrushes, listSets, saveBrush, saveSet, removeBrush, removeSet } from '../../core/brush-store.js';
+import { t } from '../../i18n/index.js';
 
 export const lib = { sets: [], brushes: [], curSet: null };
 const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -15,6 +16,19 @@ export async function loadLib() {
   lib.brushes = (await listBrushes()).sort(byOrder);
   if (!lib.sets.length) { const s = { id: uid('s'), name: '', order: 0, imported: true }; await saveSet(s); lib.sets = [s]; }
   if (!lib.curSet || !lib.sets.some((s) => s.id === lib.curSet)) lib.curSet = lib.sets[0].id;
+  if (!lib.brushes.length) await seedBase(lib.sets[0].id); // базовые кисти, если библиотека пуста
+}
+
+// встроенные базовые кисти (генерируются, без внешних файлов): круг, квадрат, дизеринг
+async function seedBase(setId) {
+  const square = { w: 1, h: 1, data: new Uint8Array([255]) }; // 1×1 → сплошной квадрат при ресемпле
+  const checker = { w: 2, h: 2, data: new Uint8Array([0, 1, 1, 0]) }; // дизер-тайл (шахматка)
+  const base = [
+    { name: t('brush.round'), source: 'base', shape: 'round', cov: null, grain: null, params: {} },
+    { name: t('brush.square'), source: 'base', shape: 'shape', cov: square, grain: null, params: {} },
+    { name: t('brush.dither'), source: 'base', shape: 'round', cov: null, grain: checker, params: {} },
+  ];
+  for (const b of base) await addBrush(b, setId);
 }
 
 export const brushesOf = (setId) => lib.brushes.filter((b) => b.setId === setId).sort(byOrder);

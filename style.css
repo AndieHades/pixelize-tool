@@ -694,10 +694,11 @@
 #brush-sets, #brush-list { overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding: 2px; }
 #brush-sets { width: 42%; flex: none; }
 #brush-list { flex: 1; }
-.brow { border-radius: 11px; background: var(--row); color: var(--txt); cursor: pointer; -webkit-user-select: none; user-select: none; }
-.brow.set { padding: 11px 12px; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brow { border-radius: 11px; background: var(--row); color: var(--txt); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; }
+.brow .swipe-front { background: var(--row); } /* непрозрачный фронт прячет action-кнопки (видны только при свайпе) */
+.brow.set .swipe-front, .brow.set:not(.swipe-row) { padding: 11px 12px; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brow.brush .swipe-front, .brow.brush:not(.swipe-row) { padding: 8px 10px; }
-.brow.set.on, .brow.brush.on .swipe-front, .brow.brush.on:not(.swipe-row) { background: var(--accent); color: var(--on-accent); }
+.brow.set.on .swipe-front, .brow.set.on:not(.swipe-row), .brow.brush.on .swipe-front, .brow.brush.on:not(.swipe-row) { background: var(--accent); color: var(--on-accent); }
 .brow.brush .bname { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
 .bname.editing { outline: none; background: var(--surface); color: var(--txt); border-radius: 6px; padding: 1px 5px; box-shadow: 0 0 0 1px var(--accent); cursor: text; }
 .brush-prev { width: 100%; height: auto; display: block; image-rendering: pixelated; }
