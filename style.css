@@ -685,15 +685,15 @@
 .fxrow.dragging { opacity: 0; max-height: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; pointer-events: none; }
 
 /* --- библиотека кистей (панель в стиле слоёв) --- */
-#brush-pop { position: fixed; display: none; z-index: 31; width: 380px;
-  top: calc(env(safe-area-inset-top, 0px) + 70px); left: 50%; transform: translateX(-50%);
+#brush-pop { position: fixed; display: none; z-index: 31; width: 380px; max-width: calc(100vw - 20px); overflow: hidden;
+  box-sizing: border-box; top: calc(env(safe-area-inset-top, 0px) + 70px); left: 50%; transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--win-shadow); }
 #brush-pop.on { display: block; animation: pop .18s ease-out; }
 #brush-body { display: flex; gap: 6px; padding: 6px;
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - 120px); }
-#brush-sets, #brush-list { overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding: 2px; }
+#brush-sets, #brush-list { overflow-y: auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 2px; }
 #brush-sets { width: 42%; flex: none; }
-#brush-list { flex: 1; }
+#brush-list { flex: 1; min-width: 0; }
 .brow { border-radius: 11px; background: var(--row); color: var(--txt); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; }
 .brow .swipe-front { background: var(--row); } /* непрозрачный фронт прячет action-кнопки (видны только при свайпе) */
 .brow.set .swipe-front, .brow.set:not(.swipe-row) { padding: 11px 12px; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
