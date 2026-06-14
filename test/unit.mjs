@@ -22,6 +22,7 @@ import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-ma
 import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke } from '../src/logic/brush-preview.js';
+import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
@@ -279,6 +280,16 @@ await (async () => { // .abr v1: один семплированный конч�
   assert.deepEqual([list[0].cov.w, list[0].cov.h], [2, 2]);
   n++; console.log('  ok   abr: v1 sampled tip → запись кисти');
 })();
+
+t('brush-pack: round-trip набора кистей (маска Uint8Array)', () => {
+  const brushes = [{ name: 'Star', source: 'custom', shape: 'shape', baseSize: 6, params: { spacing: 1, jitter: 0 },
+    cov: { w: 2, h: 2, data: new Uint8Array([0, 255, 200, 0]) }, grain: { w: 2, h: 2, data: new Uint8Array([1, 0, 0, 1]) } }];
+  const out = unpackSet(packSet('Decor', brushes));
+  assert.equal(out.name, 'Decor'); assert.equal(out.brushes.length, 1);
+  const b = out.brushes[0]; assert.equal(b.name, 'Star'); assert.equal(b.baseSize, 6); assert.equal(b.params.spacing, 1);
+  assert.ok(b.cov.data instanceof Uint8Array); assert.deepEqual([...b.cov.data], [0, 255, 200, 0]); assert.deepEqual([...b.grain.data], [1, 0, 0, 1]);
+});
+t('brush-pack: чужой файл отвергается', () => { assert.throws(() => unpackSet('{"format":"other"}')); });
 
 t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;

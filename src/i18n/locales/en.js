@@ -10,6 +10,7 @@ export const en = {
   'import.auto': 'Auto', 'import.brush': 'Brush…',
   'brush.library': 'Brushes', 'brush.add': 'Add set / import', 'brush.newSet': 'Create new set', 'brush.import': 'Import from Files',
   'brush.imported': 'Imported', 'brush.set': 'Set', 'brush.fromSelection': 'From Selection', 'brush.stampName': 'Stamp',
+  'menu.export': 'Export set', 'brush.packDesc': 'Brush set',
   'toast.selectAreaFirst': 'Select an area first', 'toast.selectionEmpty': 'Selection is empty', 'toast.brushCreated': 'Brush created: {name}',
   'tool.ellipse': 'Ellipse (Q) · right-click — filled · Shift — circle', 'tool.ellipseFill': 'Filled ellipse (Q) · right-click — outline · Shift — circle',
   'tool.move': 'Free transform (move / resize / rotate) — Ctrl+T', 'tool.adjust': 'Adjust brush: dodge / burn / tone',

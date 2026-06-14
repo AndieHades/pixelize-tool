@@ -3,22 +3,29 @@
 // «+» — новый набор / импорт / из выделения; ПКМ/долгое нажатие/свайп — меню.
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { $, showMenuAt, t } from '../../core/dom.js';
+import { $, showMenuAt, t, toast } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { importBrushFile } from '../../core/brush-import/index.js';
+import { packSet, unpackSet } from '../../core/brush-pack.js';
+import { saveFile } from '../../core/io.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
-import { ensureLib, addBrush, dupBrush, delBrush, addSet, delSet, renameBrush, renameSet } from './data.js';
+import { ensureLib, addBrush, dupBrush, delBrush, addSet, delSet, renameBrush, renameSet, brushesOf } from './data.js';
 import { renderSets, renderBrushes, bindList, renameById } from './list.js';
 import { createFromSelection } from './from-selection.js';
 
 let mode = 'pencil';
 function rerender() { renderSets(); renderBrushes(); }
 
-function pickBrush(fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.brush,.abr';
+function pickBrush(fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.brush,.abr,.phbrush,.json';
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
-function importBrush() { pickBrush((f) => importBrushFile(f)
-  .then(async (list) => { let first = null; for (const rec of list) { const b = await addBrush(rec); first = first || b; } // .abr — набор кистей
-    if (first) setStampBrush(mode, first); rerender(); }).catch(() => {})); }
+async function addAll(recs, setId) { let first = null; for (const rec of recs) { const b = await addBrush(rec, setId); first = first || b; }
+  if (first) setStampBrush(mode, first); rerender(); }
+function importBrush() { pickBrush((f) => {
+  if (/\.phbrush$|\.json$/i.test(f.name)) { f.text().then((txt) => { const pack = unpackSet(txt); // набор → новый набор
+    return addSet(pack.name).then((s) => addAll(pack.brushes, s.id)); }).catch(() => toast(t('toast.brushImportFail'))); return; }
+  importBrushFile(f).then((list) => addAll(list)).catch(() => toast(t('toast.brushImportFail'))); }); } // .brush/.abr — в текущий набор
+function exportSet(s) { const text = packSet(s.name || t('brush.imported'), brushesOf(s.id));
+  saveFile(new Blob([text], { type: 'application/json' }), (s.name || 'brushes') + '.phbrush', 'application/json', t('brush.packDesc')); }
 
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
@@ -30,6 +37,7 @@ function menu(item, kind, x, y) { const m = $('brush-ctx'); m.innerHTML = '';
     b.onclick = () => { m.classList.remove('on'); fn(); }; m.appendChild(b); };
   add(t('menu.rename'), () => renameById(item.id));
   if (kind === 'brush') add(t('menu.duplicate'), () => dup(item));
+  if (kind === 'set') add(t('menu.export'), () => exportSet(item));
   add(t('menu.delete'), () => (kind === 'set' ? removeSet(item) : del(item)), true);
   showMenuAt(m, x, y); }
 
