@@ -43,6 +43,7 @@ export const S = {
   undoStack: [], redoStack: [],
   // общая интерактивная/превью-стейт, которую читает рендер и пишут системы
   // (system-private мелочь вроде ppPath/strokeSeen живёт внутри своих систем)
+  qsShape: null, // QuickShape: распознанная ровная форма для превью/коммита
   cropMode: null, rotMode: null, rotPrev: null, moveDrag: null,
   hoverPx: null, lineStart: null, linePrev: null,
   replaceMode: null,

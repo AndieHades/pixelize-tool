@@ -334,6 +334,17 @@ t('brush-resize: колесо при зажатом D меняет размер'
 t('brush-resize: без зажатого D колесо размер не трогает', () => { resetWH(8, 8); S.brushes.pencil.size = 4;
   wheel(-1); assert.equal(S.brushes.pencil.size, 4); });
 
+await import('../src/systems/draw/quickshape.js'); const { QUICKSHAPE } = await import('../src/config/quickshape.js');
+await ta('quickshape: удержание выравнивает прямоугольник и коммитит на слой', async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 12;
+  const h = toolHandler('pencil'), add = (x, y) => h.move({ gx: x, gy: y }); h.down({ gx: 1, gy: 1 });
+  for (let x = 1; x <= 12; x++) add(x, 1); for (let y = 2; y <= 9; y++) add(12, y);
+  for (let x = 11; x >= 1; x--) add(x, 9); for (let y = 8; y >= 1; y--) add(1, y);
+  await new Promise((r) => setTimeout(r, 30)); assert.equal(S.qsShape && S.qsShape.type, 'rect'); // распозналось, превью активно
+  h.up({}); assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[1][12] && S.layers[0].grid[9][1] && S.layers[0].grid[9][12]); }); // ровный прямоугольник на слое
+await ta('quickshape: без удержания остаётся raw-штрих', async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 200;
+  const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2 }); h.move({ gx: 5, gy: 8 }); h.up({}); // отпустили сразу
+  assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[2][2] && S.layers[0].grid[8][5]); }); // кривой штрих как есть, без формы
+
 const penButton = await import('../src/systems/pen-button.js'); penButton.mount();
 const penBtn = (button = 2) => { const ev = new window.MouseEvent('pointerdown', { button, bubbles: true }); Object.defineProperty(ev, 'pointerType', { value: 'pen' }); window.dispatchEvent(ev); };
 t('pen-button: кнопка стилуса переключает кисть↔ластик', () => { resetWH(8, 8); S.tool = 'pencil';

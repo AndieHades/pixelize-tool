@@ -18,6 +18,7 @@ import { generateTints, generateShades, generateHarmonyBaseColors, generateTintS
 import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
+import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -198,6 +199,23 @@ t('mask-ops: intersect оставляет общее', () => {
 t('mask-ops: без базы возвращает копию новой области', () => {
   const add = new Set(['3,3']); const out = combineMask(null, add, 'subtract');
   assert.ok(out.has('3,3') && out !== add); });
+
+// --- QuickShape: распознавание формы штриха ---
+t('quickshape: прямой штрих → line', () => { const pts = []; for (let i = 0; i <= 12; i++) pts.push([i, 0]);
+  const sh = recognizeShape(pts); assert.equal(sh && sh.type, 'line'); assert.deepEqual([sh.x0, sh.y0, sh.x1, sh.y1], [0, 0, 12, 0]); });
+t('quickshape: замкнутый прямоугольный штрих → rect по bounds', () => { const pts = [], add = (x, y) => pts.push([x, y]);
+  for (let x = 0; x <= 12; x++) add(x, 0); for (let y = 1; y <= 9; y++) add(12, y);
+  for (let x = 11; x >= 0; x--) add(x, 9); for (let y = 8; y >= 0; y--) add(0, y);
+  const sh = recognizeShape(pts); assert.equal(sh && sh.type, 'rect'); assert.deepEqual([sh.x0, sh.y0, sh.x1, sh.y1], [0, 0, 12, 9]); });
+t('quickshape: овальный штрих → ellipse', () => { const pts = [], cx = 10, cy = 7, rx = 10, ry = 6;
+  for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2; pts.push([Math.round(cx + rx * Math.cos(a)), Math.round(cy + ry * Math.sin(a))]); }
+  assert.equal(recognizeShape(pts).type, 'ellipse'); });
+t('quickshape: круговой штрих → ellipse с равными сторонами', () => { const pts = [], c = 12, r = 9;
+  for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2; pts.push([Math.round(c + r * Math.cos(a)), Math.round(c + r * Math.sin(a))]); }
+  const sh = recognizeShape(pts); assert.equal(sh.type, 'ellipse'); assert.equal(sh.x1 - sh.x0, sh.y1 - sh.y0); });
+t('quickshape: каракули и короткий штрих не распознаются (raw остаётся)', () => {
+  assert.equal(recognizeShape([[0, 0], [9, 1], [1, 8], [8, 2], [2, 9], [0, 4]]), null);
+  assert.equal(recognizeShape([[0, 0], [1, 1]]), null); });
 
 // --- конфигурация ---
 t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });

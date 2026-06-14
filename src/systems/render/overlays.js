@@ -13,7 +13,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
   if (S.symH) { const ay = oy + (H / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ox - 8, ay); ctx.lineTo(ox + W * z + 8, ay); ctx.stroke(); ctx.setLineDash([]); }
-  if (S.linePrev) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(S.active);
+  if (S.linePrev || S.qsShape) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(S.active);
     const s = S.brushes.pencil.size, off = s >> 1, sa = symA(), sha = symHA();
     const paint = (px2, py2) => { for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
       const xx = px2 - off + dx2, yy = py2 - off + dy2;
@@ -21,9 +21,10 @@ export function drawOverlays(ctx, ox, oy, z) {
       if (sa) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
       if (sha) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
       if (sa && sha) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
-    const lp = S.linePrev;
-    if (S.tool === 'rect') (S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], paint);
-    else if (S.tool === 'ellipse') (S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], paint);
+    // QuickShape: ровная форма всегда контуром; иначе превью инструмента (rect/ellipse — с учётом заливки)
+    const q = S.qsShape, lp = q ? [q.x0, q.y0, q.x1, q.y1] : S.linePrev, type = q ? q.type : S.tool;
+    if (type === 'rect') (!q && S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], paint);
+    else if (type === 'ellipse') (!q && S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], paint);
     else bres(lp[0], lp[1], lp[2], lp[3], paint);
     ctx.globalAlpha = 1; }
   // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет

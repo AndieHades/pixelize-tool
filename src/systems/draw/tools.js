@@ -9,6 +9,7 @@ import { SHAPE_SNAP_MS } from '../../config/timings.js';
 import { stamp } from './stamp.js';
 import { line, commitLine } from './shapes.js';
 import { beginStroke, afterStroke } from './stroke.js';
+import { qsBegin, qsMove, qsRelease } from './quickshape.js';
 
 let last = null;
 
@@ -25,9 +26,10 @@ function armSnap(gx, gy) { clearTimeout(snapTimer);
 function endSnap() { clearTimeout(snapTimer); snapTimer = null; snapCell = null; snapped = false; }
 
 const brush = {
-  down({ gx, gy }) { beginStroke(); stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
-  move({ gx, gy }) { if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
-  up() { S.stroke = false; last = null; afterStroke(); bus.emit('render'); },
+  down({ gx, gy }) { beginStroke(); qsBegin(gx, gy); stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
+  move({ gx, gy }) { if (qsMove(gx, gy)) { bus.emit('render'); return; } // QuickShape выровнял форму — raw больше не рисуем
+    if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
+  up() { qsRelease(); S.stroke = false; last = null; afterStroke(); bus.emit('render'); }, // удержал → коммитит ровную форму, иначе raw остаётся
 };
 
 const shape = {

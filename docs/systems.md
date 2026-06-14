@@ -49,6 +49,7 @@
 | `logic/tint-shade.js` | генерирует 5-цветные шкалы тинтов/шейдов и цвета гармоний | ✅ | (новое) |
 | `logic/poly-mask.js` | растеризует замкнутый многоугольник в множество клеток выделения | ✅ | (выделение) |
 | `logic/mask-ops.js` | булевы операции над масками (replace/add/subtract/intersect) | ✅ | (выделение) |
+| `logic/quickshape.js` | распознаёт форму штриха (line/rect/ellipse) по точкам или null | ✅ | (QuickShape) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -56,6 +57,7 @@
 |--------|-----------|:--:|----------|
 | `systems/render/*` | рисует видимый холст (index+overlays+checker) | ✅ | 03-render |
 | `systems/draw/*` | рисует: кисть/ластик/линия/прямоугольник/коррекция/заливка | ✅ | 05-draw |
+| `systems/draw/quickshape.js` | QuickShape: удержание в конце freehand-штриха → распознать и заменить ровной формой, коммит на отпускании (поверх кисти, без выделения) | ✅ | (новое) |
 | `systems/eyedropper/*` | единственная пипетка: один pipeline (Alt/клик-залипание/удержание bb-pick/долгое нажатие) → ColorPickSource (холст/референс/палитра) → Active Color Manager | ✅ | (выделение цвета) |
 | `systems/effects/*` | неразрушающие Layer Effects: панель, окно настроек (превью+Apply/Cancel), копипаст/меню | ✅ | (эффекты) |
 | `systems/mono.js` | переводит слой/изображение в монохром | ✅ | 05-draw |
@@ -125,6 +127,7 @@
 | `config/lasso.js` | дефолты Freehand Selection (режим/операция), порог замыкания, минимум точек | ✅ |
 | `config/brush-resize.js` | дефолты Brush Size Modifier (`BRUSH_RESIZE`), пресеты чувствительности, список направлений | ✅ |
 | `config/eyedropper.js` | Hot Key пипетки по умолчанию (`EYEDROPPER` — Alt, переназначается) | ✅ |
+| `config/quickshape.js` | задержка удержания QuickShape (`QUICKSHAPE.holdMs`) | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 
