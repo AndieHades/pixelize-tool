@@ -3,3 +3,4 @@
 export const BRUSH_MASK = { threshold: 0.5, floor: 8, invert: false }; // покрытие→клетка
 export const BRUSH_SRC_MAX = 256; // потолок стороны исходного кончика при декоде, px
 export const BRUSH_GRAIN_NATIVE_MAX = 64; // grain считаем дизер-тайлом только если он мелкий
+export const BRUSH_SCATTER = { jitterScale: 1 }; // множитель радиуса разброса (plotJitter × размер)

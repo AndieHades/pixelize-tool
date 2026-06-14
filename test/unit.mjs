@@ -19,6 +19,7 @@ import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
 import { combineMask } from '../src/logic/mask-ops.js';
 import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
+import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
@@ -236,6 +237,28 @@ t('brush-mask: дизер-тайл 4×4 шахматка', () => {
 t('brush-mask: вырожденный grain (всё вкл/выкл) → null', () => {
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array([255, 255, 255, 255]) }), null);
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array(4) }), null); });
+
+// --- bplist (Brush.archive → параметры) ---
+t('bplist: распаковка NSKeyedArchiver → имя и параметры', () => {
+  // минимальный bplist00: обёртка {$top,$objects}; CF$UID индексируют $objects.
+  const str = (s) => Uint8Array.from([0x50 | s.length, ...[...s].map((c) => c.charCodeAt(0))]);
+  const real = (v) => { const b = new Uint8Array(9); b[0] = 0x23; new DataView(b.buffer).setFloat64(1, v); return b; };
+  const uid = (n) => Uint8Array.from([0x80, n]);
+  const arr = (r) => Uint8Array.from([0xa0 | r.length, ...r]);
+  const dict = (k, v) => Uint8Array.from([0xd0 | k.length, ...k, ...v]);
+  const parts = [
+    dict([1, 2], [3, 6]), str('$top'), str('$objects'), dict([4], [5]), str('root'), uid(0),
+    arr([7, 14, 15, 16]), dict([8, 9, 10], [11, 12, 13]), str('name'), str('plotSpacing'), str('plotJitter'),
+    uid(1), uid(2), uid(3), str('Test'), real(1), real(2.5),
+  ];
+  const offs = []; let pos = 8; for (const p of parts) { offs.push(pos); pos += p.length; }
+  const tr = new Uint8Array(32), dv = new DataView(tr.buffer); tr[6] = 1; tr[7] = 1;
+  dv.setBigUint64(8, BigInt(parts.length)); dv.setBigUint64(16, 0n); dv.setBigUint64(24, BigInt(pos));
+  const blocks = [new TextEncoder().encode('bplist00'), ...parts, Uint8Array.from(offs), tr];
+  const buf = new Uint8Array(blocks.reduce((a, b) => a + b.length, 0)); let o = 0; for (const b of blocks) { buf.set(b, o); o += b.length; }
+  const a = unarchiveBrush(buf);
+  assert.equal(a.name, 'Test'); assert.equal(a.plotSpacing, 1); assert.equal(a.plotJitter, 2.5);
+});
 
 // --- конфигурация ---
 t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });

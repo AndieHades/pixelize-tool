@@ -3,6 +3,7 @@
 // Grain берём только мелкий (дизер-решётка); крупную бумажную текстуру игнорируем.
 import { unzip } from '../zip.js';
 import { blobToCoverage } from '../brush-decode.js';
+import { unarchiveBrush } from './bplist.js';
 import { BRUSH_SRC_MAX, BRUSH_GRAIN_NATIVE_MAX } from '../../config/brush-import.js';
 
 export async function importProcreate(buf, name) {
@@ -14,5 +15,11 @@ export async function importProcreate(buf, name) {
   let grain = null;
   if (grainPng) { const gc = await blobToCoverage(new Blob([grainPng]), BRUSH_GRAIN_NATIVE_MAX + 1);
     if (Math.max(gc.w, gc.h) <= BRUSH_GRAIN_NATIVE_MAX) grain = gc; } // крупный grain — следующая итерация (нужен масштаб)
-  return [{ name, source: 'procreate', shape: kind, cov, grain, params: {} }];
+  let title = name, params = {};
+  const arch = files.get('Brush.archive');
+  if (arch) { try { const a = unarchiveBrush(arch); // имя и параметры штриха из bplist
+    if (a.name) title = a.name;
+    params = { spacing: +a.plotSpacing || 0, jitter: +a.plotJitter || 0 };
+  } catch (e) { /* битый архив не должен ронять импорт формы */ } }
+  return [{ name: title, source: 'procreate', shape: kind, cov, grain, params }];
 }
