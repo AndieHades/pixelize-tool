@@ -71,10 +71,12 @@ function drawReticle(ctx, cx, cy) {
 
 export function drawBrushCursor(ctx, ox, oy, z) {
   if (!S.hoverPx || S.cropMode || S.selFloat) return;
+  const cx = ox + (S.hoverPx[0] + 0.5) * z, cy = oy + (S.hoverPx[1] + 0.5) * z;
+  if (S.eyedrop.active) { ctx.save(); drawReticle(ctx, cx, cy); ctx.restore(); return; }
   const inp = inputs(); if (!inp) return;
   const m = ensureMask(inp.sb, inp.size); if (!m) return;
   const left = ox + (S.hoverPx[0] - (m.w >> 1)) * z, top = oy + (S.hoverPx[1] - (m.h >> 1)) * z;
-  const cx = ox + (S.hoverPx[0] + 0.5) * z, cy = oy + (S.hoverPx[1] + 0.5) * z, r = Math.max(m.w, m.h) * z / 2;
+  const r = Math.max(m.w, m.h) * z / 2;
   ctx.save();
   if (S.cursorMode === 'circle') drawRing(ctx, cx, cy, r);
   else drawShape(ctx, m, left, top, z, inp.fill, inp.op, footprintRotation(inp.sb));

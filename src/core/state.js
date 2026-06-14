@@ -18,7 +18,7 @@ export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, 
 
 // фабрика эффекта слоя/папки: уникальный id, видимость, копия дефолтных параметров
 let fxSeq = 0;
-export const newEffect = (type) => ({ id: ++fxSeq, type, visible: true, params: { ...EFFECT_DEFAULTS[type] } });
+export const newEffect = (type, params = {}) => ({ id: ++fxSeq, type, visible: true, params: { ...EFFECT_DEFAULTS[type], ...params } });
 // глубокая копия списка эффектов (только данные — для истории/сериализации/копипаста)
 export const cloneFx = (list) => (list || []).map((e) => ({ id: ++fxSeq, type: e.type, visible: e.visible !== false, params: { ...e.params } }));
 

@@ -7,6 +7,7 @@ import { snapshot } from '../../core/history.js';
 import { expandForEffects } from '../../core/document.js';
 import { $, t } from '../../core/dom.js';
 import { EFFECT_FIELDS } from '../../config/defaults.js';
+import { rgbToHex } from '../../logic/color.js';
 import { activeTarget } from './shared.js';
 
 let ses = null; // { target, eff, isNew, original }
@@ -44,8 +45,10 @@ function open(target, eff, isNew) { if (ses) { revert(); close(); } // пере�
   ses = { target, eff, isNew, original: { ...eff.params } }; fill(eff); $('fx-edit').classList.add('on');
   bus.emit('layers'); bus.emit('render'); }
 
+const newFxParams = (type) => (EFFECT_FIELDS[type]?.includes('color') ? { color: rgbToHex(S.active) } : {});
+
 export function openFxNew(type) { const target = activeTarget(); if (!target) return;
-  const eff = newEffect(type); open(target, eff, true); }
+  const eff = newEffect(type, newFxParams(type)); open(target, eff, true); }
 export function openFxEdit(target, eff) { if (target && eff) open(target, eff, false); }
 
 export function fxCancel() { if (!ses) return; revert(); close(); bus.emit('layers'); bus.emit('render'); }

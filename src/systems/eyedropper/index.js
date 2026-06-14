@@ -34,10 +34,10 @@ function showPreview(x, y) { const box = $('eyedrop');
 const hide = () => { found = undefined; $('eyedrop').classList.remove('on'); };
 function preview(x, y) { found = sampleColor(x, y); showPreview(x, y); }
 
-function setArmed(on, mode) { if (armed === on && via === mode) return;
-  armed = on; via = on ? mode : null; document.body.classList.toggle('picking', armed); // #pickflag + курсор-пипетка через CSS
+function setArmed(on, mode) { const nextVia = on ? mode : null; if (armed === on && via === nextVia) return;
+  armed = on; via = nextVia; E.active = armed; document.body.classList.toggle('picking', armed); // #pickflag + курсор-пипетка через CSS
   const pk = $('bb-pick'); if (pk) pk.classList.toggle('on', armed);
-  if (!armed) { picking = false; hide(); } }
+  if (!armed) { picking = false; hide(); } bus.emit('render'); }
 
 function onMove(e) {
   if (!armed) { if (holdT && e.pointerId === holdId && Math.hypot(e.clientX - holdX, e.clientY - holdY) > DRAG_THRESHOLD) clearHold(); return; } // сдвинул до срабатывания — это штрих, не пипетка

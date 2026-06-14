@@ -35,6 +35,7 @@ const { monoAll } = await import('../src/systems/mono.js');
 const { recolorAll } = await import('../src/systems/recolor.js');
 const { freeRotateLayer } = await import('../src/systems/free-rotate.js');
 const bc = await import('../src/systems/brightness-contrast.js');
+const { drawBrushCursor } = await import('../src/systems/render/cursor.js');
 const sel = await import('../src/systems/selection/model.js');
 const clip = await import('../src/systems/selection/clipboard.js');
 const xtree = await import('../src/systems/export/tree.js');
@@ -58,6 +59,7 @@ const tb = await import('../src/systems/toolbars.js');
 const effects = await import('../src/systems/effects/index.js');
 const fxr = await import('../src/core/effects-render.js');
 const fxlogic = await import('../src/logic/layer-effects.js');
+const { EFFECT_TYPES } = await import('../src/config/defaults.js');
 const adjust = await import('../src/systems/draw/adjust.js');
 const crop = await import('../src/systems/crop.js');
 const status = await import('../src/systems/status.js');
@@ -162,6 +164,13 @@ t('cursor: предпросмотр отпечатка рисуется в real/
   S.tool = 'eraser'; S.cursorMode = 'real'; render.render(); // ластик — белый отпечаток
   S.stampBrush.pencil = { tok: 7, cov: null, params: {} }; S.tool = 'pencil'; render.render(); // штамп-кисть
   S.hoverPx = null; S.stampBrush.pencil = null; assert.ok(true); });
+t('cursor: при пипетке real brush скрыт, остаётся только прицел', () => { reset4();
+  const ops = { drawImage: 0, lineTo: 0 }, ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, stroke() {},
+    lineTo() { ops.lineTo++; }, drawImage() { ops.drawImage++; }, arc() {} };
+  S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; S.brushes.pencil.size = 5;
+  S.eyedrop.active = true; drawBrushCursor(ctx, 0, 0, 10);
+  assert.equal(ops.drawImage, 0); assert.ok(ops.lineTo > 0);
+  S.eyedrop.active = false; S.hoverPx = null; S.brushes.pencil.size = 1; });
 t('cursor: cursor.cycleMode гоняет режимы по кругу', () => { reset4();
   S.cursorMode = 'real'; actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'circle');
   actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'real'); });
@@ -579,6 +588,12 @@ t('effects: новый эффект до Apply остаётся черновик
   assert.equal(S.layers[0].effects.length, 0); assert.ok(S.fxDraft && S.fxDraft.eff.type === 'glow');
   assert.equal(document.querySelectorAll('#lay-list .fxrow').length, 0); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
   document.getElementById('fx-cancel').click(); assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 0); });
+
+t('effects: новые эффекты берут активный цвет', () => { resetWH(8, 8); S.active = [12, 34, 56];
+  for (const type of EFFECT_TYPES) {
+    document.querySelector(`#fx-types button[data-fx="${type}"]`).click();
+    assert.equal(S.fxDraft.eff.params.color, '#0c2238'); document.getElementById('fx-cancel').click();
+  } });
 
 t('effects: Apply фиксирует эффект, undo убирает', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   document.querySelector('#fx-types button[data-fx="stroke"]').click(); document.getElementById('fx-apply').click();
