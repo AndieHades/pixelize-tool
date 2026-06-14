@@ -65,6 +65,8 @@ const input = await import('../src/systems/input/index.js');
 await import('../src/systems/selection/input.js');
 await import('../src/systems/selection/handles.js');
 const sfloat = await import('../src/systems/selection/float.js');
+await import('../src/systems/freehand/input.js');
+const fhpath = await import('../src/systems/freehand/path.js');
 const tf = await import('../src/systems/transform/index.js');
 const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
@@ -287,6 +289,26 @@ t('selection: selectColorPixels строит маску', () => { resetWH(6, 6);
   sel.selectColorPixels([9, 9, 9]); assert.ok(S.selMask && S.selMask.has('2,2') && S.selMask.has('4,4')); });
 t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null; sel.invertSelection();
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
+
+t('selection: applySelectionOp add объединяет рамку и новую область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+  sel.applySelectionOp(new Set(['5,5']), 'add'); assert.ok(S.selMask.has('1,1') && S.selMask.has('5,5')); });
+t('selection: applySelectionOp subtract вычитает область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+  sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.ok(!S.selMask.has('1,1') && S.selMask.has('2,2')); });
+t('selection: applySelectionOp intersect оставляет пересечение', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  sel.applySelectionOp(new Set(['2,2', '9,9']), 'intersect'); assert.deepEqual([...S.selMask], ['2,2']); });
+t('selection: applySelectionOp пустой результат снимает выделение', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 1, y1: 1 }; S.selMask = null;
+  const r = sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.equal(r, false); assert.equal(S.sel, null); });
+
+t('lasso: Continuous строит маску одним движением и авто-замыкается', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = S.selMask = null;
+  const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.move({ gx: 5, gy: 1 }); h.move({ gx: 5, gy: 5 }); h.move({ gx: 1, gy: 5 }); h.up({});
+  assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); });
+t('lasso: Segment продолжает контур и замыкается у старта', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'segment'; S.lassoOp = 'replace'; S.sel = S.selMask = null; S.view.zoom = 12;
+  const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(fhpath.pathActive() && !S.selMask); // сегмент начат, не замкнут
+  h.down({ gx: 5, gy: 1 }); h.up({}); h.down({ gx: 5, gy: 5 }); h.up({}); h.down({ gx: 1, gy: 5 }); h.up({}); assert.ok(fhpath.pathActive());
+  h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); }); // возврат к старту — замыкание
+t('lasso: cancel убирает контур, не трогая существующее выделение', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  const h = toolHandler('lasso'); h.down({ gx: 5, gy: 5 }); h.move({ gx: 6, gy: 6 }); assert.ok(fhpath.pathActive());
+  actions.run('lasso.cancel'); assert.ok(!fhpath.pathActive()); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); });
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });

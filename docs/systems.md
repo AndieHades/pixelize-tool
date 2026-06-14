@@ -46,6 +46,8 @@
 | `logic/layer-effects.js` | пиксели эффектов слоя из маски силуэта (обводка/свечение/тени) | ✅ | (эффекты) |
 | `logic/bc.js` | яркость/контраст клетки | ✅ | 05-draw |
 | `logic/tint-shade.js` | генерирует 5-цветные шкалы тинтов/шейдов и цвета гармоний | ✅ | (новое) |
+| `logic/poly-mask.js` | растеризует замкнутый многоугольник в множество клеток выделения | ✅ | (выделение) |
+| `logic/mask-ops.js` | булевы операции над масками (replace/add/subtract/intersect) | ✅ | (выделение) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -64,6 +66,7 @@
 | `systems/selection/model.js` | держит выделение, маски, операции содержимого | ✅ | 06-selection |
 | `systems/selection/input.js` + `float.js` | тянет/тащит/растягивает выделение | ✅ | 06-selection |
 | `systems/selection/clipboard.js` | копирует/вырезает/вставляет/удаляет | ✅ | 06-selection |
+| `systems/freehand/*` | Freehand Selection: инструмент (input) + контур (path) + мост к маске (apply) + панель (panel) | ✅ | (выделение) |
 | `systems/input/*` | разбирает указатель и тач-жесты, диспетчеризует в обработчики | ✅ | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
@@ -115,6 +118,7 @@
 | `config/timings.js` | тайминги и пороги жестов | ✅ |
 | `config/layer-actions.js` | набор кнопок свайпа строки слоя (`LAYER_SWIPE_ACTIONS`) | ✅ |
 | `config/tint-shade.js` | шаги шкал (`TINT_SHADE_STEPS`) и углы гармоний (`HARMONY_OFFSETS`) | ✅ |
+| `config/lasso.js` | дефолты Freehand Selection (режим/операция), порог замыкания, минимум точек | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

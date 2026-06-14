@@ -16,6 +16,8 @@ import { outlineRings } from '../src/logic/outline.js';
 import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
 import { generateTints, generateShades, generateHarmonyBaseColors, generateTintShadeScalesForHarmony } from '../src/logic/tint-shade.js';
 import { sortPalette } from '../src/logic/palette-sort.js';
+import { polygonToMask } from '../src/logic/poly-mask.js';
+import { combineMask } from '../src/logic/mask-ops.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
@@ -168,6 +170,34 @@ t('palette-sort: тон группами (коричневый не лезет �
   const out = sortPalette([gDark, brown, gLight, gray]);
   assert.deepEqual(out, [gray, brown, gLight, gDark]); // серый, затем коричневый (тон ~30), затем зелёные (тон ~95) светлый→тёмный
 });
+
+// --- выделение: растеризация контура и операции над масками ---
+t('poly-mask: прямоугольный контур заполняет клетки внутри', () => {
+  const m = polygonToMask([[1, 1], [4, 1], [4, 4], [1, 4]], 8, 8);
+  assert.ok(m.has('2,2') && m.has('3,3')); assert.ok(!m.has('0,0') && !m.has('5,5')); });
+t('poly-mask: вырожденный контур (<3 точек) даёт пустое множество', () => {
+  assert.equal(polygonToMask([[1, 1], [2, 2]], 8, 8).size, 0); });
+t('poly-mask: треугольник заполняется по even-odd', () => {
+  const m = polygonToMask([[0, 0], [6, 0], [0, 6]], 8, 8);
+  assert.ok(m.has('1,1')); assert.ok(!m.has('5,5')); });
+t('poly-mask: клипуется границами холста', () => {
+  const m = polygonToMask([[-5, -5], [3, -5], [3, 3], [-5, 3]], 4, 4);
+  for (const k of m) { const [x, y] = parseKey(k); assert.ok(x >= 0 && y >= 0 && x < 4 && y < 4); } });
+t('mask-ops: replace заменяет, не глядя на базу', () => {
+  const out = combineMask(new Set(['0,0']), new Set(['2,2']), 'replace');
+  assert.ok(out.has('2,2') && !out.has('0,0')); });
+t('mask-ops: add объединяет', () => {
+  const out = combineMask(new Set(['0,0']), new Set(['2,2']), 'add');
+  assert.ok(out.has('0,0') && out.has('2,2')); });
+t('mask-ops: subtract вычитает', () => {
+  const out = combineMask(new Set(['0,0', '1,1']), new Set(['1,1']), 'subtract');
+  assert.ok(out.has('0,0') && !out.has('1,1')); });
+t('mask-ops: intersect оставляет общее', () => {
+  const out = combineMask(new Set(['0,0', '1,1']), new Set(['1,1', '2,2']), 'intersect');
+  assert.ok(out.has('1,1') && !out.has('0,0') && !out.has('2,2')); });
+t('mask-ops: без базы возвращает копию новой области', () => {
+  const add = new Set(['3,3']); const out = combineMask(null, add, 'subtract');
+  assert.ok(out.has('3,3') && out !== add); });
 
 // --- конфигурация ---
 t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });

@@ -4,6 +4,7 @@ import { S, G } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { parseKey } from '../../logic/raster.js';
+import { combineMask } from '../../logic/mask-ops.js';
 import { eqc } from '../../logic/color.js';
 import { symA, symHA } from '../../core/layers.js';
 import { inMask } from '../../core/selection.js';
@@ -30,6 +31,19 @@ export function maskFromCells(set) { let x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (const k of set) { const [x, y] = parseKey(k); if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   if (x1 < 0) { deselect(); return; }
   S.sel = { x0, y0, x1, y1 }; S.selMask = set; bus.emit('selection'); bus.emit('render'); }
+
+// текущее выделение как множество клеток (рамка → все клетки рамки, маска → как есть)
+export function selAsSet() { if (S.selMask) return new Set(S.selMask);
+  if (!S.sel) return null; const out = new Set();
+  for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) out.add(x + ',' + y);
+  return out; }
+
+// применить построенную маску с операцией (replace/add/subtract/intersect).
+// Общая точка входа для всех инструментов выделения — не знает, как построен контур.
+export function applySelectionOp(addition, op) { commitFloat();
+  const out = combineMask(op === 'replace' ? null : selAsSet(), addition, op);
+  if (!out || !out.size) { deselect(); return false; }
+  maskFromCells(out); return true; }
 
 export function symmetrizeSelection() { const sa = symA(), sha = symHA(); if (!S.sel || (!sa && !sha)) return;
   const base = new Set();
@@ -74,6 +88,7 @@ export function fillSelection() { if (!S.sel) return; commitFloat(); snapshot();
   for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) { if (!inMask(x, y)) continue; g[y][x] = [S.active[0], S.active[1], S.active[2], 255]; nn++; }
   markDirty(S.cur); bus.emit('render'); bus.emit('layers'); toast(t('toast.filledN', { n: nn })); }
 
+actions.register('selection.applyOp', applySelectionOp);
 actions.register('selection.byColor', selectColorPixels);
 actions.register('selection.layer', selectLayerContent);
 actions.register('selection.invert', invertSelection);

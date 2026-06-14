@@ -33,7 +33,7 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
   stabPt = { x: e.clientX, y: e.clientY };
   const m = activeMode(); if (m) { m.down({ gx, gy, e }); drawing = true; return; }
   for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e })) { activeGlobal = gh; drawing = true; return; }
-  if (S.sel && S.tool !== 'select' && !selHit(gx, gy)) { actions.run('select.none'); return; }
+  if (S.sel && S.tool !== 'select' && S.tool !== 'lasso' && !selHit(gx, gy)) { actions.run('select.none'); return; } // лассо строит контур поверх существующего выделения (add/subtract/intersect)
   const h = toolHandler(S.tool); if (h && h.down) { h.down({ gx, gy, e }); drawing = true; }
 }
 

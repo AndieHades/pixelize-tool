@@ -32,6 +32,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]]) {
       ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);
       ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); } }
+  if (S.lassoPath && S.lassoPath.pts.length) drawLasso(ctx, ox, oy, z);
   if (S.replaceMode) { ctx.fillStyle = 'rgba(61,139,253,.5)';
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let hit = false; for (let i = 0; i < S.layers.length; i++) { if (!effVis(i)) continue; const c = S.layers[i].grid[y][x]; if (c && eqc(c, S.replaceMode.from)) { hit = true; break; } }
@@ -50,4 +51,19 @@ export function drawOverlays(ctx, ox, oy, z) {
     const bx = ox + (S.hoverPx[0] - off2) * z, by2 = oy + (S.hoverPx[1] - off2) * z;
     ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.lineWidth = 3; ctx.strokeRect(bx - .5, by2 - .5, s * z + 1, s * z + 1);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.strokeRect(bx - .5, by2 - .5, s * z + 1, s * z + 1); }
+}
+
+// строящийся контур лассо: пунктир по траектории, старт/конец точками, при
+// близости к старту — подсветка и предпросмотр замыкания (Continuous/Segment)
+function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts;
+  const px = (p) => ox + (p[0] + 0.5) * z, py = (p) => oy + (p[1] + 0.5) * z, end = pts[pts.length - 1];
+  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.strokeStyle = C.accent;
+  ctx.beginPath(); ctx.moveTo(px(pts[0]), py(pts[0]));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(px(pts[i]), py(pts[i])); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px(end), py(end)); ctx.lineTo(px(pts[0]), py(pts[0])); // замыкающий сегмент
+  ctx.globalAlpha = lp.near ? 0.9 : 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
+  const R = lp.near ? 6 : 4; // стартовая точка — крупнее и залита при близости (сигнал «можно замкнуть»)
+  ctx.beginPath(); ctx.arc(px(pts[0]), py(pts[0]), R, 0, Math.PI * 2);
+  ctx.fillStyle = lp.near ? C.accent : '#fff'; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = lp.near ? '#fff' : C.accent; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px(end), py(end), 3, 0, Math.PI * 2); ctx.fillStyle = C.accent; ctx.fill();
 }

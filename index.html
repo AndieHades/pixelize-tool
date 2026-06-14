@@ -41,6 +41,7 @@
       <button id="t-move" data-i18n-title="tool.move"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></svg></button>
       <button id="t-adjust" data-i18n-title="tool.adjust"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
       <button id="t-select" data-i18n-title="tool.select"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
+      <button id="t-lasso" data-i18n-title="tool.lasso"><svg viewBox="0 0 24 24"><path d="M4 13c0-5 4-8.5 8.5-8.5S20 7.5 20 11.5c0 3-2.5 4.5-4.5 4.5-1.5 0-2.5-1-2.5-2s.8-1.8 1.8-1.8" stroke-dasharray="3 2.6"/><path d="M9 18.5a2 2 0 1 1-2.6-1.9" stroke-dasharray="2.6 2.4"/></svg></button>
       <div class="tb-sep" id="tb-sep1"></div>
       <button id="layers" data-i18n-title="tool.layers"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
       <button id="activewrap" data-i18n-title="tool.color"><span id="active"></span></button>
@@ -112,6 +113,21 @@
     </div>
     <div class="irow"><label data-i18n="label.strength"></label><input id="adj-amt" type="range" min="2" max="30" step="1" value="8" /><b id="adj-amtv">8</b></div>
     <p class="hint" style="margin:0 2px" data-i18n="hint.adjust"></p>
+  </div>
+
+  <div id="lassopop" class="toolpop">
+    <div class="bp-head"><span class="bp-title" data-i18n="lasso.title"></span><button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="chips" id="lasso-mode">
+      <button data-v="continuous" data-i18n="lasso.continuous"></button>
+      <button data-v="segment" data-i18n="lasso.segment"></button>
+    </div>
+    <div class="chips" id="lasso-op">
+      <button data-v="replace" data-i18n="lasso.new"></button>
+      <button data-v="add" data-i18n="lasso.add"></button>
+      <button data-v="subtract" data-i18n="lasso.subtract"></button>
+      <button data-v="intersect" data-i18n="lasso.intersect"></button>
+    </div>
+    <div class="iact"><button id="lasso-cancel" class="txtbtn" data-i18n="lasso.cancel"></button></div>
   </div>
 
   <div id="fx-panel">

@@ -33,6 +33,7 @@ import * as newCanvas from './systems/new-canvas.js';
 import * as settings from './systems/settings.js';
 import * as panels from './systems/panels.js';
 import * as selBar from './systems/selection/bar.js';
+import * as lasso from './systems/freehand/panel.js';
 import * as status from './systems/status.js';
 import * as toolpops from './systems/toolpops.js';
 
@@ -42,6 +43,7 @@ import './systems/move-tool.js';
 import './systems/selection/input.js';
 import './systems/selection/handles.js';
 import './systems/selection/clipboard.js';
+import './systems/freehand/input.js';
 import './systems/rotate-canvas.js';
 import './systems/flip.js';
 import './systems/trim.js';
@@ -50,7 +52,7 @@ import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, status, toolpops];
+const MOUNTS = [palette, brushBar, colorPicker, toolbars, layersUI, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();

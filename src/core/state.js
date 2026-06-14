@@ -6,6 +6,7 @@ import { MAX_LAYERS, MAX_SIZE, BP_SMAX } from '../config/limits.js';
 import { DEFAULT_DOC } from '../config/presets.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../config/palette.js';
 import { BRUSH_DEFAULTS, FLAGS_DEFAULT, ADJUST_DEFAULT, EFFECT_DEFAULTS } from '../config/defaults.js';
+import { LASSO_DEFAULT } from '../config/lasso.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
@@ -33,6 +34,7 @@ export const S = {
   ppOn: FLAGS_DEFAULT.pixelPerfect, stabOn: FLAGS_DEFAULT.stabilize, stroke: false,
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
   sel: null, selMask: null, selFloat: null,
+  lassoMode: LASSO_DEFAULT.mode, lassoOp: LASSO_DEFAULT.op, lassoPath: null,
   view: { zoom: 12, ox: 0, oy: 0 },
   undoStack: [], redoStack: [],
   // общая интерактивная/превью-стейт, которую читает рендер и пишут системы

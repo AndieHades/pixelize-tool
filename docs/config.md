@@ -13,6 +13,7 @@
 | `config/defaults.js` | дефолты кисти/ластика, эффектов (обводка/тень/свечение/коррекция), импорта, флаги pp/стабилизации |
 | `config/timings.js` | тайминги и пороги жестов (долгий тап, удержание, drag-порог, сглаживание, щипок, тост) |
 | `config/layer-actions.js` | `LAYER_SWIPE_ACTIONS` — кнопки строки слоя при свайпе влево (lock/alphaLock/clip/duplicate/delete) |
+| `config/lasso.js` | Freehand Selection: `LASSO_DEFAULT` (режим/операция), `LASSO_CLOSE_PX` (порог замыкания), `LASSO_MIN_POINTS` |
 
 Хоткеи — тоже данные, но живут со своей системой: `systems/keyboard/keymap.js`
 (см. [keymap.md](keymap.md)). Строки UI — в локалях ([i18n.md](i18n.md)),

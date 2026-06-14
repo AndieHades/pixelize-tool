@@ -12,7 +12,9 @@ export const ru = {
   'tool.rect': 'Прямоугольник (K) · ПКМ — залитый · Shift — квадрат', 'tool.rectFill': 'Залитый прямоугольник (K) · ПКМ — контур · Shift — квадрат',
   'tool.ellipse': 'Эллипс (Q) · ПКМ — залитый · Shift — круг', 'tool.ellipseFill': 'Залитый эллипс (Q) · ПКМ — контур · Shift — круг',
   'tool.move': 'Свободная трансформация (носить / размер / поворот) — Ctrl+T', 'tool.adjust': 'Кисть-коррекция: осветлить / затемнить / тон',
-  'tool.select': 'Выделение (M)', 'tool.layers': 'Слои (L) · ПКМ по холсту — выбор слоя', 'tool.color': 'Цвет (HSV)',
+  'tool.select': 'Выделение (M)', 'tool.lasso': 'Свободное выделение (лассо)', 'tool.layers': 'Слои (L) · ПКМ по холсту — выбор слоя', 'tool.color': 'Цвет (HSV)',
+  'lasso.title': 'Свободное выделение', 'lasso.continuous': 'Непрерывно', 'lasso.segment': 'Сегменты',
+  'lasso.new': 'Новое', 'lasso.add': 'Добавить', 'lasso.subtract': 'Вычесть', 'lasso.intersect': 'Пересечь', 'lasso.cancel': 'Отменить контур',
   'tool.copy': 'Копировать', 'tool.cut': 'Вырезать', 'tool.paste': 'Вставить', 'tool.deleteSel': 'Удалить выделенное', 'tool.deselect': 'Снять выделение',
   // боковая панель
   'side.symV': 'Симметрия лево-право (S)', 'side.symH': 'Симметрия верх-низ (Shift+S)', 'side.pp': 'Пиксель-перфект (P)',
