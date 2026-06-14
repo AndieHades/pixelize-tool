@@ -23,6 +23,7 @@ import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke } from '../src/logic/brush-preview.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
+import { brushMode, stampSize, planDab } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
 import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
@@ -290,6 +291,16 @@ t('brush-pack: round-trip набора кистей (маска Uint8Array)', ()
   assert.ok(b.cov.data instanceof Uint8Array); assert.deepEqual([...b.cov.data], [0, 255, 200, 0]); assert.deepEqual([...b.grain.data], [1, 0, 0, 1]);
 });
 t('brush-pack: чужой файл отвергается', () => { assert.throws(() => unpackSet('{"format":"other"}')); });
+
+t('brush-stamp: режим выводится по параметрам и переопределяется явно', () => {
+  assert.equal(brushMode({}), 'flow'); assert.equal(brushMode({ spacing: 1 }), 'single');
+  assert.equal(brushMode({ jitter: 2 }), 'scatter'); assert.equal(brushMode({ mode: 'flow', jitter: 2 }), 'flow'); });
+t('brush-stamp: stampSize — натуральный для кисти из выделения, иначе слайдер', () => {
+  assert.equal(stampSize({ baseSize: 20 }, 8, 8), 20); assert.equal(stampSize({ baseSize: 20 }, 4, 8), 10); assert.equal(stampSize({}, 5, 8), 5); });
+t('brush-stamp: planDab — flow штампует всегда, single соблюдает spacing', () => {
+  assert.deepEqual(planDab({}, 4, { acc: 0 }, 3, 7), { cx: 3, cy: 7, size: 4 }); // flow
+  const st = { acc: 0 }; const a = planDab({ mode: 'single', spacing: 1 }, 4, st, 0, 0); // gap=4
+  assert.ok(a && a.cx === 0); assert.equal(planDab({ mode: 'single', spacing: 1 }, 4, st, 1, 0), null); });
 
 t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;

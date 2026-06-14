@@ -12,6 +12,8 @@ export const ru = {
   'brush.library': 'Кисти', 'brush.add': 'Набор / импорт', 'brush.newSet': 'Создать набор', 'brush.import': 'Импорт из файла',
   'brush.imported': 'Импортированные', 'brush.set': 'Набор', 'brush.fromSelection': 'Из выделения', 'brush.stampName': 'Штамп',
   'menu.export': 'Экспорт набора', 'brush.packDesc': 'Набор кистей',
+  'brush.settings': 'Настройки кисти', 'brush.size': 'Размер', 'brush.spacing': 'Расстояние', 'brush.scatter': 'Разброс',
+  'brush.modeSingle': 'Штамп', 'brush.modeScatter': 'Разброс', 'brush.modeFlow': 'Поток', 'brush.testHint': 'Рисуй здесь для проверки',
   'toast.selectAreaFirst': 'Сначала выдели область', 'toast.selectionEmpty': 'Выделение пустое', 'toast.brushCreated': 'Кисть создана: {name}',
   'tool.rect': 'Прямоугольник (K) · ПКМ — залитый · Shift — квадрат', 'tool.rectFill': 'Залитый прямоугольник (K) · ПКМ — контур · Shift — квадрат',
   'tool.ellipse': 'Эллипс (Q) · ПКМ — залитый · Shift — круг', 'tool.ellipseFill': 'Залитый эллипс (Q) · ПКМ — контур · Shift — круг',

@@ -6,7 +6,6 @@ import { S } from '../../core/state.js';
 import { $, t } from '../../core/dom.js';
 import { lib, brushesOf } from './data.js';
 import { previewStroke } from '../../logic/brush-preview.js';
-import { setStampBrush } from '../../core/stamp-brush.js';
 import { attachSwipe } from '../../core/swipe-actions.js';
 import { longPress } from '../../core/long-press.js';
 import { inlineRename } from '../../core/inline-rename.js';
@@ -60,7 +59,7 @@ export function renderBrushes() {
   for (const b of brushesOf(lib.curSet)) {
     const row = document.createElement('div'); row.className = 'brow brush' + (b.id === active ? ' on' : ''); row.dataset.id = b.id;
     const span = nameSpan(b.name); row.append(span, previewCanvas(b));
-    row.addEventListener('click', () => { if (dblHit(b.id)) { rename(span, b, 'brush'); return; } setStampBrush(cb.mode(), b); renderBrushes(); });
+    row.addEventListener('click', () => { if (dblHit(b.id)) { rename(span, b, 'brush'); return; } cb.pick(b); });
     longPress(row, (x, y) => cb.menu(b, 'brush', x, y));
     attachSwipe(row, { actions: [
       { label: t('menu.rename'), onClick: () => rename(span, b, 'brush') },

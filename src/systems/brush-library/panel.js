@@ -12,9 +12,10 @@ import { setStampBrush } from '../../core/stamp-brush.js';
 import { ensureLib, addBrush, dupBrush, delBrush, addSet, delSet, renameBrush, renameSet, brushesOf } from './data.js';
 import { renderSets, renderBrushes, bindList, renameById } from './list.js';
 import { createFromSelection } from './from-selection.js';
+import { mountSettings, syncSettings, openSettings } from './settings.js';
 
 let mode = 'pencil';
-function rerender() { renderSets(); renderBrushes(); }
+function rerender() { renderSets(); renderBrushes(); syncSettings(); }
 
 function pickBrush(fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.brush,.abr,.phbrush,.json';
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
@@ -27,6 +28,7 @@ function importBrush() { pickBrush((f) => {
 function exportSet(s) { const text = packSet(s.name || t('brush.imported'), brushesOf(s.id));
   saveFile(new Blob([text], { type: 'application/json' }), (s.name || 'brushes') + '.phbrush', 'application/json', t('brush.packDesc')); }
 
+const pick = (b) => { setStampBrush(mode, b); rerender(); openSettings(); }; // клик по кисти — выбрать + окно настроек
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
 const removeSet = (s) => delSet(s.id).then(rerender);
@@ -47,7 +49,8 @@ export function toggle(which) { const p = $('brush-pop');
   if (opened() && which === mode) p.classList.remove('on'); else open(which); }
 
 export function mount() {
-  bindList({ rerender, dup, del, menu, rename, delSet: removeSet, mode: () => mode });
+  bindList({ rerender, pick, dup, del, menu, rename, delSet: removeSet, mode: () => mode });
+  mountSettings(() => mode);
   floatingWindow($('brush-pop'), { grip: $('brush-head'), handle: $('brush-rsz'), storeKey: 'brushwin', minW: 320, minH: 260,
     onClose: () => $('brush-pop').classList.remove('on') });
   $('brush-add').addEventListener('click', (e) => { const r = e.currentTarget.getBoundingClientRect(); showMenuAt($('brush-plus'), r.left, r.bottom); });

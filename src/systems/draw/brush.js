@@ -1,51 +1,33 @@
-// Штамп кисти/ластика: маска кончика или квадрат size×size, с разбросом
-// (spacing/jitter из Procreate), дизер-тайлом (grain) и осями симметрии.
+// Штамп кисти/ластика: квадрат size×size либо маска импортированной кисти.
+// Ядро (маска/grain/режим/scatter) — общее в logic/brush-stamp.js (то же
+// поведение в тест-канвасе настроек). Здесь — применение к холсту: симметрия,
+// выделение, альфа (через paintCell).
 import { S } from '../../core/state.js';
 import { symA, symHA } from '../../core/layers.js';
 import { paintCell } from './cells.js';
 import { ppVisit } from './pixel-perfect.js';
-import { coverageToMask, maskRound } from '../../logic/brush-mask.js';
-import { BRUSH_MASK, BRUSH_SCATTER } from '../../config/brush-import.js';
+import { brushMask, grainAt, stampSize, planDab } from '../../logic/brush-stamp.js';
 import { BP_SMAX } from '../../config/limits.js';
 
-let cTok = -1, cSize = -1, cMask = null, acc = 0; // кеш маски + счётчик spacing
-export function resetScatter() { acc = 0; } // вызывается в начале штриха
+let cTok = -1, cSize = -1, cMask = null; const state = { acc: 0 }; // кеш маски + счётчик spacing
+export function resetScatter() { state.acc = 0; } // в начале штриха
+function maskOf(sb, size) { if (sb.tok === cTok && size === cSize) return cMask; cMask = brushMask(sb, size); cTok = sb.tok; cSize = size; return cMask; }
 
-function activeMask(sb, size) {
-  if (!sb) return null;
-  if (sb.tok === cTok && size === cSize) return cMask;
-  cMask = sb.cov ? coverageToMask(sb.cov, size, BRUSH_MASK) : maskRound(size);
-  cTok = sb.tok; cSize = size; return cMask;
-}
-
-// ok(x,y) — фильтр дизер-тайла (в координатах холста) либо null.
-function paintSym(x, y, erase, ok) {
-  if (!ok || ok(x, y)) paintCell(x, y, erase);
+function paintSym(x, y, erase, g) {
+  if (grainAt(g, x, y)) paintCell(x, y, erase);
   const mx = S.W - 1 - x, my = S.H - 1 - y, sa = symA(), sha = symHA();
-  if (sa && mx !== x && (!ok || ok(mx, y))) paintCell(mx, y, erase);
-  if (sha && my !== y && (!ok || ok(x, my))) paintCell(x, my, erase);
-  if (sa && sha && mx !== x && my !== y && (!ok || ok(mx, my))) paintCell(mx, my, erase);
+  if (sa && mx !== x && grainAt(g, mx, y)) paintCell(mx, y, erase);
+  if (sha && my !== y && grainAt(g, x, my)) paintCell(x, my, erase);
+  if (sa && sha && mx !== x && my !== y && grainAt(g, mx, my)) paintCell(mx, my, erase);
 }
-function footprint(cx, cy, erase, m, ok) { const ox = m.w >> 1, oy = m.h >> 1;
-  for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, ok); }
+function footprint(cx, cy, erase, m, g) { const ox = m.w >> 1, oy = m.h >> 1;
+  for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, g); }
 
 export function brushStamp(x, y, erase) {
   const tool = erase ? 'eraser' : 'pencil', slider = S.brushes[tool].size, sb = S.stampBrush[tool];
-  // кисти из выделения штампуются в своём натуральном размере; слайдер 1..BP_SMAX масштабирует
-  const s = sb && sb.baseSize ? Math.max(1, Math.round(sb.baseSize * slider / BP_SMAX)) : slider;
-  const m = activeMask(sb, s), g = sb && sb.grain ? sb.grain : null; // grain — уже бинарный дизер-тайл
-  const ok = g ? (px, py) => g.data[(((py % g.h) + g.h) % g.h) * g.w + (((px % g.w) + g.w) % g.w)] : null;
-  const p = sb && sb.params;
-  if (m && p && (p.spacing > 0 || p.jitter > 0)) { // режим разброса (shatter)
-    const gap = Math.max(1, Math.round(p.spacing * s));
-    if (acc++ % gap) return; // соблюдаем spacing: дабы реже, чем каждая клетка
-    let cx = x, cy = y;
-    if (p.jitter > 0) { const r = p.jitter * s * BRUSH_SCATTER.jitterScale, a = Math.random() * 6.2832, d = Math.random() * r;
-      cx = x + Math.round(Math.cos(a) * d); cy = y + Math.round(Math.sin(a) * d); }
-    footprint(cx, cy, erase, m, ok); return;
-  }
-  if (m) { footprint(x, y, erase, m, ok); return; }
-  if (s === 1 && !g) ppVisit(x, y);
-  const off = s >> 1;
-  for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) paintSym(x - off + dx, y - off + dy, erase, ok);
+  if (sb) { const dab = planDab(sb.params, stampSize(sb, slider, BP_SMAX), state, x, y); if (!dab) return;
+    const m = maskOf(sb, dab.size); if (m) footprint(dab.cx, dab.cy, erase, m, sb.grain || null); return; }
+  if (slider === 1) ppVisit(x, y);
+  const off = slider >> 1;
+  for (let dy = 0; dy < slider; dy++) for (let dx = 0; dx < slider; dx++) paintSym(x - off + dx, y - off + dy, erase, null);
 }

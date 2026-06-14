@@ -716,3 +716,13 @@
 .brow.set.drop-into { outline: 2px solid var(--accent); outline-offset: -2px; }
 .brow-edit { width: 100%; box-sizing: border-box; background: var(--surface); color: var(--txt);
   border: 1px solid var(--accent); border-radius: 8px; padding: 6px 8px; font-size: 13px; font-weight: 600; }
+#brush-settings { width: 232px; }
+#brush-settings .bs-body { padding: 10px 12px; display: grid; grid-template-columns: auto 1fr; gap: 9px 10px; align-items: center; }
+#brush-settings .bs-prev, #brush-settings .bs-modes, #brush-settings .bs-test { grid-column: 1 / -1; }
+.bs-prev { width: 100%; height: 40px; border-radius: 8px; background: var(--surface); image-rendering: pixelated; }
+.bs-modes { display: flex; gap: 6px; }
+.bs-modes button { flex: 1; height: 30px; border-radius: 8px; background: var(--row); color: var(--txt); font-size: 12px; }
+.bs-modes button.on { background: var(--accent); color: var(--on-accent); }
+#brush-settings .bs-body label { font-size: 13px; color: var(--txt2); }
+#brush-settings .bs-body input[type=range] { width: 100%; }
+.bs-test { width: 100%; height: auto; border-radius: 8px; touch-action: none; cursor: crosshair; image-rendering: pixelated; }

@@ -11,6 +11,8 @@ export const en = {
   'brush.library': 'Brushes', 'brush.add': 'Add set / import', 'brush.newSet': 'Create new set', 'brush.import': 'Import from Files',
   'brush.imported': 'Imported', 'brush.set': 'Set', 'brush.fromSelection': 'From Selection', 'brush.stampName': 'Stamp',
   'menu.export': 'Export set', 'brush.packDesc': 'Brush set',
+  'brush.settings': 'Brush settings', 'brush.size': 'Size', 'brush.spacing': 'Spacing', 'brush.scatter': 'Scatter',
+  'brush.modeSingle': 'Stamp', 'brush.modeScatter': 'Scatter', 'brush.modeFlow': 'Flow', 'brush.testHint': 'Draw here to test the brush',
   'toast.selectAreaFirst': 'Select an area first', 'toast.selectionEmpty': 'Selection is empty', 'toast.brushCreated': 'Brush created: {name}',
   'tool.ellipse': 'Ellipse (Q) · right-click — filled · Shift — circle', 'tool.ellipseFill': 'Filled ellipse (Q) · right-click — outline · Shift — circle',
   'tool.move': 'Free transform (move / resize / rotate) — Ctrl+T', 'tool.adjust': 'Adjust brush: dodge / burn / tone',
