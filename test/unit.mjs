@@ -21,7 +21,7 @@ import { combineMask } from '../src/logic/mask-ops.js';
 import { coverageToMask, maskRound, coverageToTile } from '../src/logic/brush-mask.js';
 import { unarchiveBrush } from '../src/core/brush-import/bplist.js';
 import { importAbr } from '../src/core/brush-import/abr.js';
-import { previewStroke } from '../src/logic/brush-preview.js';
+import { previewStroke, stampIcon } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
@@ -316,6 +316,12 @@ t('brush-preview: круглая кисть рисует непустой маз
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;
   assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'мазок непустой');
 });
+t('brush-preview: дизеринг в иконке совпадает с реальным footprint', () => {
+  const b = { cov: null, shape: 'round', grain: { w: 2, h: 2, data: new Uint8Array([0, 1, 1, 0]) } };
+  const fp = footprintMask(b, 6, 64, 0, 0), ic = stampIcon(b, 10, 6, 0, 0);
+  let fpn = 0, icn = 0; for (const v of fp.data) fpn += v; for (const v of ic.data) icn += v;
+  assert.ok(fpn > 0 && fpn < fp.data.length); assert.equal(icn, fpn);
+});
 
 t('brush-cursor: без кисти — сплошной квадрат size×size', () => {
   const m = footprintMask(null, 4, 64);
@@ -324,6 +330,12 @@ t('brush-cursor: без кисти — сплошной квадрат size×siz
 t('brush-cursor: круглая кисть — непустая маска отпечатка', () => {
   const m = footprintMask({ cov: null, shape: 'round' }, 8, 64); let on = 0; for (const v of m.data) on += v;
   assert.ok(m.w === 8 && m.h === 8 && on > 0);
+});
+t('brush-cursor: dither/grain входит в маску отпечатка', () => {
+  const b = { cov: null, shape: 'round', grain: { w: 2, h: 2, data: new Uint8Array([0, 1, 1, 0]) } };
+  const m = footprintMask(b, 8, 64, 0, 0), full = footprintMask({ cov: null, shape: 'round' }, 8, 64);
+  let on = 0, all = 0; for (const v of m.data) on += v; for (const v of full.data) all += v;
+  assert.ok(on > 0 && on < all);
 });
 t('brush-cursor: размер маски следует за натуральным размером кисти', () => {
   const m = footprintMask({ cov: null, baseSize: 20 }, 64, 64); assert.equal(Math.max(m.w, m.h), 20);

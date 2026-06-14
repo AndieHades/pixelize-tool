@@ -12,7 +12,7 @@ for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'm
 globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL не принимает jsdom-Blob
 globalThis.URL.revokeObjectURL = () => {};
 
-const { S, blank } = await import('../src/core/state.js');
+const { S, blank, BP_SMAX } = await import('../src/core/state.js');
 const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
 const history = await import('../src/core/history.js');
@@ -359,8 +359,8 @@ const brKey = (type, k) => window.dispatchEvent(new window.KeyboardEvent(type, {
 const brPtr = (x, y, buttons) => document.getElementById('cv').dispatchEvent(new window.MouseEvent('pointermove', { clientX: x, clientY: y, buttons }));
 t('brush-resize: движение при зажатом Hot Key меняет размер кисти', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd'; S.brushResize.capturing = false;
-  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); // вправо → больше (до предела)
-  assert.equal(S.brushes.pencil.size, 8); brKey('keyup', 'd'); });
+  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); // вправо → больше
+  assert.equal(S.brushes.pencil.size, 11); brKey('keyup', 'd'); });
 t('brush-resize: рисование не меняет размер, после штриха снова можно', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 8;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
   brKey('keydown', 'd'); brPtr(200, 100, 0); brPtr(150, 100, 1); assert.equal(S.brushes.pencil.size, 8); // ЛКМ нажата — штрих, размер цел
@@ -477,6 +477,17 @@ t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.pa
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
+t('brush-bar: шкала доходит до нового потолка и бережёт малые размеры', () => {
+  const linearMid = Math.round(1 + 0.5 * (BP_SMAX - 1));
+  assert.equal(bb.sizeFromFrac(0), 1); assert.equal(bb.sizeFromFrac(1), BP_SMAX);
+  assert.ok(bb.sizeFromFrac(0.5) < linearMid); assert.equal(bb.sizeFromFrac(bb.fracFromSize(BP_SMAX)), BP_SMAX);
+});
+t('brush-bar: хоткеи размера кисти упираются в потолок', () => {
+  resetWH(8, 8); S.brushes.pencil.size = BP_SMAX - 1;
+  actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
+  actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
+  actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
+});
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 
 t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
@@ -544,6 +555,12 @@ t('tint-shade: без активного цвета в палитре — окн
 });
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t('toolbars: повторный ЛКМ по активной кисти открывает библиотеку', () => {
+  let opened = null; actions.register('ui.brushLibrary', (mode) => { opened = mode; });
+  resetWH(8, 8); S.tool = 'eraser'; document.getElementById('t-pencil').click();
+  assert.equal(S.tool, 'pencil'); assert.equal(opened, null);
+  document.getElementById('t-pencil').click(); assert.equal(opened, 'pencil');
+});
 t('toolbars: повторное нажатие Move выключает трансформацию', () => { tb.mount(); resetWH(8, 8); S.tool = 'move'; S.layers[0].grid[2][2] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); }); // активная кнопка трансформации выключает
 t('toolbars: повторное нажатие выделения снимает выделение', () => { tb.mount(); resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';

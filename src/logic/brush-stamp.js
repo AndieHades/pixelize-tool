@@ -10,6 +10,18 @@ export function brushMask(sb, size) { return sb.cov ? coverageToMask(sb.cov, siz
 // дизер-тайл в координатах холста (g — бинарный тайл или null).
 export const grainAt = (g, x, y) => !g || !!g.data[(((y % g.h) + g.h) % g.h) * g.w + (((x % g.w) + g.w) % g.w)];
 
+// реальный отпечаток одного даба в координатах холста: маска кончика уже
+// отфильтрована grain/dither так же, как при рисовании.
+export function brushFootprint(sb, size, cx = 0, cy = 0) {
+  const m = brushMask(sb, size); if (!m) return null;
+  const g = sb && sb.grain; if (!g) return m;
+  const out = new Uint8Array(m.w * m.h), ox = m.w >> 1, oy = m.h >> 1;
+  for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) {
+    if (m.data[j * m.w + i] && grainAt(g, cx - ox + i, cy - oy + j)) out[j * m.w + i] = 1;
+  }
+  return { w: m.w, h: m.h, data: out };
+}
+
 // размер штампа: кисти из выделения — натуральный (baseSize × слайдер), иначе слайдер.
 export function stampSize(sb, slider, smax) { return sb && sb.baseSize ? Math.max(1, Math.round(sb.baseSize * slider / smax)) : slider; }
 

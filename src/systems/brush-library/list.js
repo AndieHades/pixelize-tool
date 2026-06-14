@@ -5,6 +5,8 @@ import { S } from '../../core/state.js';
 import { $ } from '../../core/dom.js';
 import { lib, allBrushes, setOrder } from './data.js';
 import { stampIcon } from '../../logic/brush-preview.js';
+import { stampSize } from '../../logic/brush-stamp.js';
+import { BP_SMAX } from '../../config/limits.js';
 import { inlineRename } from '../../core/inline-rename.js';
 import { attachReorder } from '../../core/reorder-drag.js';
 
@@ -19,8 +21,9 @@ function nameSpan(text) { const s = document.createElement('span'); s.className 
   const guard = (e) => { if (s.isContentEditable) e.stopPropagation(); };
   s.addEventListener('pointerdown', guard); s.addEventListener('click', guard); return s; }
 
-function iconCanvas(b) { const N = 28, cv = document.createElement('canvas'); cv.width = N; cv.height = N; cv.className = 'btile-ic';
-  const ic = stampIcon(b, N), x = cv.getContext('2d'), img = x.createImageData(N, N);
+function iconCanvas(b) { const N = 32, cv = document.createElement('canvas'); cv.width = N; cv.height = N; cv.className = 'btile-ic';
+  const size = stampSize(b, S.brushes[cb.mode()].size, BP_SMAX);
+  const ic = stampIcon(b, N, size), x = cv.getContext('2d'), img = x.createImageData(N, N);
   for (let i = 0; i < N * N; i++) if (ic.data[i]) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = 235; img.data[i * 4 + 3] = 255; }
   x.putImageData(img, 0, 0); return cv;
 }

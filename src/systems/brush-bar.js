@@ -1,18 +1,23 @@
 // Левая полоса кисти: размер сверху, пипетка по центру, прозрачность снизу.
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
+import * as actions from '../core/actions.js';
 import { $ } from '../core/dom.js';
 import { brushKey } from '../core/tools.js';
 import { doUndo, doRedo } from '../core/history.js';
-import { BP_SMAX } from '../config/limits.js';
+import { BP_SMAX, BP_SIZE_CURVE } from '../config/limits.js';
 
 const curBrush = brushKey;
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const clampSize = (v) => Math.max(1, Math.min(BP_SMAX, Math.round(v)));
+export const sizeFromFrac = (f) => clampSize(1 + Math.pow(clamp01(f), BP_SIZE_CURVE) * (BP_SMAX - 1));
+export const fracFromSize = (s) => Math.pow((clampSize(s) - 1) / (BP_SMAX - 1), 1 / BP_SIZE_CURVE);
 
 function vslPos(fillId, knobId, frac) { const f = Math.max(0, Math.min(1, frac)), knob = $(knobId), sl = knob.parentElement;
   $(fillId).style.height = f * 100 + '%'; knob.style.bottom = Math.max(0, (sl.clientHeight - knob.offsetHeight) * f) + 'px'; }
 
 export function syncBars() { const b = S.brushes[curBrush()];
-  vslPos('bp-size-fill', 'bp-size-knob', (b.size - 1) / (BP_SMAX - 1));
+  vslPos('bp-size-fill', 'bp-size-knob', fracFromSize(b.size));
   vslPos('bp-op-fill', 'bp-op-knob', b.op); }
 
 let bbValT = null;
@@ -26,9 +31,13 @@ function vslDrag(slId, onFrac) { const sl = $(slId); let on = false;
   sl.addEventListener('pointermove', (e) => { if (on) set(e); });
   const end = () => { on = false; }; sl.addEventListener('pointerup', end); sl.addEventListener('pointercancel', end); }
 
+function setSize(size, show = false) { const b = S.brushes[curBrush()];
+  b.size = clampSize(size); syncBars();
+  if (show) showBbVal('bp-size-sl', b.size + ' px');
+  bus.emit('brush'); bus.emit('render'); }
+
 export function mount() {
-  vslDrag('bp-size-sl', (f) => { S.brushes[curBrush()].size = Math.max(1, Math.min(BP_SMAX, Math.round(1 + f * (BP_SMAX - 1))));
-    syncBars(); showBbVal('bp-size-sl', S.brushes[curBrush()].size + ' px'); bus.emit('render'); });
+  vslDrag('bp-size-sl', (f) => setSize(sizeFromFrac(f), true));
   vslDrag('bp-op-sl', (f) => { S.brushes[curBrush()].op = Math.max(0, Math.min(1, f));
     syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });
   $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo; // bb-pick — кнопка пипетки: клик/удержание ведёт Eyedropper System
@@ -38,3 +47,6 @@ export function mount() {
   bus.on('brushlib', syncBars); // размер мог поменяться (кисть из выделения)
   syncBars();
 }
+
+actions.register('brush.smaller', () => setSize(S.brushes[curBrush()].size - 1, true));
+actions.register('brush.bigger', () => setSize(S.brushes[curBrush()].size + 1, true));

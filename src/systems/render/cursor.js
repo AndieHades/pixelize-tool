@@ -23,9 +23,11 @@ function inputs() {
 // кеш формы: маска отпечатка + (лениво) силуэт m.w×m.h (1 клетка = 1 px) +
 // перекрашенные копии по цвету. Инвалидация только при смене кисти/размера.
 let cKey = '', cMask = null, cShape = null; const tints = new Map();
+function grainPhase(sb) { const p = S.hoverPx, g = sb && sb.grain;
+  return g && p ? '|' + (((p[0] % g.w) + g.w) % g.w) + ',' + (((p[1] % g.h) + g.h) % g.h) : ''; }
 function ensureMask(sb, size) {
-  const key = (sb ? sb.tok : 'sq') + '|' + size;
-  if (key !== cKey) { cKey = key; cMask = footprintMask(sb, size, BP_SMAX); cShape = null; tints.clear(); }
+  const p = S.hoverPx || [0, 0], key = (sb ? sb.tok : 'sq') + '|' + size + grainPhase(sb);
+  if (key !== cKey) { cKey = key; cMask = footprintMask(sb, size, BP_SMAX, p[0], p[1]); cShape = null; tints.clear(); }
   return cMask;
 }
 function silhouette() {

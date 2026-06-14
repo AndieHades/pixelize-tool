@@ -1,19 +1,17 @@
 // Чистое превью кисти: мазок вдоль S-кривой и иконка-штамп (оригинальный вид
 // кончика) в сетку занятости. Без DOM — рисует панель/плитки.
 import { coverageToMask, maskRound } from './brush-mask.js';
-import { grainAt } from './brush-stamp.js';
+import { brushFootprint } from './brush-stamp.js';
 import { BRUSH_MASK } from '../config/brush-import.js';
 
-// Иконка кисти N×N: один штамп кончика по центру (с учётом grain-дизера).
-export function stampIcon(brush, N) {
+// Иконка кисти N×N: реальный следующий отпечаток, центрированный в плитке.
+export function stampIcon(brush, N, size = N, cx = 0, cy = 0) {
   const out = new Uint8Array(N * N);
-  const m = brush.cov ? coverageToMask(brush.cov, N, BRUSH_MASK) : maskRound(N);
+  const m = brushFootprint(brush, size, cx, cy);
   if (!m) return { w: N, h: N, data: out };
-  const g = brush.grain || null, ox = (N - m.w) >> 1, oy = (N - m.h) >> 1;
+  const ox = (N - m.w) >> 1, oy = (N - m.h) >> 1;
   for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) {
-    const x = ox + i, y = oy + j;
-    if (x >= 0 && y >= 0 && x < N && y < N && grainAt(g, x, y)) out[y * N + x] = 1;
-  }
+    const x = ox + i, y = oy + j; if (x >= 0 && y >= 0 && x < N && y < N) out[y * N + x] = 1; }
   return { w: N, h: N, data: out };
 }
 

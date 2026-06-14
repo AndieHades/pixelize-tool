@@ -27,10 +27,11 @@ function syncToolButtons() {
 function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 // повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
 const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };
+const brushClick = (tool) => { if (S.tool === tool) actions.run('ui.brushLibrary', tool); else setTool(tool); };
 
 export function mount() {
-  $('t-pencil').onclick = () => setTool('pencil'); // ЛКМ — выбор инструмента
-  $('t-eraser').onclick = () => setTool('eraser');
+  $('t-pencil').onclick = () => brushClick('pencil'); // первый ЛКМ — инструмент, второй — библиотека кистей
+  $('t-eraser').onclick = () => brushClick('eraser');
   longPress($('t-pencil'), () => actions.run('ui.brushLibrary', 'pencil')); // ПКМ/долгое нажатие — галерея кистей
   longPress($('t-eraser'), () => actions.run('ui.brushLibrary', 'eraser'));
   $('t-line').onclick = () => setTool('line');
