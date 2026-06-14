@@ -28,7 +28,8 @@ function importBrush() { pickBrush((f) => {
 function exportSet(s) { const text = packSet(s.name || t('brush.imported'), brushesOf(s.id));
   saveFile(new Blob([text], { type: 'application/json' }), (s.name || 'brushes') + '.phbrush', 'application/json', t('brush.packDesc')); }
 
-const pick = (b) => { setStampBrush(mode, b); rerender(); openSettings(); }; // клик по кисти — выбрать + окно настроек
+const pick = (b) => { setStampBrush(mode, b); rerender(); }; // ЛКМ — только выбор
+const settings = (b) => { setStampBrush(mode, b); rerender(); openSettings(); }; // ПКМ/долгое — выбрать + настройки
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
 const removeSet = (s) => delSet(s.id).then(rerender);
@@ -49,8 +50,8 @@ export function toggle(which) { const p = $('brush-pop');
   if (opened() && which === mode) p.classList.remove('on'); else open(which); }
 
 export function mount() {
-  bindList({ rerender, pick, dup, del, menu, rename, delSet: removeSet, mode: () => mode });
-  mountSettings(() => mode);
+  bindList({ rerender, pick, settings, dup, del, menu, rename, delSet: removeSet, mode: () => mode });
+  mountSettings(() => mode, { dup, del, rename: (id) => renameById(id) });
   floatingWindow($('brush-pop'), { grip: $('brush-head'), handle: $('brush-rsz'), storeKey: 'brushwin', minW: 320, minH: 260,
     onClose: () => $('brush-pop').classList.remove('on') });
   $('brush-add').addEventListener('click', (e) => { const r = e.currentTarget.getBoundingClientRect(); showMenuAt($('brush-plus'), r.left, r.bottom); });

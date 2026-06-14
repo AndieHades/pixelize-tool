@@ -59,8 +59,8 @@ export function renderBrushes() {
   for (const b of brushesOf(lib.curSet)) {
     const row = document.createElement('div'); row.className = 'brow brush' + (b.id === active ? ' on' : ''); row.dataset.id = b.id;
     const span = nameSpan(b.name); row.append(span, previewCanvas(b));
-    row.addEventListener('click', () => { if (dblHit(b.id)) { rename(span, b, 'brush'); return; } cb.pick(b); });
-    longPress(row, (x, y) => cb.menu(b, 'brush', x, y));
+    row.addEventListener('click', () => { if (dblHit(b.id)) { rename(span, b, 'brush'); return; } cb.pick(b); }); // ЛКМ — выбор
+    longPress(row, () => cb.settings(b)); // ПКМ/долгое нажатие — окно настроек
     attachSwipe(row, { actions: [
       { label: t('menu.rename'), onClick: () => rename(span, b, 'brush') },
       { label: t('menu.duplicate'), onClick: () => cb.dup(b) },

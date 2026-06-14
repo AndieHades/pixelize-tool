@@ -5,6 +5,7 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, toast, t } from '../core/dom.js';
 import { setTool } from '../core/tools.js';
+import { longPress } from '../core/long-press.js';
 
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'line', 'rect', 'ellipse', 'move', 'adjust'];
 
@@ -26,8 +27,10 @@ function syncToolButtons() {
 function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 
 export function mount() {
-  $('t-pencil').onclick = () => { if (S.tool === 'pencil') actions.run('ui.brushLibrary', 'pencil'); else setTool('pencil'); };
-  $('t-eraser').onclick = () => { if (S.tool === 'eraser') actions.run('ui.brushLibrary', 'eraser'); else setTool('eraser'); };
+  $('t-pencil').onclick = () => setTool('pencil'); // ЛКМ — выбор инструмента
+  $('t-eraser').onclick = () => setTool('eraser');
+  longPress($('t-pencil'), () => actions.run('ui.brushLibrary', 'pencil')); // ПКМ/долгое нажатие — галерея кистей
+  longPress($('t-eraser'), () => actions.run('ui.brushLibrary', 'eraser'));
   $('t-line').onclick = () => setTool('line');
   wireShape('rect', 'tool.rect', 'tool.rectFill');
   wireShape('ellipse', 'tool.ellipse', 'tool.ellipseFill');
