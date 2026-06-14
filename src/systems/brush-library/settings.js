@@ -6,6 +6,7 @@ import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { $ } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
+import { saveBrushPrefs } from '../../core/brush-prefs.js';
 import { BP_SMAX } from '../../config/limits.js';
 import { BRUSH_SETTINGS } from '../../config/brush-import.js';
 import { brushMode, stampSize } from '../../logic/brush-stamp.js';
@@ -33,7 +34,7 @@ const editParam = (patch) => { const rec = activeRec(); if (!rec) return; rec.pa
 export function mountSettings(modeFn, actions) {
   getMode = modeFn; act = actions || {};
   $('bs-size').max = BP_SMAX; $('bs-spacing').max = BRUSH_SETTINGS.spacingMax; $('bs-scatter').max = BRUSH_SETTINGS.jitterMax;
-  $('bs-size').addEventListener('input', () => { S.brushes[getMode()].size = +$('bs-size').value; bus.emit('brushlib'); bus.emit('render'); syncSettings(); clearTest(); });
+  $('bs-size').addEventListener('input', () => { S.brushes[getMode()].size = +$('bs-size').value; saveBrushPrefs(S); bus.emit('brushlib'); bus.emit('render'); syncSettings(); clearTest(); });
   $('bs-spacing').addEventListener('input', () => editParam({ spacing: +$('bs-spacing').value }));
   $('bs-scatter').addEventListener('input', () => { const v = +$('bs-scatter').value; editParam({ jitter: v, sizeJitter: Math.min(0.85, v / BRUSH_SETTINGS.jitterMax) }); });
   for (const b of $('bs-mode').children) b.addEventListener('click', () => editParam({ mode: b.dataset.mode }));

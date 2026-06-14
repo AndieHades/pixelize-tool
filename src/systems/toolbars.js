@@ -6,6 +6,7 @@ import * as actions from '../core/actions.js';
 import { $, toast, t } from '../core/dom.js';
 import { setTool } from '../core/tools.js';
 import { longPress } from '../core/long-press.js';
+import { saveBrushPrefs } from '../core/brush-prefs.js';
 
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'line', 'rect', 'ellipse', 'move', 'adjust'];
 
@@ -24,7 +25,8 @@ function syncToolButtons() {
   $('cv').style.cursor = S.tool === 'move' ? 'move' : ''; // пипетка (bb-pick «on», body.picking) — на Eyedropper System
 }
 
-function toggle(flag, btnId, onKey, offKey) { S[flag] = !S[flag]; $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
+function toggle(flag, btnId, onKey, offKey, save = false) { S[flag] = !S[flag]; if (save) saveBrushPrefs(S);
+  $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 // повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
 const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };
 const brushClick = (tool) => { if (S.tool === tool) actions.run('ui.brushLibrary', tool); else setTool(tool); };
@@ -45,8 +47,8 @@ export function mount() {
 
   $('sym').onclick = () => toggle('sym', 'sym', 'toast.symVon', 'toast.symVoff');
   $('sym-h').onclick = () => toggle('symH', 'sym-h', 'toast.symHon', 'toast.symHoff');
-  $('pp').onclick = () => toggle('ppOn', 'pp', 'toast.ppOn', 'toast.ppOff');
-  $('stab').onclick = () => toggle('stabOn', 'stab', 'toast.stabOn', 'toast.stabOff');
+  $('pp').onclick = () => toggle('ppOn', 'pp', 'toast.ppOn', 'toast.ppOff', true);
+  $('stab').onclick = () => toggle('stabOn', 'stab', 'toast.stabOn', 'toast.stabOff', true);
 
   $('flip-h').onclick = () => actions.run('layer.flipH');
   $('flip-v').onclick = () => actions.run('layer.flipV');

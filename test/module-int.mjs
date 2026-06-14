@@ -13,6 +13,7 @@ globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL н
 globalThis.URL.revokeObjectURL = () => {};
 
 const { S, blank, BP_SMAX } = await import('../src/core/state.js');
+const { BRUSH_PREFS_STORE, loadBrushPrefs, saveBrushPrefs } = await import('../src/core/brush-prefs.js');
 const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
 const history = await import('../src/core/history.js');
@@ -488,16 +489,27 @@ t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.pa
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
+t('brush-prefs: сохраняет и читает последние настройки кисти', () => {
+  localStorage.removeItem(BRUSH_PREFS_STORE);
+  S.brushes.pencil = { size: 7, op: 0.42 }; S.brushes.eraser = { size: 9, op: 0.75 };
+  S.ppOn = true; S.stabOn = false; saveBrushPrefs(S);
+  const loaded = loadBrushPrefs({ pencil: { size: 1, op: 1 }, eraser: { size: 1, op: 1 } }, { pixelPerfect: false, stabilize: true });
+  assert.deepEqual(loaded.brushes.pencil, { size: 7, op: 0.42 }); assert.deepEqual(loaded.brushes.eraser, { size: 9, op: 0.75 });
+  assert.deepEqual(loaded.flags, { pixelPerfect: true, stabilize: false });
+});
 t('brush-bar: шкала доходит до нового потолка и бережёт малые размеры', () => {
   const linearMid = Math.round(1 + 0.5 * (BP_SMAX - 1));
   assert.equal(bb.sizeFromFrac(0), 1); assert.equal(bb.sizeFromFrac(1), BP_SMAX);
   assert.ok(bb.sizeFromFrac(0.5) < linearMid); assert.equal(bb.sizeFromFrac(bb.fracFromSize(BP_SMAX)), BP_SMAX);
 });
 t('brush-bar: хоткеи размера кисти упираются в потолок', () => {
-  resetWH(8, 8); S.brushes.pencil.size = BP_SMAX - 1;
+  localStorage.removeItem(BRUSH_PREFS_STORE);
+  resetWH(8, 8); S.brushes.pencil.size = BP_SMAX - 1; S.brushes.pencil.op = 0.5;
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
+  assert.equal(JSON.parse(localStorage.getItem(BRUSH_PREFS_STORE)).pencil.size, BP_SMAX);
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
   actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
+  S.brushes.pencil = { size: 1, op: 1 }; S.brushes.eraser = { size: 1, op: 1 }; saveBrushPrefs(S);
 });
 t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');
@@ -590,6 +602,13 @@ t('toolbars: выделение и Free Transform подсвечивают св�
   assert.ok(document.getElementById('t-move').classList.contains('on'));
   tf.exitRotMode(false); assert.ok(!document.getElementById('t-move').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
+t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
+  localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();
+  document.getElementById('pp').click(); document.getElementById('stab').click();
+  const saved = JSON.parse(localStorage.getItem(BRUSH_PREFS_STORE));
+  assert.equal(saved.pixelPerfect, true); assert.equal(saved.stabilize, false);
+  S.ppOn = false; S.stabOn = true; saveBrushPrefs(S);
+});
 t('effects: новый эффект до Apply остаётся черновиком без строки в списке', () => { effects.mount(); adjust.mount();
   resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('fx.panel'); assert.ok(document.getElementById('fx-panel').classList.contains('on'));

@@ -10,6 +10,7 @@ import { LASSO_DEFAULT } from '../config/lasso.js';
 import { BRUSH_RESIZE } from '../config/brush-resize.js';
 import { EYEDROPPER } from '../config/eyedropper.js';
 import { CURSOR } from '../config/cursor.js';
+import { loadBrushPrefs } from './brush-prefs.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
@@ -23,6 +24,7 @@ export const newEffect = (type, params = {}) => ({ id: ++fxSeq, type, visible: t
 export const cloneFx = (list) => (list || []).map((e) => ({ id: ++fxSeq, type: e.type, visible: e.visible !== false, params: { ...e.params } }));
 
 const pal0 = defaultPalette();
+const brushPrefs = loadBrushPrefs(BRUSH_DEFAULTS(), FLAGS_DEFAULT);
 // единый контейнер изменяемого состояния
 export const S = {
   W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1, docName: '',
@@ -33,8 +35,8 @@ export const S = {
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   tool: 'pencil', sym: false, symH: false,
   fillShape: { rect: false, ellipse: false }, // ПКМ по иконке фигуры — рисовать залитой
-  brushes: BRUSH_DEFAULTS(), stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)
-  ppOn: FLAGS_DEFAULT.pixelPerfect, stabOn: FLAGS_DEFAULT.stabilize, stroke: false,
+  brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)
+  ppOn: brushPrefs.flags.pixelPerfect, stabOn: brushPrefs.flags.stabilize, stroke: false,
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
   sel: null, selMask: null, selFloat: null,
   lassoMode: LASSO_DEFAULT.mode, lassoOp: LASSO_DEFAULT.op, lassoPath: null,

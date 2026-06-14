@@ -1,7 +1,7 @@
 // Дефолты инструментов, эффектов и импорта. Стартовые значения настроек —
 // здесь, чтобы подправить поведение без копания в системах.
 export const BRUSH_DEFAULTS = () => ({ pencil: { size: 1, op: 1 }, eraser: { size: 1, op: 1 } });
-export const FLAGS_DEFAULT = { pixelPerfect: true, stabilize: true };
+export const FLAGS_DEFAULT = { pixelPerfect: false, stabilize: true };
 
 export const ADJUST_DEFAULT = { mode: 'dodge', amount: 8 };
 

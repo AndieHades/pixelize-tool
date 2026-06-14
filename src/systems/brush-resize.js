@@ -7,6 +7,7 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $ } from '../core/dom.js';
 import { brushKey } from '../core/tools.js';
+import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { BP_SMAX } from '../config/limits.js';
 import { SENS_PRESETS, DIRECTIONS } from '../config/brush-resize.js';
 import { eventKey } from '../logic/key-code.js';
@@ -20,7 +21,7 @@ try { const s = JSON.parse(localStorage.getItem(STORE)); if (s) Object.assign(R,
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify({ key: R.key, sensitivity: R.sensitivity, direction: R.direction })); } catch (e) {} };
 
 function setSize(n) { const k = brushKey(), v = Math.max(1, Math.min(BP_SMAX, n));
-  if (v !== S.brushes[k].size) { S.brushes[k].size = v; bus.emit('brush'); bus.emit('render'); } } // ползунок + курсор кисти обновляются в реальном времени
+  if (v !== S.brushes[k].size) { S.brushes[k].size = v; saveBrushPrefs(S); bus.emit('brush'); bus.emit('render'); } } // ползунок + курсор кисти обновляются в реальном времени
 
 function onMove(e) { if (!active || R.capturing) return;
   if (e.buttons !== 0) { last = null; return; }                 // идёт штрих (ЛКМ/касание) — размер не трогаем

@@ -5,6 +5,7 @@ import * as actions from '../core/actions.js';
 import { $ } from '../core/dom.js';
 import { brushKey } from '../core/tools.js';
 import { doUndo, doRedo } from '../core/history.js';
+import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { BP_SMAX, BP_SIZE_CURVE } from '../config/limits.js';
 
 const curBrush = brushKey;
@@ -32,14 +33,14 @@ function vslDrag(slId, onFrac) { const sl = $(slId); let on = false;
   const end = () => { on = false; }; sl.addEventListener('pointerup', end); sl.addEventListener('pointercancel', end); }
 
 function setSize(size, show = false) { const b = S.brushes[curBrush()];
-  b.size = clampSize(size); syncBars();
+  b.size = clampSize(size); saveBrushPrefs(S); syncBars();
   if (show) showBbVal('bp-size-sl', b.size + ' px');
   bus.emit('brush'); bus.emit('render'); }
 
 export function mount() {
   vslDrag('bp-size-sl', (f) => setSize(sizeFromFrac(f), true));
   vslDrag('bp-op-sl', (f) => { S.brushes[curBrush()].op = Math.max(0, Math.min(1, f));
-    syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });
+    saveBrushPrefs(S); syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });
   $('bb-undo').onclick = doUndo; $('bb-redo').onclick = doRedo; // bb-pick — кнопка пипетки: клик/удержание ведёт Eyedropper System
   window.addEventListener('resize', syncBars);
   bus.on('tool', syncBars);
