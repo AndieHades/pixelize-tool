@@ -1,7 +1,7 @@
 // Экран галереи: рендер плиток (работы/папки), переименование двойным кликом,
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
 import { $, showMenuAt } from '../../core/dom.js';
-import { t } from '../../i18n/index.js';
+import { t, getLocale } from '../../i18n/index.js';
 import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem, nextFolderName } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
@@ -16,8 +16,8 @@ function relTime(ts) {
   if (m < 60) return m + ' ' + t('time.min');
   const h = Math.floor(m / 60); if (h < 24) return h + ' ' + t('time.hour');
   const d = Math.floor(h / 24); if (d === 1) return t('time.yesterday');
-  if (d < 7) return d + ' ' + t('time.days');
-  return new Date(ts).toLocaleDateString();
+  if (d < 30) return d + ' ' + t('time.days');
+  const dt = new Date(ts); return dt.toLocaleDateString(getLocale(), { month: 'long' }) + ' ' + dt.getFullYear(); // больше месяца — «май 2025»
 }
 let viewFolder = null, selecting = false, onOpen = null, rootTitle = ''; const selected = new Set();
 export const configure = (o) => { onOpen = o.onOpen; rootTitle = $('gal-title').textContent; };
