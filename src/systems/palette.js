@@ -9,11 +9,20 @@ import { rgb, rgbToHex, hexToRgb, eqc } from '../logic/color.js';
 import { sortPalette } from '../logic/palette-sort.js';
 import { setTool } from '../core/tools.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
+import { effVis } from '../core/layers.js';
 
 const PANEL_TARGETS = []; // нативных панелей с input[type=color] больше нет — цвет везде через наш #colpop
-let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1;
+let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1, showUsed = false;
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
+const colorKey = (c) => c ? c[0] + ',' + c[1] + ',' + c[2] : '';
+
+function usedColorKeys() { const keys = new Set();
+  for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!L || !effVis(i) || L.opacity <= 0) continue;
+    for (const row of L.grid) for (const c of row) if (c && c[3] > 0) keys.add(colorKey(c));
+    for (const c of (L.ext || new Map()).values()) if (c && c[3] > 0) keys.add(colorKey(c)); }
+  return keys;
+}
 
 function setOpenPanelColor(c) {
   const target = PANEL_TARGETS.find((t) => $(t.pop).classList.contains('on'));
@@ -40,11 +49,13 @@ function openCtx(x, y, idx) { ctxIdx = idx; showMenuAt($('ctx'), x, y, true); }
 export function buildPalette() {
   const box = $('pal'); box.innerHTML = '';
   $('palgrip-label').textContent = t('label.paletteN', { n: S.palette.length });
+  const used = showUsed ? usedColorKeys() : null;
   let activeShown = false;
   S.palette.forEach((c, idx) => {
     const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;
     b.title = rgbToHex(c).toUpperCase();
     if (!activeShown && eqc(c, S.active)) { b.classList.add('on'); activeShown = true; }
+    if (used && used.has(colorKey(c))) b.classList.add('used');
     b.addEventListener('click', (e) => { clearTimeout(swHold);
       if (palSquelch) { palSquelch = false; return; }
       if (e.detail > 1) { setActiveColor(c); return; }
@@ -87,6 +98,7 @@ export function mount() {
   document.addEventListener('pointermove', palDragMove);
   document.addEventListener('pointerup', palDragEnd);
   document.addEventListener('pointercancel', palDragEnd);
+  $('pal-used').addEventListener('click', () => { showUsed = !showUsed; $('pal-used').classList.toggle('on', showUsed); buildPalette(); });
   $('ctx').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (!btn) return;
     const col = S.palette[ctxIdx]; $('ctx').classList.remove('on'); if (!col) return;
     const act = btn.dataset.act;
@@ -95,6 +107,7 @@ export function mount() {
     else if (act === 'select') actions.run('selection.byColor', col);
     else if (act === 'replace') actions.run('color.replace', col); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
+  bus.on('render', () => { if (showUsed) buildPalette(); });
   bus.on('locale', buildPalette);
   refreshActive(); buildPalette();
 }

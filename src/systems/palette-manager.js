@@ -3,16 +3,23 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import { $, showMenuAt, toast, t } from '../core/dom.js';
 import { rgb, eqc } from '../logic/color.js';
-import { medianCut, dedupePal, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
+import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
 
 const STORE = 'palettes';
 const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
+const FILE_PALETTE_LIMIT = 128;
 const palStore = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
 const saveStore = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
 const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
 const hasFileTransfer = (dt) => dt && Array.from(dt.types || []).includes('Files');
 
-function loadPalette(arr, name) { S.palette = dedupePal(arr); if (S.palette.length) S.active = S.palette[0].slice();
+function cleanPalette(arr) { const seen = new Set(), out = [];
+  for (const c of arr || []) { if (!c) continue; const k = c[0] + ',' + c[1] + ',' + c[2];
+    if (!seen.has(k)) { seen.add(k); out.push([c[0], c[1], c[2]]); } }
+  return out;
+}
+
+function loadPalette(arr, name) { S.palette = cleanPalette(arr); if (S.palette.length) S.active = S.palette[0].slice();
   bus.emit('palette'); bus.emit('render'); $('pal-ovl').classList.remove('on'); if (name) toast(t('toast.paletteLoaded', { name })); }
 function replaceFromImage(pal) { loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); }
 function addFromImage(pal) { let n = 0;
@@ -35,20 +42,20 @@ function palListUI() { const box = $('pal-list'); box.innerHTML = '';
     sw.onclick = () => loadPalette(st[nm], nm);
     row.append(head, sw); box.appendChild(row); } }
 
-export function paletteFromImageData(data) {
-  const exact = exactPaletteFromRgba(data, EXACT_LIMIT);
-  if (!exact.overflow) return exact.colors;
+export function paletteFromImageData(data, limit = EXACT_LIMIT) {
+  const exact = exactPaletteFromRgba(data, limit);
+  if (!exact.overflow) return exact.colors.slice(0, limit);
   const samples = samplesFromRgba(data);
-  return samples.length ? medianCut(samples, QUANT_COLORS) : [];
+  return samples.length ? medianCut(samples, limit === EXACT_LIMIT ? QUANT_COLORS : limit) : [];
 }
 
-function readImagePalette(im) {
+function readImagePalette(im, limit = EXACT_LIMIT) {
   const exact = im.naturalWidth * im.naturalHeight <= EXACT_MAX_PIXELS;
   const k = exact ? 1 : Math.min(1, SAMPLE_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
   const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = k < 1; x.drawImage(im, 0, 0, w, h);
-  return paletteFromImageData(x.getImageData(0, 0, w, h).data);
+  return paletteFromImageData(x.getImageData(0, 0, w, h).data, limit);
 }
 
 function showDropChoice(pal, pt) {
@@ -61,12 +68,12 @@ function showDropChoice(pal, pt) {
   m.append(head, add, create); showMenuAt(m, pt.x, pt.y, true);
 }
 
-export function paletteFromImageFile(file, mode = 'replace', pt = null) {
+export function paletteFromImageFile(file, mode = 'replace', pt = null, limit = EXACT_LIMIT) {
   if (!isImageFile(file)) { toast(t('toast.notImage')); return; }
   const url = URL.createObjectURL(file), im = new Image();
   im.onerror = () => { URL.revokeObjectURL(url); toast(t('toast.imgOpenFail')); };
   im.onload = () => { URL.revokeObjectURL(url);
-    const pal = readImagePalette(im); if (!pal.length) { toast(t('toast.imgEmpty')); return; }
+    const pal = readImagePalette(im, limit); if (!pal.length) { toast(t('toast.imgEmpty')); return; }
     if (mode === 'ask') showDropChoice(pal, pt || { x: innerWidth / 2, y: innerHeight / 2 }); else replaceFromImage(pal); };
   im.src = url;
 }
@@ -78,17 +85,22 @@ function dropPalette(e) {
   paletteFromImageFile(f, 'ask', { x: e.clientX, y: e.clientY });
 }
 
+function openPaletteWindow() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = ''; $('pal-ovl').classList.add('on'); }
+function openPresetMenu() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = 'none'; $('pal-ovl').classList.add('on'); }
+function newPalette() { S.palette = []; bus.emit('palette'); bus.emit('render'); toast(t('palette.new')); }
+
 export function mount() {
-  $('pal-menu').addEventListener('pointerdown', (e) => e.stopPropagation());
-  $('pal-menu').addEventListener('click', () => { $('pal-name').value = ''; palListUI(); $('pal-ovl').classList.add('on'); });
+  $('pal-new').onclick = newPalette;
+  $('pal-save-open').onclick = openPaletteWindow;
+  $('pal-presets').onclick = openPresetMenu;
   $('pal-close').onclick = () => $('pal-ovl').classList.remove('on');
   $('pal-save').onclick = () => { const nm = ($('pal-name').value.trim() || t('label.palette')).slice(0, 20);
     const s2 = palStore(); s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
   bus.on('locale', palListUI);
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
-  $('pal-from-img').onclick = () => palImg.click();
+  $('pal-file').onclick = () => palImg.click();
   palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    paletteFromImageFile(f); };
+    paletteFromImageFile(f, 'replace', null, FILE_PALETTE_LIMIT); };
   const stopPaletteDrag = (e) => { if (hasFileTransfer(e.dataTransfer)) { e.preventDefault(); e.stopPropagation(); } };
   $('palbar').addEventListener('dragenter', stopPaletteDrag);
   $('palbar').addEventListener('dragover', stopPaletteDrag);

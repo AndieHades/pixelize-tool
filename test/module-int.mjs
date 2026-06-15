@@ -488,7 +488,14 @@ t('import: drag в редактор — Pixelize верхним слоем, до
 });
 
 t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.palette = [[1, 1, 1], [2, 2, 2]]; S.active = [1, 1, 1];
-  pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .sw:not(.plus)').length, 2); });
+  pal.mount(); pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .sw:not(.plus)').length, 2); });
+t('palette: кнопка used отмечает использованные цвета', () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [1, 2, 3];
+  S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); pal.buildPalette();
+  document.getElementById('pal-used').click();
+  assert.equal(document.querySelectorAll('#pal .sw.used').length, 1);
+  document.getElementById('pal-used').click();
+  assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
+});
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
@@ -542,13 +549,24 @@ t('windows: preview/reference монтируются без ошибок', () =>
 
 t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
-  const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]); });
+  const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]);
+  assert.equal(document.getElementById('pal-from-img'), null);
+  assert.equal(document.querySelectorAll('#pal-act > button').length, 6);
+  document.getElementById('pal-presets').click(); assert.equal(document.getElementById('pal-save-row').style.display, 'none');
+  document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
+  document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
+});
 t('palette-manager: палитра из картинки сохраняет 46 точных цветов', () => {
   const d = new Uint8ClampedArray(46 * 2 * 4);
   for (let i = 0; i < 46; i++) for (let y = 0; y < 2; y++) { const o = (y * 46 + i) * 4;
     d[o] = i; d[o + 1] = 120 - i; d[o + 2] = 40 + i; d[o + 3] = 255; }
   const pal = palMgr.paletteFromImageData(d);
   assert.equal(pal.length, 46); assert.deepEqual(pal[0], [0, 120, 40]); assert.deepEqual(pal[45], [45, 75, 85]);
+});
+t('palette-manager: палитра из файла ограничивается 128 цветами', () => {
+  const d = new Uint8ClampedArray(150 * 4);
+  for (let i = 0; i < 150; i++) { d[i * 4] = i; d[i * 4 + 1] = 150 - i; d[i * 4 + 2] = (i * 3) % 255; d[i * 4 + 3] = 255; }
+  assert.ok(palMgr.paletteFromImageData(d, 128).length <= 128);
 });
 
 t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
