@@ -10,8 +10,9 @@ import { BP_SMAX } from '../../config/limits.js';
 import { CURSOR_MODES, CURSOR_TOOLS } from '../../config/cursor.js';
 import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
 import { paintCanvas, fillMask } from '../../core/canvas.js';
+import { C } from '../../styles/canvas-colors.js';
 
-const RING = '#fff'; // курсор без чёрной обводки — только светлый контур-прицел
+const RING = () => C.fg; // курсор без чёрной обводки — только светлый контур-прицел (токен темы)
 const SHADING_FILL = 'rgba(190,190,190,.72)', SHADING_OP = 0.45;
 const shadingOn = () => S.shading && S.shading.on && S.shading.colors && S.shading.colors.length > 1;
 
@@ -61,12 +62,12 @@ function drawShape(ctx, m, left, top, z, fill, op, rot) {
 }
 
 function drawRing(ctx, cx, cy, r) {
-  ctx.strokeStyle = RING; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = RING(); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
 }
 
 // маленький прицел по центру отпечатка — точка наводки, не закрывает пиксель
 function drawReticle(ctx, cx, cy) {
-  const a = 5, g = 1.5; ctx.lineCap = 'round'; ctx.strokeStyle = RING; ctx.lineWidth = 1.2; ctx.beginPath();
+  const a = 5, g = 1.5; ctx.lineCap = 'round'; ctx.strokeStyle = RING(); ctx.lineWidth = 1.2; ctx.beginPath();
   ctx.moveTo(cx - a, cy); ctx.lineTo(cx - g, cy); ctx.moveTo(cx + g, cy); ctx.lineTo(cx + a, cy);
   ctx.moveTo(cx, cy - a); ctx.lineTo(cx, cy - g); ctx.moveTo(cx, cy + g); ctx.lineTo(cx, cy + a); ctx.stroke();
 }

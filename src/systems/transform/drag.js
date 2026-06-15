@@ -41,6 +41,6 @@ export function rotHover({ e }) { const h = rotHit(e);
 export function drawTransformFrame(ctx) { if (!S.rotMode) return; const f = rotFrame(S.rotMode);
   S.rotQuad = f.p.map((p) => [p.x, p.y]);
   const dot = (p) => { const s = rotScreen(p); ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); };
+    ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = C.fg; ctx.stroke(); };
   for (const p of f.p) dot(p);          // углы — поворот
   for (const s of f.sides) dot(s.p); }  // стороны — масштаб

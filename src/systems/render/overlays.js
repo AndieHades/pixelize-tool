@@ -30,7 +30,7 @@ function drawSymLine(ctx, ox, oy, z, cfg, id) {
   ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke();
   if ((S.symLines && S.symLines.hover) === id && S.symLines.mode) {
     const mx = sx([(a[0] + b[0]) / 2, 0]), my = sy([0, (a[1] + b[1]) / 2]);
-    ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5;
+    ctx.setLineDash([]); ctx.fillStyle = C.fg; ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
   }
@@ -64,7 +64,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, R = 5;
     for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]]) {
       ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);
-      ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); } }
+      ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = C.fg; ctx.stroke(); } }
   if (S.lassoPath && S.lassoPath.pts.length) drawLasso(ctx, ox, oy, z);
   if (S.replaceMode) { const replaceColors = Array.isArray(S.replaceMode.from && S.replaceMode.from[0]) ? S.replaceMode.from : [S.replaceMode.from];
     ctx.fillStyle = 'rgba(61,139,253,.5)';
@@ -75,7 +75,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     ctx.fillStyle = 'rgba(0,0,0,.45)';
     ctx.fillRect(ox, oy, W * z, y - oy); ctx.fillRect(ox, y + h, W * z, oy + H * z - y - h);
     ctx.fillRect(ox, y, x - ox, h); ctx.fillRect(x + w, y, ox + W * z - x - w, h);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.fillStyle = '#fff';
+    ctx.strokeStyle = C.fg; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.fillStyle = C.fg;
     const hs = Math.min(18, h - 4), ws = Math.min(18, w - 4), hw = 5, cs = 10;
     ctx.fillRect(x - hw / 2, y + h / 2 - hs / 2, hw, hs); ctx.fillRect(x + w - hw / 2, y + h / 2 - hs / 2, hw, hs);
     ctx.fillRect(x + w / 2 - ws / 2, y - hw / 2, ws, hw); ctx.fillRect(x + w / 2 - ws / 2, y + h - hw / 2, ws, hw);
@@ -97,6 +97,6 @@ function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts, W = S
     ctx.globalAlpha = lp.near ? 0.9 : 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]); }
   const R = lp.near ? 6 : 4, a0 = pts[0]; // точки старта/конца — на оригинале
   ctx.beginPath(); ctx.arc(sx(a0), sy(a0), R, 0, Math.PI * 2);
-  ctx.fillStyle = lp.near ? C.accent : '#fff'; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = lp.near ? '#fff' : C.accent; ctx.stroke();
+  ctx.fillStyle = lp.near ? C.accent : C.fg; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = lp.near ? C.fg : C.accent; ctx.stroke();
   ctx.beginPath(); ctx.arc(sx(end), sy(end), 3, 0, Math.PI * 2); ctx.fillStyle = C.accent; ctx.fill();
 }
