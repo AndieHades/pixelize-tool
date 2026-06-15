@@ -3,7 +3,7 @@
 import { S } from './state.js';
 import { effVis, clipBase } from './layers.js';
 import { parseKey } from '../logic/raster.js';
-import { layerFxCanvas, layerEffectsFor } from './effects-render.js';
+import { layerFxCanvas, layerRenderEffects } from './effects-render.js';
 import { paintStack } from './composite.js';
 
 let lcs = []; const dirtySet = new Set(), revs = [], extCache = [];
@@ -13,7 +13,7 @@ export function dirtyAll() { lcs = []; extCache.length = 0; dirtySet.clear(); re
 // версия содержимого слоя i (растёт при правках) — подпись для кеша эффектов
 export const layerRev = (i) => (revs[i] || 0) + revAll;
 // источник для композита: слой с эффектами рисуется через fx-канвас, иначе как есть
-export const layerSrcCanvas = (i) => layerEffectsFor(S.layers[i]).length ? layerFxCanvas(i) : layerFloatCanvas(i);
+export const layerSrcCanvas = (i) => layerRenderEffects(i).length ? layerFxCanvas(i) : layerFloatCanvas(i);
 
 export function layerCanvas(i) { let c = lcs[i];
   if (!c) { c = document.createElement('canvas'); lcs[i] = c; dirtySet.add(i); }

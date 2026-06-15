@@ -50,7 +50,11 @@ const newFxParams = (type) => (EFFECT_FIELDS[type]?.includes('color') ? { color:
 
 export function openFxNew(type) { const target = activeTarget(); if (!target) return;
   const eff = newEffect(type, newFxParams(type)); open(target, eff, true); }
-export function openFxEdit(target, eff) { if (target && eff) open(target, eff, false); }
+export function openFxEdit(target, eff) {
+  if (!target || !eff) return;
+  if (eff.type === 'adjustment') { actions.run('effect.bc.edit', target, eff); return; }
+  open(target, eff, false);
+}
 
 export function fxCancel() { if (!ses) return; revert(); close(); bus.emit('layers'); bus.emit('render'); }
 export function fxApply() { if (!ses) return; const { target, eff, isNew, original } = ses;

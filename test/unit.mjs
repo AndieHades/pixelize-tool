@@ -14,6 +14,7 @@ import { rotSprite } from '../src/logic/rotsprite.js';
 import { computeGlow } from '../src/logic/glow.js';
 import { outlineRings } from '../src/logic/outline.js';
 import { bcAdjust, contrastFactor } from '../src/logic/bc.js';
+import { adjustColor } from '../src/logic/adjustment.js';
 import { generateTints, generateShades, generateHarmonyBaseColors, generateTintShadeScalesForHarmony } from '../src/logic/tint-shade.js';
 import { sortPalette } from '../src/logic/palette-sort.js';
 import { polygonToMask } from '../src/logic/poly-mask.js';
@@ -156,6 +157,10 @@ t('glow: ореол вокруг пикселя непустой', () => { const
 t('outline: кольцо включает соседа', () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(outlineRings(g, 8, 8, 1).some(([x, y]) => x === 4 && y === 3)); });
 t('bc: яркость поднимает значение', () => { const c = bcAdjust([100, 100, 100, 255], 50, 1); assert.equal(c[0], 150); assert.equal(c[3], 255); });
 t('bc: contrastFactor нейтрален при 0', () => { assert.ok(Math.abs(contrastFactor(0) - 1) < 1e-9); });
+t('adjustment: saturation -100 делает цвет серым без потери альфы', () => { const c = adjustColor([100, 50, 50, 128], { saturation: -100 });
+  assert.deepEqual(c, [100, 100, 100, 128]); });
+t('adjustment: hue сдвигает тон', () => { const c = adjustColor([255, 0, 0, 255], { hue: 120 });
+  assert.deepEqual(c, [0, 255, 0, 255]); });
 t('rotsprite: поворот не теряет контент', () => {
   const src = new Int32Array([0, 0, 0, 0xff0000ff | 0]); // один непрозрачный пиксель 2×2
   const r = rotSprite(src, 2, 2, 0, 1);

@@ -12,6 +12,7 @@ export const EFFECT_DEFAULTS = {
   glow: { size: 6, intensity: 0.8, color: '#78d7ff' },
   dropShadow: { size: 1, intensity: 0.6, color: '#000000', dx: 2, dy: 2 },
   innerShadow: { size: 2, intensity: 0.6, color: '#000000', dx: 2, dy: 2 },
+  adjustment: { brightness: 0, contrast: 0, saturation: 0, hue: 0 },
 };
 export const EFFECT_LIMITS = { size: { min: 1, max: 16 }, intensity: { min: 5, max: 100 }, offset: { min: -12, max: 12 } };
 // какие поля настроек показывает окно Edit для каждого типа эффекта
@@ -20,5 +21,6 @@ export const EFFECT_FIELDS = {
   glow: ['size', 'intensity', 'color'],
   dropShadow: ['size', 'intensity', 'color', 'offset'],
   innerShadow: ['size', 'intensity', 'color', 'offset'],
+  adjustment: ['brightness', 'contrast', 'saturation', 'hue'],
 };
 export const IMPORT_DEFAULT = { colors: 24, cell: 0, bgTol: 30 };

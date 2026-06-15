@@ -7,6 +7,7 @@ import { attachReorder } from '../core/reorder-drag.js';
 const STORE = 'panelOrder';
 const PANELS = ['tb-left', 'tb-right', 'sidebar']; // контейнеры с переставляемыми кнопками
 const DROP = PANELS.map((id) => '#' + id).join(',');
+const ID_MIGRATIONS = { bc: 'img-settings', mono: null };
 let squelchUntil = 0;
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
@@ -16,7 +17,8 @@ function save() { const order = {};
 
 function applySaved() { let order; try { order = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) {} if (!order) return;
   for (const id of PANELS) { const c = $(id); if (!c || !order[id]) continue;
-    for (const bid of order[id]) { const b = document.getElementById(bid); if (b) c.appendChild(b); } } }
+    for (const raw of order[id]) { const bid = Object.hasOwn(ID_MIGRATIONS, raw) ? ID_MIGRATIONS[raw] : raw;
+      const b = bid && document.getElementById(bid); if (b) c.appendChild(b); } } save(); }
 
 export function mount() {
   applySaved();

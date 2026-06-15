@@ -46,7 +46,7 @@ export function mountMenu() {
   $('lctx-copy-fx').onclick = () => { close(); if (lctxRef) actions.run('fx.copyAll', lctxRef.ref); };
   $('lctx-paste-fx').onclick = () => { close(); actions.run('fx.paste'); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
-  $('lctx-bc').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.bc', ts, t('pop.bc')); };
+  $('lctx-bc').onclick = () => { close(); if (lctxRef) actions.run('effect.bc', [lctxRef.ref], t('pop.bc'), { scope: 'layer' }); };
   $('lctx-clip').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleClip(lctxRef.ref); };
   $('lctx-lock').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleLock(lctxRef.ref); };
   $('lctx-alpha').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleAlphaLock(lctxRef.ref); };

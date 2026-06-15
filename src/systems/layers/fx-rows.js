@@ -12,6 +12,7 @@ import { fxDrag } from './fx-drag.js';
 
 // ромбовидная «искра» — та же иконка, что на кнопке вызова меню эффектов (#fx-btn)
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z"/></svg>';
+const ADJUST = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg>';
 const INDENT = 16;
 
 function selectFx(eff, additive) {
@@ -26,7 +27,7 @@ function effectRow(target, eff, depth) {
   const row = document.createElement('div');
   row.className = 'fxrow' + (eff === S.fxCur ? ' on' : sel ? ' marked' : '') + (eff.visible === false ? ' fxoff' : '');
   row.style.marginLeft = depth * INDENT + 'px'; row.__eff = eff; row.__owner = target;
-  const star = document.createElement('i'); star.className = 'fxstar'; star.innerHTML = STAR;
+  const star = document.createElement('i'); star.className = 'fxstar'; star.innerHTML = eff.type === 'adjustment' ? ADJUST : STAR;
   const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = t('fx.' + eff.type);
   const vis = document.createElement('button'); vis.className = 'eye' + (eff.visible === false ? ' off' : ''); vis.innerHTML = EYE;
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());

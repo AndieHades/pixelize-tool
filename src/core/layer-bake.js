@@ -5,6 +5,7 @@ import { clipBase, effVis, folderChain } from './layers.js';
 import { folderEffectsFor, layerEffectsFor } from './effects-render.js';
 import { hexToRgb } from '../logic/color.js';
 import { EFFECT_PIXELS, INNER_EFFECTS, maskFromGrid } from '../logic/layer-effects.js';
+import { adjustColor } from '../logic/adjustment.js';
 import { mergeCells } from '../logic/raster.js';
 
 const alpha = (c) => (c ? (c.length > 3 ? c[3] : 255) : 0);
@@ -18,6 +19,19 @@ function drawGrid(dst, src, op = 1) {
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) put(dst, x, y, src[y][x], op);
 }
 
+const visibleAdjustments = (effects = []) => effects.filter((e) => e.visible !== false && e.type === 'adjustment');
+const visiblePixelEffects = (effects = []) => effects.filter((e) => e.visible !== false && EFFECT_PIXELS[e.type]);
+
+function adjustedGrid(src, effects) {
+  const adj = visibleAdjustments(effects); if (!adj.length) return src;
+  const out = blank(S.W, S.H);
+  for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {
+    let c = src[y][x]; if (!c) continue;
+    c = c.slice(); for (const e of adj) c = adjustColor(c, e.params);
+    out[y][x] = c; }
+  return out;
+}
+
 function drawEffect(dst, mask, e, innerSrc = null) {
   const col = hexToRgb(e.params.color), pixels = EFFECT_PIXELS[e.type]?.(mask, S.W, S.H, e.params) || [];
   for (const [x, y, a] of pixels) {
@@ -27,10 +41,11 @@ function drawEffect(dst, mask, e, innerSrc = null) {
   }
 }
 
-function layerGrid(i) { const L = S.layers[i], out = blank(S.W, S.H), effects = layerEffectsFor(L), mask = maskFromGrid(L.grid, S.W, S.H);
-  for (const e of effects) if (e.visible !== false && !INNER_EFFECTS.has(e.type)) drawEffect(out, mask, e);
-  drawGrid(out, L.grid);
-  for (const e of effects) if (e.visible !== false && INNER_EFFECTS.has(e.type)) drawEffect(out, mask, e, L.grid);
+function layerGrid(i, inheritedAdjustments = []) { const L = S.layers[i], out = blank(S.W, S.H), effects = layerEffectsFor(L), mask = maskFromGrid(L.grid, S.W, S.H);
+  for (const e of visiblePixelEffects(effects)) if (!INNER_EFFECTS.has(e.type)) drawEffect(out, mask, e);
+  const src = adjustedGrid(L.grid, [...inheritedAdjustments, ...effects]);
+  drawGrid(out, src);
+  for (const e of visiblePixelEffects(effects)) if (INNER_EFFECTS.has(e.type)) drawEffect(out, mask, e, src);
   return out;
 }
 
@@ -66,10 +81,19 @@ function folderGroupGrid(f, selected) { const out = blank(S.W, S.H);
 }
 
 function drawFolderEffects(dst, f, which, selected) {
-  const eff = folderEffectsFor(f).filter((e) => e.visible !== false && (which === 'above' ? INNER_EFFECTS.has(e.type) : !INNER_EFFECTS.has(e.type)));
+  const eff = visiblePixelEffects(folderEffectsFor(f)).filter((e) => (which === 'above' ? INNER_EFFECTS.has(e.type) : !INNER_EFFECTS.has(e.type)));
   if (!eff.length) return;
   const grp = folderGroupGrid(f, selected), mask = maskFromGrid(grp, S.W, S.H);
   for (const e of eff) drawEffect(dst, mask, e, which === 'above' ? grp : null);
+}
+
+function folderAdjustmentsForLayer(i, root) {
+  const out = [];
+  for (const f of folderChain(S.layers[i].fid).slice().reverse()) {
+    if (!folderChain(f.id).some((x) => x.id === root.id)) continue;
+    out.push(...visibleAdjustments(folderEffectsFor(f)));
+  }
+  return out;
 }
 
 function folderGroups(root, idx) { const selected = new Set(idx), groups = [];
@@ -87,7 +111,14 @@ export function bakeFolder(f) {
   const groups = folderGroups(f, idx), byDepth = (a, b) => depth(a.f) - depth(b.f);
   for (const i of idx) {
     groups.filter((g) => g.bottom === i).sort(byDepth).forEach((g) => drawFolderEffects(out, g.f, 'below', selected));
-    const g = visibleLayerGrid(i, selected); if (g) drawGrid(out, g, S.layers[i].opacity);
+    const L = S.layers[i]; let g = null;
+    if (effVis(i) && L.opacity > 0) {
+      if (L.clip) {
+        const cb = clipBase(i);
+        if (cb >= 0 && selected.has(cb) && effVis(cb)) g = clipToBase(layerGrid(i, folderAdjustmentsForLayer(i, f)), S.layers[cb].grid);
+      } else g = layerGrid(i, folderAdjustmentsForLayer(i, f));
+    }
+    if (g) drawGrid(out, g, S.layers[i].opacity);
     groups.filter((g) => g.top === i).sort((a, b) => byDepth(b, a)).forEach((g) => drawFolderEffects(out, g.f, 'above', selected));
   }
   return { grid: out, idx };

@@ -31,7 +31,7 @@ export const ru = {
   'side.pp': 'Пиксель-перфект (P)',
   'side.stab': 'Стабилизация штриха (T)', 'side.outline': 'Обводка контуром (O)', 'side.flipH': 'Отразить по горизонтали (H)',
   'side.flipV': 'Отразить по вертикали (V)', 'side.rotate': 'Поворот холста 90° (R)', 'side.mono': 'Монохром (всё изображение)',
-  'side.bc': 'Яркость/контраст (всё изображение)', 'side.crop': 'Кроп (C): рамка → Enter', 'side.trim': 'Trim — обрезать пустые поля впритык к рисунку', 'side.center': 'Центрировать объект (в выделении, если есть)',
+  'side.bc': 'Яркость/контраст (всё изображение)', 'side.imageSettings': 'Настройки цвета слоя/холста', 'side.crop': 'Кроп (C): рамка → Enter', 'side.trim': 'Trim — обрезать пустые поля впритык к рисунку', 'side.center': 'Центрировать объект (в выделении, если есть)',
   // заголовки диалогов и попапов
   'dialog.newCanvas': 'Новый холст', 'dialog.export': 'Экспорт', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
   'export.scope': 'Что', 'export.selected': 'Выделенное', 'export.folder': 'Папка', 'export.project': 'Проект', 'export.mode': 'Как', 'export.flattened': 'Склеить', 'export.layered': 'Со слоями', 'export.separateFiles': 'Раздельно', 'export.separate': 'Раздельно', 'export.top': 'Верхний уровень', 'export.leaves': 'Все слои',
@@ -41,6 +41,7 @@ export const ru = {
   'pop.color': 'Цвет', 'pop.bc': 'Яркость/контраст', 'pop.adjust': 'Кисть-коррекция', 'pop.glow': 'Свечение',
   'pop.shadow': 'Тень (Drop Shadow)', 'pop.outline': 'Обводка',
   'bc.titleAll': 'Яркость/контраст — всё изображение',
+  'bc.titleCanvas': 'Настройки — холст', 'bc.scopeLayer': 'Слой', 'bc.scopeCanvas': 'Холст',
   // подписи полей
   'label.brightness': 'Яркость', 'label.contrast': 'Контраст', 'label.hue': 'Тон', 'label.saturation': 'Насыщенность',
   'label.value': 'Яркость', 'label.color': 'Цвет', 'label.opacity': 'Непрозр.', 'label.thickness': 'Толщина',
@@ -48,10 +49,10 @@ export const ru = {
   'label.detail': 'Детализация', 'label.bgTol': 'Отсечение фона', 'label.clean': 'Чистка мусора', 'label.symmetry': 'Симметрия',
   'label.range': 'Диапазон', 'label.intensity': 'Интенсивность', 'label.offsetX': 'Смещение X', 'label.offsetY': 'Смещение Y',
   'label.size': 'Размер', 'label.effect': 'Эффект', 'label.effects': 'Эффекты', 'label.result': 'результат', 'tool.effects': 'Эффекты слоя',
-  'fx.stroke': 'Обводка', 'fx.glow': 'Свечение', 'fx.dropShadow': 'Внешняя тень', 'fx.innerShadow': 'Внутренняя тень',
+  'fx.stroke': 'Обводка', 'fx.glow': 'Свечение', 'fx.dropShadow': 'Внешняя тень', 'fx.innerShadow': 'Внутренняя тень', 'fx.adjustment': 'Настройки',
   'menu.fxCopy': 'Скопировать эффект', 'menu.fxAsLayer': 'Как слой', 'menu.copyEffects': 'Скопировать эффекты', 'menu.pasteEffect': 'Вставить эффект',
   'toast.fxCopied': 'Эффект скопирован', 'toast.fxPasted': 'Эффект вставлен', 'toast.noFxClipboard': 'Эффект не скопирован', 'toast.fxAdded': 'Эффект добавлен',
-  'toast.noFxToCopy': 'Нет эффектов для копирования', 'toast.fxToLayer': 'Эффект превращён в слой',
+  'toast.noFxToCopy': 'Нет эффектов для копирования', 'toast.fxToLayer': 'Эффект превращён в слой', 'toast.adjustmentNoLayer': 'Настройки остаются редактируемым эффектом',
   'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.history': 'История', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
   'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки

@@ -171,8 +171,7 @@ export function mount() {
   $('flip-h').onclick = (e) => showToolChoice('flip-choice', e.currentTarget);
   $('flip-h').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('flip-choice', e.currentTarget); });
   $('rot').onclick = () => actions.run('canvas.rotate');
-  $('mono').onclick = () => actions.run('effect.mono');
-  $('bc').onclick = () => actions.run('effect.bc');
+  $('img-settings').onclick = () => actions.run('effect.bc', null, null, { scope: 'layer' });
   $('trim').onclick = () => actions.run('canvas.trim');
   $('center').onclick = () => actions.run('layer.center');
 

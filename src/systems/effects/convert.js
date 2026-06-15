@@ -21,6 +21,7 @@ function insertAt(target, inner) {
 }
 
 export function convertFxToLayer(target, eff) { if (!target || !eff) return;
+  if (eff.type === 'adjustment') { toast(t('toast.adjustmentNoLayer')); return; }
   const i = (target.effects || []).indexOf(eff); if (i < 0) return; snapshot();
   const W = S.W, H = S.H, col = hexToRgb(eff.params.color);
   const px = effectLayerPixels(targetSilhouette(target), W, H, eff);

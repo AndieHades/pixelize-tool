@@ -92,14 +92,14 @@ const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-win
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
-  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 1, h: 1, color: '#3a3a3a' };
+  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', preview: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
-  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 1, h: 1, color: '#3a3a3a' };
+  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', preview: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
@@ -366,6 +366,12 @@ t('effects-render: fxOnCanvas накладывает эффект (новый к
   assert.equal(fxr.fxOnCanvas(src, [], 8, 8), src); // нет эффектов → тот же канвас (без работы)
   const out = fxr.fxOnCanvas(src, [{ type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }], 8, 8);
   assert.notEqual(out, src); assert.equal(out.width, 8); }); // эффект → новый полнохолстовый канвас
+t('effects-render: adjustment входит в рендер слоя и наследуется от папки', () => { resetWH(4, 4);
+  const layerAdj = newEffect('adjustment', { saturation: -100 }); S.layers[0].effects = [layerAdj]; cache.dirtyAll();
+  assert.deepEqual(fxr.layerRenderEffects(0), [layerAdj]); assert.notEqual(cache.layerSrcCanvas(0), cache.layerCanvas(0));
+  const folderAdj = newEffect('adjustment', { brightness: 50 });
+  S.layers[0].effects = []; S.layers[0].fid = 1; S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [folderAdj] }];
+  cache.dirtyAll(); assert.deepEqual(fxr.layerRenderEffects(0), [folderAdj]); assert.notEqual(cache.layerSrcCanvas(0), cache.layerCanvas(0)); });
 
 t('recolor: меняет пиксели и добавляет новый цвет, не переписывая палитру', () => { resetWH(4, 4);
   S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.layers[0].grid[2][2] = [8, 8, 8, 255]; S.palette = [[9, 9, 9], [8, 8, 8]]; cache.dirtyAll();
@@ -375,9 +381,9 @@ t('recolor: меняет пиксели и добавляет новый цве�
 });
 t('free-rotate: поворачивает слой без ошибок', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
   freeRotateLayer(S.layers[0], Math.PI / 4, 4); assert.ok(true); });
-t('bc: preview можно отменить через undo, не трогая историю документа', () => { bc.mount(); resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t('bc: preview холста можно отменить через undo, не трогая историю документа', () => { bc.mount(); resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
-  bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100';
+  bc.openBcPop(null, null, { scope: 'canvas' }); document.getElementById('bc-bri').value = '100';
   document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.ok(S.layers[0].grid[1][1][0] > 150);
   history.doUndo();
@@ -385,11 +391,33 @@ t('bc: preview можно отменить через undo, не трогая и
   assert.equal(document.getElementById('bcpop').classList.contains('on'), false);
   assert.equal(S.undoStack.length, 0);
 });
-t('bc: применение поднимает яркость и откатывается undo', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t('bc: применение к холсту поднимает яркость и откатывается undo', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
-  bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
+  bc.openBcPop(null, null, { scope: 'canvas' }); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
   bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150);
   history.doUndo(); assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 255]); });
+t('bc: слой получает редактируемую настройку без изменения пикселей', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+  S.layers[0].grid[1][1] = [100, 50, 50, 255]; cache.dirtyAll();
+  bc.openBcPop([S.layers[0]], null, { scope: 'layer' });
+  document.getElementById('bc-sat').value = '-100'; document.getElementById('bc-hue').value = '90';
+  document.getElementById('bc-sat').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.layers[0].effects.length, 0); assert.ok(S.fxDraft && S.fxDraft.eff.type === 'adjustment');
+  assert.deepEqual(S.layers[0].grid[1][1], [100, 50, 50, 255]);
+  bc.bcApply();
+  assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 1); assert.equal(S.layers[0].effects[0].type, 'adjustment');
+  assert.equal(S.layers[0].effects[0].params.saturation, -100); assert.equal(S.layers[0].effects[0].params.hue, 90);
+  history.doUndo(); assert.equal(S.layers[0].effects.length, 0); });
+t('bc: настройка эффекта открывается повторно и откатывается', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+  const eff = newEffect('adjustment', { brightness: 10, contrast: 20, saturation: 30, hue: 40 }); S.layers[0].effects = [eff];
+  actions.run('effect.bc.edit', S.layers[0], eff);
+  assert.equal(document.getElementById('bc-bri').value, '10'); assert.equal(document.getElementById('bc-hue').value, '40');
+  document.getElementById('bc-hue').value = '-30'; document.getElementById('bc-hue').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(eff.params.hue, -30); history.doUndo();
+  assert.equal(eff.params.hue, 40); assert.equal(document.getElementById('bcpop').classList.contains('on'), false);
+  actions.run('effect.bc.edit', S.layers[0], eff); document.getElementById('bc-bri').value = '50';
+  document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('bc-apply').click(); assert.equal(eff.params.brightness, 50);
+  history.doUndo(); assert.equal(S.layers[0].effects[0].params.brightness, 10); });
 t('adjust: Dodge/Burn/Colorize постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
   S.layers[0].grid[0][0] = [200, 0, 0, 255]; S.adjMode = 'dodge'; history.snapshot(); adjust.adjustCell(0, 0);
   assert.ok(S.layers[0].grid[0][0][0] > 200 && S.layers[0].grid[0][0][1] > 0 && S.layers[0].grid[0][0][2] > 0);
@@ -1072,6 +1100,7 @@ t('toolbars: симметрия и флип свернуты в кнопки с 
 });
 t('grid: popup меняет шаг и цвет сетки', () => { gridSys.mount(); resetWH(8, 8); gridSys.openGridPop();
   const w = document.getElementById('grid-w'), h = document.getElementById('grid-h');
+  assert.equal(w.value, '16'); assert.equal(h.value, '16'); assert.equal(S.grid.color, '#4aa3ff'); assert.equal(S.grid.preview, true);
   w.value = '4'; w.dispatchEvent(new window.Event('input', { bubbles: true }));
   h.value = '3'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 3);
@@ -1145,6 +1174,9 @@ t('fx: Convert To Layer у эффекта папки оставляет слой
   cache.dirtyAll(); const eff = S.folders[0].effects[0]; actions.run('fx.convert', S.folders[0], eff);
   assert.equal(S.folders[0].effects.length, 0); assert.equal(S.layers.length, 2); assert.equal(S.layers[0].fid, 1);
   assert.equal(S.layers[1], L); assert.deepEqual(S.layers[1].grid[4][4], [1, 1, 1, 255]); });
+t('fx: adjustment нельзя превратить в слой', () => { resetWH(8, 8); const L = S.layers[0], eff = newEffect('adjustment', { brightness: 20 });
+  L.effects = [eff]; actions.run('fx.convert', L, eff);
+  assert.equal(S.layers.length, 1); assert.equal(L.effects[0], eff); });
 t('fx: Copy Effects + Paste копирует все эффекты, копии независимы', () => { resetWH(8, 8); const src = S.layers[0];
   src.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }, { id: 2, type: 'glow', visible: false, params: { size: 3, intensity: 0.5, color: '#00ff00' } }];
   lops.doAddLayer(); const tgt = S.layers[S.cur]; actions.run('fx.copyAll', src); actions.run('fx.paste');
@@ -1185,6 +1217,10 @@ t('effects: удаление при выбранном эффекте бьёт �
 
 t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });
+t('effects: adjustment-строка использует иконку полукруга', () => { resetWH(8, 8);
+  S.layers[0].effects = [newEffect('adjustment')]; document.getElementById('lay-pop').classList.add('on'); layList();
+  const row = document.querySelector('#lay-list .fxrow'); assert.ok(row.querySelector('.fxstar circle')); assert.equal(row.querySelector('.lname').textContent, 'Настройки');
+  S.layers[0].effects = []; });
 
 t('effects: цвет эффекта — наш #colpop, не системный input[type=color]', () => { cp.mount();
   assert.equal(document.querySelectorAll('#fx-edit input[type=color]').length, 0); // системного пикера в окне эффекта нет
