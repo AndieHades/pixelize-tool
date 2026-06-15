@@ -2,7 +2,7 @@
 // режим выбора, складывание (drag/наложение) и переупорядочивание.
 import { $, showMenuAt } from '../../core/dom.js';
 import { t, getLocale } from '../../i18n/index.js';
-import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem, nextFolderName } from './store.js';
+import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem, nextFolderName, folderStats } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 import { renderGalleryGrid } from './grid.js';
@@ -61,7 +61,7 @@ function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ 
 async function tileEl(d) {
   const tile = document.createElement('div'); tile.className = 'gal-tile' + (d.kind === 'folder' ? ' folder' : '') + (selected.has(d.id) ? ' sel' : '');
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
-  if (d.kind !== 'folder') tile.dataset.orient = d.W > d.H ? 'landscape' : d.H > d.W ? 'portrait' : 'square';
+  if (d.kind !== 'folder') { tile.dataset.orient = d.W > d.H ? 'landscape' : d.H > d.W ? 'portrait' : 'square'; tile.dataset.w = d.W || 1; tile.dataset.h = d.H || 1; }
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
   if (d.kind === 'folder') { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } // у всех папок — значок папки
   else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; im.style.aspectRatio = `${d.W} / ${d.H}`; thumb.appendChild(im); } // плитка в пропорциях работы
@@ -71,13 +71,14 @@ async function tileEl(d) {
   const cap = document.createElement('div'); cap.className = 'gal-cap';
   const nm = document.createElement('b'); nm.textContent = d.name;
   const sub = document.createElement('small'), tm = document.createElement('small');
-  if (d.kind !== 'folder') { sub.textContent = `${d.W}×${d.H} px`; tm.textContent = relTime(d.updated); } // размеры и время — на разных строках
+  if (d.kind === 'folder') { const st = await folderStats(d.id); sub.textContent = t('gallery.files', { n: st.files }); tm.textContent = relTime(st.updated); }
+  else { sub.textContent = `${d.W}×${d.H} px`; tm.textContent = relTime(d.updated); } // размеры и время — на разных строках
   cap.append(nm, sub, tm); tile.append(thumb, cap);
   thumb.onclick = () => { if (selecting) { const on = !selected.has(d.id); if (on) selected.add(d.id); else selected.delete(d.id);
       tile.classList.toggle('sel', on); chk.classList.toggle('on', on); updateSel(); }
     else if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); };
-  nm.onclick = (e) => e.stopPropagation();
-  nm.ondblclick = (e) => { e.stopPropagation(); renameInline(nm, d); };
+  nm.onclick = (e) => { e.stopPropagation(); if (!nm.isContentEditable) renameInline(nm, d); };
+  nm.ondblclick = (e) => e.stopPropagation();
   attachDrag(tile, d.id, { gridEl, selecting: isSelecting,
     onBack: async (dragId) => { const f = viewFolder ? await getItem(viewFolder) : null; // бросок на «назад» — на уровень выше
       await moveToFolder([dragId], f ? (f.folder ?? null) : null); render(); },

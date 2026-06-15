@@ -24,19 +24,18 @@
 .gal-actions button.on { background: var(--accent); color: var(--on-accent); }
 #gal-del { color: var(--danger); }
 .gal-actions button:disabled { opacity: .4; pointer-events: none; }
-/* GalleryGrid: количество колонок считает JS-компонент, ряды идут слева направо */
-#gal-grid { --gal-cols: 1; --gal-tile: var(--gal-tile-min); flex: 1; overflow: auto; display: grid;
-  grid-template-columns: repeat(var(--gal-cols), minmax(0, var(--gal-tile))); justify-content: start;
-  gap: var(--gal-grid-gap); padding: var(--gal-grid-pad-top) var(--gal-grid-pad-x) var(--gal-grid-pad-bottom);
-  align-content: start; align-items: start; }
-.gal-tile { cursor: pointer; user-select: none; min-width: 0; }
-/* ячейка квадратная и одинаковая для папок/артов; картинка внутри только вписывается */
-.gal-thumb { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center;
-  padding: var(--gal-thumb-pad); background: var(--panel-solid); border: 1px solid var(--line);
+/* GalleryGrid: размеры превью считает JS, поэтому вертикальные арты не режутся и не получают пустые поля. */
+#gal-grid { --gal-tile: var(--gal-tile-min); flex: 1; overflow: auto; display: flex; flex-wrap: wrap;
+  justify-content: flex-start; gap: var(--gal-grid-gap); padding: var(--gal-grid-pad-top) var(--gal-grid-pad-x) var(--gal-grid-pad-bottom);
+  align-content: start; align-items: flex-start; }
+.gal-tile { width: var(--gal-card-w, var(--gal-tile)); cursor: pointer; user-select: none; min-width: 0; }
+/* thumb арта получает реальные пропорции; Project остаётся квадратным для узнаваемой иконки. */
+.gal-thumb { position: relative; width: var(--gal-thumb-w, 100%); height: var(--gal-thumb-h, var(--gal-tile)); display: grid; place-items: center;
+  padding: 0; background: var(--panel-solid); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden;
   transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform var(--anim-fast) var(--ease-out); }
-.gal-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-/* папка использует ту же карточку, чтобы визуальный размер не отличался от артов */
+.gal-thumb img { display: block; width: 100%; height: 100%; object-fit: fill; image-rendering: pixelated; }
+.gal-tile.folder .gal-thumb { padding: var(--gal-thumb-pad); }
 .gal-tile:hover .gal-thumb { border-color: var(--accent); }
 .gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
 /* чек-кружок в углу плитки (виден только в режиме выбора) */
@@ -54,7 +53,7 @@
 /* круглые иконочные кнопки (＋, ✓) */
 .gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
 .gal-cap { min-height: 58px; padding: 8px 4px 0; text-align: center; } /* подписи не меняют размер превью и не ломают ряд */
-.gal-cap b { display: block; color: color-mix(in srgb, var(--txt) 68%, var(--bg)); font-size: 13px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* название приглушённое, не чисто белое */
+.gal-cap b { display: block; color: color-mix(in srgb, var(--txt) 68%, var(--bg)); font-size: 13px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; } /* название приглушённое, не чисто белое */
 .gal-cap b.editing { background: var(--panel-solid); border-radius: var(--r-xs); padding: 1px 4px; white-space: normal; }
 .gal-cap small { display: block; color: var(--txt2); font-size: 11px; margin-top: 1px; }
 /* иконка папки, когда внутри нет превью */

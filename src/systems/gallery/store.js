@@ -6,7 +6,7 @@ import { t } from '../../i18n/index.js';
 export const uid = (p = 'd') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const pad = (i) => String(i).padStart(2, '0');
 
-// «Папка 01», «02», … — первое свободное номерное имя
+// «Project 01», «02», … — первое свободное номерное имя
 export async function nextFolderName(base) { const used = new Set((await listDocs()).map((d) => d.name));
   for (let i = 1; ; i++) { const n = `${base} ${pad(i)}`; if (!used.has(n)) return n; } }
 // имя без повторов: если занято — добавляет номер
@@ -37,6 +37,15 @@ export async function duplicateItem(id, parent) { const d = await getDoc(id); if
   const nid = uid(d.kind === 'folder' ? 'f' : 'd'), name = await uniqueName(d.name + ' ' + t('layer.copySuffix'));
   await saveDoc({ ...d, id: nid, folder: parent ?? d.folder ?? null, name, updated: Date.now(), order: Date.now() });
   if (d.kind === 'folder') for (const k of await childrenOf(id)) await duplicateItem(k.id, nid);
+}
+
+export async function folderStats(id) { let files = 0, updated = 0; const seen = new Set();
+  const walk = async (fid) => { if (seen.has(fid)) return; seen.add(fid);
+    for (const d of await childrenOf(fid)) {
+      if (d.kind === 'folder') await walk(d.id);
+      else { files++; updated = Math.max(updated, d.updated || d.order || 0); }
+    } };
+  await walk(id); return { files, updated };
 }
 
 export async function folderPreviews(folderId) { return (await childrenOf(folderId)).slice(0, 4).map((d) => d.preview).filter(Boolean); }
