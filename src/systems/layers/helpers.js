@@ -4,7 +4,28 @@ import { folderChain } from '../../core/layers.js';
 
 const inSubtree = (L, fid) => folderChain(L.fid).some((f) => f.id === fid); // слой лежит в поддереве папки
 export const folderLayers = (f) => S.layers.filter((L) => inSubtree(L, f.id));
+export const folderLayerIndices = (f) => S.layers.map((L, i) => (inSubtree(L, f.id) ? i : -1)).filter((i) => i >= 0);
 export function topOfFolder(fid) { let t = -1; for (let i = 0; i < S.layers.length; i++) if (inSubtree(S.layers[i], fid)) t = i; return t; }
+export function folderStackPos(f) { const idx = folderLayerIndices(f);
+  if (idx.length) return Math.min(...idx);
+  return Number.isFinite(f.emptyPos) ? Math.max(0, Math.min(S.layers.length, f.emptyPos)) : -1; }
+export function folderInsertIndex(fid) { const top = topOfFolder(fid);
+  if (top >= 0) return top + 1;
+  const f = S.folders.find((x) => x.id === fid);
+  return Number.isFinite(f?.emptyPos) ? Math.max(0, Math.min(S.layers.length, f.emptyPos)) : 0; }
+export function clearFolderEmptyPos(fid) { for (const f of folderChain(fid)) delete f.emptyPos; }
+export function rememberEmptyFolderPositions(idx, skipFids = new Set()) {
+  const gone = new Set(idx), anchors = new Map();
+  for (const f of S.folders) {
+    if (folderChain(f.id).some((x) => skipFids.has(x.id))) continue;
+    const memberIdx = folderLayerIndices(f);
+    if (memberIdx.length && memberIdx.every((i) => gone.has(i))) anchors.set(f.id, Math.min(...memberIdx));
+  }
+  return () => {
+    for (const [id, pos] of anchors) { const f = S.folders.find((x) => x.id === id);
+      if (f && !folderLayerIndices(f).length) f.emptyPos = Math.max(0, Math.min(S.layers.length, pos)); }
+  };
+}
 // общая родительская папка набора слоёв (если одна) — новая группа вложится в неё
 export function commonParent(layers) { const f0 = layers.length ? (layers[0].fid ?? null) : null;
   return layers.every((L) => (L.fid ?? null) === f0) ? f0 : null; }

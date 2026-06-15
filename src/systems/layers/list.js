@@ -12,7 +12,7 @@ import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
-import { folderLayers } from './helpers.js';
+import { folderLayers, folderStackPos } from './helpers.js';
 import { appendEffects } from './fx-rows.js';
 import { syncLayerActionButtons } from './actions-bar.js';
 
@@ -125,30 +125,31 @@ function layerRow(L, i, depth) {
 function appendFolderRow(box, f, depth, rendered) {
   if (rendered.has(f.id)) return;
   rendered.add(f.id); box.appendChild(folderRow(f, depth)); appendEffects(box, f, depth + 1);
-  if (f.open) appendEmptyFolders(box, f.id, depth + 1, rendered);
 }
 
-function appendEmptyFolders(box, parent, depth, rendered) {
-  for (const f of S.folders) {
-    if ((f.parent ?? null) !== parent || rendered.has(f.id) || folderLayers(f).length) continue;
-    appendFolderRow(box, f, depth, rendered);
+function childItems(parent) {
+  const items = [];
+  S.layers.forEach((L, i) => { if ((L.fid ?? null) === (parent ?? null)) items.push({ kind: 'layer', pos: i, order: i, L, i }); });
+  S.folders.forEach((f, order) => { if ((f.parent ?? null) === (parent ?? null)) items.push({ kind: 'folder', pos: folderStackPos(f), order, f }); });
+  items.sort((a, b) => (b.pos - a.pos) || (a.kind === 'layer' ? -1 : b.kind === 'layer' ? 1 : 0) || (a.order - b.order));
+  return items;
+}
+
+function appendChildren(box, parent, depth, rendered) {
+  for (const item of childItems(parent)) {
+    if (item.kind === 'folder') {
+      appendFolderRow(box, item.f, depth, rendered);
+      if (item.f.open) appendChildren(box, item.f.id, depth + 1, rendered);
+    } else {
+      box.appendChild(layerRow(item.L, item.i, depth)); appendEffects(box, item.L, depth + 1);
+    }
   }
 }
 
 export function layList() {
   const box = $('lay-list'); if (!box) return; box.innerHTML = '';
   const rendered = new Set();
-  const stack = []; // папки-предки сверху вниз (учтённые в текущем месте обхода)
-  for (let i = S.layers.length - 1; i >= 0; i--) { const L = S.layers[i];
-    const chain = folderChain(L.fid).reverse(); // от корня к ближайшей папке
-    let common = 0; while (common < stack.length && common < chain.length && stack[common].id === chain[common].id) common++;
-    stack.length = common; let hidden = stack.some((f) => !f.open);
-    for (let d = common; d < chain.length; d++) { const f = chain[d];
-      if (!hidden) appendFolderRow(box, f, d, rendered); stack.push(f); if (!f.open) hidden = true; }
-    if (hidden) continue;
-    box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
-  }
-  appendEmptyFolders(box, null, 0, rendered);
+  appendChildren(box, null, 0, rendered);
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   syncLayerActionButtons();
 }

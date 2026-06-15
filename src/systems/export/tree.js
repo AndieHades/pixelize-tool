@@ -4,9 +4,10 @@
 // Узел-папка { kind:'folder', name, fid, folder, visible, open, effects, children }.
 import { S } from '../../core/state.js';
 import { folderChain } from '../../core/layers.js';
+import { folderStackPos } from '../layers/helpers.js';
 
 const inSub = (L, fid) => folderChain(L.fid).some((f) => f.id === fid); // слой в поддереве папки
-const folderPos = (fid) => { for (let i = 0; i < S.layers.length; i++) if (inSub(S.layers[i], fid)) return i; return Infinity; };
+const folderPos = (fid) => { const f = S.folders.find((x) => x.id === fid); return f ? folderStackPos(f) : Infinity; };
 
 function layerNode(L, i) { return { kind: 'layer', name: L.name || 'Layer', idx: i, visible: L.visible !== false, opacity: L.opacity, effects: L.effects || [] }; }
 function folderNode(f, includeHidden) {

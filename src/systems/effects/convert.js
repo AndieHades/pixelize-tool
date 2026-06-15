@@ -10,12 +10,13 @@ import { hexToRgb } from '../../logic/color.js';
 import { INNER_EFFECTS, effectLayerPixels } from '../../logic/layer-effects.js';
 import { targetSilhouette } from '../../core/effects-render.js';
 import { toast, t } from '../../core/dom.js';
+import { folderInsertIndex, clearFolderEmptyPos } from '../layers/helpers.js';
 
 // позиция нового слоя сохраняет вид: «наружные» эффекты — под источником, внутренние — над
 function insertAt(target, inner) {
   if (target.grid) { const si = S.layers.indexOf(target); return { at: inner ? si + 1 : si, fid: target.fid }; }
   const idxs = S.layers.map((L, k) => (folderChain(L.fid).some((f) => f.id === target.id) ? k : -1)).filter((k) => k >= 0);
-  const at = idxs.length ? (inner ? Math.max(...idxs) + 1 : Math.min(...idxs)) : S.layers.length;
+  const at = idxs.length ? (inner ? Math.max(...idxs) + 1 : Math.min(...idxs)) : folderInsertIndex(target.id);
   return { at, fid: target.id };
 }
 
@@ -28,7 +29,7 @@ export function convertFxToLayer(target, eff) { if (!target || !eff) return;
     if (x >= 0 && y >= 0 && x < W && y < H) nl.grid[y][x] = c; else nl.ext.set(x + ',' + y, c); } // вне холста — в ext, эффект не обрезается
   target.effects.splice(i, 1); // источник остаётся, эффект снят
   const { at, fid } = insertAt(target, INNER_EFFECTS.has(eff.type)); nl.fid = fid;
-  S.layers.splice(at, 0, nl); S.cur = at;
+  S.layers.splice(at, 0, nl); clearFolderEmptyPos(fid); S.cur = at;
   S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.fxToLayer'));
 }

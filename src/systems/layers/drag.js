@@ -6,7 +6,7 @@ import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { folderChain } from '../../core/layers.js';
-import { topOfFolder, folderLayers } from './helpers.js';
+import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 import { FOLDER_HOLD_MS } from '../../config/timings.js';
@@ -32,13 +32,15 @@ function layDrop(src, row, into, below) { const tIsFolder = row.classList.contai
   if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
     const block = dragBlock(src.idx);
     if (tL && block.includes(tL)) return;
+    const movedIdx = block.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0);
+    const restoreEmptyFolders = rememberEmptyFolderPositions(movedIdx);
     snapshot();
     for (const L of block) { const i = S.layers.indexOf(L); if (i >= 0) S.layers.splice(i, 1); }
     const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
     for (const L of block) L.fid = dstFid;
     // список рисуется сверху вниз от большего индекса к меньшему: «над целью» = индекс цели+1, «под целью» = индекс цели
-    let dstIdx = tIsFolder ? topOfFolder(tFid) + 1 : S.layers.indexOf(tL) + (below ? 0 : 1); if (dstIdx < 0) dstIdx = S.layers.length;
-    S.layers.splice(dstIdx, 0, ...block);
+    let dstIdx = tIsFolder ? folderInsertIndex(tFid) : S.layers.indexOf(tL) + (below ? 0 : 1); if (dstIdx < 0) dstIdx = S.layers.length;
+    S.layers.splice(dstIdx, 0, ...block); restoreEmptyFolders(); clearFolderEmptyPos(dstFid);
     const ni = block.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0); // сохранить выделение на новом месте
     S.cur = ni[ni.length - 1]; S.marked = ni.length > 1 ? new Set(ni) : new Set(); S.markedFolders.clear(); S.selFolder = null;
   } else { const foldersToMove = dragFolderBlock(src.fid);
@@ -49,8 +51,12 @@ function layDrop(src, row, into, below) { const tIsFolder = row.classList.contai
     for (let i = S.layers.length - 1; i >= 0; i--) if (foldersToMove.some((f) => folderChain(S.layers[i].fid).some((x) => x.id === f.id))) block.unshift(S.layers.splice(i, 1)[0]);
     const newParent = tIsFolder ? (into ? tFid : (S.folders.find((f) => f.id === tFid)?.parent ?? null)) : (tL ? (tL.fid ?? null) : null);
     for (const f of foldersToMove) f.parent = newParent;
-    let dstIdx; if (tIsFolder) dstIdx = topOfFolder(tFid) + 1; else if (tL && tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = (tL ? S.layers.indexOf(tL) : S.layers.length - 1) + 1;
-    S.layers.splice(Math.min(Math.max(dstIdx, 0), S.layers.length), 0, ...block);
+    let dstIdx; if (tIsFolder) dstIdx = folderInsertIndex(tFid); else if (tL && tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = (tL ? S.layers.indexOf(tL) : S.layers.length - 1) + 1;
+    dstIdx = Math.min(Math.max(dstIdx, 0), S.layers.length);
+    if (block.length) S.layers.splice(dstIdx, 0, ...block);
+    else for (const f of foldersToMove) f.emptyPos = dstIdx;
+    for (const f of foldersToMove) if (block.length) delete f.emptyPos;
+    clearFolderEmptyPos(newParent);
     S.cur = Math.min(S.cur, S.layers.length - 1); S.markedFolders = new Set(foldersToMove.map((f) => f.id)); S.selFolder = foldersToMove[0] ? foldersToMove[0].id : null; S.marked.clear(); }
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
