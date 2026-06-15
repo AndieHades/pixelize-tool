@@ -7,6 +7,7 @@ import { lib, allBrushes, setOrder } from './data.js';
 import { stampIcon } from '../../logic/brush-preview.js';
 import { inlineRename } from '../../core/inline-rename.js';
 import { attachReorder } from '../../core/reorder-drag.js';
+import { DRAG_THRESHOLD } from '../../config/timings.js';
 
 let cb = {}, squelchUntil = 0;
 const squelch = () => { squelchUntil = Date.now() + 350; };
@@ -32,8 +33,13 @@ export function renderBrushes() {
   for (const b of allBrushes()) {
     const tile = document.createElement('div'); tile.className = 'btile' + (b.id === active ? ' on' : ''); tile.dataset.id = b.id;
     tile.append(iconCanvas(b), nameSpan(b.name));
+    let rightDown = null;
+    tile.addEventListener('pointerdown', (e) => { if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY }; });
+    tile.addEventListener('pointerup', (e) => { if (e.button !== 2 || !rightDown) return;
+      const moved = Math.hypot(e.clientX - rightDown.x, e.clientY - rightDown.y) > DRAG_THRESHOLD; rightDown = null;
+      if (!moved && Date.now() >= squelchUntil) cb.settings(b); });
     tile.addEventListener('click', () => { if (Date.now() < squelchUntil) return; if (b.id === active) cb.settings(b); else cb.pick(b); });
-    tile.addEventListener('contextmenu', (e) => e.preventDefault()); // ПКМ — старт перестановки, не меню
+    tile.addEventListener('contextmenu', (e) => e.preventDefault());
     attachReorder(tile, { dropSel: '#brush-list', itemSel: '.btile', save: persist, squelch });
     host.appendChild(tile);
   }

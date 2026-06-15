@@ -1,7 +1,7 @@
 // Создание кисти-штампа из выделенной области. Берёт видимый композит внутри
 // выделения (или рамки трансформации), превращает альфу в маску (форма, не
 // цвет — кисть recolorable), обрезает пустые края, добавляет кисть в текущий
-// набор и делает её активной. Холст/выделение/цвет не меняет.
+// набор, делает её активной и снимает выделение — можно сразу рисовать.
 // Pipeline: bounds → композит → trim → alpha-маска → stamp-asset → активна.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
@@ -9,6 +9,8 @@ import { toast, t } from '../../core/dom.js';
 import { paintStack } from '../../core/composite.js';
 import { inMask } from '../../core/selection.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
+import { setTool } from '../../core/tools.js';
+import { deselect } from '../selection/model.js';
 import { BP_SMAX } from '../../config/limits.js';
 import { ensureLib, lib, addBrush, allBrushes } from './data.js';
 
@@ -42,6 +44,7 @@ export async function createFromSelection() {
   const brush = await addBrush({ name, source: 'custom', shape: 'shape', cov: { w, h, data: cov }, grain: null, baseSize: Math.max(w, h), params: { spacing: 1, jitter: 0 } }, setId);
   const tool = S.tool === 'eraser' ? 'eraser' : 'pencil';
   setStampBrush(tool, brush); S.brushes[tool].size = BP_SMAX; // штамп в натуральном размере (слайдер масштабирует)
+  setTool(tool); deselect();
   bus.emit('brushlib'); bus.emit('render');
   toast(t('toast.brushCreated', { name }));
 }

@@ -1,6 +1,7 @@
 // Интеграционные тесты сервисов core/, которым нужен DOM (canvas). Поднимаем
 // jsdom-глобали и импортируем модули напрямую — проверяем по мере портирования,
 // не дожидаясь сборки всего приложения.
+import 'fake-indexeddb/auto';
 import assert from 'node:assert/strict';
 import { makeDom } from './harness.mjs';
 
@@ -52,6 +53,7 @@ const bb = await import('../src/systems/brush-bar.js');
 const brushResize = await import('../src/systems/brush-resize.js');
 const brushData = await import('../src/systems/brush-library/data.js');
 const brushList = await import('../src/systems/brush-library/list.js');
+const brushFromSel = await import('../src/systems/brush-library/from-selection.js');
 const eyedropper = await import('../src/systems/eyedropper/index.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
@@ -193,6 +195,14 @@ t('keyboard: несвязанная клавиша игнорится', () => { 
 t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
   kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap(); });
 t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
+t('keyboard: Ctrl+A выделяет содержимое активного слоя', () => { resetWH(4, 4); kbd.resetKeymap();
+  S.layers[0].grid[0][1] = [1, 2, 3, 255]; S.layers[0].grid[2][3] = [4, 5, 6, 255]; cache.dirtyAll();
+  assert.ok(kbd.handle(ev('KeyA', { ctrlKey: true })));
+  assert.deepEqual(S.sel, { x0: 1, y0: 0, x1: 3, y1: 2 }); assert.deepEqual([...S.selMask].sort(), ['1,0', '3,2']);
+});
+t('keyboard: Ctrl+N создаёт новый слой', () => { resetWH(4, 4); kbd.resetKeymap();
+  assert.ok(kbd.handle(ev('KeyN', { ctrlKey: true }))); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
+});
 
 t('draw: кисть рисует активным цветом', () => { reset4(); S.active = [10, 20, 30]; setTool('pencil');
   stroke.beginStroke(); stamp(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [10, 20, 30, 255]); });
@@ -315,6 +325,19 @@ t('free-rotate: поворачивает слой без ошибок', () => { 
 t('bc: применение поднимает яркость', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
   bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
   bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150); });
+t('adjust: Dodge/Burn/Colorize постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
+  S.layers[0].grid[0][0] = [200, 0, 0, 255]; S.adjMode = 'dodge'; history.snapshot(); adjust.adjustCell(0, 0);
+  assert.ok(S.layers[0].grid[0][0][0] > 200 && S.layers[0].grid[0][0][1] > 0 && S.layers[0].grid[0][0][2] > 0);
+  S.layers[0].grid[0][1] = [200, 100, 50, 255]; S.adjMode = 'burn'; history.snapshot(); adjust.adjustCell(1, 0);
+  assert.ok(S.layers[0].grid[0][1][0] < 200 && S.layers[0].grid[0][1][1] < 100 && S.layers[0].grid[0][1][2] < 50);
+  S.layers[0].grid[1][0] = [10, 20, 30, 255]; S.adjMode = 'colorize'; history.snapshot(); adjust.adjustCell(0, 1);
+  assert.deepEqual(S.layers[0].grid[1][0], [110, 20, 30, 255]);
+  S.undoStack.length = 0; S.redoStack.length = 0;
+});
+t('adjust: выбор режима включает кисть-коррекцию', () => { adjust.mount(); S.tool = 'pencil';
+  document.querySelector('#adj-modes [data-m="burn"]').click();
+  assert.equal(S.tool, 'adjust'); assert.equal(S.adjMode, 'burn');
+});
 
 t('selection: fillSelection заливает рамку', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.active = [5, 6, 7];
   sel.fillSelection(); assert.deepEqual(S.layers[0].grid[2][2], [5, 6, 7, 255]); });
@@ -530,6 +553,22 @@ t('brush-bar: хоткеи размера кисти упираются в по�
   actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
   S.brushes.pencil = { size: 1, op: 1 }; S.brushes.eraser = { size: 1, op: 1 }; saveBrushPrefs(S);
 });
+await ta('brush-library: кисть из выделения сразу активна и выделение снято', async () => { resetWH(6, 6);
+  S.layers[0].grid[2][2] = [20, 30, 40, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
+  const proto = HTMLCanvasElement.prototype, orig = proto.getContext;
+  proto.getContext = function (...args) { const ctx = orig.apply(this, args);
+    return new Proxy(ctx, { get(tg, p) { if (p === 'getImageData') return () => { const data = new Uint8ClampedArray(S.W * S.H * 4);
+      for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = S.layers[0].grid[y][x]; if (!c) continue;
+        const o = (y * S.W + x) * 4; data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = c[3] ?? 255; }
+      return { data }; };
+    return tg[p]; }, set(tg, p, v) { tg[p] = v; return true; } }); };
+  try {
+    await brushFromSel.createFromSelection();
+    assert.equal(S.tool, 'pencil'); assert.equal(S.sel, null); assert.ok(S.stampBrush.pencil);
+    assert.equal(S.stampBrush.pencil.baseSize, 1); assert.equal(S.brushes.pencil.size, BP_SMAX);
+    assert.ok(brushData.lib.brushes.some((b) => b.id === S.stampBrush.pencil.id));
+  } finally { proto.getContext = orig; S.stampBrush.pencil = null; S.brushes.pencil = { size: 1, op: 1 }; }
+});
 t('brush-library: иконки остаются читаемыми при маленьком размере кисти', () => {
   const proto = HTMLCanvasElement.prototype, orig = proto.getContext, old = brushData.lib.brushes;
   proto.getContext = function (...args) { const ctx = orig.apply(this, args), canvas = this;
@@ -544,6 +583,19 @@ t('brush-library: иконки остаются читаемыми при мал
     let on = 0; for (let i = 3; i < cv.__pixels.length; i += 4) if (cv.__pixels[i]) on++;
     assert.ok(on > 900);
   } finally { proto.getContext = orig; brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
+});
+t('brush-library: ПКМ по кисти открывает настройки', () => {
+  const old = brushData.lib.brushes; let opened = null;
+  try {
+    brushData.lib.brushes = [{ id: 'ctxb', name: 'Ctx Brush', order: 0, source: 'base', shape: 'shape',
+      cov: { w: 1, h: 1, data: new Uint8Array([255]) }, grain: null, params: {} }];
+    brushList.bindList({ mode: () => 'pencil', pick() {}, settings: (b) => { opened = b; }, rename() {}, rerender() {} });
+    brushList.renderBrushes();
+    const tile = document.querySelector('#brush-list .btile');
+    tile.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    tile.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    assert.equal(opened && opened.id, 'ctxb');
+  } finally { brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
 });
 t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');

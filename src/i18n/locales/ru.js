@@ -58,7 +58,7 @@ export const ru = {
   // коррекция
   'adj.dodge': 'Осветлить', 'adj.burn': 'Затемнить', 'adj.colorize': 'В активный цвет',
   // меню слоя
-  'menu.rename': 'Переименовать…', 'menu.dupLayer': 'Дублировать слой', 'menu.newLayer': 'Новый слой', 'menu.group': 'В папку', 'menu.mergeLayers': 'Слить отмеченные (Ctrl+E)', 'menu.deselect': 'Отменить выделение', 'menu.selectAll': 'Выбрать всё на слое',
+  'menu.rename': 'Переименовать…', 'menu.dupLayer': 'Дублировать слой', 'menu.newLayer': 'Новый слой (Ctrl+N)', 'menu.group': 'В папку', 'menu.mergeLayers': 'Слить отмеченные (Ctrl+E)', 'menu.deselect': 'Отменить выделение', 'menu.selectAll': 'Выбрать всё на слое',
   'menu.invert': 'Инверсия выделения', 'menu.fill': 'Залить активным цветом', 'menu.clear': 'Очистить слой',
   'menu.symm': 'Симметрировать слой', 'menu.transform': 'Трансформировать…', 'menu.shadow': 'Тень (Drop Shadow)…',
   'menu.glow': 'Свечение…', 'menu.mono': 'В монохром', 'menu.bc': 'Яркость/контраст…', 'menu.clip': 'Обтравочная маска',
