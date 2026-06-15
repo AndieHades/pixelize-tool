@@ -32,6 +32,7 @@
   --gal-grid-gap: clamp(12px, 2vw, 18px);
   --gal-tile-min: clamp(112px, 18vw, 144px);
   --gal-tile-max: 156px;
+  --gal-thumb-pad: clamp(10px, 1.4vw, 16px);
   --ico-lg: 22px; --ico: 20px; --ico-sm: 18px; /* шкала иконок-глифов внутри кнопок */
   --win-btn: 26px; --win-ico: 14px; --win-title: 12px; /* единая шапка окна (как Tint): «призрачные» кнопки, мелкий заголовок */
   --win-radius: 16px;    /* скругление углов ВСЕХ окон — один источник */
