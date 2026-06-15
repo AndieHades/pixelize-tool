@@ -261,6 +261,12 @@ t('draw: контур рисует круглой кистью, замыкает
   assert.deepEqual(S.layers[0].grid[3][3], [7, 8, 9, 255]); // заливка внутри
   assert.deepEqual(S.layers[0].grid[0][1], [7, 8, 9, 255]); // толщина от круглой кисти size=3
   S.lineMode = 'line'; });
+t('draw: смена инструмента финализирует уже начатый контур', () => { resetWH(8, 8); S.active = [4, 5, 6]; S.brushes.pencil.size = 1; S.lineMode = 'contour'; setTool('line');
+  const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 1, e: {} }); h.move({ gx: 5, gy: 5, e: {} });
+  setTool('pencil');
+  assert.equal(S.linePath, null); assert.equal(S.stroke, false); assert.equal(S.tool, 'pencil');
+  assert.deepEqual(S.layers[0].grid[3][3], [4, 5, 6, 255]); // закрывающий сегмент + заливка остались
+});
 t('draw: прямоугольник фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('rect'); S.tool = 'rect';
   S.linePrev = [0, 0, 3, 3]; commitLine();
   assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[3][3] && S.layers[0].grid[0][3] && S.layers[0].grid[3][0]);

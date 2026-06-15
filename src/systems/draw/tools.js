@@ -66,3 +66,4 @@ const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); actions.run('color.
 for (const t of ['pencil', 'eraser', 'adjust']) registerTool(t, brush);
 for (const t of ['line', 'rect', 'ellipse']) registerTool(t, shape);
 registerTool('fill', fill);
+bus.on('before-tool-change', () => { if (S.linePath) commitContour(); });

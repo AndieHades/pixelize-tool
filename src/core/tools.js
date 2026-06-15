@@ -8,6 +8,7 @@ import * as actions from './actions.js';
 export const brushKey = () => (S.tool === 'eraser' ? 'eraser' : 'pencil');
 
 export function setTool(id) {
+  bus.emit('before-tool-change', id);
   S.tool = id; S.lineStart = null; S.linePrev = null; S.linePath = null;
   if (id === 'rect' || id === 'ellipse') S.shapeTool = id;
   bus.emit('tool', id); bus.emit('render');
