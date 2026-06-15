@@ -1,12 +1,13 @@
-import { $, showMenuAt } from '../core/dom.js';
+import { $ } from '../core/dom.js';
+import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import * as actions from '../core/actions.js';
 import { t } from '../i18n/index.js';
-import { SPRITE_PRESETS, GAME_FRAME_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { clampRound } from '../logic/math.js';
 import { rgb } from '../logic/color.js';
 import { newWork } from './gallery/doc.js';
 import { hide as hideGallery, show as showGallery } from './gallery/index.js';
+import { buildPresetLists } from './new-canvas/list.js';
 
 const STORE = 'customSizes';
 const BGS = [{ label: 'new.bgTransparent', color: null }, { label: 'new.bgWhite', color: [255, 255, 255] }, { label: 'new.bgBlack', color: [0, 0, 0] }];
@@ -18,8 +19,10 @@ const clampSize = (v) => clampRound(v, 2, MAX_SIZE);
 const panel = () => $('new-ovl')?.querySelector('.new-panel');
 const isOpen = () => $('new-ovl')?.classList.contains('on');
 const bgColor = () => BGS[bgIdx].color;
-const currentDimName = () => dim({ w: parseInt($('new-w').value, 10) || 64, h: parseInt($('new-h').value, 10) || 64 });
+const dimValue = (id) => numericFieldValue($(id), 64);
+const currentDimName = () => dim({ w: dimValue('new-w'), h: dimValue('new-h') });
 const syncName = (force = false) => { if (force || !nameCustom) $('new-name-in').value = currentDimName(); };
+const setDim = (id, v) => setNumericField($(id), clampSize(v));
 
 function setMode(next) {
   mode = next;
@@ -40,59 +43,34 @@ function createDoc(p) {
   newWork(p.w, p.h, p.label, bgColor(), mode);
 }
 
-function menuForSaved(e, i) {
-  e.preventDefault(); e.stopPropagation();
-  const m = $('rowctx'); m.innerHTML = '';
-  for (const a of [
-    { label: t('menu.edit'), fn: () => editCustom(i) },
-    { label: t('gallery.delete'), danger: true, fn: () => removeCustom(i) },
-  ]) {
-    const b = document.createElement('button'); b.textContent = a.label;
-    if (a.danger) b.classList.add('danger');
-    b.onclick = () => { m.classList.remove('on'); a.fn(); };
-    m.appendChild(b);
-  }
-  showMenuAt(m, e.clientX, e.clientY);
-}
-
-function row(p, savedIdx = null) {
-  const el = document.createElement(savedIdx == null ? 'button' : 'div');
-  el.className = 'new-row' + (savedIdx == null ? '' : ' saved'); if (el.tagName === 'BUTTON') el.type = 'button';
-  const name = document.createElement('span'); name.className = 'new-name'; name.textContent = p.label || dim(p);
-  const size = document.createElement('span'); size.className = 'new-size'; size.textContent = savedIdx == null ? '›' : dim(p);
-  el.append(name, size); el.onclick = () => createDoc(p);
-  if (savedIdx != null) {
-    const dots = document.createElement('button'); dots.type = 'button'; dots.className = 'new-dots'; dots.textContent = '...';
-    dots.onclick = (e) => menuForSaved(e, savedIdx); el.appendChild(dots);
-  }
-  return el;
-}
-
-function fillStack(id, list, saved = false) {
-  const box = $(id); box.innerHTML = '';
-  if (saved && !list.length) { const p = document.createElement('p'); p.className = 'new-empty'; p.textContent = t('new.savedEmpty'); box.appendChild(p); return; }
-  list.forEach((p, i) => box.appendChild(row(p, saved ? i : null)));
-}
-
-function buildLists() {
-  fillStack('new-sprites', SPRITE_PRESETS);
-  fillStack('new-frames', GAME_FRAME_PRESETS);
-  fillStack('new-saved', custom(), true);
-}
+function buildLists() { buildPresetLists(custom(), { create: createDoc, edit: editCustom, remove: removeCustom }); }
 
 function setLinked(on) {
   linked = on; $('new-link').classList.toggle('on', on);
-  if (on) { const w = +$('new-w').value, h = +$('new-h').value; ratio = (w > 0 && h > 0) ? w / h : 1; }
+  if (on) { const w = dimValue('new-w'), h = dimValue('new-h'); ratio = (w > 0 && h > 0) ? w / h : 1; }
 }
 
 function syncRatio(which) {
   if (!linked) return;
-  if (which === 'w') { const w = +$('new-w').value; if (w > 0) $('new-h').value = clampSize(w / ratio); }
-  else { const h = +$('new-h').value; if (h > 0) $('new-w').value = clampSize(h * ratio); }
+  if (which === 'w') { const w = dimValue('new-w'); if (w > 0) setDim('new-h', w / ratio); }
+  else { const h = dimValue('new-h'); if (h > 0) setDim('new-w', h * ratio); }
+}
+
+function commitDim(which) {
+  const id = which === 'w' ? 'new-w' : 'new-h';
+  const v = commitNumericField($(id), { min: 2, max: MAX_SIZE, integer: true, relativeMinus: true, fallback: 64 });
+  if (v == null) return false;
+  syncRatio(which); syncName(); return true;
+}
+
+function commitDims() {
+  const first = document.activeElement === $('new-h') ? 'h' : 'w';
+  commitDim(first); commitDim(first === 'w' ? 'h' : 'w');
 }
 
 function readCustom() {
-  const w = parseInt($('new-w').value, 10), h = parseInt($('new-h').value, 10);
+  commitDims();
+  const w = dimValue('new-w'), h = dimValue('new-h');
   if (!w || !h || w < 2 || h < 2 || w > MAX_SIZE || h > MAX_SIZE) return null;
   return { w, h, label: ($('new-name-in').value.trim() || dim({ w, h })).slice(0, 24) };
 }
@@ -110,7 +88,7 @@ function persistPreset(entry) {
 
 function editCustom(i) {
   const c = custom()[i]; if (!c) return;
-  editIdx = i; nameCustom = true; $('new-name-in').value = c.label || dim(c); $('new-w').value = c.w; $('new-h').value = c.h; $('new-save').checked = true;
+  editIdx = i; nameCustom = true; $('new-name-in').value = c.label || dim(c); setDim('new-w', c.w); setDim('new-h', c.h); $('new-save').checked = true;
   if (linked) setLinked(true);
   $('new-w').focus(); $('new-w').select();
 }
@@ -150,6 +128,7 @@ function bindOpen(el, ensureGallery) {
 }
 
 export function mount() {
+  setDim('new-w', 64); setDim('new-h', 64);
   bindOpen($('new'), true); bindOpen($('gal-new'), false);
   actions.register('doc.new', () => openDlg(true));
   $('new-create').onclick = createCustom;
@@ -157,10 +136,13 @@ export function mount() {
   $('new-bg').onclick = () => { bgIdx = (bgIdx + 1) % BGS.length; syncBg(); };
   $('new-mode-rgba').onclick = () => setMode('rgba');
   $('new-mode-gray').onclick = () => setMode('grayscale');
-  $('new-w').addEventListener('input', () => { syncRatio('w'); syncName(); });
-  $('new-h').addEventListener('input', () => { syncRatio('h'); syncName(); });
+  for (const [id, which] of [['new-w', 'w'], ['new-h', 'h']]) {
+    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) { syncRatio(which); syncName(); } });
+    $(id).addEventListener('blur', () => commitDim(which));
+  }
   $('new-name-in').addEventListener('input', () => { nameCustom = $('new-name-in').value.trim() !== ''; if (!nameCustom) syncName(true); });
-  ['new-w', 'new-h', 'new-name-in'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); createCustom(); } }));
+  ['new-w', 'new-h'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitDim(id === 'new-w' ? 'w' : 'h'); createCustom(); } }));
+  $('new-name-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); createCustom(); } });
   document.addEventListener('pointerdown', closeOutside, true);
   document.addEventListener('click', (e) => {
     if (suppressOutsideClick) { suppressOutsideClick = false; e.preventDefault(); e.stopPropagation(); return; }

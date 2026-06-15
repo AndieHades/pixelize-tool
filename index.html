@@ -73,9 +73,9 @@
   <div id="grid-pop" class="toolpop">
     <div class="bp-head"><span class="bp-title" data-i18n="grid.title"></span><button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="grid-dims">
-      <div class="irow grid-size"><label data-i18n="label.width"></label><input id="grid-w" type="number" min="1" max="128" step="1" inputmode="numeric" /><b>px</b></div>
+      <div class="irow grid-size"><label data-i18n="label.width"></label><input id="grid-w" type="text" inputmode="text" spellcheck="false" /><b>px</b></div>
       <button id="grid-link" class="se-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-      <div class="irow grid-size"><label data-i18n="label.height"></label><input id="grid-h" type="number" min="1" max="128" step="1" inputmode="numeric" /><b>px</b></div>
+      <div class="irow grid-size"><label data-i18n="label.height"></label><input id="grid-h" type="text" inputmode="text" spellcheck="false" /><b>px</b></div>
     </div>
     <div class="irow"><label data-i18n="label.opacity"></label><input id="grid-op" type="range" min="5" max="100" step="5" value="70" /><b id="grid-opv">70%</b></div>
     <div class="irow"><label data-i18n="label.color"></label><button id="grid-color" class="fx-colbtn"></button></div>
@@ -91,9 +91,9 @@
 
   <div id="cropbar">
     <button id="crop-sym" data-i18n-title="crop.center"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
-    <div class="crop-size"><span data-i18n="label.width"></span><input id="crop-w" type="number" min="1" max="640" step="1" inputmode="numeric" /></div>
+    <div class="crop-size"><span data-i18n="label.width"></span><input id="crop-w" type="text" inputmode="text" spellcheck="false" /></div>
     <button id="crop-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-    <div class="crop-size"><span data-i18n="label.height"></span><input id="crop-h" type="number" min="1" max="640" step="1" inputmode="numeric" /></div>
+    <div class="crop-size"><span data-i18n="label.height"></span><input id="crop-h" type="text" inputmode="text" spellcheck="false" /></div>
     <button id="crop-ok" data-i18n-title="crop.apply"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
     <button id="crop-cancel" data-i18n-title="crop.cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
@@ -475,9 +475,9 @@
       <h4 data-i18n="new.custom"></h4>
       <div class="new-name-field"><span data-i18n="label.name"></span><input id="new-name-in" type="text" maxlength="24" value="64 x 64" /></div>
       <div class="new-custom-grid">
-        <label><span data-i18n="label.width"></span><input id="new-w" type="number" min="2" max="640" step="1" value="64" inputmode="numeric" /></label>
+        <label><span data-i18n="label.width"></span><input id="new-w" type="text" inputmode="text" spellcheck="false" value="64" /></label>
         <button id="new-link" class="new-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-        <label><span data-i18n="label.height"></span><input id="new-h" type="number" min="2" max="640" step="1" value="64" inputmode="numeric" /></label>
+        <label><span data-i18n="label.height"></span><input id="new-h" type="text" inputmode="text" spellcheck="false" value="64" /></label>
         <button id="new-bg" class="new-bg" type="button" data-i18n-title="new.background"><span id="new-bg-swatch"></span><em id="new-bg-text"></em></button>
       </div>
       <label class="new-save"><input id="new-save" type="checkbox" /><span></span><b data-i18n="new.savePreset"></b></label>

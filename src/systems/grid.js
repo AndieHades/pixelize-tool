@@ -2,6 +2,7 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $ } from '../core/dom.js';
+import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import { clampRound } from '../logic/math.js';
 
 const clampStep = (v) => clampRound(+v || 1, 1, 128);
@@ -22,8 +23,8 @@ function ensureGrid() {
 
 function sync() {
   const g = ensureGrid();
-  $('grid-w').value = g.w;
-  $('grid-h').value = g.h;
+  setNumericField($('grid-w'), g.w);
+  setNumericField($('grid-h'), g.h);
   $('grid-op').value = g.opacity;
   $('grid-opv').textContent = g.opacity + '%';
   $('grid-color').style.background = g.color;
@@ -42,9 +43,11 @@ function closeGridPop(restore) {
   bus.emit('render');
 }
 
-function previewChange(from) {
+function previewChange(from, commit = false) {
   const g = ensureGrid();
-  let w = clampStep($('grid-w').value), h = clampStep($('grid-h').value);
+  if (commit && from) commitNumericField($(from === 'w' ? 'grid-w' : 'grid-h'), { min: 1, max: 128, integer: true, relativeMinus: true });
+  if (!isNumericLiteral($('grid-w').value) || !isNumericLiteral($('grid-h').value)) return;
+  let w = clampStep(numericFieldValue($('grid-w'), g.w)), h = clampStep(numericFieldValue($('grid-h'), g.h));
   if (g.link && from === 'w') h = w;
   if (g.link && from === 'h') w = h;
   g.w = w; g.h = h; g.opacity = clampOpacity($('grid-op').value);
@@ -83,8 +86,11 @@ export function mount() {
   $('grid-cancel').onclick = () => closeGridPop(true);
   $('grid-apply').onclick = applyGrid;
   $('grid-link').onclick = () => { const g = ensureGrid(); g.link = !g.link; previewChange(); };
-  $('grid-w').addEventListener('input', () => previewChange('w'));
-  $('grid-h').addEventListener('input', () => previewChange('h'));
+  for (const [id, which] of [['grid-w', 'w'], ['grid-h', 'h']]) {
+    $(id).addEventListener('input', () => previewChange(which));
+    $(id).addEventListener('blur', () => previewChange(which, true));
+    $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $(id).blur(); } });
+  }
   $('grid-op').addEventListener('input', () => previewChange());
   $('grid-color').onclick = () => actions.run('color.for', ensureGrid().color, (hex) => {
     const g = ensureGrid();

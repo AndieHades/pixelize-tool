@@ -35,6 +35,8 @@
 
 `clamp(v,min,max)` · `clamp01(v)` (0..1) · `clamp255(v)` (0..255) · `clampRound(v,min,max)` (зажим с округлением). **Не пиши `Math.max(a, Math.min(b, v))` локально.**
 
+`evalNumericField(v,base,{relativeMinus})` · `isNumericLiteral(v)` — выражения в числовых полях (`+8`, `/2`, `32+16`) без `eval`; относительные операции считаются от `base`.
+
 ## `logic/raster.js` — пиксельная сетка (чистый)
 
 | Функция | Назначение |
@@ -74,6 +76,7 @@
 | `core/io.js` → `gridToCanvas(grid,x0,y0,w,h)` | фрагмент сетки → canvas с попиксельной альфой | экспорт-фрагменты |
 | `core/env.js` → `isDesktop()` | `(hover:hover)` — мышь vs тач; свайпы только на таче | слои, «Новый холст» |
 | `core/image.js` → `imageData(im,w,h,smooth)` / `looksPixelArt(im)` | растеризация картинки + эвристика «это пиксель-арт» | импорт, Photo в галерее |
+| `core/numeric-field.js` → `setNumericField` / `numericFieldValue` / `commitNumericField` | DOM-обвязка для числовых полей с мини-математикой (`+8`, `*2`, `/2`) | размеры нового холста, кроп, сетка |
 
 > На время миграции часть этих помощников ещё живёт в `js/00-util.js`
 > (классическая сборка). Канон — версии в `src/`. При портировании системы

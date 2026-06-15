@@ -948,6 +948,16 @@ t('gallery: плюс открывает диалог нового холста',
   assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
 });
+t('new-canvas: поля размера считают относительные выражения', () => {
+  newCanvas.mount(); gallery.show();
+  const ovl = document.getElementById('new-ovl'); ovl.classList.add('on');
+  const w = document.getElementById('new-w'), h = document.getElementById('new-h');
+  w.value = '+8'; w.dispatchEvent(new window.Event('blur'));
+  h.value = '/2'; h.dispatchEvent(new window.Event('blur'));
+  document.getElementById('new-create').click();
+  assert.equal(S.W, 72); assert.equal(S.H, 32); assert.equal(S.docName, '72 x 32');
+  ovl.classList.remove('on'); gallery.hide();
+});
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 t('color-picker: первый sync скрытого окна держит маркер внутри внутреннего круга', () => {
   const pop = document.getElementById('colpop'), disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
@@ -1186,6 +1196,15 @@ t('grid: popup настраивает сетку, Apply включает, пов
   document.getElementById('grid-cancel').click();
   assert.equal(S.grid.w, 4); assert.equal(S.grid.preview, false); assert.equal(S.grid.visible, false);
 });
+t('grid: поля размера считают относительные выражения', () => { gridSys.mount(); resetWH(8, 8); gridSys.openGridPop();
+  const w = document.getElementById('grid-w'), h = document.getElementById('grid-h');
+  w.value = '/2'; w.dispatchEvent(new window.Event('blur'));
+  assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 8); assert.equal(w.value, '8');
+  document.getElementById('grid-link').click();
+  h.value = '+4'; h.dispatchEvent(new window.Event('blur'));
+  assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 12);
+  document.getElementById('grid-cancel').click();
+});
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
   localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();
   document.getElementById('pp').click(); document.getElementById('stab').click();
@@ -1323,6 +1342,15 @@ t('crop: поля размера и скрепка меняют рамку', () 
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 4); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 8);
   link.click(); ch.value = '6'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 3); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 6);
+  crop.cancelCrop(); });
+
+t('crop: поля размера считают выражения от текущего значения', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+  const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
+  if (link.classList.contains('on')) link.click();
+  cw.value = '+2'; cw.dispatchEvent(new window.Event('blur'));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 10);
+  ch.value = '/2'; ch.dispatchEvent(new window.Event('blur'));
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 4);
   crop.cancelCrop(); });
 
 t('crop: ЛКМ внутри двигает изображение, ПКМ внутри двигает рамку', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();

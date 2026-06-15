@@ -4,6 +4,7 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, toast, t } from '../core/dom.js';
+import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import { applyCropRect } from '../core/document.js';
 import { registerMode } from '../core/canvas-handlers.js';
 import { MAX_SIZE } from '../config/limits.js';
@@ -14,7 +15,7 @@ let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1;
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
 function syncCropInputs() { if (!S.cropMode) return;
-  const s = cropSize(); $('crop-w').value = s.w; $('crop-h').value = s.h; }
+  const s = cropSize(); setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
 function setCropLink(on) { cropLink = on; $('crop-link').classList.toggle('on', on);
   if (on && S.cropMode) { const s = cropSize(); cropRatio = s.w > 0 && s.h > 0 ? s.w / s.h : 1; } }
 function placeCrop(w, h, cx = (S.cropMode.x0 + S.cropMode.x1) / 2, cy = (S.cropMode.y0 + S.cropMode.y1) / 2) {
@@ -77,7 +78,10 @@ function cropMovePt({ e }) { if (!cropDrag || !S.cropMode) return; const r = $('
     if (c.y1 - c.y0 + 1 > MAX_SIZE) { if (cropDrag.t) c.y0 = c.y1 - MAX_SIZE + 1; else c.y1 = c.y0 + MAX_SIZE - 1; } }
   syncCropInputs(); bus.emit('render'); }
 
-function cropInput(which) { if (!S.cropMode) return; let w = parseInt($('crop-w').value, 10), h = parseInt($('crop-h').value, 10);
+function cropInput(which, commit = false) { if (!S.cropMode) return;
+  if (commit) commitNumericField($(which === 'w' ? 'crop-w' : 'crop-h'), { min: 1, max: MAX_SIZE, integer: true, relativeMinus: true });
+  if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return;
+  let w = numericFieldValue($('crop-w'), cropSize().w), h = numericFieldValue($('crop-h'), cropSize().h);
   if (!w || !h) return; if (cropLink) { const r = ratioDims(w, h, which === 'w'); w = r.w; h = r.h; }
   placeCrop(w, h); }
 
@@ -85,7 +89,9 @@ export function mount() {
   $('crop').onclick = toggleCrop; $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
   $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   $('crop-link').onclick = () => setCropLink(!cropLink);
-  for (const id of ['crop-w', 'crop-h']) { $(id).max = MAX_SIZE; $(id).addEventListener('input', () => cropInput(id === 'crop-w' ? 'w' : 'h'));
+  for (const id of ['crop-w', 'crop-h']) { const which = id === 'crop-w' ? 'w' : 'h';
+    $(id).addEventListener('input', () => cropInput(which));
+    $(id).addEventListener('blur', () => cropInput(which, true));
     $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); $(id).blur(); } }); }
   registerMode('crop', { down: cropDown, move: cropMovePt, up: () => { cropDrag = null; }, hover: ({ e }) => { $('cv').style.cursor = cropCursor(cropZone(e)); } });
   window.addEventListener('keydown', (e) => { if (!S.cropMode) return;

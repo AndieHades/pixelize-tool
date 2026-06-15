@@ -5,7 +5,7 @@ import { S, MAX_LAYERS, blank, newLayer, cloneLayer, G } from '../src/core/state
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
 import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill, cloneGrid } from '../src/logic/raster.js';
-import { clamp, clamp01, clamp255, clampRound } from '../src/logic/math.js';
+import { clamp, clamp01, clamp255, clampRound, evalNumericField, isNumericLiteral } from '../src/logic/math.js';
 import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
@@ -90,6 +90,18 @@ t('math: clamp/clamp01/clamp255/clampRound', () => {
   assert.equal(clamp01(1.4), 1); assert.equal(clamp01(-0.2), 0); assert.equal(clamp01(0.5), 0.5);
   assert.equal(clamp255(300), 255); assert.equal(clamp255(-1), 0);
   assert.equal(clampRound(7.6, 0, 100), 8); assert.equal(clampRound(2.4, 5, 99), 5);
+});
+t('math: numeric-field expressions', () => {
+  assert.equal(evalNumericField('+8', 64, { relativeMinus: true }), 72);
+  assert.equal(evalNumericField('-8', 64, { relativeMinus: true }), 56);
+  assert.equal(evalNumericField('/2', 64, { relativeMinus: true }), 32);
+  assert.equal(evalNumericField('*2', 64, { relativeMinus: true }), 128);
+  assert.equal(evalNumericField('32+8*2', 0), 48);
+  assert.equal(evalNumericField('(32+8)/2', 0), 20);
+  assert.equal(evalNumericField('-8', 64), -8);
+  assert.equal(isNumericLiteral('12,5'), true);
+  assert.equal(isNumericLiteral('+8'), false);
+  assert.equal(Number.isNaN(evalNumericField('1/0', 0)), true);
 });
 t('cloneGrid: глубокая копия, клетки не делят ссылок', () => {
   const g = [[[1, 2, 3, 255], null], [null, [4, 5, 6, 255]]];
