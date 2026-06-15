@@ -34,7 +34,9 @@ export const S = {
 
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   shading: { colors: [] }, // active palette ramp for Aseprite-like shading brush
-  tool: 'pencil', sym: false, symH: false,
+  tool: 'pencil', sym: false, symH: false, symD1: false, symD2: false,
+  symLines: { x: null, y: null, d1: null, d2: null, mode: null, hover: null },
+  grid: { w: 1, h: 1, color: '#3a3a3a' },
   lineMode: 'line', shapeTool: 'rect',
   fillShape: { rect: false, ellipse: false }, // режимы общей кнопки фигур: контур/заливка
   brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)

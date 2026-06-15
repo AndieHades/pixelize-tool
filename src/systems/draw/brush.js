@@ -3,7 +3,8 @@
 // поведение в тест-канвасе настроек). Здесь — применение к холсту: симметрия,
 // выделение, альфа (через paintCell).
 import { S } from '../../core/state.js';
-import { symA, symHA } from '../../core/layers.js';
+import { symmetryConfig } from '../../core/layers.js';
+import { mirrorPoints } from '../../logic/symmetry.js';
 import { paintCell } from './cells.js';
 import { ppVisit } from './pixel-perfect.js';
 import { brushMask, grainAt, stampSize, planDab } from '../../logic/brush-stamp.js';
@@ -14,11 +15,7 @@ export function resetScatter() { state.acc = 0; } // в начале штрих�
 function maskOf(sb, size) { if (sb.tok === cTok && size === cSize) return cMask; cMask = brushMask(sb, size); cTok = sb.tok; cSize = size; return cMask; }
 
 function paintSym(x, y, erase, g, paint) {
-  if (grainAt(g, x, y)) paint(x, y, erase);
-  const mx = S.W - 1 - x, my = S.H - 1 - y, sa = symA(), sha = symHA();
-  if (sa && mx !== x && grainAt(g, mx, y)) paint(mx, y, erase);
-  if (sha && my !== y && grainAt(g, x, my)) paint(x, my, erase);
-  if (sa && sha && mx !== x && my !== y && grainAt(g, mx, my)) paint(mx, my, erase);
+  for (const [px, py] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) if (grainAt(g, px, py)) paint(px, py, erase);
 }
 function footprint(cx, cy, erase, m, g, paint) { const ox = m.w >> 1, oy = m.h >> 1;
   for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, g, paint); }

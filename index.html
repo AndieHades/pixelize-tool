@@ -49,6 +49,7 @@
   <aside id="sidebar">
     <div id="sb-grip" data-i18n-title="ui.dragPanel"></div>
     <button id="sym" data-i18n-title="side.symmetry"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
+    <button id="grid-btn" data-i18n-title="side.grid"><svg viewBox="0 0 24 24"><path d="M4.5 8.5h15M4.5 15.5h15M8.5 4.5v15M15.5 4.5v15"/><rect x="4.5" y="4.5" width="15" height="15" rx="2"/></svg></button>
     <button id="pp" class="on" data-i18n-title="side.pp"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
     <button id="stab" class="on" data-i18n-title="side.stab"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
     <button id="flip-h" data-i18n-title="side.flipH"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M8 7.5v9L3.8 12 8 7.5z" fill="currentColor" stroke="none"/><path d="M16 7.5v9l4.2-4.5L16 7.5z" fill="currentColor" stroke="none"/></svg></button>
@@ -69,6 +70,13 @@
   <div id="shape-choice" class="tool-choice"></div>
   <div id="sym-choice" class="tool-choice"></div>
   <div id="flip-choice" class="tool-choice"></div>
+
+  <div id="grid-pop" class="toolpop">
+    <div class="bp-head"><span class="bp-title" data-i18n="grid.title"></span><button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="irow"><label data-i18n="label.width"></label><input id="grid-w" type="number" min="1" max="128" step="1" inputmode="numeric" /><b>px</b></div>
+    <div class="irow"><label data-i18n="label.height"></label><input id="grid-h" type="number" min="1" max="128" step="1" inputmode="numeric" /><b>px</b></div>
+    <div class="irow"><label data-i18n="label.color"></label><button id="grid-color" class="fx-colbtn"></button></div>
+  </div>
 
   <div id="tools-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.panels"></h3>

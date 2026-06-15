@@ -30,9 +30,12 @@ export function render() {
   ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // итог клипуется холстом
   ctx.drawImage(buf, ox, oy, W * z, H * z);
   ctx.restore();
-  if (z >= 7) { ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
-    for (let x = 0; x <= W; x++) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
-    for (let y = 0; y <= H; y++) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
+  if (z >= 7 && (!S.grid || S.grid.visible !== false)) { const gw = Math.max(1, Math.round(S.grid && S.grid.w) || 1), gh = Math.max(1, Math.round(S.grid && S.grid.h) || 1);
+    ctx.strokeStyle = (S.grid && S.grid.color) || C.grid; ctx.lineWidth = 1; ctx.beginPath();
+    const vx = new Set([W]); for (let x = 0; x <= W; x += gw) vx.add(x);
+    const hy = new Set([H]); for (let y = 0; y <= H; y += gh) hy.add(y);
+    for (const x of vx) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
+    for (const y of hy) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
     ctx.stroke(); }
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)
   drawOverlays(ctx, ox, oy, z);

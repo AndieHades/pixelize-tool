@@ -63,6 +63,8 @@ const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
 const tb = await import('../src/systems/toolbars.js');
+const gridSys = await import('../src/systems/grid.js');
+const symLines = await import('../src/systems/symmetry-lines.js');
 const effects = await import('../src/systems/effects/index.js');
 const fxr = await import('../src/core/effects-render.js');
 const fxlogic = await import('../src/logic/layer-effects.js');
@@ -89,13 +91,15 @@ const { showMenuAt } = await import('../src/core/dom.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false;
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
+  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 1, h: 1, color: '#3a3a3a' };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil';
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
+  S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 1, h: 1, color: '#3a3a3a' };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
@@ -422,6 +426,23 @@ t('symmetry: заливка зеркалит обе стороны', () => { res
   for (let y = 0; y < 8; y++) { S.layers[0].grid[y][3] = [1, 1, 1, 255]; S.layers[0].grid[y][4] = [1, 1, 1, 255]; } cache.dirtyAll(); // стенка делит лево/право
   flood(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9]); assert.deepEqual(S.layers[0].grid[1][6], [9, 9, 9]); // правая сторона залита зеркально
   assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); S.sym = false; }); // стенка цела
+t('symmetry: диагональная симметрия рисует и выделяет по 45 градусам', () => { resetWH(6, 6); S.symD1 = true; S.active = [8, 7, 6]; stamp(1, 3);
+  assert.deepEqual(S.layers[0].grid[3][1], [8, 7, 6, 255]);
+  assert.deepEqual(S.layers[0].grid[1][3], [8, 7, 6, 255]);
+  sel.applySelectionOp(new Set(['0,4']), 'replace');
+  assert.ok(S.selMask.has('0,4') && S.selMask.has('4,0'));
+  S.symD1 = false;
+});
+t('symmetry: линию можно перенести и reset вернуть в центр', () => { resetWH(8, 8); symLines.mount(); S.sym = true; S.symLines = { x: 3.5, y: null, d1: null, d2: null, mode: 'move', hover: null };
+  S.view = { zoom: 10, ox: 0, oy: 0 }; const cv = document.getElementById('cv');
+  cv.getBoundingClientRect = () => ({ left: 0, top: 0, width: 80, height: 80, right: 80, bottom: 80 });
+  const gh = globalHandlers()[globalHandlers().length - 1];
+  gh.down({ e: { clientX: 40, clientY: 40 } }); gh.move({ e: { clientX: 25, clientY: 40 } }); gh.up({});
+  assert.equal(S.symLines.x, 2);
+  S.symLines.mode = 'reset'; gh.down({ e: { clientX: 25, clientY: 40 } });
+  assert.equal(S.symLines.x, 3.5);
+  S.sym = false; S.symLines.mode = null;
+});
 t('symmetry: вырезание зеркального выделения вставляет стороны отдельными слоями', () => { resetWH(8, 8); S.sym = true; S.symH = false;
   S.layers[0].grid[1][1] = [5, 5, 5, 255]; S.layers[0].grid[1][6] = [5, 5, 5, 255]; S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1']); cache.dirtyAll();
   const n0 = S.layers.length; clip.doCut(); assert.equal(S.layers[0].grid[1][1], null); assert.equal(S.layers[0].grid[1][6], null); // обе стороны вырезаны
@@ -1002,16 +1023,30 @@ t('toolbars: выделение и Free Transform подсвечивают то�
 t('toolbars: симметрия и флип свернуты в кнопки с режимами', () => { tb.mount(); resetWH(4, 4);
   S.sym = false; S.symH = false; document.getElementById('sym').click();
   assert.ok(document.getElementById('sym-choice').classList.contains('on'));
+  assert.equal(document.querySelectorAll('#sym-choice [data-sym-flag]').length, 4);
+  assert.equal(document.querySelectorAll('#sym-choice [data-sym-tool]').length, 2);
   document.querySelector('#sym-choice [data-sym-flag="sym"]').click();
   assert.equal(S.sym, true); assert.ok(document.getElementById('sym').classList.contains('on'));
   document.getElementById('sym').click(); document.querySelector('#sym-choice [data-sym-flag="symH"]').click();
   assert.equal(S.symH, true);
+  document.querySelector('#sym-choice [data-sym-flag="symD1"]').click(); assert.equal(S.symD1, true);
+  document.querySelector('#sym-choice [data-sym-tool="move"]').click(); assert.equal(S.symLines.mode, 'move');
   S.layers[0].grid[1][0] = [5, 5, 5, 255]; document.getElementById('flip-h').click();
   assert.ok(document.getElementById('flip-choice').classList.contains('on'));
   document.querySelector('#flip-choice [data-flip-mode="h"]').click();
   assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
-  S.sym = false; S.symH = false;
+  S.sym = false; S.symH = false; S.symD1 = false; S.symLines.mode = null;
+});
+t('grid: popup меняет шаг и цвет сетки', () => { gridSys.mount(); resetWH(8, 8); gridSys.openGridPop();
+  const w = document.getElementById('grid-w'), h = document.getElementById('grid-h');
+  w.value = '4'; w.dispatchEvent(new window.Event('input', { bubbles: true }));
+  h.value = '3'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 3);
+  document.getElementById('grid-color').click();
+  assert.ok(document.getElementById('colpop').classList.contains('on'));
+  const hex = document.getElementById('col-hex'); hex.value = '#112233'; hex.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.grid.color, '#112233');
 });
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
   localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();

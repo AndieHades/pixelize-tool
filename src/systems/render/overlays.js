@@ -4,23 +4,55 @@
 import { S } from '../../core/state.js';
 import { rgb, eqc } from '../../logic/color.js';
 import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
-import { symA, symHA, effVis } from '../../core/layers.js';
+import { symmetryConfig, effVis } from '../../core/layers.js';
+import { mirrorPoints } from '../../logic/symmetry.js';
 import { C } from '../../styles/canvas-colors.js';
+
+function diagSegment(W, H, kind, val) {
+  const pts = [], x0 = -0.5, x1 = W - 0.5, y0 = -0.5, y1 = H - 0.5, eps = 1e-6;
+  const add = (x, y) => { if (x >= x0 - eps && x <= x1 + eps && y >= y0 - eps && y <= y1 + eps) pts.push([x, y]); };
+  if (kind === 'd1') {
+    add(x0, x0 + val); add(x1, x1 + val); add(y0 - val, y0); add(y1 - val, y1);
+  } else {
+    add(x0, -x0 + val); add(x1, -x1 + val); add(val - y0, y0); add(val - y1, y1);
+  }
+  const uniq = [];
+  for (const p of pts) if (!uniq.some((q) => Math.abs(q[0] - p[0]) < .01 && Math.abs(q[1] - p[1]) < .01)) uniq.push(p);
+  return uniq.slice(0, 2);
+}
+
+function drawSymLine(ctx, ox, oy, z, cfg, id) {
+  let a, b;
+  if (id === 'x') { a = [cfg.axisX, -0.5]; b = [cfg.axisX, S.H - 0.5]; }
+  else if (id === 'y') { a = [-0.5, cfg.axisY]; b = [S.W - 0.5, cfg.axisY]; }
+  else { const seg = diagSegment(S.W, S.H, id, id === 'd1' ? cfg.diagP : cfg.diagN); if (seg.length < 2) return; [a, b] = seg; }
+  const sx = (p) => ox + (p[0] + 0.5) * z, sy = (p) => oy + (p[1] + 0.5) * z;
+  ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke();
+  if ((S.symLines && S.symLines.hover) === id && S.symLines.mode) {
+    const mx = sx([(a[0] + b[0]) / 2, 0]), my = sy([0, (a[1] + b[1]) / 2]);
+    ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+  }
+}
+
+function drawSymmetryGuides(ctx, ox, oy, z) {
+  const cfg = symmetryConfig(), ids = [];
+  if (cfg.x) ids.push('x'); if (cfg.y) ids.push('y'); if (cfg.d1) ids.push('d1'); if (cfg.d2) ids.push('d2');
+  if (!ids.length) return;
+  ctx.save(); ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+  for (const id of ids) drawSymLine(ctx, ox, oy, z, cfg, id);
+  ctx.restore();
+}
 
 export function drawOverlays(ctx, ox, oy, z) {
   const W = S.W, H = S.H;
-  if (S.sym) { const ax = ox + (W / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ax, oy - 8); ctx.lineTo(ax, oy + H * z + 8); ctx.stroke(); ctx.setLineDash([]); }
-  if (S.symH) { const ay = oy + (H / 2) * z; ctx.strokeStyle = 'rgba(61,139,253,.85)'; ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(ox - 8, ay); ctx.lineTo(ox + W * z + 8, ay); ctx.stroke(); ctx.setLineDash([]); }
+  drawSymmetryGuides(ctx, ox, oy, z);
   if (S.linePrev || S.qsShape) { ctx.globalAlpha = .6; ctx.fillStyle = rgb(S.active);
-    const s = S.brushes.pencil.size, off = s >> 1, sa = symA(), sha = symHA();
+    const s = S.brushes.pencil.size, off = s >> 1, sym = symmetryConfig();
     const paint = (px2, py2) => { for (let dy2 = 0; dy2 < s; dy2++) for (let dx2 = 0; dx2 < s; dx2++) {
       const xx = px2 - off + dx2, yy = py2 - off + dy2;
-      ctx.fillRect(ox + xx * z, oy + yy * z, z, z);
-      if (sa) ctx.fillRect(ox + (W - 1 - xx) * z, oy + yy * z, z, z);
-      if (sha) ctx.fillRect(ox + xx * z, oy + (H - 1 - yy) * z, z, z);
-      if (sa && sha) ctx.fillRect(ox + (W - 1 - xx) * z, oy + (H - 1 - yy) * z, z, z); } };
+      for (const [mx, my] of mirrorPoints(xx, yy, W, H, false, false, sym)) ctx.fillRect(ox + mx * z, oy + my * z, z, z); } };
     // QuickShape: ровная форма всегда контуром; иначе превью инструмента (rect/ellipse — с учётом заливки)
     const q = S.qsShape, lp = q ? [q.x0, q.y0, q.x1, q.y1] : S.linePrev, type = q ? q.type : S.tool;
     if (type === 'rect') (!q && S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], paint);
@@ -53,16 +85,14 @@ export function drawOverlays(ctx, ox, oy, z) {
 
 // строящийся контур лассо: пунктир по траектории + зеркальные контуры (симметрия)
 // в реальном времени; старт/конец точками с подсветкой замыкания (Continuous/Segment)
-function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts, W = S.W, H = S.H, end = pts[pts.length - 1];
+function drawLasso(ctx, ox, oy, z) { const lp = S.lassoPath, pts = lp.pts, W = S.W, H = S.H, end = pts[pts.length - 1], sym = symmetryConfig();
   const sx = (p) => ox + (p[0] + 0.5) * z, sy = (p) => oy + (p[1] + 0.5) * z;
-  const tfs = [(p) => p]; // оригинал + зеркальные копии по активным осям
-  if (symA()) tfs.push((p) => [W - 1 - p[0], p[1]]);
-  if (symHA()) tfs.push((p) => [p[0], H - 1 - p[1]]);
-  if (symA() && symHA()) tfs.push((p) => [W - 1 - p[0], H - 1 - p[1]]);
+  const mirrored = pts.map((p) => mirrorPoints(p[0], p[1], W, H, false, false, sym));
+  const paths = Math.max(...mirrored.map((m) => m.length));
   ctx.lineWidth = 1.5; ctx.strokeStyle = C.accent;
-  for (const tf of tfs) { const a = tf(pts[0]), e = tf(end);
+  for (let pi = 0; pi < paths; pi++) { const a = mirrored[0][pi], e = mirrored[mirrored.length - 1][pi]; if (!a || !e) continue;
     ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(sx(a), sy(a));
-    for (let i = 1; i < pts.length; i++) { const b = tf(pts[i]); ctx.lineTo(sx(b), sy(b)); } ctx.stroke();
+    for (let i = 1; i < pts.length; i++) { const b = mirrored[i][pi]; if (b) ctx.lineTo(sx(b), sy(b)); } ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sx(e), sy(e)); ctx.lineTo(sx(a), sy(a)); // замыкающий сегмент
     ctx.globalAlpha = lp.near ? 0.9 : 0.35; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]); }
   const R = lp.near ? 6 : 4, a0 = pts[0]; // точки старта/конца — на оригинале

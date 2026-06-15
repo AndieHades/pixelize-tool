@@ -1,6 +1,7 @@
 // Запросы к слоям: видимость с учётом папок, обтравка, замок симметрии.
 // Чистые функции над состоянием S (без DOM).
 import { S } from './state.js';
+import { centerSymmetryAxes, symmetryAxes } from '../logic/symmetry.js';
 
 export const folderById = (id) => S.folders.find((x) => x.id === id);
 export const layerFolder = (L) => (L && L.fid != null ? folderById(L.fid) : null);
@@ -26,3 +27,38 @@ export function clipBase(i) { if (!S.layers[i].clip) return -1;
 // активна ли симметрия на текущем слое (с учётом замка слоя/папки)
 export const symA = () => S.sym && !layerSymLocked(S.layers[S.cur]);   // лево-право
 export const symHA = () => S.symH && !layerSymLocked(S.layers[S.cur]); // верх-низ
+export const symDA = () => S.symD1 && !layerSymLocked(S.layers[S.cur]); // диагональ 45°
+export const symDB = () => S.symD2 && !layerSymLocked(S.layers[S.cur]); // диагональ -45°
+export const anySym = () => symA() || symHA() || symDA() || symDB();
+
+export function symmetryConfig() {
+  const c = centerSymmetryAxes(S.W, S.H), l = S.symLines || {};
+  return symmetryAxes(S.W, S.H, {
+    x: symA(),
+    y: symHA(),
+    d1: symDA(),
+    d2: symDB(),
+    axisX: Number.isFinite(l.x) ? l.x : c.axisX,
+    axisY: Number.isFinite(l.y) ? l.y : c.axisY,
+    diagP: Number.isFinite(l.d1) ? l.d1 : c.diagP,
+    diagN: Number.isFinite(l.d2) ? l.d2 : c.diagN,
+  });
+}
+
+export function ensureSymmetryDefaults() {
+  const c = centerSymmetryAxes(S.W, S.H);
+  S.symLines ||= { x: null, y: null, d1: null, d2: null, mode: null, hover: null };
+  if (!Number.isFinite(S.symLines.x)) S.symLines.x = c.axisX;
+  if (!Number.isFinite(S.symLines.y)) S.symLines.y = c.axisY;
+  if (!Number.isFinite(S.symLines.d1)) S.symLines.d1 = c.diagP;
+  if (!Number.isFinite(S.symLines.d2)) S.symLines.d2 = c.diagN;
+}
+
+export function resetSymmetryLine(id) {
+  const c = centerSymmetryAxes(S.W, S.H);
+  ensureSymmetryDefaults();
+  if (id === 'x') S.symLines.x = c.axisX;
+  else if (id === 'y') S.symLines.y = c.axisY;
+  else if (id === 'd1') S.symLines.d1 = c.diagP;
+  else if (id === 'd2') S.symLines.d2 = c.diagN;
+}

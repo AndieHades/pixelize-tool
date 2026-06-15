@@ -7,6 +7,7 @@ import { $, showMenuAt, toast, t } from '../core/dom.js';
 import { setTool } from '../core/tools.js';
 import { longPress } from '../core/long-press.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
+import { ensureSymmetryDefaults } from '../core/layers.js';
 
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'line', 'move', 'adjust'];
 
@@ -19,7 +20,12 @@ const ICONS = {
   ellipseFill: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="7.5" ry="5.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="7.5" ry="5.5"/></svg>',
   symV: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg>',
   symH: '<svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg>',
+  symD1: '<svg viewBox="0 0 24 24"><path d="M5 19 19 5" stroke-dasharray="3 3"/><path d="M6 11l-3 3 3 3"/><path d="M18 7l3 3-3 3"/></svg>',
+  symD2: '<svg viewBox="0 0 24 24"><path d="M5 5 19 19" stroke-dasharray="3 3"/><path d="M6 13l-3-3 3-3"/><path d="M18 17l3-3-3-3"/></svg>',
   symBoth: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/><path d="M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>',
+  symMulti: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M4 12h16" stroke-dasharray="3 3"/><path d="M6 18 18 6" stroke-dasharray="3 3"/><path d="M6 6 18 18" stroke-dasharray="3 3"/></svg>',
+  symMove: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg>',
+  symReset: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M4 12h16"/><path d="M8.5 7.5A5 5 0 1 1 7 11"/><path d="M7 7.5v3.5h3.5"/></svg>',
   flipH: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M8 7.5v9L3.8 12 8 7.5z" fill="currentColor" stroke="none"/><path d="M16 7.5v9l4.2-4.5L16 7.5z" fill="currentColor" stroke="none"/></svg>',
   flipV: '<svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="2 2"/><path d="M7.5 8h9L12 3.8 7.5 8z" fill="currentColor" stroke="none"/><path d="M7.5 16h9L12 20.2 7.5 16z" fill="currentColor" stroke="none"/></svg>',
 };
@@ -37,6 +43,12 @@ const SHAPE_MODES = [
 const SYM_MODES = [
   { flag: 'sym', icon: 'symV', key: 'side.symV', onKey: 'toast.symVon', offKey: 'toast.symVoff' },
   { flag: 'symH', icon: 'symH', key: 'side.symH', onKey: 'toast.symHon', offKey: 'toast.symHoff' },
+  { flag: 'symD1', icon: 'symD1', key: 'side.symD1', onKey: 'toast.symD1on', offKey: 'toast.symD1off' },
+  { flag: 'symD2', icon: 'symD2', key: 'side.symD2', onKey: 'toast.symD2on', offKey: 'toast.symD2off' },
+];
+const SYM_TOOLS = [
+  { mode: 'move', icon: 'symMove', key: 'side.symMove' },
+  { mode: 'reset', icon: 'symReset', key: 'side.symReset' },
 ];
 const FLIP_MODES = [
   { mode: 'h', icon: 'flipH', key: 'side.flipH', action: 'layer.flipH' },
@@ -54,14 +66,18 @@ function setButtonIcon(btn, mode) {
 function currentLineMode() { return LINE_MODES.find((m) => m.mode === S.lineMode) || LINE_MODES[0]; }
 function currentShapeMode() { const tool = S.shapeTool || (S.tool === 'ellipse' ? 'ellipse' : 'rect'), fill = !!S.fillShape[tool];
   return SHAPE_MODES.find((m) => m.tool === tool && m.fill === fill) || SHAPE_MODES[0]; }
-function currentSymMode() { if (S.sym && S.symH) return { icon: 'symBoth', key: 'side.symBoth' };
-  if (S.symH) return SYM_MODES[1]; if (S.sym) return SYM_MODES[0]; return { icon: 'symV', key: 'side.symmetry' }; }
+function currentSymMode() { const on = SYM_MODES.filter((m) => S[m.flag]);
+  if (on.length > 1) return { icon: S.sym && S.symH && on.length === 2 ? 'symBoth' : 'symMulti', key: 'side.symBoth' };
+  if (on.length === 1) return on[0]; return { icon: 'symV', key: 'side.symmetry' }; }
 function currentFlipMode() { return FLIP_MODES.find((m) => m.mode === lastFlipMode) || FLIP_MODES[0]; }
 
 function syncChoiceMenus() {
   const line = $('line-choice'); if (line) for (const b of line.querySelectorAll('button')) b.classList.toggle('on', b.dataset.lineMode === S.lineMode);
   const shape = $('shape-choice'); if (shape) for (const b of shape.querySelectorAll('button')) b.classList.toggle('on', b.dataset.shapeTool === (S.shapeTool || 'rect') && (b.dataset.fill === '1') === !!S.fillShape[S.shapeTool || 'rect']);
-  const sym = $('sym-choice'); if (sym) for (const b of sym.querySelectorAll('button')) b.classList.toggle('on', !!S[b.dataset.symFlag]);
+  const sym = $('sym-choice'); if (sym) for (const b of sym.querySelectorAll('button')) {
+    if (b.dataset.symFlag) b.classList.toggle('on', !!S[b.dataset.symFlag]);
+    if (b.dataset.symTool) b.classList.toggle('on', (S.symLines && S.symLines.mode) === b.dataset.symTool);
+  }
   const flip = $('flip-choice'); if (flip) for (const b of flip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.flipMode === lastFlipMode);
 }
 
@@ -70,7 +86,7 @@ function syncModeButtons() {
   setButtonIcon($('t-shape'), currentShapeMode());
   setButtonIcon($('sym'), currentSymMode());
   setButtonIcon($('flip-h'), currentFlipMode());
-  const sym = $('sym'); if (sym) sym.classList.toggle('on', !!(S.sym || S.symH));
+  const sym = $('sym'); if (sym) sym.classList.toggle('on', !!(S.sym || S.symH || S.symD1 || S.symD2 || (S.symLines && S.symLines.mode)));
   syncChoiceMenus();
 }
 
@@ -94,7 +110,12 @@ function buildToolChoices() {
   const sym = $('sym-choice');
   if (sym && !sym.dataset.ready) { sym.dataset.ready = '1';
     for (const m of SYM_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.symFlag = m.flag;
-      b.onclick = () => { toggleSym(m.flag); sym.classList.remove('on'); };
+      b.onclick = () => { toggleSym(m.flag); };
+      sym.appendChild(b); } }
+  if (sym && !sym.dataset.toolsReady) { sym.dataset.toolsReady = '1';
+    for (const m of SYM_TOOLS) { const b = choiceButton(m.icon, m.key); b.dataset.symTool = m.mode;
+      b.onclick = () => { S.symLines ||= { x: null, y: null, d1: null, d2: null, mode: null, hover: null };
+        S.symLines.mode = S.symLines.mode === m.mode ? null : m.mode; S.symLines.hover = null; syncModeButtons(); bus.emit('render'); };
       sym.appendChild(b); } }
   const flip = $('flip-choice');
   if (flip && !flip.dataset.ready) { flip.dataset.ready = '1';
@@ -121,6 +142,7 @@ function syncToolButtons() {
 function toggle(flag, btnId, onKey, offKey, save = false) { S[flag] = !S[flag]; if (save) saveBrushPrefs(S);
   $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 function toggleSym(flag) { const m = SYM_MODES.find((x) => x.flag === flag); if (!m) return;
+  ensureSymmetryDefaults();
   S[flag] = !S[flag]; syncModeButtons(); bus.emit('render'); bus.emit('layers'); toast(t(S[flag] ? m.onKey : m.offKey)); }
 // повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
 const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };

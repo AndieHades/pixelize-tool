@@ -7,7 +7,7 @@ import { parseKey } from '../../logic/raster.js';
 import { combineMask } from '../../logic/mask-ops.js';
 import { expandMask } from '../../logic/symmetry.js';
 import { eqc } from '../../logic/color.js';
-import { symA, symHA } from '../../core/layers.js';
+import { anySym, symmetryConfig } from '../../core/layers.js';
 import { selectedLayerTargets } from '../../core/targets.js';
 import { inMask } from '../../core/selection.js';
 import { snapshot } from '../../core/history.js';
@@ -43,14 +43,14 @@ export function selAsSet() { if (S.selMask) return new Set(S.selMask);
 // применить построенную маску с операцией (replace/add/subtract/intersect).
 // Общая точка входа для всех инструментов выделения — не знает, как построен контур.
 export function applySelectionOp(addition, op) { commitFloat();
-  const add = expandMask(addition, S.W, S.H, symA(), symHA()); // симметрия: оригинал + зеркальные копии области
+  const add = expandMask(addition, S.W, S.H, false, false, symmetryConfig()); // симметрия: оригинал + зеркальные копии области
   const out = combineMask(op === 'replace' ? null : selAsSet(), add, op);
   if (!out || !out.size) { deselect(); return false; }
   maskFromCells(out); return true; }
 
 // добавить зеркальные копии области выделения через общий mapper (без дублей логики)
-export function symmetrizeSelection() { const sa = symA(), sha = symHA(); if (!S.sel || (!sa && !sha)) return;
-  maskFromCells(expandMask(selAsSet(), S.W, S.H, sa, sha)); }
+export function symmetrizeSelection() { if (!S.sel || !anySym()) return;
+  maskFromCells(expandMask(selAsSet(), S.W, S.H, false, false, symmetryConfig())); }
 
 export function selectColorPixels(col) { commitFloat(); const colors = (Array.isArray(col && col[0]) ? col : [col]).filter(Boolean);
   const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;

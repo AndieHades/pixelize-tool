@@ -68,7 +68,7 @@ function folderRow(f, depth) {
   const nm = nameSpan(f.name), cnt = folderCountSpan(f);
   const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
   fr.append(car, nm); if (cnt) fr.append(cnt);
-  if (S.sym || S.symH) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (f.symLock ? ' off' : ''); sy.innerHTML = SYM_IC;
+  if (S.sym || S.symH || S.symD1 || S.symD2) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (f.symLock ? ' off' : ''); sy.innerHTML = SYM_IC;
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.symLock = !f.symLock; sy.classList.toggle('off', f.symLock); bus.emit('render'); }); fr.append(sy); }
   fr.append(vis);
@@ -103,7 +103,7 @@ function layerRow(L, i, depth) {
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
   if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; ar.innerHTML = CLIP_IC; row.append(ar); } // обтравка: стрелка вниз + сдвиг строки
   row.append(thumbFor(i), nm);
-  if (S.sym || S.symH) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (L.symLock ? ' off' : ''); sy.innerHTML = SYM_IC; // симметрия на слое (можно выключить)
+  if (S.sym || S.symH || S.symD1 || S.symD2) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (L.symLock ? ' off' : ''); sy.innerHTML = SYM_IC; // симметрия на слое (можно выключить)
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.symLock = !L.symLock; sy.classList.toggle('off', L.symLock); bus.emit('render'); }); row.append(sy); }
   if (L.reference) { const rf = document.createElement('button'); rf.className = 'eye lref'; rf.innerHTML = REF_IC;

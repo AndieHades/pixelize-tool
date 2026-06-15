@@ -376,6 +376,12 @@ t('symmetry: expandMask зеркалит по Y (верх-низ)', () => { cons
   assert.ok(m.has('1,2') && m.has('1,5')); });
 t('symmetry: двойная симметрия даёт 4 копии', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, true);
   assert.equal(m.size, 4); assert.ok(m.has('6,5')); });
+t('symmetry: диагональные оси зеркалят по 45 и -45 градусам', () => {
+  let m = expandMask(new Set(['1,3']), 6, 6, false, false, { d1: true });
+  assert.ok(m.has('1,3') && m.has('3,1'));
+  m = expandMask(new Set(['1,2']), 6, 6, false, false, { d2: true });
+  assert.ok(m.has('1,2') && m.has('3,4'));
+});
 t('symmetry: без осей маска не меняется', () => { assert.deepEqual([...expandMask(new Set(['1,2']), 8, 8, false, false)], ['1,2']); });
 t('symmetry: mirrorDeltas инвертирует знак по активной оси', () => {
   assert.deepEqual(mirrorDeltas(3, 2, true, false), [[3, 2], [-3, 2]]);

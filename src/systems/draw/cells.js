@@ -2,7 +2,8 @@
 // setCell — простая запись (заливка), paintCell — кисть с альфа-смешиванием.
 import { S, G } from '../../core/state.js';
 import { blendOver } from '../../logic/raster.js';
-import { symA, symHA } from '../../core/layers.js';
+import { symmetryConfig } from '../../core/layers.js';
+import { mirrorPoints } from '../../logic/symmetry.js';
 import { inSel } from '../../core/selection.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { strokeSeen } from './seen.js';
@@ -11,11 +12,7 @@ export function setCell(x, y, c) {
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return; // выделение работает как маска
   const L = S.layers[S.cur]; if (L.lock) return; // замок: слой нельзя трогать
   const g = G(); const put = (px, py) => { if (L.alphaLock && !g[py][px]) return; g[py][px] = c ? c.slice() : null; }; // альфа-замок: только по существующим
-  put(x, y);
-  const mx = S.W - 1 - x, my = S.H - 1 - y, sa = symA(), sha = symHA();
-  if (sa && mx !== x && inSel(mx, y)) put(mx, y);
-  if (sha && my !== y && inSel(x, my)) put(x, my);
-  if (sa && sha && mx !== x && my !== y && inSel(mx, my)) put(mx, my);
+  for (const [px, py] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) if (inSel(px, py)) put(px, py);
   markDirty(S.cur);
 }
 
