@@ -89,11 +89,15 @@ const { showMenuAt } = await import('../src/core/dom.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false;
+  S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
+  S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil';
+  S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
+  S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
@@ -247,6 +251,16 @@ t('drop-color: бросок мимо холста ничего не залива
   assert.equal(S.layers[0].grid[0][0], null); });
 t('draw: линия фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('line'); S.tool = 'line';
   S.linePrev = [0, 0, 3, 0]; commitLine(); assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[0][3]); });
+t('draw: линия с Shift снапится к 45 градусам', () => { resetWH(8, 8); S.active = [7, 7, 7]; setTool('line');
+  const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 3, e: { shiftKey: true } });
+  assert.deepEqual(S.linePrev, [1, 1, 5, 5]); h.up({});
+  assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
+t('draw: контур рисует круглой кистью, замыкает и заливает без превью-состояния', () => { resetWH(8, 8); S.active = [7, 8, 9]; S.brushes.pencil.size = 3; S.lineMode = 'contour'; setTool('line');
+  const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 1, e: {} }); h.move({ gx: 5, gy: 5, e: {} }); h.move({ gx: 1, gy: 5, e: {} }); h.up({});
+  assert.equal(S.linePath, null); assert.equal(S.stroke, false);
+  assert.deepEqual(S.layers[0].grid[3][3], [7, 8, 9, 255]); // заливка внутри
+  assert.deepEqual(S.layers[0].grid[0][1], [7, 8, 9, 255]); // толщина от круглой кисти size=3
+  S.lineMode = 'line'; });
 t('draw: прямоугольник фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('rect'); S.tool = 'rect';
   S.linePrev = [0, 0, 3, 3]; commitLine();
   assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[3][3] && S.layers[0].grid[0][3] && S.layers[0].grid[3][0]);
@@ -918,6 +932,17 @@ t('tint-shade: без активного цвета в палитре — окн
 });
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t('toolbars: линия и фигуры выбираются одной кнопкой с режимами', () => { tb.mount(); resetWH(8, 8);
+  document.getElementById('t-line').click();
+  assert.ok(document.getElementById('line-choice').classList.contains('on'));
+  document.querySelector('#line-choice [data-line-mode="contour"]').click();
+  assert.equal(S.tool, 'line'); assert.equal(S.lineMode, 'contour'); assert.ok(document.getElementById('t-line').classList.contains('on'));
+  document.getElementById('t-shape').click();
+  assert.ok(document.getElementById('shape-choice').classList.contains('on'));
+  document.querySelector('#shape-choice [data-shape-tool="ellipse"][data-fill="1"]').click();
+  assert.equal(S.tool, 'ellipse'); assert.equal(S.shapeTool, 'ellipse'); assert.equal(S.fillShape.ellipse, true);
+  assert.ok(document.getElementById('t-shape').classList.contains('on'));
+});
 t('toolbars: повторный ЛКМ по активной кисти открывает библиотеку', () => {
   let opened = null; actions.register('ui.brushLibrary', (mode) => { opened = mode; });
   resetWH(8, 8); S.tool = 'eraser'; document.getElementById('t-pencil').click();

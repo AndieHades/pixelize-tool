@@ -35,7 +35,8 @@ export const S = {
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
   shading: { colors: [] }, // active palette ramp for Aseprite-like shading brush
   tool: 'pencil', sym: false, symH: false,
-  fillShape: { rect: false, ellipse: false }, // ПКМ по иконке фигуры — рисовать залитой
+  lineMode: 'line', shapeTool: 'rect',
+  fillShape: { rect: false, ellipse: false }, // режимы общей кнопки фигур: контур/заливка
   brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)
   ppOn: brushPrefs.flags.pixelPerfect, stabOn: brushPrefs.flags.stabilize, stroke: false,
   adjMode: ADJUST_DEFAULT.mode, adjAmt: ADJUST_DEFAULT.amount,
@@ -50,7 +51,7 @@ export const S = {
   // (system-private мелочь вроде ppPath/strokeSeen живёт внутри своих систем)
   qsShape: null, // QuickShape: распознанная ровная форма для превью/коммита
   cropMode: null, rotMode: null, rotPrev: null, rotQuad: null, moveDrag: null,
-  hoverPx: null, lineStart: null, linePrev: null,
+  hoverPx: null, lineStart: null, linePrev: null, linePath: null,
   replaceMode: null,
 };
 

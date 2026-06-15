@@ -113,7 +113,9 @@ export function start() {
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).classList.remove('on'); }); // окна (imp-ovl/export-ovl/pal-ovl) не закрываем по фону — только крестиком
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx']) { const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on'); } }, true);
+    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'line-choice', 'shape-choice']) {
+      const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on');
+    } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
   window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
     document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());

@@ -360,6 +360,13 @@
     #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx, #brush-plus { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
       box-shadow: var(--win-shadow); }
+    .tool-choice { position: fixed; z-index: 70; display: none; gap: 4px; padding: 5px;
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--win-shadow); }
+    .tool-choice.on { display: flex; }
+    .tool-choice button { width: 34px; height: 34px; border-radius: 7px; background: var(--row); color: var(--txt); }
+    .tool-choice button:hover { background: var(--accent-soft); }
+    .tool-choice button.on { background: var(--accent); color: var(--on-accent); }
+    .tool-choice button svg { width: 21px; height: 21px; }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
     #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on { display: flex; }
@@ -632,6 +639,8 @@ body.gallery-open #trctx,
 body.gallery-open #fxctx,
 body.gallery-open #impmenu,
 body.gallery-open #tctx,
+body.gallery-open #line-choice,
+body.gallery-open #shape-choice,
 body.gallery-open #ovl,
 body.gallery-open #ren-ovl,
 body.gallery-open #tools-ovl,
