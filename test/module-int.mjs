@@ -180,6 +180,18 @@ t('cursor: при пипетке real brush скрыт, остаётся тол�
   S.eyedrop.active = true; drawBrushCursor(ctx, 0, 0, 10);
   assert.equal(ops.drawImage, 0); assert.ok(ops.lineTo > 0);
   S.eyedrop.active = false; S.hoverPx = null; S.brushes.pencil.size = 1; });
+t('cursor: при Shading real brush нейтрально-серый, не активный цвет', () => { reset4();
+  const fills = [], proto = HTMLCanvasElement.prototype, orig = proto.getContext;
+  proto.getContext = function (...args) { const ctx = orig.apply(this, args);
+    return new Proxy(ctx, { set(tg, p, v) { if (p === 'fillStyle') fills.push(v); tg[p] = v; return true; } }); };
+  try {
+    const ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, arc() {}, drawImage() {} };
+    S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; S.active = [255, 0, 0]; S.brushes.pencil.size = 3; S.brushes.pencil.op = 1;
+    S.shading = { colors: [[0, 0, 0], [255, 255, 255]] };
+    drawBrushCursor(ctx, 0, 0, 10);
+    assert.ok(fills.includes('rgba(190,190,190,.72)')); assert.ok(!fills.includes('rgb(255,0,0)'));
+  } finally { proto.getContext = orig; S.shading = { colors: [] }; S.hoverPx = null; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; }
+});
 t('cursor: cursor.cycleMode гоняет режимы по кругу', () => { reset4();
   S.cursorMode = 'real'; actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'circle');
   actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'real'); });

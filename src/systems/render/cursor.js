@@ -11,12 +11,15 @@ import { CURSOR_MODES, CURSOR_TOOLS } from '../../config/cursor.js';
 import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
 
 const RING = '#fff'; // курсор без чёрной обводки — только светлый контур-прицел
+const SHADING_FILL = 'rgba(190,190,190,.72)', SHADING_OP = 0.45;
+const shadingOn = () => S.shading && S.shading.colors && S.shading.colors.length > 1;
 
 // под какой инструмент берём кисть/цвет/opacity (что реально положит штамп)
 function inputs() {
   const t = S.tool; if (!CURSOR_TOOLS.includes(t)) return null;
   if (t === 'eraser') return { sb: S.stampBrush.eraser, size: S.brushes.eraser.size, fill: '#fff', op: S.brushes.eraser.op };
   if (t === 'adjust') return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: '#fff', op: 0.35 };
+  if (t === 'pencil' && shadingOn()) return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: SHADING_FILL, op: SHADING_OP };
   return { sb: S.stampBrush.pencil, size: S.brushes.pencil.size, fill: rgb(S.active), op: S.brushes.pencil.op };
 }
 
