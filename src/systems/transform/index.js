@@ -7,7 +7,8 @@ import { $, showMenuAt, toast, t } from '../../core/dom.js';
 import { snapshot, setUndoGuard, cloneGrid } from '../../core/history.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { registerMode } from '../../core/canvas-handlers.js';
-import { effVis, folderChain, symA, symHA } from '../../core/layers.js';
+import { effVis, symA, symHA } from '../../core/layers.js';
+import { selectedLayerTargets } from '../../core/targets.js';
 import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
 import { rotBuildCellsSym, rotHasChanges, rotRestoreState } from './math.js';
@@ -48,27 +49,21 @@ function clearSelectionCells(L, sel, mask, dx, dy) {
     if (L.grid[yy] && xx >= 0 && xx < L.grid[yy].length) L.grid[yy][xx] = null; }
 }
 
-const inFolder = (L, fid) => folderChain(L.fid).some((f) => f.id === fid);
-const folderLayers = (fid) => S.layers.filter((L) => inFolder(L, fid));
+const activeTargets = () => selectedLayerTargets();
 
-function activeTargets() {
-  const out = new Set(), fids = new Set(S.markedFolders);
-  if (S.selFolder != null) fids.add(S.selFolder);
-  for (const fid of fids) for (const L of folderLayers(fid)) out.add(L);
-  for (const i of S.marked) if (S.layers[i]) out.add(S.layers[i]);
-  if (!fids.size || S.marked.size) if (S.layers[S.cur]) out.add(S.layers[S.cur]);
-  return [...out].filter((L) => S.layers.includes(L));
-}
-
-function enterSelectionRotMode() { const L = S.layers[S.cur], sel = cloneSel(S.sel), mask = cloneMask(S.selMask);
-  if (!L || !sel || S.selFloat) return false;
+function enterSelectionRotMode() { const sel = cloneSel(S.sel), mask = cloneMask(S.selMask);
+  if (!sel || S.selFloat) return false;
   const sa = symA(), sha = symHA(), sym = (sa || sha) ? { sx: sa, sy: sha } : null; // трансформируем одну сторону, зеркала достраиваются симметрично
   const keep = sym ? (x, y) => (!sa || x * 2 <= S.W - 1) && (!sha || y * 2 <= S.H - 1) : null;
-  const src = selectionSource(L, sel, mask, keep);
-  if (!src) { toast(t('toast.transformEmpty')); return false; }
-  const backup = { idx: S.cur, sel, mask, grid: cloneGrid(L.grid), ext: new Map(L.ext) };
-  clearSelectionCells(L, sel, mask, 0, 0); S.sel = null; S.selMask = null; markDirty(S.cur);
-  S.rotMode = { idx: S.cur, idxs: [S.cur], sources: [{ L, idx: S.cur, src }], src, b: { x0: sel.x0, y0: sel.y0, w: sel.x1 - sel.x0 + 1, h: sel.y1 - sel.y0 + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [], selection: backup, sym };
+  const sources = [];
+  for (const L of activeTargets()) { const idx = S.layers.indexOf(L), src = selectionSource(L, sel, mask, keep); if (idx >= 0 && src) sources.push({ L, idx, src }); }
+  if (!sources.length) { toast(t('toast.transformEmpty')); return false; }
+  const backups = sources.map(({ L, idx }) => ({ L, idx, grid: cloneGrid(L.grid), ext: new Map(L.ext) }));
+  for (const { L, idx } of sources) { clearSelectionCells(L, sel, mask, 0, 0); markDirty(idx); }
+  S.sel = null; S.selMask = null;
+  const idxs = sources.map((s) => s.idx).sort((a, b) => a - b), idx = idxs[idxs.length - 1];
+  S.cur = idx;
+  S.rotMode = { idx, idxs, sources, src: sources[0].src, b: { x0: sel.x0, y0: sel.y0, w: sel.x1 - sel.x0 + 1, h: sel.y1 - sel.y0 + 1 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0, grab: null, changed: false, hist: [], selection: { idx, sel, mask, layers: backups }, sym };
   bus.emit('selection'); bus.emit('tool', S.tool); rotRebuild(); toast(t('toast.transformHint')); return true; }
 
 export function enterRotMode(target) { const targets = (Array.isArray(target) ? target : [target]).filter((L) => S.layers.includes(L));
@@ -96,15 +91,22 @@ function applyRotMode(m) { let res = null, per = [];
     L.grid = g; L.ext = ext; const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }
   dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
 
-function restoreSelectionMode(m) { const b = m.selection, L = m.sources[0].L;
-  if (!b || !L) return; L.grid = cloneGrid(b.grid); L.ext = new Map(b.ext); S.cur = b.idx; S.sel = null; S.selMask = null; markDirty(b.idx); }
+function restoreSelectionMode(m) { const b = m.selection;
+  if (!b) return;
+  for (const layerBackup of (b.layers || [b])) { const L = layerBackup.L || S.layers[layerBackup.idx]; if (!L) continue;
+    L.grid = cloneGrid(layerBackup.grid); L.ext = new Map(layerBackup.ext); markDirty(layerBackup.idx); }
+  S.cur = b.idx; S.sel = null; S.selMask = null; }
 
-function applySelectionRotMode(m, per) { const b = m.selection, L = m.sources[0].L;
-  L.grid = cloneGrid(b.grid); L.ext = new Map(b.ext); S.cur = b.idx; S.sel = cloneSel(b.sel); S.selMask = cloneMask(b.mask); snapshot();
-  clearSelectionCells(L, b.sel, b.mask, 0, 0);
-  for (const { r } of per) if (r) for (const [x, y, c] of r.cells) {
-    if (x >= 0 && y >= 0 && x < S.W && y < S.H) L.grid[y][x] = c.slice(); else L.ext.set(x + ',' + y, c.slice()); }
-  S.sel = null; S.selMask = null; markDirty(b.idx); dirtyAll(); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); return true; }
+function applySelectionRotMode(m, per) { const b = m.selection, backups = b.layers || [b];
+  for (const layerBackup of backups) { const L = layerBackup.L || S.layers[layerBackup.idx]; if (!L) continue;
+    L.grid = cloneGrid(layerBackup.grid); L.ext = new Map(layerBackup.ext); }
+  S.cur = b.idx; S.sel = cloneSel(b.sel); S.selMask = cloneMask(b.mask); snapshot();
+  for (const layerBackup of backups) { const L = layerBackup.L || S.layers[layerBackup.idx]; if (L) clearSelectionCells(L, b.sel, b.mask, 0, 0); }
+  for (const { s, r } of per) if (r) for (const [x, y, c] of r.cells) {
+    if (x >= 0 && y >= 0 && x < S.W && y < S.H) s.L.grid[y][x] = c.slice(); else s.L.ext.set(x + ',' + y, c.slice()); }
+  S.sel = null; S.selMask = null;
+  for (const layerBackup of backups) markDirty(layerBackup.idx);
+  dirtyAll(); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); return true; }
 
 export function undoRotStep() { if (!S.rotMode) return false;
   if (!S.rotMode.hist.length) { toast(t('toast.noTransformUndo')); return true; }
@@ -139,7 +141,7 @@ export function mount() {
     else if (e.key === 'Escape') { e.preventDefault(); exitRotMode(false); } });
 }
 
-actions.register('transform.enter', () => { if (!enterSelectionRotMode()) enterRotMode(activeTargets()); });
+actions.register('transform.enter', () => { if (S.sel || S.selFloat) { enterSelectionRotMode(); return; } enterRotMode(activeTargets()); });
 actions.register('transform.enterTargets', (targets) => enterRotMode(targets));
 actions.register('transform.cancel', () => exitRotMode(false));
 actions.register('transform.apply', () => exitRotMode(true)); // повторное нажатие кнопки трансформации — применить и выключить

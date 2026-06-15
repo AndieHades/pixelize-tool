@@ -20,7 +20,7 @@ function wireShape(id, outlineKey, fillKey) { const b = $('t-' + id);
 
 function syncToolButtons() {
   for (const id of TOOLS) { const b = $('t-' + id); if (b) b.classList.toggle('on', S.tool === id); }
-  $('t-select').classList.toggle('on', S.tool === 'select' || !!S.sel);
+  $('t-select').classList.toggle('on', !S.rotMode && (S.tool === 'select' || !!S.sel));
   $('t-move').classList.toggle('on', !!S.rotMode);
   $('cv').style.cursor = S.tool === 'move' ? 'move' : ''; // пипетка (bb-pick «on», body.picking) — на Eyedropper System
 }

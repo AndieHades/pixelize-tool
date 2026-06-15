@@ -371,6 +371,18 @@ t('selection: selectColorPixels принимает несколько цвето
   sel.selectColorPixels([[1, 1, 1], [3, 3, 3]]);
   assert.ok(S.selMask && S.selMask.has('1,1') && S.selMask.has('3,3') && !S.selMask.has('2,2'));
 });
+t('selection: содержимое выбранной папки выделяется по всем её слоям', () => { resetWH(5, 5);
+  S.layers = [
+    { name: 'outside', grid: blank(5, 5), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
+    { name: 'a', grid: blank(5, 5), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+    { name: 'b', grid: blank(5, 5), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
+  S.layers[0].grid[0][0] = [9, 9, 9, 255]; S.layers[1].grid[1][1] = [1, 1, 1, 255]; S.layers[2].grid[3][3] = [2, 2, 2, 255];
+  S.cur = 0; S.selFolder = 1; S.markedFolders = new Set([1]); S.marked = new Set();
+  sel.selectLayerContent();
+  assert.ok(S.selMask && S.selMask.has('1,1') && S.selMask.has('3,3') && !S.selMask.has('0,0'));
+});
 t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null; sel.invertSelection();
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
 
@@ -891,11 +903,12 @@ t('toolbars: повторное нажатие Move выключает тран�
   actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); }); // активная кнопка трансформации выключает
 t('toolbars: повторное нажатие выделения снимает выделение', () => { tb.mount(); resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
   document.getElementById('t-select').click(); assert.equal(S.sel, null); assert.equal(S.tool, 'pencil'); }); // активная кнопка выделения снимает
-t('toolbars: выделение и Free Transform подсвечивают свои кнопки', () => { resetWH(8, 8); S.tool = 'pencil';
-  S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; bus.emit('selection');
+t('toolbars: выделение и Free Transform подсвечивают только текущий режим', () => { resetWH(8, 8); S.tool = 'pencil';
+  S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; bus.emit('selection');
   assert.ok(document.getElementById('t-select').classList.contains('on'));
-  S.sel = null; S.layers[0].grid[2][2] = [1, 1, 1, 255]; actions.run('transform.enter');
+  actions.run('transform.enter');
   assert.ok(document.getElementById('t-move').classList.contains('on'));
+  assert.ok(!document.getElementById('t-select').classList.contains('on'));
   tf.exitRotMode(false); assert.ok(!document.getElementById('t-move').classList.contains('on')); });
 t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
@@ -1138,6 +1151,30 @@ t('transform: Ctrl+T с Selection трансформирует фрагмент 
   S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
   assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
+t('transform: выделение на выбранной папке двигает содержимое всех её слоёв', () => { resetWH(6, 6);
+  S.layers = [
+    { name: 'outside', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
+    { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+    { name: 'b', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
+  S.layers[1].grid[1][1] = [1, 1, 1, 255]; S.layers[2].grid[1][3] = [2, 2, 2, 255];
+  S.cur = 0; S.selFolder = 1; S.markedFolders = new Set([1]); S.marked = new Set(); S.sel = { x0: 0, y0: 0, x1: 4, y1: 2 }; S.selMask = null;
+  actions.run('transform.enter');
+  assert.ok(S.rotMode && S.rotMode.selection); assert.equal(S.rotMode.sources.length, 2);
+  assert.equal(S.sel, null); assert.equal(S.layers[1].grid[1][1], null); assert.equal(S.layers[2].grid[1][3], null);
+  S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true);
+  assert.deepEqual(S.layers[1].grid[1][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[2].grid[1][4], [2, 2, 2, 255]);
+});
+t('transform: пустое выделение папки не запускает transform всей папки', () => { resetWH(6, 6);
+  S.layers = [
+    { name: 'outside', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
+    { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
+  S.layers[1].grid[5][5] = [1, 1, 1, 255]; S.cur = 0; S.selFolder = 1; S.markedFolders = new Set([1]); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null;
+  actions.run('transform.enter'); assert.equal(S.rotMode, null); assert.deepEqual(S.sel, { x0: 0, y0: 0, x1: 1, y1: 1 });
+});
 t('transform: выделение за краем не меняет размер холста', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null; actions.run('transform.enter');
   S.rotMode.tx = -1; S.rotMode.changed = true; tf.exitRotMode(true);
