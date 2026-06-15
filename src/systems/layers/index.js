@@ -11,6 +11,7 @@ import { layList } from './list.js';
 import { mountActionBars } from './actions-bar.js';
 import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
+import './fill.js'; // регистрирует action 'layer.dropColorAt'
 
 const vw = () => window.innerWidth || document.documentElement.clientWidth || 1024;
 const vh = () => window.innerHeight || document.documentElement.clientHeight || 768;

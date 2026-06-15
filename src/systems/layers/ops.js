@@ -4,7 +4,6 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { symmetrizeGrid } from '../../logic/raster.js';
-import { rgbToHex } from '../../logic/color.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { bakeFolder, bakeLayerIndices } from '../../core/layer-bake.js';
 import { toast, t } from '../../core/dom.js';
@@ -92,45 +91,6 @@ export function toggleReference(L) { if (!L) return; snapshot(); const on = !L.r
 export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
   L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerCleared')); }
 
-export function fillLayerRefs(layers, color) {
-  const ts = layers.filter((L) => S.layers.includes(L));
-  if (!ts.length || !Array.isArray(color) || color.length < 3) return false;
-  snapshot(); const a = [color[0], color[1], color[2], 255];
-  for (const L of ts) {
-    let hasContent = false;
-    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {
-      const c = L.grid[y][x]; if (c && (c[3] ?? 255) > 0) hasContent = true;
-    }
-    if (!hasContent && L.ext) for (const c of L.ext.values()) if (c && (c[3] ?? 255) > 0) { hasContent = true; break; }
-    if (hasContent) {
-      for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {
-        const c = L.grid[y][x]; if (c && (c[3] ?? 255) > 0) L.grid[y][x] = [a[0], a[1], a[2], c[3] ?? 255];
-      }
-      if (L.ext) for (const [k, c] of L.ext) if (c && (c[3] ?? 255) > 0) L.ext.set(k, [a[0], a[1], a[2], c[3] ?? 255]);
-    } else {
-      for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) L.grid[y][x] = a.slice();
-      L.ext = new Map();
-    }
-    markDirty(S.layers.indexOf(L));
-  }
-  actions.run('color.used', color); bus.emit('layers'); bus.emit('render'); return true;
-}
-
-export function dropColorAtLayer(color, clientX, clientY) {
-  const el = document.elementFromPoint(clientX, clientY);
-  const fxrow = el && el.closest ? el.closest('#lay-list .fxrow') : null;
-  if (fxrow && fxrow.__eff && fxrow.__eff.params && Object.prototype.hasOwnProperty.call(fxrow.__eff.params, 'color')) {
-    snapshot(); fxrow.__eff.params.color = rgbToHex(color).toLowerCase();
-    S.fxCur = fxrow.__eff; S.fxSel = new Set([fxrow.__eff]);
-    actions.run('color.used', color); dirtyAll(); bus.emit('layers'); bus.emit('render'); return true;
-  }
-  const row = el && el.closest ? el.closest('#lay-list .lrow[data-li], #lay-list .lrow[data-fid]') : null;
-  if (!row) return false;
-  if (row.dataset.li != null) return fillLayerRefs([S.layers[+row.dataset.li]], color);
-  const f = S.folders.find((x) => x.id === +row.dataset.fid);
-  return f ? fillLayerRefs(folderLayers(f), color) : false;
-}
-
 export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; const restoreActive = activeAfterDelete([idx]);
   const restoreEmptyFolders = rememberEmptyFolderPositions([idx]);
@@ -176,4 +136,3 @@ export function deleteLayer() {
 actions.register('layer.add', doAddLayer);
 actions.register('layer.merge', doMerge);
 actions.register('layer.group', doGroup);
-actions.register('layer.dropColorAt', dropColorAtLayer);
