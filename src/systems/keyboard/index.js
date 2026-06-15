@@ -23,10 +23,14 @@ export function resetKeymap() { overrides = {}; keymap = { ...DEFAULT_KEYMAP }; 
 const typing = (t) => !!((t && t.matches && t.matches('input, textarea')) || (t && t.isContentEditable));
 
 export function handle(e) {
-  if (typing(e.target) || document.querySelector('.ovl.on')) return false; // ввод текста / открыт диалог
   const combo = comboOf(e); if (!combo) return false;
   const action = keymap[combo];
   if (!action || !actions.has(action)) return false;
+  const undoRedo = action === 'edit.undo' || action === 'edit.redo';
+  const target = e.target, domTarget = target && typeof target.nodeType === 'number' ? target : null;
+  const editPop = domTarget && [...document.querySelectorAll('#bcpop.on, #fx-edit.on')].some((p) => p.contains(domTarget));
+  const undoInEditPop = undoRedo && editPop;
+  if ((typing(target) && !undoInEditPop) || (document.querySelector('.ovl.on') && !undoInEditPop)) return false; // ввод текста / открыт диалог
   e.preventDefault(); actions.run(action); return true;
 }
 

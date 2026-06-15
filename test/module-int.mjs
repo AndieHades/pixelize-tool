@@ -215,7 +215,8 @@ t('keyboard: хоткей запускает действие', () => { let ran 
   assert.ok(kbd.handle(ev('KeyB'))); assert.equal(ran, 1); });
 t('keyboard: несвязанная клавиша игнорится', () => { assert.equal(kbd.handle(ev('KeyJ')), false); });
 t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
-  kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap(); });
+  kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap();
+  actions.register('edit.undo', history.doUndo); actions.register('edit.redo', history.doRedo); });
 t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
 t('keyboard: Ctrl+A выделяет содержимое активного слоя', () => { resetWH(4, 4); kbd.resetKeymap();
   S.layers[0].grid[0][1] = [1, 2, 3, 255]; S.layers[0].grid[2][3] = [4, 5, 6, 255]; cache.dirtyAll();
@@ -412,7 +413,8 @@ t('bc: настройка эффекта открывается повторно
   actions.run('effect.bc.edit', S.layers[0], eff);
   assert.equal(document.getElementById('bc-bri').value, '10'); assert.equal(document.getElementById('bc-hue').value, '40');
   document.getElementById('bc-hue').value = '-30'; document.getElementById('bc-hue').dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(eff.params.hue, -30); history.doUndo();
+  assert.equal(eff.params.hue, -30);
+  assert.equal(kbd.handle(ev('KeyZ', { ctrlKey: true, target: document.getElementById('bc-hue') })), true);
   assert.equal(eff.params.hue, 40); assert.equal(document.getElementById('bcpop').classList.contains('on'), false);
   actions.run('effect.bc.edit', S.layers[0], eff); document.getElementById('bc-bri').value = '50';
   document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -1147,7 +1149,7 @@ t('effects: preview изменения эффекта отменяется undo,
   actions.run('fx.edit', S.layers[0], eff); document.getElementById('fx-size').value = '5';
   document.getElementById('fx-size').dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(eff.params.size, 5);
-  history.doUndo();
+  assert.equal(kbd.handle(ev('KeyZ', { ctrlKey: true, target: document.getElementById('fx-size') })), true);
   assert.equal(eff.params.size, 1); assert.equal(document.getElementById('fx-edit').classList.contains('on'), false);
   assert.equal(S.undoStack.length, 0);
   actions.run('fx.edit', S.layers[0], eff); document.getElementById('fx-size').value = '4';
