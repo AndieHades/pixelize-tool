@@ -24,12 +24,13 @@ function memberCanvas(cells, W, H) { const c = document.createElement('canvas');
     const o = (py * W + px) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
   x.putImageData(id, 0, 0); return c; }
 
-function rotRebuild() { if (!S.rotMode) return; const W = S.W, H = S.H, mems = []; let any = false;
-  for (const s of S.rotMode.sources) { const r = rotBuildCellsSym(S.rotMode, s.src, W, H); if (!r) continue; any = true;
-    const L = S.layers[s.idx]; if (L && effVis(s.idx) && L.opacity > 0) mems.push({ idx: s.idx, L, content: memberCanvas(r.cells, W, H) }); }
-  S.rotPrev = any ? { idx: S.rotMode.idx, canvas: fxPreview(mems, W, H), px: 0, py: 0, ow: W, oh: H } : { idx: S.rotMode.idx, canvas: null };
+function rotRebuild() { if (!S.rotMode) return; const W = S.W, H = S.H, mems = []; let drawIdx = -1;
+  for (const s of S.rotMode.sources) { const r = rotBuildCellsSym(S.rotMode, s.src, W, H); if (!r) continue;
+    const L = S.layers[s.idx]; if (L && effVis(s.idx) && L.opacity > 0) { mems.push({ idx: s.idx, L, content: memberCanvas(r.cells, W, H) }); drawIdx = Math.max(drawIdx, s.idx); } }
+  S.rotPrev = mems.length ? { idx: drawIdx, canvas: fxPreview(mems, W, H), px: 0, py: 0, ow: W, oh: H } : { idx: drawIdx, canvas: null };
   bus.emit('render'); }
 const rotRebuildSoon = () => { cancelAnimationFrame(rotRAF); rotRAF = requestAnimationFrame(rotRebuild); };
+bus.on('visibility', () => { if (S.rotMode) rotRebuild(); });
 
 const cloneSel = (s) => (s ? { x0: s.x0, y0: s.y0, x1: s.x1, y1: s.y1 } : null);
 const cloneMask = (m) => (m ? new Set(m) : null);

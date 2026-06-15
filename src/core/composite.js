@@ -40,7 +40,7 @@ function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vi
   ctx.globalAlpha = L.opacity;
   const inRot = live && S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i);
   if (inRot && !S.rotMode.selection) { // живое превью трансформации целого слоя/папки
-    if (i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh);
+    if (i === (S.rotPrev && S.rotPrev.idx) && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh);
     return; }
   const md = live ? S.moveDrag : null, di = (md && md.idxs.includes(i)) ? md : null;
   if (cb >= 0) { const db = (md && md.idxs.includes(cb)) ? md : null;

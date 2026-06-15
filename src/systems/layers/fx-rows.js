@@ -32,7 +32,7 @@ function effectRow(target, eff, depth) {
   const vis = document.createElement('button'); vis.className = 'eye' + (eff.visible === false ? ' off' : ''); vis.innerHTML = EYE;
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); eff.visible = eff.visible === false;
-    vis.classList.toggle('off', eff.visible === false); row.classList.toggle('fxoff', eff.visible === false); bus.emit('render'); });
+    vis.classList.toggle('off', eff.visible === false); row.classList.toggle('fxoff', eff.visible === false); bus.emit('visibility'); bus.emit('render'); });
   row.append(star, nm, vis);
   row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); });
   row.addEventListener('dblclick', (e) => { e.stopPropagation(); actions.run('fx.edit', target, eff); });

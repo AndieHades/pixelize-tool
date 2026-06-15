@@ -53,7 +53,7 @@ function folderCountSpan(f) {
 // глаз видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
 function wireVis(vis, obj) {
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());
-  vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('off', !obj.visible); bus.emit('render'); });
+  vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('off', !obj.visible); bus.emit('visibility'); bus.emit('render'); });
 }
 
 function folderRow(f, depth) {

@@ -1444,6 +1444,22 @@ t('transform: выбранная папка строит рамку по скр�
   S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[1].grid[6][6] = [2, 2, 2, 255]; S.selFolder = 1; S.markedFolders = new Set([1]);
   actions.run('transform.enter'); assert.deepEqual(S.rotMode.b, { x0: 1, y0: 1, w: 6, h: 6 }); tf.exitRotMode(false); });
 
+t('transform: превью обновляется при скрытии слоя внутри папки', () => { resetWH(8, 8);
+  S.layers = [
+    { name: 'red', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+    { name: 'blue', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
+  ]; S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
+  S.layers[0].grid[1][1] = [200, 0, 0, 255]; S.layers[1].grid[2][2] = [0, 80, 220, 255];
+  S.selFolder = 1; S.markedFolders = new Set([1]); cache.dirtyAll();
+  actions.run('transform.enter'); assert.equal(S.rotPrev.idx, 1); assert.ok(S.rotPrev.canvas);
+  S.layers[0].visible = false; bus.emit('visibility');
+  assert.equal(S.rotPrev.idx, 1); assert.ok(S.rotPrev.canvas);
+  S.layers[0].visible = true; S.layers[1].visible = false; bus.emit('visibility');
+  assert.equal(S.rotPrev.idx, 0); assert.ok(S.rotPrev.canvas);
+  S.layers[0].visible = false; bus.emit('visibility');
+  assert.equal(S.rotPrev.canvas, null);
+  tf.exitRotMode(false); });
+
 t('transform: превью строится с эффектами слоя и папки (обводка не пропадает)', () => { resetWH(8, 8);
   S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[4][3] = [1, 1, 1, 255];
   S.layers[0].effects = [{ id: 'e1', type: 'stroke', visible: true, params: { size: 1, color: '#ff7a18' } }];
