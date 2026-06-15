@@ -5,38 +5,14 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, t, toast, copyText } from '../core/dom.js';
 import { rgb, rgbToHex, rgbToHsv, hsvToRgb, hexToRgb } from '../logic/color.js';
+import { initColorHistory, rememberUsedColor, clearColorHistory } from './color-history.js';
+import { DISC_INNER_RATIO, DISC_GAP, discBox, svDiscBox } from './color-disc.js';
 
 let colH = 0, colS = 0, colV = 100, replaceFrom = null; // replaceFrom — цвет или список цветов для режима замены
 let onPick = null; // режим «выбрать цвет для произвольной цели» (эффекты): колбэк(hex) на каждое изменение
-const COL_HISTORY_STORE = 'pixel-heart:color-used-history';
-const DISC_INNER_RATIO = 2 / 3, DISC_GAP = 5;
-let colHistory = [];
 let prevColor = S.active.slice(0, 3);
 
 const currentColor = () => hsvToRgb(colH, colS, colV);
-const colorKey = (c) => c ? c.slice(0, 3).join(',') : '';
-
-function loadColorHistory() {
-  try { colHistory = JSON.parse(localStorage.getItem(COL_HISTORY_STORE) || '[]').filter((c) => Array.isArray(c) && c.length >= 3).map((c) => c.slice(0, 3)); }
-  catch (e) { colHistory = []; }
-}
-
-function saveColorHistory() {
-  try { localStorage.setItem(COL_HISTORY_STORE, JSON.stringify(colHistory)); } catch (e) {}
-}
-
-function renderColorHistory() {
-  const host = $('col-hist'); if (!host) return; host.innerHTML = '';
-  for (const c of colHistory.slice(0, 10)) { const b = document.createElement('button'), hex = rgbToHex(c).toUpperCase();
-    b.type = 'button'; b.style.background = hex; b.title = hex; b.onclick = () => { prevColor = currentColor(); setColorFromRgb(c); }; host.appendChild(b); }
-}
-
-function rememberUsedColor(c) {
-  if (!Array.isArray(c) || c.length < 3) return;
-  const key = colorKey(c);
-  colHistory = [c.slice(0, 3), ...colHistory.filter((x) => colorKey(x) !== key)].slice(0, 10);
-  saveColorHistory(); renderColorHistory();
-}
 
 function addCurrentToPalette() {
   actions.run('palette.addRgb', hsvToRgb(colH, colS, colV));
@@ -49,28 +25,6 @@ function syncModeActions() {
 }
 
 function focusHex() { $('col-hex').focus(); $('col-hex').select(); }
-
-function cssPx(el, prop) {
-  const view = el && el.ownerDocument && el.ownerDocument.defaultView;
-  const cs = view && view.getComputedStyle ? view.getComputedStyle(el) : null;
-  const n = cs ? parseFloat(cs[prop]) : 0;
-  return Number.isFinite(n) ? n : 0;
-}
-
-function discBox() {
-  const disc = $('col-disc'), r = disc.getBoundingClientRect();
-  const w = r.width || disc.clientWidth || cssPx(disc, 'width') || 286;
-  const h = r.height || disc.clientHeight || cssPx(disc, 'height') || w;
-  return { left: r.left || 0, top: r.top || 0, width: w, height: h };
-}
-
-function svDiscBox(disc = discBox()) {
-  const sv = $('col-svdisc'), r = sv.getBoundingClientRect();
-  const d = r.width || sv.clientWidth || cssPx(sv, 'width') || Math.round(Math.min(disc.width, disc.height) * DISC_INNER_RATIO);
-  const left = r.width ? r.left - disc.left : (sv.offsetLeft || (disc.width - d) / 2);
-  const top = r.height ? r.top - disc.top : (sv.offsetTop || (disc.height - d) / 2);
-  return { left, top, width: d, height: r.height || sv.clientHeight || cssPx(sv, 'height') || d };
-}
 
 function afterLayout(fn) {
   const view = document.defaultView;
@@ -131,7 +85,7 @@ export function openColFor(hex, cb) { replaceFrom = null; onPick = cb || null;
   const [h, s, v] = rgbToHsv(...hexToRgb(hex)); colH = h; colS = s; colV = v; showColPop(); syncColUI(); syncModeActions(); }
 
 export function mount() {
-  loadColorHistory(); renderColorHistory(); syncModeActions();
+  initColorHistory((c) => { prevColor = currentColor(); setColorFromRgb(c); }); syncModeActions();
   let drop = null;
   $('activewrap').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return;
     drop = { x: e.clientX, y: e.clientY, moved: false }; try { $('activewrap').setPointerCapture(e.pointerId); } catch (err) {} });
@@ -194,7 +148,7 @@ export function mount() {
   $('col-commit').onclick = () => { const c = hsvToRgb(colH, colS, colV);
     if (onPick) { onPick = null; syncModeActions(); $('colpop').classList.remove('on'); return; } // «Готово» — закрыть пикер эффекта
     if (replaceFrom) { const from = replaceFrom; replaceFrom = null; syncModeActions(); $('colpop').classList.remove('on'); actions.run('recolor.all', from, c); } };
-  $('col-hist-clear').onclick = () => { colHistory = []; saveColorHistory(); renderColorHistory(); };
+  $('col-hist-clear').onclick = clearColorHistory;
   bus.on('color-sync', () => { if (onPick) return; if ($('colpop').classList.contains('on')) { prevColor = currentColor(); syncColFromActive(true); } }); // в режиме цели не сбрасываем на активный
   $('colpop').querySelector('.win-x').onclick = () => { onPick = null; $('colpop').classList.remove('on'); syncModeActions(); };
 }
