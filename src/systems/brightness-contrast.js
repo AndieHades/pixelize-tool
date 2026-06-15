@@ -2,12 +2,13 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
-import { snapshot, cloneGrid } from '../core/history.js';
+import { snapshot, cloneGrid, addUndoGuard } from '../core/history.js';
 import { bcAdjust, contrastFactor } from '../logic/bc.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { $, t } from '../core/dom.js';
 
 let bcBackup = null;
+let undoGuardBound = false;
 
 export function bcPreview() { if (!bcBackup) return;
   const bri = +$('bc-bri').value * 1.27, f = contrastFactor(+$('bc-con').value * 1.27);
@@ -36,6 +37,8 @@ export function mount() {
   $('bc-con').addEventListener('input', () => { $('bc-conv').textContent = $('bc-con').value; bcPreview(); });
   $('bc-apply').onclick = bcApply; $('bc-cancel').onclick = bcCancel;
   $('bcpop').querySelector('.win-x').onclick = bcCancel; // крестик = отмена
+  if (!undoGuardBound) { undoGuardBound = true;
+    addUndoGuard(() => { if (!bcBackup) return false; bcCancel(); return true; }); }
 }
 
 actions.register('effect.bc', (targets, title) => openBcPop(targets && targets.length ? targets : S.layers, title || t('bc.titleAll')));

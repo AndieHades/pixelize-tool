@@ -24,12 +24,16 @@ export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folder
   S.fxDraft = null;
   dirtyAll(); bus.emit('layers'); bus.emit('render'); }
 
-// перехватчик undo: система (напр. трансформация) может на время «забрать» отмену
+// перехватчики undo: системы (напр. трансформация/живой preview попапа) могут
+// на время «забрать» отмену до записи в историю.
 let undoGuard = null;
+const undoGuards = new Set();
 export const setUndoGuard = (fn) => { undoGuard = fn; };
+export const addUndoGuard = (fn) => { undoGuards.add(fn); return () => undoGuards.delete(fn); };
 
 export function doUndo() { if (S.rotMode && actions.run('transform.cancel')) return;
   if ((S.sel || S.selFloat) && actions.run('select.none')) return;
+  for (const guard of [...undoGuards]) if (guard && guard()) return;
   if (undoGuard && undoGuard()) return;
   bus.emit('before-undo'); // незавершённые жесты (плавающее выделение) оседают до снимка
   if (!S.undoStack.length) { toast(t('toast.nothingUndo')); return; }

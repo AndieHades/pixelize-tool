@@ -3,7 +3,7 @@
 import { S, newEffect } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { snapshot } from '../../core/history.js';
+import { snapshot, addUndoGuard } from '../../core/history.js';
 import { expandForEffects } from '../../core/document.js';
 import { $, t } from '../../core/dom.js';
 import { EFFECT_FIELDS } from '../../config/defaults.js';
@@ -11,6 +11,7 @@ import { rgbToHex } from '../../logic/color.js';
 import { activeTarget } from './shared.js';
 
 let ses = null; // { target, eff, isNew, original }
+let undoGuardBound = false;
 
 function showRows(type) { const f = new Set(EFFECT_FIELDS[type]), win = $('fx-edit');
   win.querySelector('.fxf-size').style.display = f.has('size') ? '' : 'none';
@@ -65,4 +66,6 @@ export function mountSettings() {
   for (const id of ['fx-size', 'fx-int', 'fx-dx', 'fx-dy']) $(id).addEventListener('input', () => { syncLabels(); readForm(); });
   $('fx-colsw').onclick = () => { if (ses) actions.run('color.for', ses.eff.params.color, setColor); }; // наш пикер, не системный
   $('fx-apply').onclick = fxApply; $('fx-cancel').onclick = fxCancel;
-  $('fx-edit').querySelector('.win-x').onclick = fxCancel; } // крестик = отмена (откат черновика)
+  $('fx-edit').querySelector('.win-x').onclick = fxCancel; // крестик = отмена (откат черновика)
+  if (!undoGuardBound) { undoGuardBound = true;
+    addUndoGuard(() => { if (!ses) return false; fxCancel(); return true; }); } }

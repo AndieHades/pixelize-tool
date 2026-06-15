@@ -13,7 +13,7 @@ for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'm
 globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL не принимает jsdom-Blob
 globalThis.URL.revokeObjectURL = () => {};
 
-const { S, blank, BP_SMAX } = await import('../src/core/state.js');
+const { S, blank, BP_SMAX, newEffect } = await import('../src/core/state.js');
 const { BRUSH_PREFS_STORE, loadBrushPrefs, saveBrushPrefs } = await import('../src/core/brush-prefs.js');
 const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
@@ -375,9 +375,21 @@ t('recolor: меняет пиксели и добавляет новый цве�
 });
 t('free-rotate: поворачивает слой без ошибок', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
   freeRotateLayer(S.layers[0], Math.PI / 4, 4); assert.ok(true); });
-t('bc: применение поднимает яркость', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
+t('bc: preview можно отменить через undo, не трогая историю документа', () => { bc.mount(); resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+  S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
+  bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100';
+  document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.ok(S.layers[0].grid[1][1][0] > 150);
+  history.doUndo();
+  assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 255]);
+  assert.equal(document.getElementById('bcpop').classList.contains('on'), false);
+  assert.equal(S.undoStack.length, 0);
+});
+t('bc: применение поднимает яркость и откатывается undo', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+  S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
   bc.openBcPop([S.layers[0]], 't'); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
-  bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150); });
+  bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150);
+  history.doUndo(); assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 255]); });
 t('adjust: Dodge/Burn/Colorize постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
   S.layers[0].grid[0][0] = [200, 0, 0, 255]; S.adjMode = 'dodge'; history.snapshot(); adjust.adjustCell(0, 0);
   assert.ok(S.layers[0].grid[0][0][0] > 200 && S.layers[0].grid[0][0][1] > 0 && S.layers[0].grid[0][0][2] > 0);
@@ -1083,6 +1095,14 @@ t('effects: новый эффект до Apply остаётся черновик
   assert.equal(document.querySelectorAll('#lay-list .fxrow').length, 0); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
   document.getElementById('fx-cancel').click(); assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 0); });
 
+t('effects: preview нового эффекта можно отменить через undo', () => { effects.mount(); resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
+  actions.run('fx.panel'); document.querySelector('#fx-types button[data-fx="stroke"]').click();
+  assert.ok(S.fxDraft); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
+  history.doUndo();
+  assert.equal(S.fxDraft, null); assert.equal(document.getElementById('fx-edit').classList.contains('on'), false);
+  assert.equal(S.layers[0].effects.length, 0); assert.equal(S.undoStack.length, 0);
+});
+
 t('effects: новые эффекты берут активный цвет', () => { resetWH(8, 8); S.active = [12, 34, 56];
   for (const type of EFFECT_TYPES) {
     document.querySelector(`#fx-types button[data-fx="${type}"]`).click();
@@ -1092,6 +1112,20 @@ t('effects: новые эффекты берут активный цвет', () 
 t('effects: Apply фиксирует эффект, undo убирает', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   document.querySelector('#fx-types button[data-fx="stroke"]').click(); document.getElementById('fx-apply').click();
   assert.equal(S.layers[0].effects.length, 1); history.doUndo(); assert.equal(S.layers[0].effects.length, 0); });
+
+t('effects: preview изменения эффекта отменяется undo, Apply откатывается историей', () => { resetWH(8, 8); effects.mount(); S.undoStack.length = 0; S.redoStack.length = 0;
+  const eff = newEffect('stroke', { size: 1, color: '#112233' }); S.layers[0].effects = [eff];
+  actions.run('fx.edit', S.layers[0], eff); document.getElementById('fx-size').value = '5';
+  document.getElementById('fx-size').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(eff.params.size, 5);
+  history.doUndo();
+  assert.equal(eff.params.size, 1); assert.equal(document.getElementById('fx-edit').classList.contains('on'), false);
+  assert.equal(S.undoStack.length, 0);
+  actions.run('fx.edit', S.layers[0], eff); document.getElementById('fx-size').value = '4';
+  document.getElementById('fx-size').dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('fx-apply').click(); assert.equal(S.layers[0].effects[0].params.size, 4);
+  history.doUndo(); assert.equal(S.layers[0].effects[0].params.size, 1);
+});
 
 t('effects: copy/paste переносит эффект на выбранные слои', () => { resetWH(8, 8); lops.doAddLayer();
   S.layers[0].effects = [{ id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
