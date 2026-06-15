@@ -12,7 +12,7 @@ import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
 
 const RING = '#fff'; // курсор без чёрной обводки — только светлый контур-прицел
 const SHADING_FILL = 'rgba(190,190,190,.72)', SHADING_OP = 0.45;
-const shadingOn = () => S.shading && S.shading.colors && S.shading.colors.length > 1;
+const shadingOn = () => S.shading && S.shading.on && S.shading.colors && S.shading.colors.length > 1;
 
 // под какой инструмент берём кисть/цвет/opacity (что реально положит штамп)
 function inputs() {

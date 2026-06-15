@@ -8,7 +8,8 @@ import { eqc } from '../../logic/color.js';
 import { brushStampWith } from './brush.js';
 import { strokeSeen } from './seen.js';
 
-export const shadingActive = () => S.shading && S.shading.colors && S.shading.colors.length > 1;
+const colors = () => (S.shading && S.shading.colors) || [];
+export const shadingActive = () => !!(S.shading && S.shading.on && colors().length > 1);
 
 export function shadeCell(x, y) {
   if (!shadingActive()) return;
@@ -16,9 +17,10 @@ export function shadeCell(x, y) {
   const L = S.layers[S.cur]; if (L.lock) return;
   const key = y * S.W + x; if (strokeSeen.has(key)) return; strokeSeen.add(key);
   const g = G(), cur = g[y][x]; if (!cur) return;
-  const i = S.shading.colors.findIndex((c) => eqc(c, cur));
+  const ramp = colors();
+  const i = ramp.findIndex((c) => eqc(c, cur));
   if (i <= 0) return;
-  const to = S.shading.colors[i - 1], a = cur.length > 3 ? cur[3] : 255;
+  const to = ramp[i - 1], a = cur.length > 3 ? cur[3] : 255;
   g[y][x] = [to[0], to[1], to[2], a];
   markDirty(S.cur);
 }

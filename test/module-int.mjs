@@ -93,6 +93,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
+  S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
@@ -100,6 +101,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
+  S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
@@ -195,10 +197,10 @@ t('cursor: при Shading real brush нейтрально-серый, не ак�
   try {
     const ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, arc() {}, drawImage() {} };
     S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; S.active = [255, 0, 0]; S.brushes.pencil.size = 3; S.brushes.pencil.op = 1;
-    S.shading = { colors: [[0, 0, 0], [255, 255, 255]] };
+    S.shading = { colors: [[0, 0, 0], [255, 255, 255]], on: true, open: true, picking: false };
     drawBrushCursor(ctx, 0, 0, 10);
     assert.ok(fills.includes('rgba(190,190,190,.72)')); assert.ok(!fills.includes('rgb(255,0,0)'));
-  } finally { proto.getContext = orig; S.shading = { colors: [] }; S.hoverPx = null; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; }
+  } finally { proto.getContext = orig; S.shading = { colors: [], on: false, open: false, picking: false }; S.hoverPx = null; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; }
 });
 t('cursor: cursor.cycleMode гоняет режимы по кругу', () => { reset4();
   S.cursorMode = 'real'; actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'circle');
@@ -673,8 +675,9 @@ t('palette: drag ЛКМ выделяет диапазон, Shading включа�
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
     document.querySelector('#ctx [data-act="shade"]').click();
     assert.deepEqual(S.shading.colors, [[0, 0, 0], [40, 40, 40], [80, 80, 80]]);
+    assert.equal(S.shading.on, true);
     assert.ok(document.getElementById('shade-pop').classList.contains('on'));
-    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
+    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0); assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
     sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
     document.elementFromPoint = () => sw[0];
     sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 0 }));
@@ -707,7 +710,7 @@ t('palette: Ctrl+клик выбирает общий диапазон, Shading 
   } finally { document.elementFromPoint = oldHit; }
   document.querySelector('#ctx [data-act="shade"]').click();
   assert.deepEqual(S.shading.colors, [[7, 7, 7], [6, 6, 6], [5, 5, 5], [4, 4, 4], [3, 3, 3], [2, 2, 2]]);
-  assert.equal(document.querySelectorAll('#pal .shade-sel').length, 6);
+  assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
   assert.ok(document.getElementById('shade-pop').classList.contains('on'));
 });
@@ -744,7 +747,7 @@ t('palette: выделенный диапазон можно перетащит�
   } finally { document.elementFromPoint = oldHit; }
 });
 t('palette: drag ПКМ переставляет цвета', () => {
-  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [] }; pal.buildPalette();
+  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
@@ -754,6 +757,22 @@ t('palette: drag ПКМ переставляет цвета', () => {
     assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
   } finally { document.elementFromPoint = oldHit; }
 });
+t('palette: кнопка Shading выбирает ramp без залипшего выделения палитры', () => {
+  shading.clear(); S.palette = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40]]; pal.buildPalette();
+  document.getElementById('shade-pick').click();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[3];
+    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 30, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 30, clientY: 0 }));
+  } finally { document.elementFromPoint = oldHit; }
+  assert.deepEqual(S.shading.colors, [[20, 20, 20], [30, 30, 30], [40, 40, 40]]);
+  assert.equal(S.shading.on, true); assert.equal(S.shading.picking, false);
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
+  assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
+});
 t('shading: максимум 6 цветов и клик по линейке разворачивает направление', () => {
   shading.setRamp([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]);
   assert.equal(S.shading.colors.length, 6);
@@ -761,17 +780,37 @@ t('shading: максимум 6 цветов и клик по линейке ра
   assert.deepEqual(S.shading.colors[0], [5, 5, 5]);
   shading.clear();
 });
+t('shading: закрытие и смена инструмента сбрасывают режим без потери ramp', () => {
+  shading.setRamp([[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
+  S.palette = [[0, 0, 0], [80, 80, 80], [160, 160, 160]]; pal.buildPalette();
+  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[2];
+    sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
+  } finally { document.elementFromPoint = oldHit; }
+  shading.close();
+  assert.deepEqual(S.shading.colors, [[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
+  assert.equal(S.shading.on, false); assert.equal(S.shading.open, false); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
+  shading.open(); assert.equal(S.shading.on, true); assert.ok(document.getElementById('shade-pop').classList.contains('on'));
+  setTool('eraser');
+  assert.equal(S.shading.on, false); assert.equal(S.shading.open, false);
+  assert.deepEqual(S.shading.colors, [[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
+  shading.clear(); setTool('pencil');
+});
 t('shading: кисть двигает цвет на шаг к первому цвету линейки', () => { resetWH(3, 3);
   S.tool = 'pencil'; S.brushes.pencil.size = 1; S.layers[0].grid[1][1] = [200, 200, 200, 180];
-  S.shading = { colors: [[0, 0, 0], [100, 100, 100], [200, 200, 200]] };
+  S.shading = { colors: [[0, 0, 0], [100, 100, 100], [200, 200, 200]], on: true, open: true, picking: false };
   stroke.beginStroke(); stamp(1, 1); stamp(1, 1); S.stroke = false;
   assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 180]);
   stroke.beginStroke(); stamp(1, 1); S.stroke = false;
   assert.deepEqual(S.layers[0].grid[1][1], [0, 0, 0, 180]);
-  S.shading = { colors: [[200, 200, 200], [100, 100, 100], [0, 0, 0]] };
+  S.shading = { colors: [[200, 200, 200], [100, 100, 100], [0, 0, 0]], on: true, open: true, picking: false };
   stroke.beginStroke(); stamp(1, 1); S.stroke = false;
   assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 180]);
-  S.shading = { colors: [] };
+  S.shading = { colors: [], on: false, open: false, picking: false };
 });
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
@@ -1065,11 +1104,15 @@ t('toolbars: линия и фигуры выбираются одной кноп
   assert.equal(S.tool, 'ellipse'); assert.equal(S.shapeTool, 'ellipse'); assert.equal(S.fillShape.ellipse, true);
   assert.ok(document.getElementById('t-shape').classList.contains('on'));
 });
-t('toolbars: повторный ЛКМ по активной кисти открывает библиотеку', () => {
+t('toolbars: повторный ЛКМ по активной кисти открывает библиотеку и режимы кисти', () => {
   let opened = null; actions.register('ui.brushLibrary', (mode) => { opened = mode; });
   resetWH(8, 8); S.tool = 'eraser'; document.getElementById('t-pencil').click();
-  assert.equal(S.tool, 'pencil'); assert.equal(opened, null);
-  document.getElementById('t-pencil').click(); assert.equal(opened, 'pencil');
+  assert.equal(S.tool, 'pencil'); assert.equal(opened, 'pencil');
+  assert.ok(document.getElementById('brush-choice').classList.contains('on'));
+  assert.equal(document.querySelectorAll('#brush-choice [data-brush-mode]').length, 2);
+  document.querySelector('#brush-choice [data-brush-mode="shading"]').click();
+  assert.equal(S.tool, 'pencil'); assert.ok(document.getElementById('shade-pop').classList.contains('on'));
+  assert.equal(document.querySelector('#brush-choice [data-brush-mode="library"]'), null);
 });
 t('toolbars: повторное нажатие Move выключает трансформацию', () => { tb.mount(); resetWH(8, 8); S.tool = 'move'; S.layers[0].grid[2][2] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); }); // активная кнопка трансформации выключает

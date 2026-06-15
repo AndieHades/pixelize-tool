@@ -20,7 +20,7 @@ export async function copyText(t) {
   }
 }
 
-const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus', 'line-choice', 'shape-choice', 'sym-choice', 'flip-choice'];
+const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus', 'brush-choice', 'line-choice', 'shape-choice', 'sym-choice', 'flip-choice'];
 const menus = () => MENU_IDS.map($).filter(Boolean);
 export function closeMenus(except = null) { for (const m of menus()) if (m !== except) m.classList.remove('on'); }
 function raiseMenu(m) {

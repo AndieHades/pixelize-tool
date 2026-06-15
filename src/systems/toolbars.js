@@ -12,6 +12,8 @@ import { ensureSymmetryDefaults } from '../core/layers.js';
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'line', 'move', 'adjust'];
 
 const ICONS = {
+  pencil: '<svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg>',
+  shading: '<svg viewBox="0 0 24 24"><path d="M5 17.5c2.2-6.8 7.5-11.2 14-12"/><path d="M5 17.5h14"/><path d="M8 14.5h3.2M11 11.5h3.2M14 8.5h3.2"/></svg>',
   line: '<svg viewBox="0 0 24 24"><path d="M6 18 18 6"/></svg>',
   contour: '<svg viewBox="0 0 24 24"><path d="M5 15c1.3-6.5 8.6-10.2 12.6-5.4 3.7 4.4-1.4 9.5-7.2 8.6-2.7-.4-4.6-1.5-5.4-3.2z"/></svg>',
   rect: '<svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg>',
@@ -30,6 +32,10 @@ const ICONS = {
   flipV: '<svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="2 2"/><path d="M7.5 8h9L12 3.8 7.5 8z" fill="currentColor" stroke="none"/><path d="M7.5 16h9L12 20.2 7.5 16z" fill="currentColor" stroke="none"/></svg>',
 };
 
+const BRUSH_MODES = [
+  { mode: 'normal', icon: 'pencil', key: 'tool.pencil' },
+  { mode: 'shading', icon: 'shading', key: 'tool.brushShading' },
+];
 const LINE_MODES = [
   { mode: 'line', icon: 'line', key: 'tool.lineStraight' },
   { mode: 'contour', icon: 'contour', key: 'tool.lineContour' },
@@ -64,6 +70,7 @@ function setButtonIcon(btn, mode) {
 }
 
 function currentLineMode() { return LINE_MODES.find((m) => m.mode === S.lineMode) || LINE_MODES[0]; }
+function currentBrushMode() { return S.shading && (S.shading.on || S.shading.picking) ? BRUSH_MODES[1] : BRUSH_MODES[0]; }
 function currentShapeMode() { const tool = S.shapeTool || (S.tool === 'ellipse' ? 'ellipse' : 'rect'), fill = !!S.fillShape[tool];
   return SHAPE_MODES.find((m) => m.tool === tool && m.fill === fill) || SHAPE_MODES[0]; }
 function currentSymMode() { const on = SYM_MODES.filter((m) => S[m.flag]);
@@ -72,6 +79,7 @@ function currentSymMode() { const on = SYM_MODES.filter((m) => S[m.flag]);
 function currentFlipMode() { return FLIP_MODES.find((m) => m.mode === lastFlipMode) || FLIP_MODES[0]; }
 
 function syncChoiceMenus() {
+  const brush = $('brush-choice'); if (brush) for (const b of brush.querySelectorAll('button')) b.classList.toggle('on', b.dataset.brushMode === currentBrushMode().mode);
   const line = $('line-choice'); if (line) for (const b of line.querySelectorAll('button')) b.classList.toggle('on', b.dataset.lineMode === S.lineMode);
   const shape = $('shape-choice'); if (shape) for (const b of shape.querySelectorAll('button')) b.classList.toggle('on', b.dataset.shapeTool === (S.shapeTool || 'rect') && (b.dataset.fill === '1') === !!S.fillShape[S.shapeTool || 'rect']);
   const sym = $('sym-choice'); if (sym) for (const b of sym.querySelectorAll('button')) {
@@ -82,6 +90,7 @@ function syncChoiceMenus() {
 }
 
 function syncModeButtons() {
+  setButtonIcon($('t-pencil'), currentBrushMode());
   setButtonIcon($('t-line'), currentLineMode());
   setButtonIcon($('t-shape'), currentShapeMode());
   setButtonIcon($('sym'), currentSymMode());
@@ -97,6 +106,14 @@ function choiceButton(icon, key) {
 }
 
 function buildToolChoices() {
+  const brush = $('brush-choice');
+  if (brush && !brush.dataset.ready) { brush.dataset.ready = '1';
+    for (const m of BRUSH_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.brushMode = m.mode;
+      b.onclick = () => { brush.classList.remove('on'); setTool('pencil');
+        if (m.mode === 'shading') { actions.run('shading.open'); if (!S.shading || !S.shading.colors || S.shading.colors.length < 2) actions.run('shading.pickColors'); }
+        else actions.run('shading.disable');
+        syncModeButtons(); };
+      brush.appendChild(b); } }
   const line = $('line-choice');
   if (line && !line.dataset.ready) { line.dataset.ready = '1';
     for (const m of LINE_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.lineMode = m.mode;
@@ -145,11 +162,16 @@ function toggleSym(flag) { const m = SYM_MODES.find((x) => x.flag === flag); if 
   S[flag] = !S[flag]; syncModeButtons(); bus.emit('render'); bus.emit('layers'); toast(t(S[flag] ? m.onKey : m.offKey)); }
 // повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
 const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };
+function pencilClick(e) {
+  if (S.tool !== 'pencil') setTool('pencil');
+  actions.run('ui.brushLibrary', 'pencil');
+  showToolChoice('brush-choice', e.currentTarget);
+}
 const brushClick = (tool) => { if (S.tool === tool) actions.run('ui.brushLibrary', tool); else setTool(tool); };
 
 export function mount() {
   buildToolChoices();
-  $('t-pencil').onclick = () => brushClick('pencil'); // первый ЛКМ — инструмент, второй — библиотека кистей
+  $('t-pencil').onclick = pencilClick;
   $('t-eraser').onclick = () => brushClick('eraser');
   longPress($('t-pencil'), () => actions.run('ui.brushLibrary', 'pencil')); // ПКМ/долгое нажатие — галерея кистей
   longPress($('t-eraser'), () => actions.run('ui.brushLibrary', 'eraser'));
@@ -180,7 +202,7 @@ export function mount() {
   $('fit').onclick = () => actions.run('view.fit');
 
   $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn); syncModeButtons();
-  bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); syncToolButtons();
+  bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); bus.on('shading', syncToolButtons); syncToolButtons();
 }
 
 actions.register('toggle.symV', () => toggleSym('sym'));

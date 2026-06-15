@@ -17,7 +17,7 @@ let palSel = new Set(), palAnchorIdx = -1, palRef = S.palette;
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
 const colorKey = (c) => c ? c[0] + ',' + c[1] + ',' + c[2] : '';
-const inShadeRamp = (c) => S.shading && S.shading.colors && S.shading.colors.some((x) => eqc(x, c));
+const inShadeRamp = (c) => S.shading && S.shading.picking && S.shading.colors && S.shading.colors.some((x) => eqc(x, c));
 const validSel = () => { if (S.palette !== palRef) { palRef = S.palette; palSel = new Set(); palAnchorIdx = -1; }
   palSel = new Set([...palSel].filter((i) => i >= 0 && i < S.palette.length));
   if (!palSel.has(palAnchorIdx)) palAnchorIdx = palSel.size ? Math.min(...palSel) : -1; };
@@ -82,14 +82,21 @@ function setPaletteSelection(idxs, anchor = idxs[0]) {
   palAnchorIdx = anchor ?? -1;
   buildPalette();
 }
+function setShadingFromSelection(idxs) {
+  const cols = colorsFromIdx(idxs);
+  palSel = new Set(); palAnchorIdx = -1;
+  actions.run('shading.setRamp', cols);
+}
 function ctrlPaletteSelect(idx) {
   if (palAnchorIdx < 0 || !palSel.size) setPaletteSelection([idx], idx);
   else setPaletteSelection(rangeIdx(palAnchorIdx, idx), palAnchorIdx);
+  if (S.shading && S.shading.picking && palSel.size > 1) setShadingFromSelection([...palSel]);
 }
 function clearPaletteSelection() {
   if (!palSel.size) return;
   palSel = new Set(); palAnchorIdx = -1; buildPalette();
 }
+actions.register('palette.clearSelection', clearPaletteSelection);
 
 export function buildPalette() {
   validSel();
@@ -189,7 +196,10 @@ function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
       if (reorderIdxs(d.moveIdxs, +targetSw.dataset.i, e.clientX >= r.left + r.width / 2)) buildPalette(); }
     return; }
   if (d.selecting) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
-    if (d.idxs && d.idxs.length > 1) setPaletteSelection(d.idxs, d.idx); return; }
+    if (d.idxs && d.idxs.length > 1) {
+      if (S.shading && S.shading.picking) setShadingFromSelection(d.idxs);
+      else setPaletteSelection(d.idxs, d.idx);
+    } return; }
   if (d.reordering) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); buildPalette(); return; }
   if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
@@ -216,6 +226,7 @@ export function mount() {
     else if (act === 'replace') actions.run('color.replace', cols); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
   bus.on('render', () => { if (showUsed) buildPalette(); });
+  bus.on('tool', (id) => { if (id !== 'pencil') clearPaletteSelection(); });
   bus.on('locale', buildPalette);
   refreshActive(); buildPalette();
 }
