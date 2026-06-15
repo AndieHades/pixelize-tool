@@ -1137,8 +1137,11 @@ t('crop: скрепка держит пропорцию при растягив�
   input.move({ pointerType: 'mouse', button: 0, clientX: 100, clientY: 40, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 10); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 10); crop.cancelCrop(); });
 
-t('status: при кропе/выделении/трансформе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); status.mount();
+t('status: при кропе/выделении/трансформе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); S.view.zoom = 12; status.mount();
   bus.emit('layers'); assert.equal(document.getElementById('status').textContent, '8×8 px');
+  assert.equal(document.getElementById('zoom-status').textContent, '1200%');
+  S.view.zoom = 1.25; bus.emit('overlay', {});
+  assert.equal(document.getElementById('zoom-status').textContent, '125%');
   S.cropMode = { x0: 2, y0: 1, x1: 5, y1: 5, idx: 0, idy: 0 }; bus.emit('render');
   assert.equal(document.getElementById('status').textContent, '8×8 → 4×5 px');
   S.cropMode = null; S.sel = { x0: 1, y0: 2, x1: 6, y1: 4 }; bus.emit('selection');

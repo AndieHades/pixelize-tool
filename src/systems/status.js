@@ -11,6 +11,7 @@ function activeSize() {
 }
 
 function sync() { const el = $('status'); if (!el) return; const a = activeSize();
-  el.textContent = S.W + '×' + S.H + (a ? ' → ' + a[0] + '×' + a[1] : '') + ' px'; }
+  el.textContent = S.W + '×' + S.H + (a ? ' → ' + a[0] + '×' + a[1] : '') + ' px';
+  const zoom = $('zoom-status'); if (zoom) zoom.textContent = Math.round(S.view.zoom * 100) + '%'; }
 
-export function mount() { bus.on('layers', sync); bus.on('fit', sync); bus.on('selection', sync); bus.on('render', sync); sync(); }
+export function mount() { bus.on('layers', sync); bus.on('fit', sync); bus.on('selection', sync); bus.on('render', sync); bus.on('overlay', sync); sync(); }

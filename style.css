@@ -483,10 +483,11 @@
       border: 1px solid rgba(255, 255, 255, .25); background: #ff7a18; }
 
     /* ---- статус-бар ---- */
-    #status { position: fixed; left: max(8px, env(safe-area-inset-left, 0px));
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); z-index: 8;
+    #status, #zoom-status { position: fixed; left: max(8px, env(safe-area-inset-left, 0px)); z-index: 8;
       font-size: 12px; color: var(--txt2); background: var(--panel);
       border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; pointer-events: none; }
+    #status { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); }
+    #zoom-status { bottom: calc(env(safe-area-inset-bottom, 0px) + 38px); }
 
     /* ---- окно 1:1 ---- */
     #prevwin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px));
@@ -620,6 +621,7 @@ body.gallery-open #cropbar,
 body.gallery-open #rotbar,
 body.gallery-open #selbar,
 body.gallery-open #status,
+body.gallery-open #zoom-status,
 body.gallery-open #pickflag,
 body.gallery-open #eyedrop,
 body.gallery-open #bb-val,
