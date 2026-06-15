@@ -6,6 +6,7 @@ import * as actions from '../../core/actions.js';
 import { rgb, eqc } from '../../logic/color.js';
 import { sampleGrid } from '../../logic/sample.js';
 import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
+import { cloneGrid } from '../../logic/raster.js';
 import { symmetrizeV, despeckle, cropEmpty } from '../../logic/cleanup.js';
 import { setTool } from '../../core/tools.js';
 import { dirtyAll } from '../../core/layer-cache.js';
@@ -67,7 +68,7 @@ function insertGridAsLayer(g) {
 
 export function applyImport() {
   if (!impGrid) return;
-  const g = cropEmpty(impGrid.map((r) => r.map((c) => (c ? c.slice() : null))));
+  const g = cropEmpty(cloneGrid(impGrid));
   if (importMode === 'layer') { insertGridAsLayer(g); return; } // в редактор — верхним слоем
   S.W = g[0].length; S.H = g.length;
   S.layerSeq = 1; S.layers = [{ name: t('layer.name') + ' 1', grid: g, opacity: 1, visible: true, fid: null, clip: false, reference: false, ext: new Map(), effects: [] }]; S.cur = 0;

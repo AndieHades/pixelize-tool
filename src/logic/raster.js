@@ -2,6 +2,9 @@
 // без DOM и без глобального состояния.
 export const parseKey = (k) => { const ci = k.indexOf(','); return [+k.slice(0, ci), +k.slice(ci + 1)]; };
 
+// глубокая копия сетки: клетка = [r,g,b,a] или null
+export const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
+
 // альфа-смешивание source-over: s поверх d, sa — доп. множитель альфы источника (0..1)
 export function blendOver(s, d, sa) {
   const ta = sa * (s.length > 3 ? s[3] / 255 : 1);

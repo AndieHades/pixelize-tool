@@ -1,8 +1,8 @@
 // Операции над слоями: добавить, слить отмеченные/диапазон, сгруппировать, дублировать.
-import { S, newLayer, cloneFx, blank } from '../../core/state.js';
+import { S, newLayer, cloneFx, cloneLayer, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
-import { snapshot, cloneGrid } from '../../core/history.js';
+import { snapshot } from '../../core/history.js';
 import { symmetrizeGrid } from '../../logic/raster.js';
 import { rgbToHex } from '../../logic/color.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
@@ -74,7 +74,7 @@ export function doGroup() { const idx = selectedIdx(); // сгруппирова
 
 export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
-  S.layers.splice(idx + 1, 0, { name: L.name + ' ' + t('layer.copySuffix'), opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: false, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) });
+  S.layers.splice(idx + 1, 0, cloneLayer(L, { name: L.name + ' ' + t('layer.copySuffix'), reference: false }));
   S.cur = idx + 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerDup')); }
 
 export function symmetrizeLayerRefs(layers) { const ts = layers.filter((L) => S.layers.includes(L)); if (!ts.length) return;
@@ -143,7 +143,7 @@ export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.len
   const map = new Map(); // имена и id новых папок — уникальны; пушим сразу, чтобы следующие копии это учитывали
   for (const sf of subs) { const nf = { ...sf, id: nextFolderId(), name: uniqueFolderName(sf === f ? sf.name + ' ' + t('layer.copySuffix') : sf.name), effects: cloneFx(sf.effects) }; delete nf.emptyPos; map.set(sf.id, nf); S.folders.push(nf); }
   for (const sf of subs) { const nf = map.get(sf.id); nf.parent = (sf === f) ? (f.parent ?? null) : (map.has(sf.parent) ? map.get(sf.parent).id : sf.parent ?? null); }
-  const copies = kids.map((L) => ({ name: L.name + ' ' + t('layer.copySuffix'), opacity: L.opacity, visible: L.visible, fid: map.get(L.fid).id, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: false, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) }));
+  const copies = kids.map((L) => cloneLayer(L, { name: L.name + ' ' + t('layer.copySuffix'), fid: map.get(L.fid).id, reference: false }));
   const dst = topOfFolder(f.id) + 1; S.layers.splice(dst, 0, ...copies); S.cur = dst + copies.length - 1; S.marked.clear(); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.folderDup')); }
 
 // удалить папку и всё её содержимое (слои + вложенные папки)

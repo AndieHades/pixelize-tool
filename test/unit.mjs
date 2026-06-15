@@ -1,10 +1,10 @@
 // Юнит-тесты модулей src/ — чистый node, без DOM. Валидируют слои и логику
 // по мере сборки новой архитектуры (приложение пока работает на js/*.js).
 import assert from 'node:assert/strict';
-import { S, MAX_LAYERS, blank, newLayer, G } from '../src/core/state.js';
+import { S, MAX_LAYERS, blank, newLayer, cloneLayer, G } from '../src/core/state.js';
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
-import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill } from '../src/logic/raster.js';
+import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill, cloneGrid } from '../src/logic/raster.js';
 import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
@@ -82,6 +82,21 @@ t('flood: область останавливается на непрозрач�
   assert.ok(cells.every(([x]) => x < 2)); });
 
 // --- логика импорта/поворота ---
+t('cloneGrid: глубокая копия, клетки не делят ссылок', () => {
+  const g = [[[1, 2, 3, 255], null], [null, [4, 5, 6, 255]]];
+  const c = cloneGrid(g);
+  assert.deepEqual(c, g); assert.notEqual(c[0][0], g[0][0]);
+  c[0][0][0] = 99; assert.equal(g[0][0][0], 1); // правка копии не трогает оригинал
+});
+t('cloneLayer: копирует все поля, overrides перекрывают, grid/ext независимы', () => {
+  const L = { name: 'A', opacity: 0.5, visible: false, fid: 7, clip: true, lock: true, alphaLock: true,
+    reference: true, symLock: true, ext: new Map([['1,1', [9, 9, 9, 255]]]), grid: [[[1, 2, 3, 255]]], effects: [] };
+  const c = cloneLayer(L, { name: 'A copy', reference: false });
+  assert.equal(c.name, 'A copy'); assert.equal(c.reference, false); // override
+  assert.equal(c.opacity, 0.5); assert.equal(c.fid, 7); assert.equal(c.clip, true); assert.equal(c.alphaLock, true); assert.equal(c.symLock, true);
+  assert.notEqual(c.ext, L.ext); assert.notEqual(c.grid, L.grid);
+  c.grid[0][0][0] = 50; assert.equal(L.grid[0][0][0], 1);
+});
 t('sample: сетка из картинки', () => {
   const data = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255]);
   const r = sampleGrid({ w: 2, h: 2, ch: 4, data }, 1, 0); // bgTol=0 → ничего не считаем фоном

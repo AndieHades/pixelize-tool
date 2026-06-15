@@ -11,11 +11,19 @@ import { BRUSH_RESIZE } from '../config/brush-resize.js';
 import { EYEDROPPER } from '../config/eyedropper.js';
 import { CURSOR } from '../config/cursor.js';
 import { loadBrushPrefs } from './brush-prefs.js';
+import { cloneGrid } from '../logic/raster.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
 export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
 export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, reference: false, ext: new Map(), effects: [] });
+// глубокая копия слоя (история/галерея/дубликат); overrides перекрывают поля
+// (напр. дубликат: reference:false и новое имя). Все поля слоя — в одном месте.
+export const cloneLayer = (L, overrides = {}) => ({
+  name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid,
+  clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock,
+  ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects), ...overrides,
+});
 
 // фабрика эффекта слоя/папки: уникальный id, видимость, копия дефолтных параметров
 let fxSeq = 0;

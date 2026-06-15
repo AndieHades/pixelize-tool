@@ -1,17 +1,18 @@
 // История: снимок всего документа (слои + размеры) и откат. Восстановление
 // шлёт события 'layers'/'render' — история не знает про системы визуала.
-import { S, cloneFx } from './state.js';
+import { S, cloneFx, cloneLayer } from './state.js';
 import * as bus from './bus.js';
 import * as actions from './actions.js';
 import { toast, t } from './dom.js';
 import { dirtyAll } from './layer-cache.js';
 import { historyCap } from '../config/limits.js';
+import { cloneGrid } from '../logic/raster.js';
 
-export const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
+export { cloneGrid }; // канон — в logic/raster.js; реэкспорт для прежних импортов из истории
 
 function snapState() {
   return { cur: S.cur, W: S.W, H: S.H, folderSeq: S.folderSeq, folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })),
-    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) })) };
+    layers: S.layers.map((L) => cloneLayer(L)) };
 }
 
 export function snapshot() { S.undoStack.push(snapState());

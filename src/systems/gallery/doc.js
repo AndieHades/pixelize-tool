@@ -1,8 +1,7 @@
 // Персистентность активной работы: снимок S → запись, восстановление, новая
 // работа (в т.ч. из картинки), автосохранение.
-import { S, newLayer, cloneFx } from '../../core/state.js';
+import { S, newLayer, cloneFx, cloneLayer } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
-import { cloneGrid } from '../../core/history.js';
 import { compositeLayers, dirtyAll } from '../../core/layer-cache.js';
 import { dedupePal } from '../../logic/quantize.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../../config/palette.js';
@@ -17,7 +16,7 @@ function record() {
   const c = document.createElement('canvas'); c.width = S.W; c.height = S.H; compositeLayers(c.getContext('2d'));
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
-    layers: S.layers.map((L) => ({ name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid, clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock, ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects) })),
+    layers: S.layers.map((L) => cloneLayer(L)),
     folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })), palette: S.palette.map((p) => p.slice()), active: S.active.slice(),
     preview: c.toDataURL('image/png'), order: Date.now(), updated: Date.now() };
 }
