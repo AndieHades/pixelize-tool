@@ -1542,7 +1542,7 @@ t('layers-ui: папка показывает количество слоёв, �
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }, { id: 2, name: 'Empty', open: true, visible: true, parent: null, effects: [] }];
   layList();
   const full = document.querySelector('#lay-list .frow[data-fid="1"]'), empty = document.querySelector('#lay-list .frow[data-fid="2"]');
-  assert.equal(full.querySelector('.fcount').textContent, '· 2'); assert.equal(empty.querySelector('.fcount'), null);
+  assert.equal(full.querySelector('.fcount').textContent, '2'); assert.equal(empty.querySelector('.fcount'), null); // '· ' — в CSS (.fcount::before)
   assert.ok(S.folders.some((f) => f.id === 2));
 });
 t('layers-ui: два бара действий по 6 кнопок и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
