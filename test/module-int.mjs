@@ -50,6 +50,8 @@ const pal = await import('../src/systems/palette.js');
 const swipe = await import('../src/core/swipe-actions.js');
 const bb = await import('../src/systems/brush-bar.js');
 const brushResize = await import('../src/systems/brush-resize.js');
+const brushData = await import('../src/systems/brush-library/data.js');
+const brushList = await import('../src/systems/brush-library/list.js');
 const eyedropper = await import('../src/systems/eyedropper/index.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
@@ -511,6 +513,21 @@ t('brush-bar: хоткеи размера кисти упираются в по�
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
   actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
   S.brushes.pencil = { size: 1, op: 1 }; S.brushes.eraser = { size: 1, op: 1 }; saveBrushPrefs(S);
+});
+t('brush-library: иконки остаются читаемыми при маленьком размере кисти', () => {
+  const proto = HTMLCanvasElement.prototype, orig = proto.getContext, old = brushData.lib.brushes;
+  proto.getContext = function (...args) { const ctx = orig.apply(this, args), canvas = this;
+    return new Proxy(ctx, { get(tg, p) { if (p === 'putImageData') return (img) => { canvas.__pixels = img.data; };
+      if (p === 'createImageData') return (w, h) => ({ data: new Uint8ClampedArray(w * h * 4), width: w, height: h });
+      return tg[p]; } }); };
+  try {
+    S.brushes.pencil.size = 1; brushList.bindList({ mode: () => 'pencil' });
+    brushData.lib.brushes = [{ id: 'sq', name: 'Square', order: 0, source: 'base', shape: 'shape',
+      cov: { w: 1, h: 1, data: new Uint8Array([255]) }, grain: null, params: {} }];
+    brushList.renderBrushes(); const cv = document.querySelector('#brush-list canvas');
+    let on = 0; for (let i = 3; i < cv.__pixels.length; i += 4) if (cv.__pixels[i]) on++;
+    assert.ok(on > 900);
+  } finally { proto.getContext = orig; brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
 });
 t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');
