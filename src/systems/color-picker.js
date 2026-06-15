@@ -46,6 +46,39 @@ function syncModeActions() {
 
 function focusHex() { $('col-hex').focus(); $('col-hex').select(); }
 
+function cssPx(el, prop) {
+  const view = el && el.ownerDocument && el.ownerDocument.defaultView;
+  const cs = view && view.getComputedStyle ? view.getComputedStyle(el) : null;
+  const n = cs ? parseFloat(cs[prop]) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
+function discBox() {
+  const disc = $('col-disc'), r = disc.getBoundingClientRect();
+  const w = r.width || disc.clientWidth || cssPx(disc, 'width') || 286;
+  const h = r.height || disc.clientHeight || cssPx(disc, 'height') || w;
+  return { left: r.left || 0, top: r.top || 0, width: w, height: h };
+}
+
+function svDiscBox(disc = discBox()) {
+  const sv = $('col-svdisc'), r = sv.getBoundingClientRect();
+  const d = r.width || sv.clientWidth || cssPx(sv, 'width') || Math.round(Math.min(disc.width, disc.height) * DISC_INNER_RATIO);
+  const left = r.width ? r.left - disc.left : (sv.offsetLeft || (disc.width - d) / 2);
+  const top = r.height ? r.top - disc.top : (sv.offsetTop || (disc.height - d) / 2);
+  return { left, top, width: d, height: r.height || sv.clientHeight || cssPx(sv, 'height') || d };
+}
+
+function afterLayout(fn) {
+  const view = document.defaultView;
+  const raf = view && view.requestAnimationFrame ? view.requestAnimationFrame.bind(view) : (cb) => setTimeout(cb, 0);
+  raf(fn);
+}
+
+function showColPop() {
+  $('colpop').classList.add('on');
+  afterLayout(syncColUI);
+}
+
 function syncColUI() { const hex = rgbToHex(hsvToRgb(colH, colS, colV)).toUpperCase();
   $('col-h').value = Math.round(colH); $('col-hv').textContent = Math.round(colH);
   $('col-s').value = Math.round(colS); $('col-sv').textContent = Math.round(colS);
@@ -54,11 +87,11 @@ function syncColUI() { const hex = rgbToHex(hsvToRgb(colH, colS, colV)).toUpperC
   $('col-prev-sw').style.background = prevHex; $('col-prev-sw').title = prevHex;
   $('col-sw').style.background = hex; $('col-sw').title = hex; if (document.activeElement !== $('col-hex')) $('col-hex').value = hex;
   const hueHex = rgbToHex(hsvToRgb(colH, 100, 100)); $('col-disc').style.setProperty('--col-hue', hueHex);
-  const r = $('col-disc').clientWidth / 2 || 143, hueInner = Math.min(r, r * DISC_INNER_RATIO + DISC_GAP), ringR = (r + hueInner) / 2, a = (colH - 90) * Math.PI / 180;
+  const disc = discBox(), r = Math.min(disc.width, disc.height) / 2, hueInner = Math.min(r, r * DISC_INNER_RATIO + DISC_GAP), ringR = (r + hueInner) / 2, a = (colH - 90) * Math.PI / 180;
   $('col-hmark').style.left = (r + Math.cos(a) * ringR) + 'px'; $('col-hmark').style.top = (r + Math.sin(a) * ringR) + 'px'; $('col-hmark').style.background = hueHex;
-  const sv = $('col-svdisc'), svD = sv.clientWidth || Math.round(r * 2 * 2 / 3), svR = svD / 2;
-  let sx = sv.offsetLeft + svD * colS / 100, sy = sv.offsetTop + svD * (100 - colV) / 100;
-  const scx = sv.offsetLeft + svR, scy = sv.offsetTop + svR, sd = Math.hypot(sx - scx, sy - scy);
+  const sv = svDiscBox(disc), svD = Math.min(sv.width, sv.height), svR = svD / 2;
+  let sx = sv.left + svD * colS / 100, sy = sv.top + svD * (100 - colV) / 100;
+  const scx = sv.left + svR, scy = sv.top + svR, sd = Math.hypot(sx - scx, sy - scy);
   if (sd > svR) { sx = scx + (sx - scx) / sd * svR; sy = scy + (sy - scy) / sd * svR; }
   $('col-svmark').style.left = sx + 'px'; $('col-svmark').style.top = sy + 'px'; $('col-svmark').style.background = hex;
   $('col-svmark').classList.toggle('white', colS < 8 && colV > 92);
@@ -79,19 +112,19 @@ export function syncColFromActive(keepPrevious = false) { if (!keepPrevious) pre
 // окна — можно растащить); повторный тап при обоих открытых — прячет оба.
 function openColPop() { const pb = $('palbar'), cp = $('colpop');
   if (!pb.classList.contains('closed') && cp.classList.contains('on')) { pb.classList.add('closed'); cp.classList.remove('on'); onPick = null; return; }
-  pb.classList.remove('closed'); replaceFrom = null; onPick = null; syncModeActions(); $('fx-edit').classList.remove('on'); syncColFromActive(); cp.classList.add('on'); }
+  pb.classList.remove('closed'); replaceFrom = null; onPick = null; syncModeActions(); $('fx-edit').classList.remove('on'); showColPop(); syncColFromActive(); }
 
 // открыть наш пикер для выбора нового цвета в палитру (вместо нативного input)
-export function openColPick() { replaceFrom = null; onPick = null; syncModeActions(); $('fx-edit').classList.remove('on'); syncColFromActive(); $('colpop').classList.add('on'); }
+export function openColPick() { replaceFrom = null; onPick = null; syncModeActions(); $('fx-edit').classList.remove('on'); showColPop(); syncColFromActive(); }
 
 // открыть наш пикер в режиме «заменить цвет from на выбранный по всему рисунку»
 export function openColReplace(from) { replaceFrom = null; onPick = null; replaceFrom = from.slice(); $('fx-edit').classList.remove('on');
   const seed = Array.isArray(from[0]) ? S.active : from;
-  const [h, s, v] = rgbToHsv(seed[0], seed[1], seed[2]); colH = h; colS = s; colV = v; syncColUI(); syncModeActions(); $('colpop').classList.add('on'); }
+  const [h, s, v] = rgbToHsv(seed[0], seed[1], seed[2]); colH = h; colS = s; colV = v; showColPop(); syncColUI(); syncModeActions(); }
 
 // открыть наш пикер для произвольной цели (эффекты): cb(hex) на каждое изменение; окно эффекта не прячем
 export function openColFor(hex, cb) { replaceFrom = null; onPick = cb || null;
-  const [h, s, v] = rgbToHsv(...hexToRgb(hex)); colH = h; colS = s; colV = v; syncColUI(); syncModeActions(); $('colpop').classList.add('on'); }
+  const [h, s, v] = rgbToHsv(...hexToRgb(hex)); colH = h; colS = s; colV = v; showColPop(); syncColUI(); syncModeActions(); }
 
 export function mount() {
   loadColorHistory(); renderColorHistory(); syncModeActions();
@@ -105,15 +138,13 @@ export function mount() {
     if (!moved) { openColPop(); return; }
     if (!actions.run('layer.dropColorAt', S.active, e.clientX, e.clientY)) actions.run('edit.dropColorAt', S.active, e.clientX, e.clientY); });
   $('activewrap').addEventListener('pointercancel', () => { if (drop) { drop = null; $('swdrop').classList.remove('on'); } });
-  const rectWithSize = (el, fallback) => { const r = el.getBoundingClientRect(), w = r.width || el.clientWidth || fallback, h = r.height || el.clientHeight || fallback;
-    return { left: r.left, top: r.top, width: w, height: h }; };
   const svPoint = (e) => {
-    const disc = rectWithSize($('col-disc'), 286);
-    const sv = rectWithSize($('col-svdisc'), Math.round(Math.min(disc.width, disc.height) * 2 / 3)), svCx = sv.left + sv.width / 2, svCy = sv.top + sv.height / 2;
+    const disc = discBox(), sv = svDiscBox(disc), svLeft = disc.left + sv.left, svTop = disc.top + sv.top;
+    const svCx = svLeft + sv.width / 2, svCy = svTop + sv.height / 2;
     if (Math.hypot(e.clientX - svCx, e.clientY - svCy) > Math.min(sv.width, sv.height) / 2) return null;
     return {
-      s: Math.max(0, Math.min(100, (e.clientX - sv.left) / sv.width * 100)),
-      v: Math.max(0, Math.min(100, 100 - (e.clientY - sv.top) / sv.height * 100)),
+      s: Math.max(0, Math.min(100, (e.clientX - svLeft) / sv.width * 100)),
+      v: Math.max(0, Math.min(100, 100 - (e.clientY - svTop) / sv.height * 100)),
       sv,
     };
   };
@@ -124,7 +155,7 @@ export function mount() {
     setColorFromHsv(colH, best[0], best[1]);
   };
   const discPick = (e) => {
-    const r = rectWithSize($('col-disc'), 286), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const r = discBox(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy), outer = Math.min(r.width, r.height) / 2, inner = outer * DISC_INNER_RATIO;
     if (d >= inner + DISC_GAP && d <= outer) { setColorFromHsv((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360, colS, colV); return 'hue'; }
     const p = svPoint(e); if (p) { setColorFromHsv(colH, p.s, p.v); return 'sv'; }

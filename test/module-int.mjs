@@ -817,6 +817,18 @@ t('gallery: режим галереи сохраняет открытые окн
   ids.forEach((id) => document.getElementById(id).classList.remove('on'));
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
+t('color-picker: первый sync скрытого окна держит маркер внутри внутреннего круга', () => {
+  const pop = document.getElementById('colpop'), disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
+  pop.classList.remove('on');
+  disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 });
+  sv.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 });
+  Object.defineProperty(disc, 'clientWidth', { value: 0, configurable: true });
+  Object.defineProperty(sv, 'clientWidth', { value: 0, configurable: true });
+  S.active = [144, 170, 188]; cp.syncColFromActive();
+  const x = parseFloat(document.getElementById('col-svmark').style.left), y = parseFloat(document.getElementById('col-svmark').style.top);
+  assert.ok(x >= 47 && x <= 239);
+  assert.ok(y >= 47 && y <= 239);
+});
 t('color-picker: диск, плюс и история использованных цветов работают без большой Add-кнопки', () => { localStorage.removeItem('pixel-heart:color-used-history'); cp.mount(); document.getElementById('col-hist-clear').click(); S.palette = [];
   assert.ok(document.getElementById('col-disc')); assert.ok(document.getElementById('col-prev-sw')); assert.ok(document.getElementById('col-copy')); assert.equal(document.querySelector('#colpop .iact'), null);
   S.active = [10, 20, 30]; cp.syncColFromActive();
