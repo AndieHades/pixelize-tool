@@ -59,13 +59,29 @@ export function floatingWindow(el, opts = {}) {
   if (xb) xb.addEventListener('click', (e) => { e.stopPropagation(); if (onClose) onClose(); else el.classList.remove('on'); });
 
   el.addEventListener('pointerdown', () => bringToFront(el, alwaysOnTop), true); // любой тык по окну — наверх стопки
+
+  // Перетаскивание за ЛЮБОЕ свободное место окна, не только за грип: на тач, если
+  // верх окна скрыт за панелью, его всё равно можно ухватить за пустую область.
+  // Исключаем интерактив, canvas, диск пикера и прокручиваемые зоны.
+  const NODRAG = interactive + ',canvas,.fw-nodrag,.fw-rsz-edge,#col-disc';
+  const scrolls = (n) => /(auto|scroll)/.test(window.getComputedStyle(n).overflowY + window.getComputedStyle(n).overflowX);
+  const rootScrolls = scrolls(el);
+  if (!rootScrolls) el.classList.add('fw-win'); // touch-action: none → тащится с тача из любой точки
+  const canDragFrom = (t) => {
+    if (t.closest(NODRAG)) return false;
+    if (grip !== el && grip.contains(t)) return true;  // шапка тащит всегда
+    if (rootScrolls) return false;                     // тело прокручиваемого окна не тащим — для него есть грип
+    for (let n = t; n && n !== el; n = n.parentElement) if (scrolls(n) && n.scrollHeight > n.clientHeight + 1) return false;
+    return true;
+  };
   let d = null;
-  grip.addEventListener('pointerdown', (e) => { if (e.target.closest(interactive)) return;
-    try { grip.setPointerCapture(e.pointerId); } catch (err) {}
-    bringToFront(el, alwaysOnTop); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
-  grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
-  const dEnd = () => { if (d) { d = null; placed = true; save(); } };
-  grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
+  el.addEventListener('pointerdown', (e) => {
+    if (e.button > 0 || d || !canDragFrom(e.target)) return;
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    bringToFront(el, alwaysOnTop); const r = el.getBoundingClientRect(); d = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+  el.addEventListener('pointermove', (e) => { if (d && e.pointerId === d.id) { e.preventDefault(); place(e.clientX - d.dx, e.clientY - d.dy); } });
+  const dEnd = (e) => { if (d && (!e || e.pointerId === d.id)) { d = null; placed = true; save(); } };
+  el.addEventListener('pointerup', dEnd); el.addEventListener('pointercancel', dEnd);
 
   let rz = null;
   const pos = (l, t) => { el.style.left = l + 'px'; el.style.top = t + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto'; el.style.transform = 'none'; };
