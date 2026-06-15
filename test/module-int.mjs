@@ -242,7 +242,8 @@ await ta('draw: удержание фигуры на месте → ровный
 t('eyedropper: color.setActive ставит активный цвет, не меняя инструмент', () => { reset4(); S.tool = 'pencil'; S.active = [1, 2, 3];
   actions.run('color.setActive', [40, 50, 60]); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 
-t('rotate-canvas: меняет W/H местами', () => { resetWH(4, 6); rotateCanvas(); assert.equal(S.W, 6); assert.equal(S.H, 4); });
+t('rotate-canvas: поворачивает содержимое без изменения размера холста', () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
+  rotateCanvas(); assert.equal(S.W, 4); assert.equal(S.H, 6); assert.deepEqual(S.layers[0].ext.get('4,1'), [7, 7, 7, 255]); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
 t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); });
 t('center: объект встаёт в центр холста', () => { resetWH(8, 8); S.sel = null; S.selMask = null; S.layers[0].grid[1][1] = [1, 1, 1, 255]; cache.dirtyAll();
@@ -640,6 +641,11 @@ t('fx: Convert To Layer — новый слой только с эффектом
   const nl = S.layers[S.layers.indexOf(L) - 1]; // слой под источником
   assert.ok(nl && nl.grid.some((r) => r.some((c) => c && c[0] === 255))); // в новом слое только пиксели обводки
   assert.deepEqual(L.grid[4][4], [1, 1, 1, 255]); }); // исходный пиксель не тронут
+t('fx: Convert To Layer у эффекта папки оставляет слой внутри этой папки', () => { resetWH(8, 8); const L = S.layers[0]; L.fid = 1; L.grid[4][4] = [1, 1, 1, 255];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }] }];
+  cache.dirtyAll(); const eff = S.folders[0].effects[0]; actions.run('fx.convert', S.folders[0], eff);
+  assert.equal(S.folders[0].effects.length, 0); assert.equal(S.layers.length, 2); assert.equal(S.layers[0].fid, 1);
+  assert.equal(S.layers[1], L); assert.deepEqual(S.layers[1].grid[4][4], [1, 1, 1, 255]); });
 t('fx: Copy Effects + Paste копирует все эффекты, копии независимы', () => { resetWH(8, 8); const src = S.layers[0];
   src.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }, { id: 2, type: 'glow', visible: false, params: { size: 3, intensity: 0.5, color: '#00ff00' } }];
   lops.doAddLayer(); const tgt = S.layers[S.cur]; actions.run('fx.copyAll', src); actions.run('fx.paste');
@@ -818,6 +824,9 @@ t('selection-float: повторный перенос не стирает под
 t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
+t('transform: слой за краем не меняет размер холста', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [7, 7, 7, 255]; cache.dirtyAll();
+  tf.enterRotMode(S.layers[0]); S.rotMode.tx = -2; S.rotMode.changed = true; tf.exitRotMode(true);
+  assert.equal(S.W, 4); assert.equal(S.H, 4); assert.deepEqual(S.layers[0].ext.get('-2,0'), [7, 7, 7, 255]); });
 t('transform: ЛКМ вне рамки завершает трансформацию', () => { tf.mount(); resetWH(8, 8); S.tool = 'move'; S.view = { zoom: 10, ox: 0, oy: 0 }; S.layers[0].grid[2][2] = [1, 2, 3, 255]; cache.dirtyAll();
   actions.run('transform.enter'); assert.ok(S.rotMode); // вошли в свободную трансформацию
   input.down({ pointerType: 'mouse', button: 0, clientX: -100, clientY: -100, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
@@ -830,6 +839,10 @@ t('transform: Ctrl+T с Selection трансформирует фрагмент 
   S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
   assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
+t('transform: выделение за краем не меняет размер холста', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+  S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null; actions.run('transform.enter');
+  S.rotMode.tx = -1; S.rotMode.changed = true; tf.exitRotMode(true);
+  assert.equal(S.W, 4); assert.equal(S.H, 4); assert.deepEqual(S.layers[0].ext.get('-1,0'), [9, 9, 9, 255]); });
 t('transform: undo закрывает активную трансформацию без отката истории', () => { resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[2][2] = [4, 4, 4, 255]; history.snapshot(); actions.run('transform.enter');
   S.rotMode.tx = 2; S.rotMode.changed = true; history.doUndo();

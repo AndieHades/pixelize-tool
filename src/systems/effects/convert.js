@@ -16,7 +16,7 @@ function insertAt(target, inner) {
   if (target.grid) { const si = S.layers.indexOf(target); return { at: inner ? si + 1 : si, fid: target.fid }; }
   const idxs = S.layers.map((L, k) => (folderChain(L.fid).some((f) => f.id === target.id) ? k : -1)).filter((k) => k >= 0);
   const at = idxs.length ? (inner ? Math.max(...idxs) + 1 : Math.min(...idxs)) : S.layers.length;
-  return { at, fid: target.parent ?? null };
+  return { at, fid: target.id };
 }
 
 export function convertFxToLayer(target, eff) { if (!target || !eff) return;

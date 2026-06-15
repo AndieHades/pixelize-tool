@@ -5,7 +5,6 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $, showMenuAt, toast, t } from '../../core/dom.js';
 import { snapshot, setUndoGuard, cloneGrid } from '../../core/history.js';
-import { expandCanvas } from '../../core/document.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { registerMode } from '../../core/canvas-handlers.js';
 import { effVis, folderChain, symA, symHA } from '../../core/layers.js';
@@ -16,8 +15,8 @@ import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.j
 
 let rotRAF = 0;
 
-// трансформированный контент одного слоя на полном W×H (вне холста — обрезается,
-// при применении холст расширяется); эффекты накладываются в fxPreview по новой форме
+// трансформированный контент одного слоя на полном W×H (вне холста — скрыт в превью,
+// при применении уходит в ext); эффекты накладываются в fxPreview по новой форме
 function memberCanvas(cells, W, H) { const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d'), id = x.createImageData(W, H);
   for (const [px, py, cc] of cells) { if (px < 0 || py < 0 || px >= W || py >= H) continue;
@@ -89,25 +88,22 @@ function applyRotMode(m) { let res = null, per = [];
   for (const s of m.sources) { const r = rotBuildCellsSym(m, s.src, S.W, S.H); per.push({ s, r }); if (!r) continue;
     res = res ? { minx: Math.min(res.minx, r.minx), miny: Math.min(res.miny, r.miny), maxx: Math.max(res.maxx, r.maxx), maxy: Math.max(res.maxy, r.maxy) } : r; }
   if (!res) { toast(t('toast.transformEmpty')); return false; }
-  if (m.selection) return applySelectionRotMode(m, per, res);
+  if (m.selection) return applySelectionRotMode(m, per);
   snapshot();
-  const pl = Math.max(0, -res.minx), pt = Math.max(0, -res.miny), pr = Math.max(0, res.maxx - (S.W - 1)), pb = Math.max(0, res.maxy - (S.H - 1));
-  if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
   for (const { s, r } of per) { const L = s.L; if (!S.layers.includes(L)) continue; const g = blank(S.W, S.H);
-    if (r) for (const [x, y, c] of r.cells) { const nx = x + pl, ny = y + pt; if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) g[ny][nx] = c.slice(); }
-    L.grid = g; L.ext = new Map(); const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }
+    const ext = new Map();
+    if (r) for (const [x, y, c] of r.cells) { if (x >= 0 && y >= 0 && x < S.W && y < S.H) g[y][x] = c.slice(); else ext.set(x + ',' + y, c.slice()); }
+    L.grid = g; L.ext = ext; const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }
   dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
 
 function restoreSelectionMode(m) { const b = m.selection, L = m.sources[0].L;
   if (!b || !L) return; L.grid = cloneGrid(b.grid); L.ext = new Map(b.ext); S.cur = b.idx; S.sel = null; S.selMask = null; markDirty(b.idx); }
 
-function applySelectionRotMode(m, per, res) { const b = m.selection, L = m.sources[0].L;
+function applySelectionRotMode(m, per) { const b = m.selection, L = m.sources[0].L;
   L.grid = cloneGrid(b.grid); L.ext = new Map(b.ext); S.cur = b.idx; S.sel = cloneSel(b.sel); S.selMask = cloneMask(b.mask); snapshot();
-  const pl = Math.max(0, -res.minx), pt = Math.max(0, -res.miny), pr = Math.max(0, res.maxx - (S.W - 1)), pb = Math.max(0, res.maxy - (S.H - 1));
-  if (pl || pt || pr || pb) expandCanvas(pl, pt, pr, pb);
-  clearSelectionCells(L, b.sel, b.mask, pl, pt);
-  for (const { r } of per) if (r) for (const [x, y, c] of r.cells) { const nx = x + pl, ny = y + pt;
-    if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) L.grid[ny][nx] = c.slice(); }
+  clearSelectionCells(L, b.sel, b.mask, 0, 0);
+  for (const { r } of per) if (r) for (const [x, y, c] of r.cells) {
+    if (x >= 0 && y >= 0 && x < S.W && y < S.H) L.grid[y][x] = c.slice(); else L.ext.set(x + ',' + y, c.slice()); }
   S.sel = null; S.selMask = null; markDirty(b.idx); dirtyAll(); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); return true; }
 
 export function undoRotStep() { if (!S.rotMode) return false;
