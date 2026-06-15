@@ -210,7 +210,7 @@ export function mount() {
     const col = cols[0]; $('ctx').classList.remove('on'); if (!col) return;
     const act = btn.dataset.act;
     if (act === 'copy') { const h = cols.map((c) => rgbToHex(c).toUpperCase()).join('\n'); copyText(h).then(() => toast(t('toast.copied', { s: h }))); }
-    else if (act === 'shade') actions.run('shading.setRamp', cols);
+    else if (act === 'shade') { palSel = new Set(); palAnchorIdx = -1; actions.run('shading.setRamp', cols); }
     else if (act === 'delete') deleteIdxs(ids);
     else if (act === 'select') actions.run('selection.byColor', cols);
     else if (act === 'replace') actions.run('color.replace', cols); });

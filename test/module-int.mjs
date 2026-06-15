@@ -556,8 +556,7 @@ t('palette: drag ЛКМ выделяет диапазон, Shading включа�
     document.querySelector('#ctx [data-act="shade"]').click();
     assert.deepEqual(S.shading.colors, [[0, 0, 0], [40, 40, 40], [80, 80, 80]]);
     assert.ok(document.getElementById('shade-pop').classList.contains('on'));
-    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
-    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; sw[3].click(); sw[3].click(); // снять диапазон перед обратным выделением
+    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
     sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
     document.elementFromPoint = () => sw[0];
     sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 0 }));
@@ -591,6 +590,7 @@ t('palette: Ctrl+клик выбирает общий диапазон, Shading 
   document.querySelector('#ctx [data-act="shade"]').click();
   assert.deepEqual(S.shading.colors, [[7, 7, 7], [6, 6, 6], [5, 5, 5], [4, 4, 4], [3, 3, 3], [2, 2, 2]]);
   assert.equal(document.querySelectorAll('#pal .shade-sel').length, 6);
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
   assert.ok(document.getElementById('shade-pop').classList.contains('on'));
 });
 t('palette: ПКМ меню удаляет выделенный диапазон цветов', () => {
