@@ -29,12 +29,13 @@
   justify-content: flex-start; gap: var(--gal-grid-gap); padding: var(--gal-grid-pad-top) var(--gal-grid-pad-x) var(--gal-grid-pad-bottom);
   align-content: start; align-items: flex-start; }
 .gal-tile { width: var(--gal-tile); cursor: pointer; user-select: none; min-width: 0; }
-/* Квадратная подложка держит ряд ровным; img внутри центрируется через object-fit: contain. */
+/* Квадратная подложка держит ряд ровным; картинка уменьшается в safe-zone и не режется рамкой. */
 .gal-thumb { position: relative; width: var(--gal-tile); height: var(--gal-tile); display: grid; place-items: center;
   padding: 0; background: var(--panel-solid); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden;
   transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform var(--anim-fast) var(--ease-out); }
-.gal-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; image-rendering: pixelated; }
+.gal-thumb img { --gal-preview-box: calc(100% - var(--gal-preview-inset) - var(--gal-preview-inset));
+  display: block; width: var(--gal-preview-box); height: var(--gal-preview-box); object-fit: contain; object-position: center; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { padding: var(--gal-thumb-pad); }
 .gal-tile:hover .gal-thumb { border-color: var(--accent); }
 .gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
