@@ -58,7 +58,7 @@ function layDrop(src, row, into, below) { const tIsFolder = row.classList.contai
     for (const f of foldersToMove) if (block.length) delete f.emptyPos;
     clearFolderEmptyPos(newParent);
     S.cur = Math.min(S.cur, S.layers.length - 1); S.markedFolders = new Set(foldersToMove.map((f) => f.id)); S.selFolder = foldersToMove[0] ? foldersToMove[0].id : null; S.marked.clear(); }
-  dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  dirtyAll(); bus.emitDoc(); }
 
 export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {

@@ -62,7 +62,7 @@ function cancelAdjustment() {
   if (!bcSession) return;
   if (bcSession.isNew) S.fxDraft = null;
   else bcSession.eff.params = { ...bcSession.original };
-  bcSession = null; bus.emit('layers'); bus.emit('render');
+  bcSession = null; bus.emitDoc();
 }
 
 function beginCanvas() {
@@ -134,13 +134,13 @@ export function bcApply() {
     if (!bcBackup) return;
     const params = controlsToParams(), backup = bcBackup;
     restoreCanvas(); snapshot(); bcBackup = backup; setControls(params); bcPreview();
-    bcBackup = null; bcLayerTargets = null; bcLockScope = false; $('bcpop').classList.remove('on'); bus.emit('layers'); bus.emit('render'); return;
+    bcBackup = null; bcLayerTargets = null; bcLockScope = false; $('bcpop').classList.remove('on'); bus.emitDoc(); return;
   }
   if (!bcSession) return;
   const { target, eff, isNew, original } = bcSession, cur = adjustmentParams(eff.params);
   if (isNew) { snapshot(); target.effects.push(eff); S.fxDraft = null; }
   else { eff.params = { ...original }; snapshot(); eff.params = cur; }
-  bcSession = null; bcLayerTargets = null; bcLockScope = false; $('bcpop').classList.remove('on'); bus.emit('layers'); bus.emit('render');
+  bcSession = null; bcLayerTargets = null; bcLockScope = false; $('bcpop').classList.remove('on'); bus.emitDoc();
 }
 
 export function bcCancel() {

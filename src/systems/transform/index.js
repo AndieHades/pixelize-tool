@@ -89,7 +89,7 @@ function applyRotMode(m) { let res = null, per = [];
     const ext = new Map();
     if (r) for (const [x, y, c] of r.cells) { if (x >= 0 && y >= 0 && x < S.W && y < S.H) g[y][x] = c.slice(); else ext.set(x + ',' + y, c.slice()); }
     L.grid = g; L.ext = ext; const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }
-  dirtyAll(); bus.emit('layers'); bus.emit('render'); return true; }
+  dirtyAll(); bus.emitDoc(); return true; }
 
 function restoreSelectionMode(m) { const b = m.selection;
   if (!b) return;
@@ -106,7 +106,7 @@ function applySelectionRotMode(m, per) { const b = m.selection, backups = b.laye
     if (x >= 0 && y >= 0 && x < S.W && y < S.H) s.L.grid[y][x] = c.slice(); else s.L.ext.set(x + ',' + y, c.slice()); }
   S.sel = null; S.selMask = null;
   for (const layerBackup of backups) markDirty(layerBackup.idx);
-  dirtyAll(); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); return true; }
+  dirtyAll(); bus.emit('selection'); bus.emitDoc(); return true; }
 
 export function undoRotStep() { if (!S.rotMode) return false;
   if (!S.rotMode.hist.length) { toast(t('toast.noTransformUndo')); return true; }

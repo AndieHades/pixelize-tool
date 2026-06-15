@@ -15,3 +15,8 @@ export function emit(event, payload) {
   if (!set) return;
   for (const fn of set) fn(payload);
 }
+
+// частый дуэт «изменился состав слоёв + нужна перерисовка» — один вызов вместо
+// двух emit подряд (меньше шума и риска забыть один из сигналов)
+export function emitDoc() { emit('layers'); emit('render'); }
+

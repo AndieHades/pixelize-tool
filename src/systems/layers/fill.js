@@ -29,7 +29,7 @@ export function fillLayerRefs(layers, color) {
     }
     markDirty(S.layers.indexOf(L));
   }
-  actions.run('color.used', color); bus.emit('layers'); bus.emit('render'); return true;
+  actions.run('color.used', color); bus.emitDoc(); return true;
 }
 
 export function dropColorAtLayer(color, clientX, clientY) {
@@ -38,7 +38,7 @@ export function dropColorAtLayer(color, clientX, clientY) {
   if (fxrow && fxrow.__eff && fxrow.__eff.params && Object.prototype.hasOwnProperty.call(fxrow.__eff.params, 'color')) {
     snapshot(); fxrow.__eff.params.color = rgbToHex(color).toLowerCase();
     S.fxCur = fxrow.__eff; S.fxSel = new Set([fxrow.__eff]);
-    actions.run('color.used', color); dirtyAll(); bus.emit('layers'); bus.emit('render'); return true;
+    actions.run('color.used', color); dirtyAll(); bus.emitDoc(); return true;
   }
   const row = el && el.closest ? el.closest('#lay-list .lrow[data-li], #lay-list .lrow[data-fid]') : null;
   if (!row) return false;

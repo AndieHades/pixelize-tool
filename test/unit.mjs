@@ -46,6 +46,7 @@ t('state: blank/newLayer', () => { const L = newLayer('x', 4, 3); assert.equal(L
 t('state: G() — сетка текущего слоя', () => { assert.equal(G(), S.layers[S.cur].grid); });
 
 t('bus: on/emit синхронно', () => { let got = 0; const off = bus.on('ping', (v) => { got = v; }); bus.emit('ping', 7); assert.equal(got, 7); off(); bus.emit('ping', 9); assert.equal(got, 7); });
+t('bus: emitDoc шлёт layers и render', () => { const seen = []; const o1 = bus.on('layers', () => seen.push('l')); const o2 = bus.on('render', () => seen.push('r')); bus.emitDoc(); o1(); o2(); assert.deepEqual(seen, ['l', 'r']); });
 
 t('color: hex↔rgb', () => { assert.deepEqual(hexToRgb('#ff7a18'), [255, 122, 24]); assert.equal(rgbToHex([255, 122, 24]), '#ff7a18'); assert.equal(rgb([1, 2, 3]), 'rgb(1,2,3)'); });
 t('color: eqc по RGB', () => { assert.ok(eqc([1, 2, 3], [1, 2, 3, 200])); assert.ok(!eqc([1, 2, 3], [1, 2, 4])); });

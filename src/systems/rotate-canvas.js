@@ -19,7 +19,7 @@ export function rotateCanvas() {
     for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (old[y][x]) put(L, ...rotPt(x, y), old[y][x]);
     for (const [k, c] of oldExt) { const [x, y] = parseKey(k); put(L, ...rotPt(x, y), c); } }
   S.sel = null; S.selMask = null;
-  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.rotated90'));
+  bus.emit('selection'); dirtyAll(); bus.emitDoc(); toast(t('toast.rotated90'));
 }
 
 actions.register('canvas.rotate', rotateCanvas);

@@ -10,7 +10,7 @@ import { convertFxToLayer } from './convert.js';
 import { pasteTargets, getFxClip, setFxClip, ownerOf, selectedEffects } from './shared.js';
 
 let ref = null; // { target, eff } — по какой строке открыто меню
-const refresh = () => { bus.emit('layers'); bus.emit('render'); };
+const refresh = () => { bus.emitDoc(); };
 
 export function deleteFx() { const list = selectedEffects(); if (!list.length) return; snapshot();
   for (const e of list) { const o = ownerOf(e); if (o) { const i = o.effects.indexOf(e); if (i >= 0) o.effects.splice(i, 1); } }

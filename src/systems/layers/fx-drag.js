@@ -29,7 +29,7 @@ export function fxDrop(blk, row, below) { let owner, at;
   else { owner = rowTarget(row); if (!owner) return; if (!owner.effects) owner.effects = []; at = owner.effects.length; }
   snapshot();
   for (const e of blk) { const [o, k] = ownerIndex(e); if (o) { o.effects.splice(k, 1); if (o === owner && k < at) at--; } }
-  owner.effects.splice(at, 0, ...blk); dirtyAll(); bus.emit('layers'); bus.emit('render'); } // dirtyAll — гарантированно сбросить кеш эффектов на старом и новом владельце
+  owner.effects.splice(at, 0, ...blk); dirtyAll(); bus.emitDoc(); } // dirtyAll — гарантированно сбросить кеш эффектов на старом и новом владельце
 
 const findRow = (x, y) => { const t = document.elementFromPoint(x, y);
   return t && t.closest ? t.closest('#lay-list .fxrow:not(.dragging), #lay-list .lrow:not(.dragging)') : null; };

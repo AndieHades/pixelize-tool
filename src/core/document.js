@@ -56,7 +56,7 @@ export function expandForEffects(target) {
   const pl = Math.max(0, R.l - b.minx), pt = Math.max(0, R.t - b.miny);
   const pr = Math.max(0, b.maxx + R.r - (S.W - 1)), pb = Math.max(0, b.maxy + R.b - (S.H - 1));
   if (!(pl || pt || pr || pb)) return false;
-  expandCanvas(pl, pt, pr, pb); bus.emit('layers'); bus.emit('render');
+  expandCanvas(pl, pt, pr, pb); bus.emitDoc();
   toast(t('toast.canvasSize', { w: S.W, h: S.H })); return true;
 }
 
@@ -75,7 +75,7 @@ export function applyCropRect(x0, y0, x1, y1) {
       if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; } else ne.set(ax + ',' + ay, c); }
     L.grid = out; L.ext = ne; }
   S.W = nw; S.H = nh; keepCanvasScreenSize(oldW, oldH, nw, nh); S.sel = null;
-  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('render');
+  bus.emit('selection'); dirtyAll(); bus.emitDoc();
   toast(t('toast.canvasSize', { w: S.W, h: S.H }));
 }
 

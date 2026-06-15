@@ -32,5 +32,5 @@ export function convertFxToLayer(target, eff) { if (!target || !eff) return;
   const { at, fid } = insertAt(target, INNER_EFFECTS.has(eff.type)); nl.fid = fid;
   S.layers.splice(at, 0, nl); clearFolderEmptyPos(fid); S.cur = at;
   S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
-  dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.fxToLayer'));
+  dirtyAll(); bus.emitDoc(); toast(t('toast.fxToLayer'));
 }

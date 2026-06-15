@@ -34,7 +34,7 @@ function pastePieces(pieces) { commitFloat(); snapshot();
   for (const cells of pieces) { if (S.layers.length >= MAX_LAYERS) break; const nl = pasteLayer(t('layer.pasteName'));
     for (const [k, c] of cells) { const [x, y] = parseKey(k); nl.grid[y][x] = c.slice(); } }
   S.marked.clear(); dirtyAll(); S.sel = null; S.selMask = null;
-  bus.emit('selection'); bus.emit('layers'); bus.emit('render'); toast(t('toast.pastedNew')); }
+  bus.emit('selection'); bus.emitDoc(); toast(t('toast.pastedNew')); }
 
 export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; }
   if (clip.pieces) { pastePieces(clip.pieces); return; }
@@ -47,7 +47,7 @@ export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; 
   for (let y = 0; y < clipG.length; y++) for (let x = 0; x < clipG[y].length; x++) { const c = clipG[y][x]; if (!c) continue;
     const yy = py + y, xx = px + x; if (xx < 0 || yy < 0 || xx >= S.W || yy >= S.H) continue; g[yy][xx] = c.slice(); }
   S.sel = null; S.selMask = null;
-  markDirty(S.cur); bus.emit('selection'); bus.emit('layers'); bus.emit('render'); toast(asNew ? t('toast.pastedNew') : t('toast.pasted')); }
+  markDirty(S.cur); bus.emit('selection'); bus.emitDoc(); toast(asNew ? t('toast.pastedNew') : t('toast.pasted')); }
 
 export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удалить эффект, а не чистить слой
   if (S.sel ? deleteSelContent() : clearLayer()) toast(S.sel ? t('toast.selDeleted') : t('toast.layerCleared')); }

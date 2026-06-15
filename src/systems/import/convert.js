@@ -7,7 +7,7 @@ import { rgb, eqc } from '../../logic/color.js';
 import { sampleGrid } from '../../logic/sample.js';
 import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
 import { cloneGrid } from '../../logic/raster.js';
-import { syncCanvasSize } from '../../core/canvas.js';
+import { makeCanvas, syncCanvasSize } from '../../core/canvas.js';
 import { symmetrizeV, despeckle, cropEmpty } from '../../logic/cleanup.js';
 import { setTool } from '../../core/tools.js';
 import { dirtyAll } from '../../core/layer-cache.js';
@@ -37,8 +37,8 @@ export function impConvert() {
 export function rotateImp() { // поворот исходника на 90° до конвертации
   if (!impData) return;
   const w = impData.width, h = impData.height;
-  const a = document.createElement('canvas'); a.width = w; a.height = h; a.getContext('2d').putImageData(impData, 0, 0);
-  const b = document.createElement('canvas'); b.width = h; b.height = w;
+  const a = makeCanvas(w, h); a.getContext('2d').putImageData(impData, 0, 0);
+  const b = makeCanvas(h, w);
   const x = b.getContext('2d'); x.translate(h, 0); x.rotate(Math.PI / 2); x.drawImage(a, 0, 0);
   impData = x.getImageData(0, 0, h, w); impConvert();
 }
@@ -63,7 +63,7 @@ function insertGridAsLayer(g) {
   if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayersDel')); $('imp-ovl').classList.remove('on'); importMode = 'replace'; return; }
   snapshot(); addImageLayerTop(w, h, d);
   for (const c of paletteFromGrid(g, 64)) if (!S.palette.some((p) => eqc(p, c))) S.palette.push(c.slice());
-  bus.emit('palette'); bus.emit('layers'); bus.emit('render'); bus.emit('fit');
+  bus.emit('palette'); bus.emitDoc(); bus.emit('fit');
   $('imp-ovl').classList.remove('on'); importMode = 'replace'; toast(t('toast.imgImported'));
 }
 

@@ -13,8 +13,8 @@ export function toMono(L) { const g = L.grid;
     const v = lum(c); g[y][x] = c.length > 3 ? [v, v, v, c[3]] : [v, v, v]; }
   for (const [k, c] of L.ext) { const v = lum(c); L.ext.set(k, c.length > 3 ? [v, v, v, c[3]] : [v, v, v]); } }
 
-export function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.layerMono')); }
-export function monoAll() { snapshot(); for (const L of S.layers) toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.monoAll')); }
+export function monoLayer(L) { snapshot(); toMono(L); dirtyAll(); bus.emitDoc(); toast(t('toast.layerMono')); }
+export function monoAll() { snapshot(); for (const L of S.layers) toMono(L); dirtyAll(); bus.emitDoc(); toast(t('toast.monoAll')); }
 
-export function monoTargets(targets) { snapshot(); for (const L of targets) toMono(L); dirtyAll(); bus.emit('layers'); bus.emit('render'); toast(t('toast.mono')); }
+export function monoTargets(targets) { snapshot(); for (const L of targets) toMono(L); dirtyAll(); bus.emitDoc(); toast(t('toast.mono')); }
 actions.register('effect.mono', (targets) => (targets && targets.length) ? monoTargets(targets) : monoAll());

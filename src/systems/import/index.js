@@ -30,7 +30,7 @@ export function insertImageTop(im, name) {
   const k = Math.min(1, IMPORT_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
   const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
   const d = imageData(im, w, h, k < 1).data; snapshot(); addImageLayerTop(w, h, d, name);
-  bus.emit('layers'); bus.emit('render'); bus.emit('fit'); toast(t('toast.imgImported'));
+  bus.emitDoc(); bus.emit('fit'); toast(t('toast.imgImported'));
 }
 
 export function openImport(file) {

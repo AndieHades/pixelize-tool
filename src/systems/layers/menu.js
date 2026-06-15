@@ -38,9 +38,9 @@ export function mountMenu() {
   $('lctx-invert').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') { curTo(lctxRef.ref); actions.run('selection.invert'); } };
   $('lctx-fill').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot(); const a = [S.active[0], S.active[1], S.active[2], 255];
     for (const L of ts) { for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) L.grid[y][x] = a.slice(); L.ext = new Map(); markDirty(S.layers.indexOf(L)); }
-    actions.run('color.used', S.active); bus.emit('layers'); bus.emit('render'); };
+    actions.run('color.used', S.active); bus.emitDoc(); };
   $('lctx-clear').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot();
-    for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
+    for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emitDoc(); };
   $('lctx-symm').onclick = () => { close(); symmetrizeLayerRefs(targets()); };
   $('lctx-rotate').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('transform.enterTargets', ts); };
   $('lctx-copy-fx').onclick = () => { close(); if (lctxRef) actions.run('fx.copyAll', lctxRef.ref); };
@@ -57,7 +57,7 @@ export function mountMenu() {
   $('lctx-ung').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'folder') { snapshot(); const f = lctxRef.ref; // расформировать: содержимое — на уровень выше
     S.layers.forEach((L) => { if (L.fid === f.id) L.fid = f.parent ?? null; });
     S.folders.forEach((sf) => { if (sf.parent === f.id) sf.parent = f.parent ?? null; });
-    S.folders = S.folders.filter((x) => x !== f); bus.emit('layers'); bus.emit('render'); } };
+    S.folders = S.folders.filter((x) => x !== f); bus.emitDoc(); } };
   $('ren-ok').onclick = () => { if (renRef) { const v = $('ren-name').value.trim(); if (v) { snapshot(); renRef.name = v.slice(0, 24); bus.emit('layers'); } } renRef = null; $('ren-ovl').classList.remove('on'); };
   $('ren-cancel').onclick = () => { renRef = null; $('ren-ovl').classList.remove('on'); };
   $('ren-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ren-ok').click(); });

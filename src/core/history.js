@@ -23,7 +23,7 @@ export function snapshot() { S.undoStack.push(snapState());
 export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folders = s.folders; S.folderSeq = s.folderSeq;
   S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); S.fxSel.clear(); S.fxCur = null;
   S.fxDraft = null;
-  dirtyAll(); bus.emit('layers'); bus.emit('render'); }
+  dirtyAll(); bus.emitDoc(); }
 
 // перехватчики undo: системы (напр. трансформация/живой preview попапа) могут
 // на время «забрать» отмену до записи в историю.

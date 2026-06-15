@@ -44,7 +44,7 @@ const close = () => { if (ses && ses.isNew) S.fxDraft = null; $('fx-edit').class
 function open(target, eff, isNew) { if (ses) { revert(); close(); } // переключение окна — тихо отменить прежнее
   if (isNew) S.fxDraft = { target, eff };
   ses = { target, eff, isNew, original: { ...eff.params } }; fill(eff); $('fx-edit').classList.add('on');
-  bus.emit('layers'); bus.emit('render'); }
+  bus.emitDoc(); }
 
 const newFxParams = (type) => (EFFECT_FIELDS[type]?.includes('color') ? { color: rgbToHex(S.active) } : {});
 
@@ -56,12 +56,12 @@ export function openFxEdit(target, eff) {
   open(target, eff, false);
 }
 
-export function fxCancel() { if (!ses) return; revert(); close(); bus.emit('layers'); bus.emit('render'); }
+export function fxCancel() { if (!ses) return; revert(); close(); bus.emitDoc(); }
 export function fxApply() { if (!ses) return; const { target, eff, isNew, original } = ses;
   if (isNew) { snapshot(); target.effects.push(eff); S.fxDraft = null; }
   else { const cur = { ...eff.params }; eff.params = { ...original }; snapshot(); eff.params = cur; }
   expandForEffects(target); // если эффекту не хватает места — раздвинуть холст под тем же снимком
-  close(); bus.emit('layers'); bus.emit('render'); }
+  close(); bus.emitDoc(); }
 
 const syncLabels = () => { $('fx-sizev').textContent = $('fx-size').value; $('fx-intv').textContent = $('fx-int').value + '%';
   $('fx-dxv').textContent = $('fx-dx').value; $('fx-dyv').textContent = $('fx-dy').value; };

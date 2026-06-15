@@ -36,7 +36,7 @@ export function insertPsd(psd, name) {
   snapshot();
   S.folders.push(...folders); S.layers.push(...layers); // папка PSD — верхним элементом списка
   S.cur = S.layers.length - 1; S.marked.clear(); S.selFolder = null;
-  dirtyAll(); bus.emit('layers'); bus.emit('render'); bus.emit('fit');
+  dirtyAll(); bus.emitDoc(); bus.emit('fit');
   if (warnings.length) { console.warn('PSD: unsupported effects/issues:', [...new Set(warnings)]); toast(t('toast.psdSomeFx')); }
   else toast(t('toast.psdImported', { n: layers.length }));
 }
