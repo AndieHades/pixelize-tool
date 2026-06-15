@@ -67,9 +67,17 @@ function create() { const w = parseInt($('new-w').value, 10), h = parseInt($('ne
 
 export function mount() {
   // «Новый холст» — всегда поверх галереи, не эдитора: из эдитора сперва уводим в галерею
-  const openDlg = () => { showGallery(); editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on'); };
-  $('new').onclick = openDlg; $('gal-new').onclick = openDlg;
-  actions.register('doc.new', openDlg);
+  const openDlg = (ensureGallery = true) => {
+    if (ensureGallery) showGallery();
+    editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on');
+  };
+  const bindOpen = (el, ensureGallery) => {
+    if (!el) return;
+    el.onclick = () => openDlg(ensureGallery);
+    el.addEventListener('pointerup', (e) => { if (e.pointerType === 'touch') { e.preventDefault(); openDlg(ensureGallery); } });
+  };
+  bindOpen($('new'), true); bindOpen($('gal-new'), false);
+  actions.register('doc.new', () => openDlg(true));
   $('new-add').onclick = () => { editIdx = null; openEditor('32×32', 32, 32); };
   $('new-cancel').onclick = () => { editIdx = null; closeEditor(); };
   $('new-create').onclick = create;

@@ -59,6 +59,7 @@ const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const gallery = await import('../src/systems/gallery/index.js');
+const newCanvas = await import('../src/systems/new-canvas.js');
 const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
@@ -937,6 +938,13 @@ t('gallery: режим галереи сохраняет открытые окн
   gallery.hide();
   assert.ok(!document.body.classList.contains('gallery-open'));
   ids.forEach((id) => document.getElementById(id).classList.remove('on'));
+});
+t('gallery: плюс открывает диалог нового холста', () => {
+  newCanvas.mount(); gallery.show();
+  const ovl = document.getElementById('new-ovl'); ovl.classList.remove('on');
+  document.getElementById('gal-new').click();
+  assert.ok(ovl.classList.contains('on'));
+  ovl.classList.remove('on'); gallery.hide();
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 t('color-picker: первый sync скрытого окна держит маркер внутри внутреннего круга', () => {
