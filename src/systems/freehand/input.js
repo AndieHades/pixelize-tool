@@ -7,9 +7,10 @@ import * as actions from '../../core/actions.js';
 import { registerTool } from '../../core/canvas-handlers.js';
 import { beginPath, addPoint, resetPath, pathActive, nearStart } from './path.js';
 import { closePath } from './apply.js';
+import { clamp } from '../../logic/math.js';
 
-const clampX = (x) => Math.max(0, Math.min(S.W - 1, x));
-const clampY = (y) => Math.max(0, Math.min(S.H - 1, y));
+const clampX = (x) => clamp(x, 0, S.W - 1);
+const clampY = (y) => clamp(y, 0, S.H - 1);
 
 function down({ gx, gy }) { const x = clampX(gx), y = clampY(gy);
   if (S.lassoMode === 'segment' && pathActive()) { addPoint(x, y); return; } // продолжаем из конца предыдущего сегмента

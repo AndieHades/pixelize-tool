@@ -9,13 +9,14 @@ import { paintStack } from '../../core/composite.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { hexToRgb } from '../../logic/color.js';
+import { clamp01 } from '../../logic/math.js';
 import { drawOverlays } from './overlays.js';
 import { drawBrushCursor } from './cursor.js';
 import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
 const buf = document.createElement('canvas'); // композит слой+эффекты в пиксельном масштабе
-const gridOpacity = (v) => Math.max(0, Math.min(1, (+v || 70) / 100));
+const gridOpacity = (v) => clamp01((+v || 70) / 100);
 function gridStroke(hex, opacity) {
   const c = hexToRgb(hex || '#4aa3ff');
   return c.some((v) => !Number.isFinite(v)) ? C.grid : `rgba(${c[0]},${c[1]},${c[2]},${gridOpacity(opacity)})`;

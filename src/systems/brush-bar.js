@@ -7,10 +7,10 @@ import { brushKey } from '../core/tools.js';
 import { doUndo, doRedo } from '../core/history.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { BP_SMAX, BP_SIZE_CURVE } from '../config/limits.js';
+import { clamp01, clampRound } from '../logic/math.js';
 
 const curBrush = brushKey;
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
-const clampSize = (v) => Math.max(1, Math.min(BP_SMAX, Math.round(v)));
+const clampSize = (v) => clampRound(v, 1, BP_SMAX);
 export const sizeFromFrac = (f) => clampSize(1 + Math.pow(clamp01(f), BP_SIZE_CURVE) * (BP_SMAX - 1));
 export const fracFromSize = (s) => Math.pow((clampSize(s) - 1) / (BP_SMAX - 1), 1 / BP_SIZE_CURVE);
 

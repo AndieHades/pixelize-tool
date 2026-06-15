@@ -2,6 +2,7 @@
 // Это сервис фундамента — им пользуются системы визуала, но не logic.
 import { TOAST_MS } from '../config/timings.js';
 import { nextFloatingZ } from './floating-window.js';
+import { clamp } from '../logic/math.js';
 export { t } from '../i18n/index.js'; // реэкспорт для удобства (toast(t('ключ')))
 
 export const $ = (id) => document.getElementById(id);
@@ -54,7 +55,6 @@ export function showMenuAt(m, ax, ay, above = false) {
 function resetArrow(arrow) {
   for (const p of ['left', 'right', 'top', 'bottom']) arrow.style[p] = '';
 }
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // Меню от кнопки тулбара: позиционируем снаружи всей панели, но выравниваем
 // по самой кнопке. Так вложенные панели не прячутся под ресайзнутым тулбаром.

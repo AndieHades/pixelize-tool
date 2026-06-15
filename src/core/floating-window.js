@@ -1,3 +1,4 @@
+import { clamp } from '../logic/math.js';
 const allWins = new Set(); // все плавающие окна — чтобы новое вставало в свободное место
 // Плавающее окно: перетаскивание за грип + ресайз за уголок/края + сохранение
 // геометрии. Один помощник на палитру, боковую панель, окна слоёв/превью/референса.
@@ -9,7 +10,6 @@ const shown = (e) => { for (let n = e; n && n.nodeType === 1; n = n.parentElemen
   if (s.display === 'none' || s.visibility === 'hidden') return false; } return true; };
 const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 const interactive = 'button,input,select,textarea,label,a,[contenteditable="true"]';
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const vw = () => window.innerWidth || document.documentElement.clientWidth || 1024;
 const vh = () => window.innerHeight || document.documentElement.clientHeight || 768;
 const zOf = (el) => { const host = hostFor(el), n = parseFloat(window.getComputedStyle(host).zIndex || host.style.zIndex);

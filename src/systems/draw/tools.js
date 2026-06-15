@@ -12,6 +12,7 @@ import { line, commitLine, commitContour, contourDab, contourStroke } from './sh
 import { beginStroke, afterStroke } from './stroke.js';
 import { qsBegin, qsMove, qsRelease } from './quickshape.js';
 import { shadingActive } from './shading.js';
+import { clamp } from '../../logic/math.js';
 
 let last = null;
 
@@ -19,8 +20,8 @@ let last = null;
 let snapTimer = null, snapCell = null, snapped = false;
 const canSnap = () => S.tool === 'rect' || S.tool === 'ellipse';
 const lineContour = () => S.tool === 'line' && S.lineMode === 'contour';
-const clampX = (x) => Math.max(0, Math.min(S.W - 1, x));
-const clampY = (y) => Math.max(0, Math.min(S.H - 1, y));
+const clampX = (x) => clamp(x, 0, S.W - 1);
+const clampY = (y) => clamp(y, 0, S.H - 1);
 function square(gx, gy) { const dx = gx - S.lineStart[0], dy = gy - S.lineStart[1], s = Math.max(Math.abs(dx), Math.abs(dy));
   return [S.lineStart[0] + (dx < 0 ? -1 : 1) * s, S.lineStart[1] + (dy < 0 ? -1 : 1) * s]; }
 function snap45(gx, gy) {

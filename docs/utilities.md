@@ -31,6 +31,10 @@
 `generateTintShadeScalesForHarmony(base, type)` — `{base,tints,shades}[]`.
 Шаги/углы — `config/tint-shade.js`.
 
+## `logic/math.js` — числовые помощники (чистый)
+
+`clamp(v,min,max)` · `clamp01(v)` (0..1) · `clamp255(v)` (0..255) · `clampRound(v,min,max)` (зажим с округлением). **Не пиши `Math.max(a, Math.min(b, v))` локально.**
+
 ## `logic/raster.js` — пиксельная сетка (чистый)
 
 | Функция | Назначение |

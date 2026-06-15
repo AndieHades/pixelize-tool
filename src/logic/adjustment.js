@@ -1,7 +1,6 @@
 import { bcAdjust, contrastFactor } from './bc.js';
 import { hsvToRgb, rgbToHsv } from './color.js';
-
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+import { clamp } from './math.js';
 
 export function adjustColor(c, params = {}) {
   const brightness = Number(params.brightness) || 0;

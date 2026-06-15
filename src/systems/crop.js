@@ -7,11 +7,12 @@ import { $, toast, t } from '../core/dom.js';
 import { applyCropRect } from '../core/document.js';
 import { registerMode } from '../core/canvas-handlers.js';
 import { MAX_SIZE } from '../config/limits.js';
+import { clampRound } from '../logic/math.js';
 
 let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1;
 
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
-const clampDim = (v) => Math.max(1, Math.min(MAX_SIZE, Math.round(v)));
+const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
 function syncCropInputs() { if (!S.cropMode) return;
   const s = cropSize(); $('crop-w').value = s.w; $('crop-h').value = s.h; }
 function setCropLink(on) { cropLink = on; $('crop-link').classList.toggle('on', on);

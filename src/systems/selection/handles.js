@@ -6,11 +6,12 @@ import { $, toast, t } from '../../core/dom.js';
 import { selHit } from '../../core/selection.js';
 import { registerGlobal } from '../../core/canvas-handlers.js';
 import { parseKey } from '../../logic/raster.js';
+import { clamp as clampv } from '../../logic/math.js';
 
 let drag = null;
 const cloneSel = (s) => (s ? { x0: s.x0, y0: s.y0, x1: s.x1, y1: s.y1 } : null);
 const cloneMask = (m) => (m ? new Set(m) : null);
-const clamp = (v, max) => Math.max(0, Math.min(max, v));
+const clamp = (v, max) => clampv(v, 0, max);
 const norm = (s) => ({ x0: Math.min(s.x0, s.x1), y0: Math.min(s.y0, s.y1), x1: Math.max(s.x0, s.x1), y1: Math.max(s.y0, s.y1) });
 
 function points(s) { return [

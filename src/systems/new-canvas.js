@@ -8,6 +8,7 @@ import { isDesktop } from '../core/env.js';
 import { t } from '../i18n/index.js';
 import { SIZE_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
+import { clampRound } from '../logic/math.js';
 import { newWork } from './gallery/doc.js';
 import { hide as hideGallery } from './gallery/index.js';
 
@@ -42,7 +43,7 @@ function buildList() { const box = $('new-list'); if (!box) return; closeSwipe()
 
 // окно создания/правки размера (имя + ширина/высота + связка пропорций)
 let linked = false, ratio = 1;
-const clampSize = (v) => Math.max(2, Math.min(MAX_SIZE, Math.round(v)));
+const clampSize = (v) => clampRound(v, 2, MAX_SIZE);
 function setLinked(on) { linked = on; $('new-link').classList.toggle('on', on);
   if (on) { const w = +$('new-w').value, h = +$('new-h').value; ratio = (w > 0 && h > 0) ? w / h : 1; } }
 function syncRatio(which) { if (!linked) return;

@@ -5,6 +5,7 @@ import { S, MAX_LAYERS, blank, newLayer, cloneLayer, G } from '../src/core/state
 import * as bus from '../src/core/bus.js';
 import { hexToRgb, rgbToHex, rgb, eqc, rgbToHsv, hsvToRgb } from '../src/logic/color.js';
 import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt, symmetrizeGrid, rectFill, ellipseEdges, ellipseFill, cloneGrid } from '../src/logic/raster.js';
+import { clamp, clamp01, clamp255, clampRound } from '../src/logic/math.js';
 import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
@@ -82,6 +83,12 @@ t('flood: область останавливается на непрозрач�
   assert.ok(cells.every(([x]) => x < 2)); });
 
 // --- логика импорта/поворота ---
+t('math: clamp/clamp01/clamp255/clampRound', () => {
+  assert.equal(clamp(5, 0, 10), 5); assert.equal(clamp(-3, 0, 10), 0); assert.equal(clamp(20, 0, 10), 10);
+  assert.equal(clamp01(1.4), 1); assert.equal(clamp01(-0.2), 0); assert.equal(clamp01(0.5), 0.5);
+  assert.equal(clamp255(300), 255); assert.equal(clamp255(-1), 0);
+  assert.equal(clampRound(7.6, 0, 100), 8); assert.equal(clampRound(2.4, 5, 99), 5);
+});
 t('cloneGrid: глубокая копия, клетки не делят ссылок', () => {
   const g = [[[1, 2, 3, 255], null], [null, [4, 5, 6, 255]]];
   const c = cloneGrid(g);

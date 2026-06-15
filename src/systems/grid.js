@@ -2,9 +2,10 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $ } from '../core/dom.js';
+import { clampRound } from '../logic/math.js';
 
-const clampStep = (v) => Math.max(1, Math.min(128, Math.round(+v || 1)));
-const clampOpacity = (v) => Math.max(5, Math.min(100, Math.round(+v || 70)));
+const clampStep = (v) => clampRound(+v || 1, 1, 128);
+const clampOpacity = (v) => clampRound(+v || 70, 5, 100);
 let backup = null;
 
 function ensureGrid() {

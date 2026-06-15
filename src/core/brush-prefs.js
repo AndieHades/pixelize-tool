@@ -1,11 +1,12 @@
 // Последние пользовательские настройки кисти, общие между сессиями.
 import { BP_SMAX } from '../config/limits.js';
+import { clamp01 as norm01, clampRound } from '../logic/math.js';
 
 export const BRUSH_PREFS_STORE = 'brushSettings';
 
 const storage = () => (typeof localStorage === 'undefined' ? null : localStorage);
-const clamp01 = (v) => Math.max(0, Math.min(1, Number(v)));
-const clampSize = (v) => Math.max(1, Math.min(BP_SMAX, Math.round(Number(v))));
+const clamp01 = (v) => norm01(Number(v));
+const clampSize = (v) => clampRound(Number(v), 1, BP_SMAX);
 const finite = (v) => v !== null && v !== '' && Number.isFinite(Number(v));
 const bool = (v, fallback) => (typeof v === 'boolean' ? v : fallback);
 
