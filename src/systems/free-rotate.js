@@ -5,6 +5,7 @@ import * as bus from '../core/bus.js';
 import { snapshot } from '../core/history.js';
 import { rotSprite } from '../logic/rotsprite.js';
 import { markDirty } from '../core/layer-cache.js';
+import { paintCanvas } from '../core/canvas.js';
 import { toast, t } from '../core/dom.js';
 
 const cellInt = (c) => (c ? (((c[0] << 24) | (c[1] << 16) | (c[2] << 8) | (c.length > 3 ? c[3] : 255)) >>> 0) : 0);
@@ -14,11 +15,9 @@ export function layerToInt(L) { const src = new Int32Array(S.W * S.H);
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) src[y * S.W + x] = cellInt(L.grid[y][x]); return src; }
 
 export function buildRotPreview(L, ang, scale) { const r = rotSprite(layerToInt(L), S.W, S.H, ang, scale);
-  const c = document.createElement('canvas'); c.width = r.w; c.height = r.h;
-  const x = c.getContext('2d'), id = x.createImageData(r.w, r.h);
-  for (let i = 0; i < r.w * r.h; i++) { const v = r.data[i]; if (!v) continue; const o = i * 4;
-    id.data[o] = (v >>> 24) & 255; id.data[o + 1] = (v >>> 16) & 255; id.data[o + 2] = (v >>> 8) & 255; id.data[o + 3] = v & 255; }
-  x.putImageData(id, 0, 0);
+  const c = paintCanvas(r.w, r.h, (d) => {
+    for (let i = 0; i < r.w * r.h; i++) { const v = r.data[i]; if (!v) continue; const o = i * 4;
+      d[o] = (v >>> 24) & 255; d[o + 1] = (v >>> 16) & 255; d[o + 2] = (v >>> 8) & 255; d[o + 3] = v & 255; } });
   return { canvas: c, px: Math.round((S.W - r.w) / 2), py: Math.round((S.H - r.h) / 2), ow: r.w, oh: r.h }; }
 
 export function freeRotateLayer(L, ang, scale) { const r = rotSprite(layerToInt(L), S.W, S.H, ang, scale);

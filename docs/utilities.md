@@ -70,6 +70,8 @@
 | `core/swipe-actions.js` → `closeSwipe()` | закрыть открытую свайп-строку | при ре-рендере списков |
 | `core/drag-ghost.js` → `dragGhost(el, width)` | клон элемента-призрака под курсором (`{move,remove}`) | перетаскивание плиток галереи и строк слоёв |
 | `core/reorder-drag.js` → `attachReorder(el, {dropSel,itemSel,save,squelch})` | перестановка по тем же механикам, что цвета палитры (долгий тап/ПКМ) | кнопки тулбара и сайдбара |
+| `core/canvas.js` → `makeCanvas(w,h)` / `paintCanvas(w,h,fill)` / `fillMask(d,mask,w,h,color)` | пустой canvas · canvas из ImageData (`fill(data)`) · заливка RGBA-буфера по булевой маске цветом `[r,g,b,a]` | кеш слоёв, эффекты, трансформация, поворот, курсор, иконки кистей |
+| `core/io.js` → `gridToCanvas(grid,x0,y0,w,h)` | фрагмент сетки → canvas с попиксельной альфой | экспорт-фрагменты |
 | `core/env.js` → `isDesktop()` | `(hover:hover)` — мышь vs тач; свайпы только на таче | слои, «Новый холст» |
 | `core/image.js` → `imageData(im,w,h,smooth)` / `looksPixelArt(im)` | растеризация картинки + эвристика «это пиксель-арт» | импорт, Photo в галерее |
 
@@ -91,6 +93,7 @@
 - Ручной разбор `k.indexOf(',')` вместо `parseKey`.
 - Свой цикл альфа-смешивания вместо `blendOver`/`mergeCells`.
 - Свой цикл `for layers … drawImage` вместо `compositeLayers`.
+- Ручной `createElement('canvas')`+`createImageData`+`putImageData` вместо `makeCanvas`/`paintCanvas`.
 - Свой сканер охвата `if(x<x0)x0=x…` вместо `gridBounds`.
 - Своя обвязка drag/resize окна вместо `floatingWindow`.
 - Прямой импорт другой системы вместо `bus.emit(...)`.

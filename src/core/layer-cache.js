@@ -5,6 +5,7 @@ import { effVis, clipBase } from './layers.js';
 import { parseKey } from '../logic/raster.js';
 import { layerFxCanvas, layerRenderEffects } from './effects-render.js';
 import { paintStack } from './composite.js';
+import { makeCanvas, paintCanvas } from './canvas.js';
 
 let lcs = []; const dirtySet = new Set(), revs = [], extCache = [];
 let revAll = 0; // глобальный счётчик инвалидации — для подписи кеша эффектов
@@ -16,7 +17,7 @@ export const layerRev = (i) => (revs[i] || 0) + revAll;
 export const layerSrcCanvas = (i) => layerRenderEffects(i).length ? layerFxCanvas(i) : layerFloatCanvas(i);
 
 export function layerCanvas(i) { let c = lcs[i];
-  if (!c) { c = document.createElement('canvas'); lcs[i] = c; dirtySet.add(i); }
+  if (!c) { c = makeCanvas(S.W, S.H); lcs[i] = c; dirtySet.add(i); }
   if (c.width !== S.W || c.height !== S.H) { c.width = S.W; c.height = S.H; dirtySet.add(i); }
   if (dirtySet.has(i)) { const x = c.getContext('2d'), id = x.createImageData(S.W, S.H), g = S.layers[i].grid;
     for (let y = 0; y < S.H; y++) for (let xx = 0; xx < S.W; xx++) { const cc = g[y][xx]; if (!cc) continue;
@@ -34,11 +35,9 @@ export function layerExtCanvas(i) {
   for (const k of L.ext.keys()) { const [x, y] = parseKey(k);
     if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
   const w = maxX - minX + 1, h = maxY - minY + 1;
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d'), id = x.createImageData(w, h);
-  for (const [k, cc] of L.ext) { const [px, py] = parseKey(k); const o = ((py - minY) * w + (px - minX)) * 4;
-    id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
-  x.putImageData(id, 0, 0);
+  const c = paintCanvas(w, h, (d) => {
+    for (const [k, cc] of L.ext) { const [px, py] = parseKey(k); const o = ((py - minY) * w + (px - minX)) * 4;
+      d[o] = cc[0]; d[o + 1] = cc[1]; d[o + 2] = cc[2]; d[o + 3] = cc.length > 3 ? cc[3] : 255; } });
   const res = { canvas: c, ox: minX, oy: minY, rev: layerRev(i) }; extCache[i] = res; return res; }
 
 // слой i вместе с «висящим» фрагментом выделения (если фрагмент поднят с него):

@@ -9,6 +9,7 @@ import { rgb } from '../../logic/color.js';
 import { BP_SMAX } from '../../config/limits.js';
 import { CURSOR_MODES, CURSOR_TOOLS } from '../../config/cursor.js';
 import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
+import { paintCanvas, fillMask } from '../../core/canvas.js';
 
 const RING = '#fff'; // курсор без чёрной обводки — только светлый контур-прицел
 const SHADING_FILL = 'rgba(190,190,190,.72)', SHADING_OP = 0.45;
@@ -35,10 +36,8 @@ function ensureMask(sb, size) {
 }
 function silhouette() {
   if (cShape || !cMask) return cShape; const m = cMask;
-  const cv = document.createElement('canvas'); cv.width = m.w; cv.height = m.h;
-  const cx = cv.getContext('2d'), img = cx.createImageData(m.w, m.h);
-  for (let i = 0; i < m.w * m.h; i++) if (m.data[i]) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = img.data[i * 4 + 3] = 255; }
-  cx.putImageData(img, 0, 0); cShape = cv; return cv;
+  cShape = paintCanvas(m.w, m.h, (d) => fillMask(d, m.data, m.w, m.h, [255, 255, 255, 255]));
+  return cShape;
 }
 
 // перекраска силуэта в цвет fill — кеш по цвету, переиспользуем готовый bitmap

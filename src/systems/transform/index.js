@@ -11,6 +11,7 @@ import { effVis, symA, symHA } from '../../core/layers.js';
 import { selectedLayerTargets } from '../../core/targets.js';
 import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
+import { paintCanvas } from '../../core/canvas.js';
 import { rotBuildCellsSym, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.js';
 
@@ -18,11 +19,9 @@ let rotRAF = 0;
 
 // трансформированный контент одного слоя на полном W×H (вне холста — скрыт в превью,
 // при применении уходит в ext); эффекты накладываются в fxPreview по новой форме
-function memberCanvas(cells, W, H) { const c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d'), id = x.createImageData(W, H);
+function memberCanvas(cells, W, H) { return paintCanvas(W, H, (d) => {
   for (const [px, py, cc] of cells) { if (px < 0 || py < 0 || px >= W || py >= H) continue;
-    const o = (py * W + px) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
-  x.putImageData(id, 0, 0); return c; }
+    const o = (py * W + px) * 4; d[o] = cc[0]; d[o + 1] = cc[1]; d[o + 2] = cc[2]; d[o + 3] = cc.length > 3 ? cc[3] : 255; } }); }
 
 function rotRebuild() { if (!S.rotMode) return; const W = S.W, H = S.H, mems = []; let drawIdx = -1;
   for (const s of S.rotMode.sources) { const r = rotBuildCellsSym(S.rotMode, s.src, W, H); if (!r) continue;

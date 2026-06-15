@@ -2,6 +2,14 @@
 // с картинкой) → скачивание. Низкоуровневый сервис; что и как назвать — решают
 // системы экспорта.
 import { $, toast, t } from './dom.js';
+import { paintCanvas } from './canvas.js';
+
+// фрагмент сетки [x0,y0,w×h] → canvas с попиксельной альфой
+export function gridToCanvas(grid, x0, y0, w, h) {
+  return paintCanvas(w, h, (d) => {
+    for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const cc = grid[y0 + y][x0 + xx]; if (!cc) continue;
+      const o = (y * w + xx) * 4; d[o] = cc[0]; d[o + 1] = cc[1]; d[o + 2] = cc[2]; d[o + 3] = cc.length > 3 ? cc[3] : 255; } });
+}
 
 export function showSaveOverlay(u) { $('ovlimg').src = u; $('ovl').classList.add('on'); }
 
@@ -16,15 +24,6 @@ export async function saveFile(b, name, mime, desc, overlayUrl = null) {
   if (overlayUrl) { showSaveOverlay(overlayUrl); return; }
   const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
-// фрагмент сетки → canvas с попиксельной альфой
-export function gridToCanvas(grid, x0, y0, w, h) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d'), id = x.createImageData(w, h);
-  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const cc = grid[y0 + y][x0 + xx]; if (!cc) continue;
-    const o = (y * w + xx) * 4; id.data[o] = cc[0]; id.data[o + 1] = cc[1]; id.data[o + 2] = cc[2]; id.data[o + 3] = cc.length > 3 ? cc[3] : 255; }
-  x.putImageData(id, 0, 0); return c;
 }
 
 export function saveCanvas(c, name) {

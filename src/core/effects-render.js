@@ -6,8 +6,7 @@ import { adjustColor } from '../logic/adjustment.js';
 import { EFFECT_PIXELS, INNER_EFFECTS, maskFromGrid, maskFromAlpha } from '../logic/layer-effects.js';
 import { layerFloatCanvas, layerSrcCanvas, layerExtCanvas, layerRev } from './layer-cache.js';
 import { effVis, clipBase, folderChain } from './layers.js';
-
-const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+import { makeCanvas as cv, paintCanvas } from './canvas.js';
 
 // булев силуэт цели (слой — по сетке, папка — по композиту поддерева): нужен
 // для расчёта пикселей одного эффекта (Convert To Layer). groupCanvas — ниже (hoisted).
@@ -50,9 +49,8 @@ export function layerRenderEffects(i) {
 }
 
 // один эффект → canvas W×H с его пикселями (цвет + альфа)
-function effCanvas(pixels, col, W, H) { const c = cv(W, H), x = c.getContext('2d'), id = x.createImageData(W, H);
-  for (const [px, py, a] of pixels) { const o = (py * W + px) * 4; id.data[o] = col[0]; id.data[o + 1] = col[1]; id.data[o + 2] = col[2]; id.data[o + 3] = a; }
-  x.putImageData(id, 0, 0); return c; }
+function effCanvas(pixels, col, W, H) { return paintCanvas(W, H, (d) => {
+  for (const [px, py, a] of pixels) { const o = (py * W + px) * 4; d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = a; } }); }
 
 // слой effects поверх содержимого src (маска mask): низ-эффекты под src, внутр.-эффекты по альфе src
 function build(src, mask, effects, W, H) { const c = cv(W, H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;

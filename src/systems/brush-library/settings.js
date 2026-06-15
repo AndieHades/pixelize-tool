@@ -11,6 +11,7 @@ import { BP_SMAX } from '../../config/limits.js';
 import { BRUSH_SETTINGS } from '../../config/brush-import.js';
 import { brushMode, stampSize } from '../../logic/brush-stamp.js';
 import { previewStroke } from '../../logic/brush-preview.js';
+import { fillMask } from '../../core/canvas.js';
 import { lib } from './data.js';
 import { saveBrush } from '../../core/brush-store.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
@@ -24,7 +25,7 @@ function drawPreview() { const rec = activeRec(), cv = $('bs-preview'), W = 196,
   const cx = cv.getContext('2d'); cx.clearRect(0, 0, W, H); if (!rec) return;
   const size = Math.max(2, Math.min(H - 4, stampSize(rec, S.brushes[getMode()].size, BP_SMAX)));
   const pr = previewStroke(rec, W, H, size), c = S.active, img = cx.createImageData(W, H);
-  for (let i = 0; i < W * H; i++) if (pr.data[i]) { img.data[i * 4] = c[0]; img.data[i * 4 + 1] = c[1]; img.data[i * 4 + 2] = c[2]; img.data[i * 4 + 3] = 255; }
+  fillMask(img.data, pr.data, W, H, [c[0], c[1], c[2], 255]);
   cx.putImageData(img, 0, 0); }
 function syncModes() { const rec = activeRec(), mode = rec ? brushMode(rec.params) : 'flow';
   for (const b of $('bs-mode').children) b.classList.toggle('on', b.dataset.mode === mode); }
