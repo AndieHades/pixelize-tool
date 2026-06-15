@@ -102,6 +102,9 @@
     #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
     .sw { position: relative; width: 30px; height: 30px; border-radius: 0; }
     .sw.on { box-shadow: inset 0 0 0 2px #fff; border-color: transparent; }
+    .sw.shade-sel { box-shadow: inset 0 0 0 2px var(--accent); }
+    .sw.shade-sel.on { box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent); }
+    .sw.shade-pending { outline: 2px solid var(--accent); outline-offset: -2px; }
     .sw.used::after { content: ""; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px;
       border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .55); pointer-events: none; }
 
@@ -446,6 +449,17 @@
       cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #prevrsz svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
+    /* ---- Shading ramp ---- */
+    #shade-pop { position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); z-index: 19; width: 244px; display: none;
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--win-shadow); overflow: hidden; }
+    #shade-pop.on { display: block; animation: pop .18s ease-out; }
+    #shade-list { display: flex; flex-wrap: wrap; gap: 0; padding: 10px; min-height: 50px; }
+    .shade-sw { width: 32px; height: 32px; border-radius: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+    .shade-sw:first-child { box-shadow: inset 0 0 0 2px #fff; }
+    #shade-rsz { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; color: var(--txt2); cursor: nwse-resize; touch-action: none; display: grid; place-items: center; }
+    #shade-rsz svg { width: 16px; height: 16px; }
+
     /* ---- окно референса ---- */
     #refwin { position: fixed; left: 60%; top: 26%; z-index: 13; width: 270px; height: 250px;
       display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
@@ -551,6 +565,7 @@ body.gallery-open #swtip,
 body.gallery-open #swdrop,
 body.gallery-open #paldrag,
 body.gallery-open #palbar,
+body.gallery-open #shade-pop,
 body.gallery-open #prevwin,
 body.gallery-open #refwin,
 body.gallery-open #tsg-win,

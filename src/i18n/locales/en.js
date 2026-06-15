@@ -87,6 +87,7 @@ export const en = {
   'palette.menu': 'Palettes: save, load, import from image', 'palette.namePlaceholder': 'Palette name', 'palette.addActiveTitle': 'Add active color · long-press/right-click to pick a new one',
   'palette.new': 'New palette', 'palette.fromCanvas': 'Palette from canvas', 'palette.presets': 'Palette presets', 'palette.used': 'Show used colors',
   'palette.dropTitle': 'Palette from image · {n}', 'palette.dropAdd': 'Add to current', 'palette.dropNew': 'Create new',
+  'shade.title': 'Shading',
   'menu.pickLayer': 'Layer:',
   'crop.center': 'From center (or hold Shift)', 'crop.apply': 'Apply crop (Enter)', 'crop.cancel': 'Cancel (Esc)',
   'transform.apply': 'Apply transform (Enter or right-click)', 'transform.cancel': 'Cancel transform (Esc)',

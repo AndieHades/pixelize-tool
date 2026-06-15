@@ -59,6 +59,7 @@ const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const gallery = await import('../src/systems/gallery/index.js');
+const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
 const tb = await import('../src/systems/toolbars.js');
@@ -530,6 +531,55 @@ t('palette: кнопка used отмечает использованные цв
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
 });
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
+t('palette: drag ЛКМ выделяет диапазон для Shading с направлением', () => {
+  shading.mount(); S.palette = [[0, 0, 0], [40, 40, 40], [80, 80, 80], [120, 120, 120]]; S.active = [0, 0, 0]; S.shading = { colors: [] }; pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[2];
+    sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
+    assert.deepEqual(S.shading.colors, [[0, 0, 0], [40, 40, 40], [80, 80, 80]]);
+    assert.ok(document.getElementById('shade-pop').classList.contains('on'));
+    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .shade-sel').length, 3);
+    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+    document.elementFromPoint = () => sw[0];
+    sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+    assert.deepEqual(S.shading.colors, [[80, 80, 80], [40, 40, 40], [0, 0, 0]]);
+  } finally { document.elementFromPoint = oldHit; }
+});
+t('palette: drag ПКМ переставляет цвета', () => {
+  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [] }; pal.buildPalette();
+  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[2];
+    sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
+    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
+  } finally { document.elementFromPoint = oldHit; }
+});
+t('shading: максимум 6 цветов и клик по линейке разворачивает направление', () => {
+  shading.setRamp([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]);
+  assert.equal(S.shading.colors.length, 6);
+  document.querySelector('#shade-list .shade-sw').click();
+  assert.deepEqual(S.shading.colors[0], [5, 5, 5]);
+  shading.clear();
+});
+t('shading: кисть двигает цвет на шаг к первому цвету линейки', () => { resetWH(3, 3);
+  S.tool = 'pencil'; S.brushes.pencil.size = 1; S.layers[0].grid[1][1] = [200, 200, 200, 180];
+  S.shading = { colors: [[0, 0, 0], [100, 100, 100], [200, 200, 200]] };
+  stroke.beginStroke(); stamp(1, 1); stamp(1, 1); S.stroke = false;
+  assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 180]);
+  stroke.beginStroke(); stamp(1, 1); S.stroke = false;
+  assert.deepEqual(S.layers[0].grid[1][1], [0, 0, 0, 180]);
+  S.shading = { colors: [[200, 200, 200], [100, 100, 100], [0, 0, 0]] };
+  stroke.beginStroke(); stamp(1, 1); S.stroke = false;
+  assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 180]);
+  S.shading = { colors: [] };
+});
 
 t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
 t('brush-prefs: сохраняет и читает последние настройки кисти', () => {

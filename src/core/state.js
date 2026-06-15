@@ -33,6 +33,7 @@ export const S = {
   fxSel: new Set(), fxCur: null, fxDraft: null, // выделенные строки эффектов + черновик окна
 
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
+  shading: { colors: [] }, // active palette ramp for Aseprite-like shading brush
   tool: 'pencil', sym: false, symH: false,
   fillShape: { rect: false, ellipse: false }, // ПКМ по иконке фигуры — рисовать залитой
   brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)

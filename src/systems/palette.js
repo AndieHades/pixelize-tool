@@ -16,6 +16,7 @@ let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx 
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
 const colorKey = (c) => c ? c[0] + ',' + c[1] + ',' + c[2] : '';
+const inShadeRamp = (c) => S.shading && S.shading.colors && S.shading.colors.some((x) => eqc(x, c));
 
 function usedColorKeys() { const keys = new Set();
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!L || !effVis(i) || L.opacity <= 0) continue;
@@ -64,6 +65,7 @@ export function buildPalette() {
     const b = document.createElement('button'); b.className = 'sw'; b.style.background = rgb(c); b.dataset.i = idx;
     b.title = rgbToHex(c).toUpperCase();
     if (!activeShown && eqc(c, S.active)) { b.classList.add('on'); activeShown = true; }
+    if (inShadeRamp(c)) b.classList.add('shade-sel');
     if (used && used.has(colorKey(c))) b.classList.add('used');
     b.addEventListener('click', (e) => { clearTimeout(swHold);
       if (palSquelch) { palSquelch = false; return; }
@@ -87,20 +89,39 @@ export function buildPalette() {
   box.appendChild(add);
 }
 
+function markShadeRange(toIdx) {
+  if (!palDrag) return;
+  const a = palDrag.idx, lo = Math.min(a, toIdx), hi = Math.max(a, toIdx);
+  for (const sw of $('pal').querySelectorAll('.sw:not(.plus)')) {
+    const i = +sw.dataset.i; sw.classList.toggle('shade-pending', i >= lo && i <= hi);
+  }
+  const colors = S.palette.slice(lo, hi + 1).map((c) => c.slice(0, 3));
+  palDrag.range = toIdx < a ? colors.reverse() : colors;
+}
+function clearShadePending() { $('pal').querySelectorAll('.shade-pending').forEach((sw) => sw.classList.remove('shade-pending')); }
+
 function palDragMove(e) { if (!palDrag) return; const pal = $('pal'), chip = $('paldrag');
   if (!palDrag.moved) { if (Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) <= 6) return;
-    palDrag.moved = true; palDrag.b.classList.add('dragging'); clearTimeout(swHold);
-    chip.style.background = palDrag.b.style.background; chip.classList.add('on'); }
-  chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px';
+    palDrag.moved = true; clearTimeout(swHold); }
   const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest ? el.closest('#pal .sw:not(.plus)') : null;
-  if (t && t !== palDrag.b) { const r = t.getBoundingClientRect(); pal.insertBefore(palDrag.b, (e.clientX < r.left + r.width / 2) ? t : t.nextSibling); } }
+  if (!palDrag.rmb && t && t !== palDrag.b) { palDrag.selecting = true; palDrag.b.classList.remove('dragging'); chip.classList.remove('on'); markShadeRange(+t.dataset.i); return; }
+  if (palDrag.selecting) { if (t) markShadeRange(+t.dataset.i); return; }
+  if (palDrag.rmb && t && t !== palDrag.b) { const r = t.getBoundingClientRect(); palDrag.reordering = true; chip.classList.remove('on');
+    palDrag.b.classList.add('dragging'); pal.insertBefore(palDrag.b, (e.clientX < r.left + r.width / 2) ? t : t.nextSibling); return; }
+  palDrag.b.classList.add('dragging');
+  chip.style.background = palDrag.b.style.background; chip.classList.add('on');
+  chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px'; }
 
 function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
-  const d = palDrag; palDrag = null; d.b.classList.remove('dragging'); $('paldrag').classList.remove('on');
+  const d = palDrag; palDrag = null; d.b.classList.remove('dragging'); $('paldrag').classList.remove('on'); clearShadePending();
+  if (d.selecting) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
+    if (d.range && d.range.length > 1) actions.run('shading.setRamp', d.range); return; }
+  if (d.reordering) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
+    S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); buildPalette(); return; }
   if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     const tgt = document.elementFromPoint(e.clientX, e.clientY), onPal = tgt && tgt.closest && tgt.closest('#pal');
     if (!onPal) { actions.run('edit.dropColorAt', S.palette[d.idx], e.clientX, e.clientY); buildPalette(); return; } // бросок мимо палитры → заливка холста
-    S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); buildPalette(); }
+    buildPalette(); }
   else if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); }
 
 export function mount() {

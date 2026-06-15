@@ -31,6 +31,7 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   S.layers.forEach((L) => { if (!L.effects) L.effects = []; L.reference = !!L.reference; }); S.folders.forEach((f) => { if (!f.effects) f.effects = []; }); // старые проекты без эффектов/reference
   // folderSeq всегда впереди реальных id — иначе новые папки могут получить чужой id (старые проекты)
   S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
+  S.shading = { colors: [] };
   S.docName = rec.name; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null;
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); }
@@ -38,6 +39,7 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
 function blankWork(w, h, name) { curId = uid('d'); curFolder = null;
   S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer(t('layer.name') + ' 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
   S.palette = defaultPalette(); S.active = S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
+  S.shading = { colors: [] };
   S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null; }
 
 export function newWork(w, h, name) { blankWork(w, h, name);

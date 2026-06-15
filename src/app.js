@@ -21,6 +21,7 @@ import * as importSys from './systems/import/index.js';
 import * as importEditor from './systems/import/editor.js';
 import * as exportSys from './systems/export/index.js';
 import * as palManager from './systems/palette-manager.js';
+import * as shading from './systems/shading.js';
 import * as tintShade from './systems/tint-shade/index.js';
 import * as preview from './systems/preview-window.js';
 import * as reference from './systems/reference-window.js';
@@ -57,7 +58,7 @@ import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops];
 
 export function start() {
   detect(); applyTheme(); refreshColors();
