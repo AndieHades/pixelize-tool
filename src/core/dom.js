@@ -51,6 +51,54 @@ export function showMenuAt(m, ax, ay, above = false) {
     m.style.visibility = ''; });
 }
 
+function resetArrow(arrow) {
+  for (const p of ['left', 'right', 'top', 'bottom']) arrow.style[p] = '';
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// Меню от кнопки тулбара: позиционируем снаружи всей панели, но выравниваем
+// по самой кнопке. Так вложенные панели не прячутся под ресайзнутым тулбаром.
+export function showMenuForAnchor(m, anchorEl, opts = {}) {
+  showMenu(m);
+  let arrow = m.querySelector(':scope > .menu-arrow');
+  if (!arrow) { arrow = document.createElement('div'); arrow.className = 'menu-arrow'; m.appendChild(arrow); }
+  requestAnimationFrame(() => {
+    const r = m.getBoundingClientRect(), a = anchorEl.getBoundingClientRect(), gap = 10, margin = 8;
+    const host = anchorEl.closest(opts.containerSelector || '#sidebar, #topbar') || anchorEl;
+    const h = host.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    const room = {
+      right: vw - h.right - margin - gap,
+      left: h.left - margin - gap,
+      bottom: vh - h.bottom - margin - gap,
+      top: h.top - margin - gap,
+    };
+    const need = { right: r.width, left: r.width, bottom: r.height, top: r.height };
+    const horizontal = h.width >= h.height * 1.2;
+    const vertical = h.height >= h.width * 1.2;
+    const order = vertical ? ['right', 'left', 'bottom', 'top']
+      : horizontal ? ['bottom', 'top', 'right', 'left']
+        : ['right', 'left', 'bottom', 'top'];
+    const side = order.find((s) => room[s] >= need[s])
+      || order.reduce((best, s) => (room[s] - need[s] > room[best] - need[best] ? s : best), order[0]);
+
+    let left = ax - r.width / 2, top = ay - r.height / 2;
+    resetArrow(arrow);
+    if (side === 'right') { left = h.right + gap; arrow.className = 'menu-arrow left'; }
+    else if (side === 'left') { left = h.left - gap - r.width; arrow.className = 'menu-arrow right'; }
+    else if (side === 'bottom') { top = h.bottom + gap; arrow.className = 'menu-arrow up'; }
+    else { top = h.top - gap - r.height; arrow.className = 'menu-arrow down'; }
+
+    left = clamp(left, margin, vw - r.width - margin);
+    top = clamp(top, margin, vh - r.height - margin);
+    m.style.left = left + 'px'; m.style.top = top + 'px';
+    if (side === 'right' || side === 'left') arrow.style.top = (clamp(ay - top, 16, r.height - 16) - 6) + 'px';
+    else arrow.style.left = (clamp(ax - left, 16, r.width - 16) - 6) + 'px';
+    m.style.visibility = '';
+  });
+}
+
 // Меню сбоку от опорного элемента (панель слоёв): справа, если влезает, иначе
 // слева — чтобы никогда не перекрывать панель. По вертикали — у ay, в экране.
 export function showMenuBeside(m, anchorEl, ay) {

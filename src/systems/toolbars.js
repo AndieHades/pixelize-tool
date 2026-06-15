@@ -3,7 +3,7 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
-import { $, showMenuAt, toast, t } from '../core/dom.js';
+import { $, showMenuForAnchor, toast, t } from '../core/dom.js';
 import { setTool } from '../core/tools.js';
 import { longPress } from '../core/long-press.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
@@ -125,8 +125,7 @@ function buildToolChoices() {
 }
 
 function showToolChoice(menuId, anchor) {
-  const r = anchor.getBoundingClientRect();
-  syncModeButtons(); showMenuAt($(menuId), r.left + r.width / 2, r.bottom + 2);
+  syncModeButtons(); showMenuForAnchor($(menuId), anchor);
 }
 
 function syncToolButtons() {

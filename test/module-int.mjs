@@ -87,7 +87,7 @@ const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
-const { showMenuAt } = await import('../src/core/dom.js');
+const { showMenuAt, showMenuForAnchor } = await import('../src/core/dom.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -805,6 +805,26 @@ t('menus: контекстное меню выше активной панели
   other.classList.add('on'); showMenuAt(menu, 120, 120);
   assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
   assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
+});
+t('menus: tool-choice открывается снаружи панели тулбара', () => {
+  const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
+  const sidebar = document.getElementById('sidebar'), sym = document.getElementById('sym'), symMenu = document.getElementById('sym-choice');
+  const topbar = document.getElementById('topbar'), line = document.getElementById('t-line'), lineMenu = document.getElementById('line-choice');
+  const undo = [
+    mockRect(sidebar, rect(96, 120, 54, 320)), mockRect(sym, rect(104, 260, 38, 38)), mockRect(symMenu, rect(0, 0, 220, 46)),
+    mockRect(topbar, rect(0, 0, 640, 58)), mockRect(line, rect(330, 10, 38, 38)), mockRect(lineMenu, rect(0, 0, 82, 46)),
+  ];
+  try {
+    showMenuForAnchor(symMenu, sym);
+    assert.equal(symMenu.style.left, '160px');
+    assert.ok(symMenu.querySelector('.menu-arrow').classList.contains('left'));
+    symMenu.classList.remove('on');
+    showMenuForAnchor(lineMenu, line);
+    assert.equal(lineMenu.style.top, '68px');
+    assert.ok(lineMenu.querySelector('.menu-arrow').classList.contains('up'));
+    lineMenu.classList.remove('on');
+  } finally { undo.forEach((fn) => fn()); }
 });
 await ta('floating-window: новое окно и активное окно поднимаются, toolbar выше всех', async () => {
   const root = document.createElement('div'), rootGrip = document.createElement('div');

@@ -393,6 +393,8 @@
       border: 1px solid var(--line); transform: rotate(45deg); pointer-events: none; }
     .menu-arrow.up { top: -7px; border-right: none; border-bottom: none; }
     .menu-arrow.down { bottom: -7px; border-left: none; border-top: none; }
+    .menu-arrow.left { left: -7px; border-right: none; border-top: none; }
+    .menu-arrow.right { right: -7px; border-left: none; border-bottom: none; }
     .sw.drop { box-shadow: inset 0 0 0 2px var(--accent); }
     .sw.plus { background: transparent; box-shadow: inset 0 0 0 1px var(--txt2); color: var(--txt2); display: grid; place-items: center; }
     .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
