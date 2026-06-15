@@ -31,15 +31,24 @@ function setOpenPanelColor(c) {
   $(target.input).dispatchEvent(new Event('input', { bubbles: true })); return true;
 }
 
+function addRgbColor(c, notify = false) {
+  if (!c) return false;
+  if (S.palette.some((p) => eqc(p, c))) { if (notify) toast(t('toast.colorExists')); return false; }
+  S.palette.push(c.slice(0, 3)); bus.emit('palette');
+  if (notify) toast(t('toast.colorAdded'));
+  return true;
+}
+
 export function setActiveColor(c, pickTool = true) {
   S.active = c.slice(); refreshActive();
   bus.emit('color-sync'); buildPalette();
   if (pickTool) setTool('pencil');
 }
 
-export function addColor(hex) { const c = hexToRgb(hex); if (!S.palette.some((p) => eqc(p, c))) S.palette.push(c); setActiveColor(c); }
+export function addColor(hex) { const c = hexToRgb(hex); addRgbColor(c); setActiveColor(c); }
 
 actions.register('palette.add', addColor);
+actions.register('palette.addRgb', (c) => addRgbColor(c, true));
 actions.register('color.setActive', (c) => setActiveColor(c, false)); // Active Color Manager: пипетка/источники ставят активный цвет, не меняя инструмент
 // упорядочить палитру по тону и светлоте (кнопку добавим позже — пока через action)
 actions.register('palette.sort', () => { S.palette = sortPalette(S.palette); bus.emit('palette'); });

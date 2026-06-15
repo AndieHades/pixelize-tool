@@ -2,6 +2,8 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import { $, showMenuAt, toast, t } from '../core/dom.js';
+import { paintStack } from '../core/composite.js';
+import { compositeAt } from '../core/layer-cache.js';
 import { rgb, eqc } from '../logic/color.js';
 import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
 
@@ -58,6 +60,20 @@ function readImagePalette(im, limit = EXACT_LIMIT) {
   return paletteFromImageData(x.getImageData(0, 0, w, h).data, limit);
 }
 
+function fallbackCanvasPalette() { const seen = new Set(), pal = [];
+  for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = compositeAt(x, y); if (!c) continue;
+    const k = c[0] + ',' + c[1] + ',' + c[2]; if (seen.has(k)) continue;
+    seen.add(k); pal.push(c); }
+  return pal;
+}
+
+export function paletteFromCanvas() {
+  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; paintStack(x, false);
+  const exact = exactPaletteFromRgba(x.getImageData(0, 0, S.W, S.H).data);
+  return exact.colors.length ? exact.colors : fallbackCanvasPalette();
+}
+
 function showDropChoice(pal, pt) {
   const m = $('rowctx'); m.innerHTML = '';
   const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('palette.dropTitle', { n: pal.length });
@@ -88,9 +104,14 @@ function dropPalette(e) {
 function openPaletteWindow() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = ''; $('pal-ovl').classList.add('on'); }
 function openPresetMenu() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = 'none'; $('pal-ovl').classList.add('on'); }
 function newPalette() { S.palette = []; bus.emit('palette'); bus.emit('render'); toast(t('palette.new')); }
+function createFromCanvas() { const pal = paletteFromCanvas();
+  if (!pal.length) { toast(t('toast.canvasEmpty')); return; }
+  loadPalette(pal); toast(t('toast.paletteFromCanvas', { n: pal.length }));
+}
 
 export function mount() {
   $('pal-new').onclick = newPalette;
+  $('pal-canvas').onclick = createFromCanvas;
   $('pal-save-open').onclick = openPaletteWindow;
   $('pal-presets').onclick = openPresetMenu;
   $('pal-close').onclick = () => $('pal-ovl').classList.remove('on');

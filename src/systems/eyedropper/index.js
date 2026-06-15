@@ -17,6 +17,7 @@ const E = S.eyedrop; // { key, capturing }
 let armed = false, via = null, picking = false, found;
 let holdT = null, holdId = null, holdX = 0, holdY = 0; // долгое нажатие пальцем по холсту → пипетка
 let btnDownT = 0, btnPicked = false, swallowClick = false; // короткий клик vs удержание bb-pick; гашение click после выбора
+let addOnPick = false;
 const clearHold = () => { clearTimeout(holdT); holdT = null; holdId = null; };
 const hover = () => via === 'alt' || via === 'sticky'; // режимы с preview на наведении
 
@@ -50,14 +51,17 @@ function onDown(e) {
       holdId = e.pointerId; holdX = e.clientX; holdY = e.clientY;
       holdT = setTimeout(() => { holdT = null; setArmed(true, 'touch'); picking = true; preview(holdX, holdY); }, HOLD_PICK_MS); } return; }
   swallowClick = false;
+  addOnPick = via === 'alt' && e.button === 2 && e.target === $('cv');
   if (e.target && e.target.closest && e.target.closest('#bb-pick')) return; // bb-pick — кнопка активации, не источник
   const c = sampleColor(e.clientX, e.clientY); if (c === undefined) return;  // не над источником (тулбар и т.п.) — отдаём событие как есть
   picking = true; found = c; swallowClick = true; e.preventDefault(); e.stopImmediatePropagation(); showPreview(e.clientX, e.clientY); } // перехватываем у инструмента/свотча
 
 function onUp(e) { clearHold(); if (!picking) return; picking = false;
   if (via !== 'touch') { e.preventDefault(); e.stopImmediatePropagation(); } // btn/alt/sticky — гасим клик; touch — даём gestures завершить трекинг
+  if (e.button === 2) swallowClick = false;                                  // ПКМ не даёт обычный click — не глотаем следующий UI-клик
   if (via === 'btn') btnPicked = true;                                       // цвет взят во время удержания bb-pick — не считаем это коротким кликом
-  if (found) actions.run('color.setActive', found);                          // прозрачный пиксель (null) активный цвет не меняет
+  if (found) { actions.run('color.setActive', found); if (addOnPick) actions.run('palette.addRgb', found); } // прозрачный пиксель (null) активный цвет не меняет
+  addOnPick = false;
   if (via === 'touch') setArmed(false); else preview(e.clientX, e.clientY); } // долгое нажатие — разовый выбор: после отпускания выключаем
 
 // короткий клик по bb-pick (ПК) → залипающая пипетка до смены инструмента;

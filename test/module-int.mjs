@@ -419,6 +419,15 @@ t('eyedropper: повторный клик по bb-pick выключает за�
 t('eyedropper: brush-resize живёт на клавише D отдельно от пипетки', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
   brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); assert.ok(S.brushes.pencil.size > 1); brKey('keyup', 'd'); });
+t('eyedropper: Alt+ПКМ по холсту добавляет цвет в палитру', () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.palette = [[1, 1, 1]]; S.active = [1, 1, 1];
+  S.layers[0].grid[2][2] = [9, 8, 7, 255]; const undo = overCv();
+  window.dispatchEvent(new window.KeyboardEvent('keydown', { code: 'AltLeft', bubbles: true }));
+  const cv = document.getElementById('cv');
+  cv.dispatchEvent(new window.MouseEvent('pointerdown', { clientX: 2, clientY: 2, button: 2, bubbles: true }));
+  cv.dispatchEvent(new window.MouseEvent('pointerup', { clientX: 2, clientY: 2, button: 2, bubbles: true }));
+  window.dispatchEvent(new window.KeyboardEvent('keyup', { code: 'AltLeft', bubbles: true })); undo();
+  assert.ok(S.palette.some((c) => c[0] === 9 && c[1] === 8 && c[2] === 7)); assert.deepEqual(S.active, [9, 8, 7]);
+});
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
@@ -551,7 +560,7 @@ t('palette-manager: монтируется и сохраняет палитру'
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]);
   assert.equal(document.getElementById('pal-from-img'), null);
-  assert.equal(document.querySelectorAll('#pal-act > button').length, 6);
+  assert.equal(document.querySelectorAll('#pal-act > button').length, 7);
   document.getElementById('pal-presets').click(); assert.equal(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
@@ -567,6 +576,12 @@ t('palette-manager: палитра из файла ограничивается 
   const d = new Uint8ClampedArray(150 * 4);
   for (let i = 0; i < 150; i++) { d[i * 4] = i; d[i * 4 + 1] = 150 - i; d[i * 4 + 2] = (i * 3) % 255; d[i * 4 + 3] = 255; }
   assert.ok(palMgr.paletteFromImageData(d, 128).length <= 128);
+});
+t('palette-manager: палитра с холста берёт видимые цвета', () => { resetWH(3, 3);
+  S.layers[0].grid[0][0] = [1, 2, 3, 255]; S.layers[0].grid[1][1] = [7, 8, 9, 255];
+  S.layers.push({ name: 'hidden', grid: blank(3, 3), opacity: 1, visible: false, fid: null, clip: false, ext: new Map(), effects: [] });
+  S.layers[1].grid[2][2] = [80, 90, 100, 255]; cache.dirtyAll();
+  assert.deepEqual(palMgr.paletteFromCanvas(), [[1, 2, 3], [7, 8, 9]]);
 });
 
 t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
