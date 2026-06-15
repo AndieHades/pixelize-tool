@@ -61,10 +61,9 @@ function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ 
 async function tileEl(d) {
   const tile = document.createElement('div'); tile.className = 'gal-tile' + (d.kind === 'folder' ? ' folder' : '') + (selected.has(d.id) ? ' sel' : '');
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
-  if (d.kind !== 'folder') { tile.dataset.orient = d.W > d.H ? 'landscape' : d.H > d.W ? 'portrait' : 'square'; tile.dataset.w = d.W || 1; tile.dataset.h = d.H || 1; }
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
   if (d.kind === 'folder') { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } // у всех папок — значок папки
-  else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; im.style.aspectRatio = `${d.W} / ${d.H}`; thumb.appendChild(im); } // плитка в пропорциях работы
+  else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; thumb.appendChild(im); } // картинка вписывается в квадратную плитку без обрезки
   tile.addEventListener('dragstart', (e) => e.preventDefault()); // не запускать нативный драг картинки (мешает своему)
   tile.addEventListener('contextmenu', (e) => { e.preventDefault(); tileMenu(e.clientX, e.clientY, d); }); // ПКМ (десктоп) — меню
   const chk = document.createElement('div'); chk.className = 'gal-check' + (selected.has(d.id) ? ' on' : ''); thumb.appendChild(chk);

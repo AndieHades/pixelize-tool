@@ -2,7 +2,7 @@
 .swipe-row { position: relative; overflow: hidden; }
 .swipe-front { position: relative; z-index: 1; transition: transform var(--anim-fast) var(--ease-out); will-change: transform; }
 .swipe-acts { position: absolute; top: 0; right: 0; height: 100%; display: flex; z-index: 0; }
-.swipe-act { height: 100%; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; color: var(--on-accent);
+.swipe-act { height: 100%; padding: 0 18px; border: none; font-size: var(--type-body); font-weight: var(--fw-heading); color: var(--on-accent);
   background: var(--txt2); cursor: pointer; }
 .swipe-act.danger { background: var(--danger); }
 .swipe-act.on { background: var(--accent); }
@@ -18,7 +18,7 @@
 .lrow .swipe-acts { border-radius: 0; }
 /* кнопки действий — того же цвета, что строка слоя, чтобы не выбивались;
    состояния (активно/удаление) остаются акцентом/красным, как в Procreate */
-.lrow .swipe-act { padding: 0 14px; font-size: 13px; background: var(--row); color: var(--txt); }
+.lrow .swipe-act { padding: 0 14px; font-size: var(--type-label); background: var(--row); color: var(--txt); }
 .lrow .swipe-act.on { background: var(--accent); color: var(--on-accent); }
 .lrow .swipe-act.danger { background: var(--danger); color: var(--on-accent); }
 .lrow .swipe-act + .swipe-act { box-shadow: inset 1px 0 0 var(--line); }  /* тонкий разделитель между кнопками */

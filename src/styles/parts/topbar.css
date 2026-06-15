@@ -15,7 +15,7 @@
     /* ---- подсказка hex над свотчем ---- */
     #swtip { position: fixed; z-index: 90; transform: translate(-50%, -100%); display: none;
       background: rgba(20, 20, 24, .96); border: 1px solid var(--line); color: var(--txt);
-      font: 12px/1 ui-monospace, monospace; padding: 6px 9px; border-radius: var(--r-md); cursor: pointer;
+      font: var(--type-system)/1 var(--font-mono); padding: 6px 9px; border-radius: var(--r-md); cursor: pointer;
       white-space: nowrap; box-shadow: var(--win-shadow); }
     #swtip::after { content: " ⧉"; color: var(--txt2); }
     #swtip.on { display: block; }
@@ -29,8 +29,8 @@
       background: rgba(13, 13, 16, .72); backdrop-filter: blur(2px); pointer-events: none; }
     #dropmask.on { display: flex; }
     #dropmask > div { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--txt);
-      font-size: 20px; font-weight: 700; padding: 28px 40px; border-radius: var(--r-2xl);
+      font-size: var(--type-drop-title); font-weight: var(--fw-display); padding: 28px 40px; border-radius: var(--r-2xl);
       border: 2px dashed var(--accent); background: rgba(26, 26, 31, .9); }
-    #dropmask small { color: var(--txt2); font-size: 13px; font-weight: 400; }
+    #dropmask small { color: var(--txt2); font-size: var(--type-label); font-weight: var(--fw-regular); }
 
 

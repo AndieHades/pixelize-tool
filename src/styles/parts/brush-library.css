@@ -11,27 +11,27 @@
   background: var(--row); color: var(--txt2); cursor: pointer; -webkit-user-select: none; user-select: none; }
 .btile.on { background: var(--accent); color: var(--on-accent); }
 .btile-ic { width: 100%; aspect-ratio: 1; image-rendering: pixelated; }
-.btile .bname { max-width: 100%; font-size: 11px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btile .bname { max-width: 100%; font-size: var(--type-caption); font-weight: var(--fw-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btile.reordering { opacity: .3; }
 .bname.editing { outline: none; background: var(--surface); color: var(--txt); border-radius: var(--r-xs); padding: 0 4px; box-shadow: 0 0 0 1px var(--accent); cursor: text; }
 #brush-rsz { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; color: var(--txt2); cursor: nwse-resize; }
 #brush-rsz svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 #brush-plus { min-width: 210px; }
 .brow-edit { width: 100%; box-sizing: border-box; background: var(--surface); color: var(--txt);
-  border: 1px solid var(--accent); border-radius: var(--r-md); padding: 6px 8px; font-size: 13px; font-weight: 600; }
+  border: 1px solid var(--accent); border-radius: var(--r-md); padding: 6px 8px; font-size: var(--type-label); font-weight: var(--fw-heading); }
 #brush-settings { width: 244px; }
 #brush-settings .bs-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .bs-prev { width: 100%; height: 44px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); image-rendering: pixelated; }
 .bs-modes { display: flex; gap: 6px; }
-.bs-modes button { flex: 1; height: 32px; border-radius: var(--r-md); background: var(--row); color: var(--txt); font-size: 12px; font-weight: 600; }
+.bs-modes button { flex: 1; height: 32px; border-radius: var(--r-md); background: var(--row); color: var(--txt); font-size: var(--type-system); font-weight: var(--fw-heading); }
 .bs-modes button.on { background: var(--accent); color: var(--on-accent); }
-.bs-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--txt2); margin-bottom: -7px; }
+.bs-row { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--type-label); color: var(--txt2); margin-bottom: -7px; }
 .bs-row b { color: var(--txt); font-variant-numeric: tabular-nums; }
 #brush-settings input[type=range] { width: 100%; margin: 0; }
 .bs-test-wrap { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
-.bs-test-label { font-size: 12px; color: var(--txt2); }
+.bs-test-label { font-size: var(--type-system); color: var(--txt2); }
 .bs-test { width: 100%; height: auto; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); touch-action: none; cursor: crosshair; image-rendering: pixelated; }
 .bs-acts { display: flex; gap: 6px; margin-top: 2px; }
-.bs-acts button { flex: 1; height: 32px; border-radius: var(--r-md); background: var(--row); color: var(--txt); font-size: 12px; font-weight: 600; }
+.bs-acts button { flex: 1; height: 32px; border-radius: var(--r-md); background: var(--row); color: var(--txt); font-size: var(--type-system); font-weight: var(--fw-heading); }
 .bs-acts button:hover { background: var(--accent-soft); }
 .bs-acts button.danger { color: var(--danger); }

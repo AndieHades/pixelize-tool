@@ -8,9 +8,9 @@
     #selbar.on, #cropbar.on, #rotbar.on { display: flex; }
     #crop-ok, #rot-ok { color: var(--ok); }
     .crop-size { display: flex; align-items: center; gap: 5px; height: 40px; padding: 0 7px;
-      background: var(--row); border-radius: var(--r-lg); color: var(--txt2); font-size: 11px; font-weight: 700; }
+      background: var(--row); border-radius: var(--r-lg); color: var(--txt2); font-size: var(--type-caption); font-weight: var(--fw-heading); }
     .crop-size input { width: 54px; height: 28px; box-sizing: border-box; text-align: right; padding: 0 6px;
-      background: var(--surface); color: var(--txt); border: 1px solid var(--line); border-radius: var(--r-sm); font: 13px/1 ui-monospace, monospace; }
+      background: var(--surface); color: var(--txt); border: 1px solid var(--line); border-radius: var(--r-sm); font: var(--type-label)/1 var(--font-mono); }
     #crop-link { width: 38px; }
 
     /* «бегущие муравьи» выделения — SVG поверх холста, анимация чистым CSS */

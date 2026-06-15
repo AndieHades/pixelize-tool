@@ -15,13 +15,13 @@
     #rowctx { min-width: 170px; }
     #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on { display: flex; }
     #ctx button, #lctx button, #cctx button, #sctx button, #trctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button, #brush-plus button { width: 100%; height: 42px; border-radius: var(--r-md); display: flex;
-      align-items: center; justify-content: flex-start; padding: 0 12px; font-size: 14px; }
+      align-items: center; justify-content: flex-start; padding: 0 12px; font-size: var(--type-body); }
     /* подсветка пункта меню при наведении (десктоп) */
     #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover, #brush-plus button:hover { background: var(--accent-soft); }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }
-    .cctx-head { color: var(--txt2); font-size: 12px; padding: 6px 12px 2px; }
+    .cctx-head { color: var(--txt2); font-size: var(--type-system); padding: 6px 12px 2px; }
     /* Треугольник-указатель меню-бабла (единый для всех меню). */
     .menu-arrow { position: absolute; width: 12px; height: 12px; background: var(--panel-solid);
       border: 1px solid var(--line); transform: rotate(45deg); pointer-events: none; }

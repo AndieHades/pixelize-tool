@@ -8,9 +8,9 @@
     #lay-pop.on { display: flex; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
     .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
+      padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line); font-weight: var(--fw-heading);
       cursor: grab; touch-action: none; }
-    .pop-title, .bp-title { flex: 1; font-size: var(--win-title); font-weight: 600; color: var(--txt2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pop-title, .bp-title { flex: 1; font-size: var(--win-title); font-weight: var(--fw-heading); color: var(--txt2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pop-acts { display: flex; align-items: center; gap: 4px; flex: none; }
     /* единые «призрачные» кнопки шапки любого окна (как Tint): новый слой, меню палитры, закрытие */
     .pop-head button, .bp-head button, .pop-acts button, #pal-menu, #tsg-grip button, .win-x {
@@ -32,10 +32,10 @@
     .lrow.on .lname, .lrow.on .fcount, .lrow.on .eye, .lrow.on .caret { color: var(--on-accent); }
     .lrow.on .clip-arrow { color: var(--on-accent); }
     .lth { width: 40px; height: 40px; border-radius: var(--r-md); border: 1px solid var(--line); flex: none; }
-    .lname { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lname { flex: 1; font-size: var(--type-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lname.editing { overflow: visible; text-overflow: clip; outline: none; cursor: text; color: var(--txt);
       background: var(--surface); border-radius: var(--r-sm); padding: 2px 6px; box-shadow: 0 0 0 2px var(--accent); -webkit-user-select: text; user-select: text; }
-    .fcount { flex: none; color: var(--txt2); font-size: 12px; font-weight: 700; opacity: .9; }
+    .fcount { flex: none; color: var(--txt2); font-size: var(--type-system); font-weight: var(--fw-ui); opacity: .9; }
     .fcount::before { content: '· '; } /* декоративный разделитель счётчика слоёв папки — в стилях, не в JS */
     .eye { width: 30px; height: 24px; color: var(--txt2); flex: none; }
     .eye svg { width: var(--ico-lg); height: var(--ico-lg); }
@@ -48,8 +48,8 @@
     .symlock.off { color: var(--txt2); opacity: .5; }
     .symlock.off .slash { display: block; }
     .lay-ops { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); }
-    .lay-ops label { color: var(--txt2); font-size: 12px; flex: none; }
-    .lay-ops b { min-width: 42px; text-align: right; font-size: 13px; }
+    .lay-ops label { color: var(--txt2); font-size: var(--type-system); flex: none; }
+    .lay-ops b { min-width: 42px; text-align: right; font-size: var(--type-label); }
     .lay-act { display: flex; justify-content: space-around; padding: 6px 4px; border-top: 1px solid var(--line); }
     .lay-act.lay-act-top { border-top: 0; border-bottom: 1px solid var(--line); }
     .lay-act button { width: var(--btn-sm); height: var(--btn-sm); color: var(--txt2); }
@@ -74,7 +74,7 @@
     .caret { width: 26px; height: 24px; color: var(--txt2); flex: none; }
     .caret svg { width: 16px; height: 16px; transition: transform .15s; }
     .caret.open svg { transform: rotate(90deg); }
-    .frow .lname { font-weight: 600; }
+    .frow .lname { font-weight: var(--fw-heading); }
     /* папка — чуть светлее обычной строки (жирное имя + каретка отличают её от слоя) */
     .frow { gap: 6px; min-height: 0; height: 26px; padding-top: 0; padding-bottom: 0; } /* ровно 50% высоты обычного слоя */
     .frow:not(.on):not(.marked):not(.drop-into) { background: color-mix(in srgb, var(--txt) 7%, var(--row)); }

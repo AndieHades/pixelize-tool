@@ -9,11 +9,11 @@
     /* шапка toolpop приведена к виду #lay-pop: тянется на всю ширину (компенсируем падинг) */
     .bp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
       margin: -10px -16px 10px; padding: 8px 8px 8px 16px; border-bottom: 1px solid var(--line);
-      font-size: 13px; font-weight: 700; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+      font-size: var(--win-title); font-weight: var(--fw-heading); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
     .bp-head:active { cursor: grabbing; }
     .toolpop .irow { min-height: 38px; gap: 8px; }
-    .toolpop .irow label:not(.switch) { min-width: 72px; font-size: 12px; font-weight: 600; }
-    .toolpop .irow b { min-width: 32px; font-size: 12px; font-weight: 700; }
+    .toolpop .irow label:not(.switch) { min-width: 72px; font-size: var(--type-system); font-weight: var(--fw-ui); }
+    .toolpop .irow b { min-width: 32px; font-size: var(--type-system); font-weight: var(--fw-ui); }
     .toolpop .iact { gap: 8px; margin-top: 10px; }
     .toolpop .iact .txtbtn { height: 40px; border-radius: var(--r-lg); }
     .toolpop input[type=range] { height: 24px; }

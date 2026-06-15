@@ -1,7 +1,7 @@
 /* База приложения: box sizing, body, canvas, общие кнопки и drag-scroll контейнеры. */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--txt);
-      font: 14px/1.4 -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+      font: var(--type-body)/1.4 var(--font-ui);
       touch-action: manipulation; overscroll-behavior: none;
       -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
@@ -21,7 +21,7 @@
       stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
     .toolfill svg rect, .toolfill svg ellipse { fill: currentColor; } /* режим залитой фигуры (ПКМ по иконке) */
     .txtbtn { width: auto; min-width: 44px; height: 44px; padding: 0 18px; border-radius: var(--r-xl);
-      background: rgba(255, 255, 255, .08); font-size: 15px; font-weight: 600; }
+      background: rgba(255, 255, 255, .08); font-size: var(--type-action); font-weight: var(--fw-ui); }
     .txtbtn.primary { background: var(--accent); color: var(--on-accent); }
 
 

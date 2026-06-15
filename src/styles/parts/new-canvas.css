@@ -13,7 +13,7 @@
 .new-panel::before { content: ""; position: absolute; right: 24px; top: -11px; width: 20px; height: 20px;
   background: var(--panel); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
 .new-head { position: relative; padding: 14px 18px 8px; text-align: center; }
-.new-head h3 { margin: 0; color: var(--txt); font-size: 18px; line-height: 1.15; font-weight: 800; }
+.new-head h3 { margin: 0; color: var(--txt2); font-size: var(--win-title); line-height: 1.2; font-weight: var(--fw-heading); }
 
 /* Прокручиваемая зона: только пресеты и Saved, чтобы Custom не уезжал. */
 .new-scroll { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
@@ -21,7 +21,7 @@
 .new-scroll::-webkit-scrollbar { width: 7px; }
 .new-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-pill); }
 .new-presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.new-group h4, .new-saved h4, .new-custom h4 { margin: 0 0 8px; color: var(--txt); font-size: 14px; font-weight: 800; }
+.new-group h4, .new-saved h4, .new-custom h4 { margin: 0 0 8px; color: var(--txt); font-size: var(--type-body); font-weight: var(--fw-heading); }
 .new-saved { margin-top: 14px; }
 
 /* Списки размеров: одинаковая высота строк и стабильные границы. */
@@ -30,19 +30,19 @@
   color: var(--txt); background: transparent; border-radius: 0; border-top: 1px solid var(--line); text-align: left; cursor: pointer; }
 .new-row:first-child { border-top: 0; }
 .new-row:hover { background: color-mix(in srgb, var(--txt) 7%, transparent); }
-.new-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 650; }
-.new-size { flex: none; color: var(--txt2); font-size: 13px; font-weight: 600; }
-.new-row.saved .new-name { font-size: 14px; }
-.new-dots { width: var(--btn-sm); height: var(--btn-sm); flex: none; border-radius: var(--r-lg); color: var(--txt); font-size: 18px; line-height: 1; }
-.new-empty { margin: 0; padding: 14px 12px; color: var(--txt2); font-size: 13px; }
+.new-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: var(--fw-ui); }
+.new-size { flex: none; color: var(--txt2); font-size: var(--type-label); font-weight: var(--fw-regular); }
+.new-row.saved .new-name { font-size: var(--type-body); }
+.new-dots { width: var(--btn-sm); height: var(--btn-sm); flex: none; border-radius: var(--r-lg); color: var(--txt); font-size: var(--type-glyph); line-height: 1; }
+.new-empty { margin: 0; padding: 14px 12px; color: var(--txt2); font-size: var(--type-label); }
 
 /* Закреплённый Custom-блок: здесь правятся имя, размер, фон и режим цвета. */
 .new-custom { padding: 12px 18px 16px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--panel-solid) 42%, transparent); }
 .new-name-field { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 10px; }
-.new-name-field span, .new-custom-grid span, .new-mode > span { color: var(--txt); font-size: 13px; font-weight: 650; }
+.new-name-field span, .new-custom-grid span, .new-mode > span { color: var(--txt); font-size: var(--type-label); font-weight: var(--fw-ui); }
 .new-name-field input, .new-custom-grid input { width: 100%; height: var(--btn-sm); box-sizing: border-box; padding: 0 10px;
   color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); outline: none;
-  font: 650 13px/1 system-ui, sans-serif; }
+  font: inherit; font-size: var(--type-label); font-weight: var(--fw-ui); }
 .new-custom-grid { display: grid; grid-template-columns: minmax(64px, 1fr) var(--btn-sm) minmax(64px, 1fr) 74px; align-items: end; gap: 10px; }
 .new-custom-grid label { display: grid; gap: 6px; }
 .new-link { width: var(--btn-sm); height: var(--btn-sm); margin-bottom: 0; border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -60,20 +60,20 @@
   linear-gradient(45deg, transparent 75%, #8b8b8b 75%),
   linear-gradient(-45deg, transparent 75%, #8b8b8b 75%),
   #d8d8d8; background-size: 18px 18px; background-position: 0 0, 0 9px, 9px -9px, -9px 0; }
-.new-bg em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-size: 10px; font-weight: 700; }
+.new-bg em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-size: var(--type-micro); font-weight: var(--fw-ui); }
 
 /* Save preset и Color mode стоят перед Create, чтобы решение было видно до запуска. */
 .new-save { min-height: var(--btn-sm); display: inline-flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--txt); cursor: pointer; }
 .new-save input { position: absolute; opacity: 0; pointer-events: none; }
 .new-save span { width: 22px; height: 22px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); }
 .new-save input:checked + span { background: var(--accent); box-shadow: inset 0 0 0 6px var(--surface); }
-.new-save b { font-size: 13px; font-weight: 650; }
+.new-save b { font-size: var(--type-label); font-weight: var(--fw-ui); }
 .new-mode { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 10px; }
 .new-mode div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(220px, 58%); padding: 3px; border: 1px solid var(--line);
   border-radius: var(--r-lg); background: var(--surface); }
-.new-mode button { width: 100%; height: 30px; border-radius: var(--r-md); color: var(--txt2); font-size: 12px; font-weight: 800; }
+.new-mode button { width: 100%; height: 30px; border-radius: var(--r-md); color: var(--txt2); font-size: var(--type-system); font-weight: var(--fw-heading); }
 .new-mode button.on { color: var(--on-accent); background: var(--accent); }
-#new-create { width: 100%; height: var(--btn); border-radius: var(--r-lg); font-size: 14px; font-weight: 800; }
+#new-create { width: 100%; height: var(--btn); border-radius: var(--r-lg); font-size: var(--type-body); font-weight: var(--fw-heading); }
 
 @media (max-width: 720px) {
   .new-panel { left: 16px; right: 16px; top: 116px; width: auto; max-height: calc(100dvh - 136px); min-height: 0; }
