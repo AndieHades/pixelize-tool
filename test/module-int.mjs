@@ -790,10 +790,14 @@ t('gallery: режим галереи сохраняет открытые окн
   ids.forEach((id) => document.getElementById(id).classList.remove('on'));
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
-t('color-picker: диск, плюс и история работают без большой Add-кнопки', () => { cp.mount(); localStorage.removeItem('pixel-heart:color-history'); document.getElementById('col-hist-clear').click(); S.palette = [];
-  assert.ok(document.getElementById('col-disc')); assert.equal(document.querySelector('#colpop .iact'), null);
+t('color-picker: диск, плюс и история использованных цветов работают без большой Add-кнопки', () => { localStorage.removeItem('pixel-heart:color-used-history'); cp.mount(); document.getElementById('col-hist-clear').click(); S.palette = [];
+  assert.ok(document.getElementById('col-disc')); assert.ok(document.getElementById('col-prev-sw')); assert.ok(document.getElementById('col-copy')); assert.equal(document.querySelector('#colpop .iact'), null);
+  S.active = [10, 20, 30]; cp.syncColFromActive();
   const hex = document.getElementById('col-hex'); hex.value = '#123456'; hex.dispatchEvent(new window.Event('input', { bubbles: true }));
   document.getElementById('col-add').click(); assert.deepEqual(S.palette[0], [18, 52, 86]);
+  assert.equal(document.querySelectorAll('#col-hist button').length, 0);
+  document.getElementById('col-prev-sw').click(); assert.equal(hex.value, '#0A141E'); assert.deepEqual(S.active, [10, 20, 30]);
+  actions.run('color.used', [18, 52, 86]);
   assert.equal(document.querySelectorAll('#col-hist button').length, 1);
   document.getElementById('col-hist-clear').click(); assert.equal(document.querySelectorAll('#col-hist button').length, 0);
 });
@@ -1266,6 +1270,15 @@ t('layers-ui: Ctrl-клик выделяет диапазон до активн�
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
   target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
   assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
+t('layers-ui: цвет можно бросить прямо на слой', () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
+  const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 1);
+  const prev = document.elementFromPoint; document.elementFromPoint = () => row;
+  try {
+    assert.equal(actions.run('layer.dropColorAt', [9, 8, 7], 12, 12), true);
+  } finally { document.elementFromPoint = prev; }
+  assert.deepEqual(S.layers[1].grid[0][0], [9, 8, 7, 255]); assert.equal(S.layers[0].grid[0][0], null);
+  assert.ok([...document.querySelectorAll('#col-hist button')].some((b) => b.title === '#090807'));
+});
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
 t('layers-ui: merge запекает clipping mask и эффекты слоя', () => { resetWH(5, 5);

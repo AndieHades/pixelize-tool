@@ -2,6 +2,7 @@
 // down/move/up; координаты клетки приходят готовыми из системы ввода.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { registerTool } from '../../core/canvas-handlers.js';
 import { snapshot } from '../../core/history.js';
 import { toast, t } from '../../core/dom.js';
@@ -10,6 +11,7 @@ import { stamp } from './stamp.js';
 import { line, commitLine } from './shapes.js';
 import { beginStroke, afterStroke } from './stroke.js';
 import { qsBegin, qsMove, qsRelease } from './quickshape.js';
+import { shadingActive } from './shading.js';
 
 let last = null;
 
@@ -29,7 +31,9 @@ const brush = {
   down({ gx, gy }) { beginStroke(); qsBegin(gx, gy); stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
   move({ gx, gy }) { if (qsMove(gx, gy)) { bus.emit('render'); return; } // QuickShape выровнял форму — raw больше не рисуем
     if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
-  up() { qsRelease(); S.stroke = false; last = null; afterStroke(); bus.emit('render'); }, // удержал → коммитит ровную форму, иначе raw остаётся
+  up() { qsRelease(); S.stroke = false; last = null;
+    if ((S.tool === 'pencil' && !shadingActive()) || (S.tool === 'adjust' && S.adjMode === 'colorize')) actions.run('color.used', S.active);
+    afterStroke(); bus.emit('render'); }, // удержал → коммитит ровную форму, иначе raw остаётся
 };
 
 const shape = {
@@ -42,7 +46,7 @@ const shape = {
   up() { endSnap(); if (S.linePrev) commitLine(); },
 };
 
-const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); bus.emit('render'); afterStroke(); } };
+const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); actions.run('color.used', S.active); bus.emit('render'); afterStroke(); } };
 
 for (const t of ['pencil', 'eraser', 'adjust']) registerTool(t, brush);
 for (const t of ['line', 'rect', 'ellipse']) registerTool(t, shape);

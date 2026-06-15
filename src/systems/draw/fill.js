@@ -22,7 +22,7 @@ function floodFrom(x, y) {
 export function flood(x, y) { for (const [mx, my] of mirrorPoints(x, y, S.W, S.H, symA(), symHA())) floodFrom(mx, my); }
 
 // заливка как самостоятельное действие (снимок + перерисовка) — для drop-to-fill
-export function floodAt(x, y) { snapshot(); flood(x, y); bus.emit('render'); bus.emit('layers'); }
+export function floodAt(x, y) { snapshot(); flood(x, y); actions.run('color.used', S.active); bus.emit('render'); bus.emit('layers'); }
 actions.register('edit.floodAt', floodAt);
 
 // бросили цвет (палитра/кружок) на холст: есть выделение — заливаем его целиком,

@@ -59,9 +59,9 @@
     #col-wheel { position: absolute; inset: 0; border-radius: 50%;
       background: conic-gradient(from -90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 1px 3px rgba(0, 0, 0, .35); }
-    #col-wheel::after { content: ""; position: absolute; inset: 24%; border-radius: 50%;
-      background: var(--panel-solid); box-shadow: 0 0 0 5px var(--panel-solid), inset 0 0 0 1px rgba(255, 255, 255, .06); }
-    #col-svdisc { position: absolute; inset: 27%; border-radius: 50%; overflow: hidden;
+    #col-wheel::after { content: ""; position: absolute; inset: 16.667%; border-radius: 50%;
+      background: var(--panel-solid); box-shadow: 0 0 0 3px var(--panel-solid), inset 0 0 0 1px rgba(255, 255, 255, .06); }
+    #col-svdisc { position: absolute; inset: 16.667%; border-radius: 50%; overflow: hidden;
       background:
         linear-gradient(to top, #000 0%, rgba(0, 0, 0, .88) 12%, rgba(0, 0, 0, .28) 42%, rgba(0, 0, 0, 0) 70%),
         radial-gradient(circle at 19% 21%, #fff 0%, rgba(255,255,255,.96) 12%, rgba(255,255,255,.42) 32%, rgba(255,255,255,0) 55%),
@@ -71,13 +71,14 @@
       border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .45), 0 1px 4px rgba(0, 0, 0, .45);
       transform: translate(-50%, -50%); pointer-events: none; }
     #col-svmark.white { border-color: transparent; }
-    .col-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    #col-sw { width: 42px; height: 34px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .25); flex: none; }
+    .col-row { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+    #col-prev-sw, #col-sw { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .25); flex: none;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .16); }
     #col-hex { flex: 1; width: auto; background: var(--surface); color: var(--txt); border: 1px solid var(--line);
-      border-radius: 10px; padding: 9px 10px; font: 14px ui-monospace, monospace; text-transform: uppercase; }
-    #col-add, #col-commit { width: 34px; height: 34px; border-radius: 9px; background: var(--row); color: var(--txt2); flex: none; }
-    #col-add:hover, #col-commit:hover { background: var(--accent-soft); color: var(--txt); }
-    #col-add svg, #col-commit svg { width: 18px; height: 18px; }
+      border-radius: 10px; padding: 9px 10px; font: 14px ui-monospace, monospace; text-transform: uppercase; min-width: 82px; }
+    #col-copy, #col-add, #col-commit { width: 34px; height: 34px; border-radius: 9px; background: var(--row); color: var(--txt2); flex: none; }
+    #col-copy:hover, #col-add:hover, #col-commit:hover { background: var(--accent-soft); color: var(--txt); }
+    #col-copy svg, #col-add svg, #col-commit svg { width: 18px; height: 18px; }
     #col-commit { color: #6fdb8b; }
     #col-commit.hide { display: none; }
     #colpop input[type=range] { height: 12px; border-radius: 6px; border: 1px solid var(--line); }

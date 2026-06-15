@@ -2,6 +2,7 @@
 // превью в слой (углы целы — pp молчит при stroke=false).
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
 import { stamp } from './stamp.js';
@@ -16,5 +17,6 @@ export function commitLine() {
   if (S.tool === 'rect') (S.fillShape.rect ? rectFill : rectEdges)(lp[0], lp[1], lp[2], lp[3], stamp);
   else if (S.tool === 'ellipse') (S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], stamp);
   else line(lp[0], lp[1], lp[2], lp[3]);
+  actions.run('color.used', S.active);
   bus.emit('render'); afterStroke();
 }

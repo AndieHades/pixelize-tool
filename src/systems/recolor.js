@@ -19,6 +19,7 @@ export function recolorAll(from, to) {
     for (const [k, c] of L.ext) if (sources.some((f) => eqc(c, f))) L.ext.set(k, target.slice()); }
   if (!S.palette.some((p) => eqc(p, target))) S.palette.push(target.slice());
   if (sources.some((f) => eqc(S.active, f))) S.active = target.slice();
+  if (n) actions.run('color.used', target);
   dirtyAll(); bus.emit('palette'); bus.emit('render'); bus.emit('layers');
   toast(t('toast.recoloredN', { n }));
 }

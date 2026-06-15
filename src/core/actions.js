@@ -6,4 +6,4 @@ const reg = new Map();
 export const register = (name, fn) => reg.set(name, fn);
 export const has = (name) => reg.has(name);
 export const list = () => [...reg.keys()];
-export function run(name, ...args) { const f = reg.get(name); if (!f) return false; f(...args); return true; }
+export function run(name, ...args) { const f = reg.get(name); if (!f) return false; const out = f(...args); return out === undefined ? true : out; }

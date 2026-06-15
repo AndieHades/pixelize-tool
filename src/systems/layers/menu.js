@@ -37,7 +37,8 @@ export function mountMenu() {
   $('lctx-select').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') { curTo(lctxRef.ref); actions.run('selection.layer'); } };
   $('lctx-invert').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') { curTo(lctxRef.ref); actions.run('selection.invert'); } };
   $('lctx-fill').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot(); const a = [S.active[0], S.active[1], S.active[2], 255];
-    for (const L of ts) { for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) L.grid[y][x] = a.slice(); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
+    for (const L of ts) { for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) L.grid[y][x] = a.slice(); L.ext = new Map(); markDirty(S.layers.indexOf(L)); }
+    actions.run('color.used', S.active); bus.emit('layers'); bus.emit('render'); };
   $('lctx-clear').onclick = () => { close(); const ts = targets(); if (!ts.length) return; snapshot();
     for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emit('layers'); bus.emit('render'); };
   $('lctx-symm').onclick = () => { close(); symmetrizeLayerRefs(targets()); };

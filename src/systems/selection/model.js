@@ -87,6 +87,7 @@ export function deleteSelContent() { commitFloat(); const targets = selectedLaye
 
 export function fillSelection() { if (!S.sel) return; commitFloat(); snapshot(); const g = G(); let nn = 0;
   for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) { if (!inMask(x, y)) continue; g[y][x] = [S.active[0], S.active[1], S.active[2], 255]; nn++; }
+  if (nn) actions.run('color.used', S.active);
   markDirty(S.cur); bus.emit('render'); bus.emit('layers'); toast(t('toast.filledN', { n: nn })); }
 
 actions.register('selection.applyOp', applySelectionOp);

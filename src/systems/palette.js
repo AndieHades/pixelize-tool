@@ -194,7 +194,7 @@ function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
     S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); buildPalette(); return; }
   if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     const onPal = tgt && tgt.closest && tgt.closest('#pal');
-    if (!onPal) { actions.run('edit.dropColorAt', S.palette[d.idx], e.clientX, e.clientY); buildPalette(); return; } // бросок мимо палитры → заливка холста
+    if (!onPal) { if (!actions.run('layer.dropColorAt', S.palette[d.idx], e.clientX, e.clientY)) actions.run('edit.dropColorAt', S.palette[d.idx], e.clientX, e.clientY); buildPalette(); return; } // бросок мимо палитры → слой/заливка холста
     buildPalette(); }
   else if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); }
 
