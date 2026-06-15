@@ -744,7 +744,7 @@ body.gallery-open #pal-ovl {
 /* круглые иконочные кнопки (＋, ✓) */
 .gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
 .gal-cap { padding: 8px 4px 0; text-align: center; } /* название работы — по центру под плиткой */
-.gal-cap b { display: block; color: var(--txt); font-size: 13px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gal-cap b { display: block; color: color-mix(in srgb, var(--txt) 68%, var(--bg)); font-size: 13px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* название приглушённое, не чисто белое */
 .gal-cap b.editing { background: var(--panel-solid); border-radius: var(--r-xs); padding: 1px 4px; white-space: normal; }
 .gal-cap small { display: block; color: var(--txt2); font-size: 11px; margin-top: 1px; }
 /* иконка папки, когда внутри нет превью */
