@@ -7,6 +7,7 @@ import { snapshot } from '../../core/history.js';
 import { longPress } from '../../core/long-press.js';
 import { inlineRename } from '../../core/inline-rename.js';
 import { layerCanvas } from '../../core/layer-cache.js';
+import { makeCanvas } from '../../core/canvas.js';
 import { folderChain } from '../../core/layers.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
@@ -30,7 +31,7 @@ export const setSquelch = (v) => { layDragSquelch = v; };
 
 export { longPress }; // переэкспорт общего жеста (используется fx-rows)
 
-function thumbFor(i) { const th = document.createElement('canvas'); th.className = 'lth'; th.width = 40; th.height = 40;
+function thumbFor(i) { const th = makeCanvas(40, 40); th.className = 'lth';
   const tx = th.getContext('2d'); tx.imageSmoothingEnabled = false; tx.fillStyle = '#26262c'; tx.fillRect(0, 0, 40, 40); tx.fillStyle = '#1d1d23';
   for (let yy = 0; yy < 5; yy++) for (let xx = 0; xx < 5; xx++) if ((xx + yy) & 1) tx.fillRect(xx * 8, yy * 8, 8, 8);
   const k = Math.min(40 / S.W, 40 / S.H), w2 = Math.max(1, Math.round(S.W * k)), h2 = Math.max(1, Math.round(S.H * k));
@@ -47,7 +48,7 @@ function nameSpan(text) { const nm = document.createElement('span'); nm.classNam
 function folderCountSpan(f) {
   const n = folderLayers(f).length;
   if (!n) return null;
-  const c = document.createElement('span'); c.className = 'fcount'; c.textContent = '· ' + n; return c;
+  const c = document.createElement('span'); c.className = 'fcount'; c.textContent = n; return c; // разделитель '· ' — в CSS (.fcount::before)
 }
 
 // глаз видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
