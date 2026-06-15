@@ -10,7 +10,7 @@ import { SIZE_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { clampRound } from '../logic/math.js';
 import { newWork } from './gallery/doc.js';
-import { hide as hideGallery } from './gallery/index.js';
+import { hide as hideGallery, show as showGallery } from './gallery/index.js';
 
 const STORE = 'customSizes';
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
@@ -66,7 +66,8 @@ function create() { const w = parseInt($('new-w').value, 10), h = parseInt($('ne
 }
 
 export function mount() {
-  const openDlg = () => { editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on'); };
+  // «Новый холст» — всегда поверх галереи, не эдитора: из эдитора сперва уводим в галерею
+  const openDlg = () => { showGallery(); editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on'); };
   $('new').onclick = openDlg; $('gal-new').onclick = openDlg;
   actions.register('doc.new', openDlg);
   $('new-add').onclick = () => { editIdx = null; openEditor('32×32', 32, 32); };

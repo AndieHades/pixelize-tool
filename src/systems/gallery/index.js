@@ -15,7 +15,7 @@ function setGalleryOpen(on) {
 }
 
 export function show() { saveCurrent(); render(); setGalleryOpen(true); }
-export function hide() { setGalleryOpen(false); }
+export function hide() { setGalleryOpen(false); $('new-ovl').classList.remove('on'); } // галерейный диалог не утекает в эдитор
 
 function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }
