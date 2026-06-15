@@ -505,7 +505,10 @@
     #tsg-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 4px; scrollbar-width: thin; }
     .tsg-base { display: flex; align-items: center; gap: 8px; padding-right: 7px; }
     #tsg-baseprev { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); flex: none; }
-    #tsg-basehex { font-size: 13px; letter-spacing: .5px; }
+    #tsg-basehex { width: 82px; height: 28px; padding: 0 2px; border: 0; background: transparent;
+      color: var(--txt); font: 700 13px/1 ui-monospace, monospace; letter-spacing: .5px; text-transform: uppercase; outline: none; }
+    #tsg-basehex:focus { box-shadow: inset 0 -1px 0 var(--accent); }
+    #tsg-basehex.bad { color: var(--danger); box-shadow: inset 0 -1px 0 var(--danger); }
     .tsg-htitle { font-size: 11px; color: var(--txt2); margin-top: 2px; }
     .tsg-scale .tsg-stitle { font-size: 10px; color: var(--txt2); margin: 4px 0 3px; }
     .tsg-row { display: flex; gap: 4px; }

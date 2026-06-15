@@ -8,6 +8,13 @@ import { floatingWindow } from '../../core/floating-window.js';
 import { tsg, toggleSel, openWith } from './store.js';
 import { render, setHandlers } from './render.js';
 
+function parseHex(s) {
+  const raw = (s || '').trim().replace(/^#/, '');
+  const full = /^[0-9a-f]{3}$/i.test(raw) ? raw.split('').map((x) => x + x).join('') : raw;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return null;
+  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+}
+
 export function addSelectedToCurrentPalette(colors) {
   let n = 0;
   for (const c of colors) if (!S.palette.some((p) => eqc(p, c))) { S.palette.push(c.slice(0, 3)); n++; }
@@ -23,6 +30,13 @@ export function createNewPaletteFromSelected(colors) {
 const tap = (c) => { toggleSel(c); render(); };
 const addOne = (c) => { addSelectedToCurrentPalette([c]); toast(t('toast.colorAdded')); render(); };
 const close = () => $('tsg-win').classList.remove('on');
+function setBaseFromHex(value, normalize = false) {
+  const c = parseHex(value), input = $('tsg-basehex');
+  input.classList.toggle('bad', !c && value.trim().length > 0);
+  if (!c) { if (normalize) render(); return; }
+  tsg.base = c; tsg.sel = [];
+  render();
+}
 
 function open() {
   if (!S.palette.some((p) => eqc(p, S.active))) { toast(t('toast.selectBaseFirst')); return; }
@@ -32,6 +46,9 @@ function open() {
 export function mount() {
   setHandlers({ onTap: tap, onAdd: addOne });
   $('tsg-btn').onclick = open; $('tsg-x').onclick = close;
+  $('tsg-basehex').addEventListener('input', (e) => setBaseFromHex(e.target.value));
+  $('tsg-basehex').addEventListener('blur', (e) => setBaseFromHex(e.target.value, true));
+  $('tsg-basehex').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } });
   for (const b of document.querySelectorAll('#tsg-win [data-harm]'))
     b.onclick = () => { tsg.harmony = tsg.harmony === b.dataset.harm ? null : b.dataset.harm; render(); };
   $('tsg-add').onclick = () => { if (!tsg.sel.length) { toast(t('toast.nothingSelected')); return; }

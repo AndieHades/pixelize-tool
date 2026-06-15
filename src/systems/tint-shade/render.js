@@ -66,7 +66,8 @@ function renderSelected() {
 
 export function render() {
   $('tsg-baseprev').style.background = rgb(tsg.base);
-  $('tsg-basehex').textContent = rgbToHex(tsg.base).toUpperCase();
+  $('tsg-basehex').value = rgbToHex(tsg.base).toUpperCase();
+  $('tsg-basehex').classList.remove('bad');
   const tints = generateTints(tsg.base), shades = generateShades(tsg.base);
   const sc = $('tsg-scales'); sc.innerHTML = '';
   sc.append(scaleRow(tints, t('tsg.tints')), scaleRow(shades, t('tsg.shades')));

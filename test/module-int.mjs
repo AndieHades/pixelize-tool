@@ -705,6 +705,19 @@ t('tint-shade: окно открывается от активного цвет�
   assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale').length, 2); // тинты + шейды
   assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale')[0].querySelectorAll('.tsg-sw').length, 5);
 });
+t('tint-shade: HEX поля можно вставлять и редактировать', () => {
+  document.querySelector('#tsg-scales .tsg-sw').click();
+  assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 1);
+  const input = document.getElementById('tsg-basehex');
+  input.value = 'CF573C';
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(input.value, '#CF573C');
+  assert.equal(document.getElementById('tsg-baseprev').style.background, 'rgb(207, 87, 60)');
+  assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 0);
+  input.value = '#C57';
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(input.value, '#CC5577');
+});
 t('tint-shade: гармония рисует доп. шкалы по 5', () => {
   document.querySelector('#tsg-win [data-harm="triadic"]').click();
   const blocks = document.querySelectorAll('#tsg-harm .tsg-block');
