@@ -536,6 +536,51 @@
       button svg { width: 18px; height: 18px; }
     }
 
+/* ---- режим галереи: редакторские окна прячутся, но их состояние сохраняется ---- */
+body.gallery-open #topbar,
+body.gallery-open #sidebar,
+body.gallery-open #brushbar,
+body.gallery-open #cropbar,
+body.gallery-open #rotbar,
+body.gallery-open #selbar,
+body.gallery-open #status,
+body.gallery-open #pickflag,
+body.gallery-open #eyedrop,
+body.gallery-open #bb-val,
+body.gallery-open #swtip,
+body.gallery-open #swdrop,
+body.gallery-open #paldrag,
+body.gallery-open #palbar,
+body.gallery-open #prevwin,
+body.gallery-open #refwin,
+body.gallery-open #tsg-win,
+body.gallery-open #lay-pop,
+body.gallery-open #brush-pop,
+body.gallery-open #brush-plus,
+body.gallery-open #brush-settings,
+body.gallery-open #fx-panel,
+body.gallery-open #fx-edit,
+body.gallery-open #bcpop,
+body.gallery-open #adjpop,
+body.gallery-open #lassopop,
+body.gallery-open #colpop,
+body.gallery-open #ctx,
+body.gallery-open #lctx,
+body.gallery-open #cctx,
+body.gallery-open #sctx,
+body.gallery-open #trctx,
+body.gallery-open #fxctx,
+body.gallery-open #impmenu,
+body.gallery-open #tctx,
+body.gallery-open #ovl,
+body.gallery-open #ren-ovl,
+body.gallery-open #tools-ovl,
+body.gallery-open #export-ovl,
+body.gallery-open #pal-ovl {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* ---- галерея работ (Procreate-стиль) ---- */
 #gallery { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
 #gallery.on { display: flex; }

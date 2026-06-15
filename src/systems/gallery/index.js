@@ -9,8 +9,13 @@ import { listAll } from './store.js';
 import { configure, render, goBack, setSelecting, isSelecting, stackSelected, dupSelected, delSelected } from './screen.js';
 import { readPsd } from '../../logic/psd.js';
 
-export function show() { saveCurrent(); render(); $('gallery').classList.add('on'); }
-function hide() { $('gallery').classList.remove('on'); }
+function setGalleryOpen(on) {
+  $('gallery').classList.toggle('on', on);
+  document.body.classList.toggle('gallery-open', on);
+}
+
+export function show() { saveCurrent(); render(); setGalleryOpen(true); }
+export function hide() { setGalleryOpen(false); }
 
 function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }

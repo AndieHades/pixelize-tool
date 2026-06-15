@@ -9,13 +9,14 @@ import { t } from '../i18n/index.js';
 import { SIZE_PRESETS } from '../config/presets.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { newWork } from './gallery/doc.js';
+import { hide as hideGallery } from './gallery/index.js';
 
 const STORE = 'customSizes';
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
 let editIdx = null; // null — добавление нового; число — правка кастомного по индексу
 
-function open(p) { closeEditor(); $('new-ovl').classList.remove('on'); $('gallery').classList.remove('on'); newWork(p.w, p.h); }
+function open(p) { closeEditor(); $('new-ovl').classList.remove('on'); hideGallery(); newWork(p.w, p.h); }
 
 function row(p, customIdx) {
   const r = document.createElement('div'); r.className = 'new-row';

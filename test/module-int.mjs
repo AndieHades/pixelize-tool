@@ -58,6 +58,7 @@ const eyedropper = await import('../src/systems/eyedropper/index.js');
 const cp = await import('../src/systems/color-picker.js');
 const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
+const gallery = await import('../src/systems/gallery/index.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
 const tb = await import('../src/systems/toolbars.js');
@@ -603,6 +604,17 @@ t('menus: контекстное меню выше активной панели
   other.classList.add('on'); showMenuAt(menu, 120, 120);
   assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
   assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
+});
+t('gallery: режим галереи сохраняет открытые окна редактора', () => {
+  const ids = ['lay-pop', 'brush-pop', 'adjpop', 'prevwin'];
+  ids.forEach((id) => document.getElementById(id).classList.add('on'));
+  gallery.show();
+  assert.ok(document.getElementById('gallery').classList.contains('on'));
+  assert.ok(document.body.classList.contains('gallery-open'));
+  ids.forEach((id) => assert.ok(document.getElementById(id).classList.contains('on')));
+  gallery.hide();
+  assert.ok(!document.body.classList.contains('gallery-open'));
+  ids.forEach((id) => document.getElementById(id).classList.remove('on'));
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
 
