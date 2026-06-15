@@ -1,6 +1,8 @@
 // Общие запросы по слоям/папкам (с учётом вложенных групп).
 import { S } from '../../core/state.js';
 import { folderChain } from '../../core/layers.js';
+import { t } from '../../core/dom.js';
+import { localeValues } from '../../i18n/index.js';
 
 const inSubtree = (L, fid) => folderChain(L.fid).some((f) => f.id === fid); // слой лежит в поддереве папки
 export const folderLayers = (f) => S.layers.filter((L) => inSubtree(L, f.id));
@@ -39,3 +41,11 @@ export function nextFolderId() { const max = S.folders.reduce((m, f) => Math.max
 // уникальное имя папки: к занятому добавляем счётчик («База 2», «База 3», …)
 export function uniqueFolderName(base) { const used = new Set(S.folders.map((f) => f.name));
   if (!used.has(base)) return base; let n = 2; while (used.has(base + ' ' + n)) n++; return base + ' ' + n; }
+export function nextFolderName() {
+  const bases = localeValues('folder.name').map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp('^(?:' + bases.join('|') + ')\\s+(\\d+)$');
+  const used = new Set();
+  for (const f of S.folders) { const m = (f.name || '').trim().match(re); if (m) used.add(+m[1]); }
+  let n = 1; while (used.has(n)) n++;
+  return t('folder.name') + ' ' + n;
+}

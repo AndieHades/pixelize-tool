@@ -11,7 +11,7 @@ import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
 import { localeValues } from '../../i18n/index.js';
-import { folderLayers, topOfFolder, commonParent, selectedIdx, nextFolderId, uniqueFolderName, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
+import { folderLayers, topOfFolder, commonParent, selectedIdx, nextFolderId, uniqueFolderName, nextFolderName, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function nextLayerName() {
@@ -66,7 +66,7 @@ function activeAfterDelete(idx) {
 
 export function doGroup() { const idx = selectedIdx(); // сгруппировать всё выделенное (активный + отмеченные)
   snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
-  const id = nextFolderId(); const f = { id, name: uniqueFolderName(t('folder.name') + ' ' + id), open: true, visible: true, symLock: false, parent, effects: [] };
+  const id = nextFolderId(); const f = { id, name: nextFolderName(), open: true, visible: true, symLock: false, parent, effects: [] };
   S.folders.push(f); const moved = [];
   for (let j = idx.length - 1; j >= 0; j--) moved.unshift(S.layers.splice(idx[j], 1)[0]);
   moved.forEach((L) => { L.fid = f.id; }); clearFolderEmptyPos(f.id); S.layers.splice(idx[0], 0, ...moved);

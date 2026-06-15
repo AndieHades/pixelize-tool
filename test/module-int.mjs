@@ -958,6 +958,15 @@ t('color-picker: диск, плюс и история использованны
   document.getElementById('col-add').click(); assert.deepEqual(S.palette[0], [18, 52, 86]);
   assert.equal(document.querySelectorAll('#col-hist button').length, 0);
   document.getElementById('col-prev-sw').click(); assert.equal(hex.value, '#0A141E'); assert.deepEqual(S.active, [10, 20, 30]);
+  const disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
+  disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 });
+  sv.getBoundingClientRect = () => ({ left: 33, top: 33, width: 134, height: 134, right: 167, bottom: 167 });
+  Object.defineProperty(disc, 'clientWidth', { value: 200, configurable: true });
+  Object.defineProperty(sv, 'clientWidth', { value: 134, configurable: true });
+  const pev = (button, x, y) => { const e = new window.MouseEvent('pointerdown', { bubbles: true, button, clientX: x, clientY: y });
+    Object.defineProperty(e, 'pointerType', { value: 'mouse' }); return e; };
+  disc.dispatchEvent(pev(0, 190, 100)); assert.equal(S.palette.length, 1);
+  disc.dispatchEvent(pev(2, 10, 100)); assert.equal(S.palette.length, 2);
   actions.run('color.used', [18, 52, 86]);
   assert.equal(document.querySelectorAll('#col-hist button').length, 1);
   document.getElementById('col-hist-clear').click(); assert.equal(document.querySelectorAll('#col-hist button').length, 0);
@@ -1655,6 +1664,16 @@ t('layers-ui: имя нового слоя учитывает номерные �
   i18n.setLocale('en'); S.layerSeq = 34; S.layers[0].name = 'Слой 3';
   lops.doAddLayer(); assert.equal(S.layers[S.cur].name, 'Layer 4'); assert.equal(S.layerSeq, 4);
   i18n.setLocale('ru'); });
+t('layers-ui: имя новой папки берёт минимальный свободный номер', () => { resetWH(8, 8);
+  i18n.setLocale('ru'); S.folderSeq = 8;
+  const mk = (name) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] });
+  S.layers = [mk('a'), mk('b')]; S.cur = 0; S.marked = new Set([1]);
+  S.folders = [
+    { id: 2, name: 'Папка 2', open: true, visible: true, parent: null, effects: [] },
+    { id: 4, name: 'Папка 4', open: true, visible: true, parent: null, effects: [] },
+  ];
+  lops.doGroup(); assert.equal(S.folders[S.folders.length - 1].name, 'Папка 1');
+});
 t('layers-ui: закрытая папка с активным слоем становится активной строкой', () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0;
   document.getElementById('lay-pop').classList.add('on'); layList(); document.querySelector('#lay-list .frow .caret').click();

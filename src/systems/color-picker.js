@@ -38,6 +38,10 @@ function rememberUsedColor(c) {
   saveColorHistory(); renderColorHistory();
 }
 
+function addCurrentToPalette() {
+  actions.run('palette.addRgb', hsvToRgb(colH, colS, colV));
+}
+
 function syncModeActions() {
   const btn = $('col-commit'); if (!btn) return; const active = !!(onPick || replaceFrom);
   btn.classList.toggle('hide', !active); btn.dataset.i18nTitle = onPick ? 'btn.done' : 'btn.replaceColor';
@@ -162,8 +166,10 @@ export function mount() {
     return '';
   };
   let discDrag = false, lastSvTap = null;
-  $('col-disc').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return;
+  $('col-disc').addEventListener('contextmenu', (e) => e.preventDefault());
+  $('col-disc').addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
     e.preventDefault();
+    if (e.pointerType === 'mouse' && e.button === 2) { if (discPick(e)) addCurrentToPalette(); return; }
     const p = svPoint(e), now = Date.now();
     prevColor = currentColor();
     if (p && lastSvTap && now - lastSvTap.t < 360 && Math.hypot(e.clientX - lastSvTap.x, e.clientY - lastSvTap.y) < 22) {
@@ -184,8 +190,7 @@ export function mount() {
   $('col-sw').onclick = focusHex;
   $('col-copy').onclick = () => { const h = rgbToHex(currentColor()).toUpperCase(); $('col-hex').value = h;
     copyText(h).then(() => toast(t('toast.copied', { s: h }))); };
-  $('col-add').onclick = () => { const c = hsvToRgb(colH, colS, colV);
-    actions.run('palette.addRgb', c); };
+  $('col-add').onclick = addCurrentToPalette;
   $('col-commit').onclick = () => { const c = hsvToRgb(colH, colS, colV);
     if (onPick) { onPick = null; syncModeActions(); $('colpop').classList.remove('on'); return; } // «Готово» — закрыть пикер эффекта
     if (replaceFrom) { const from = replaceFrom; replaceFrom = null; syncModeActions(); $('colpop').classList.remove('on'); actions.run('recolor.all', from, c); } };
