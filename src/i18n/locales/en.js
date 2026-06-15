@@ -201,5 +201,5 @@ export const en = {
   'toast.canvasSize': 'Canvas: {w}×{h}',
   'toast.recoloredN': 'Recolored: {n} px',
   'toast.exported': 'Exported files: {n}', 'toast.exportEmpty': 'Nothing to export',
-  'menu.copyHex': 'Copy HEX', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
+  'menu.copyHex': 'Copy HEX', 'menu.shading': 'Shading', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
 };

@@ -1,4 +1,5 @@
-// Замена цвета по всему документу (на всех слоях и в палитре).
+// Замена цвета по всему документу. Палитра сохраняет исходные цвета; новый цвет
+// добавляется в конец, если его там ещё нет.
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
@@ -7,19 +8,22 @@ import { eqc } from '../logic/color.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { toast, t } from '../core/dom.js';
 
+const fromList = (from) => (Array.isArray(from && from[0]) ? from : [from]).filter(Boolean).map((c) => c.slice(0, 3));
+
 export function recolorAll(from, to) {
+  const sources = fromList(from), target = to.slice(0, 3);
+  if (!sources.length) return;
   snapshot(); let n = 0;
   for (const L of S.layers) { const g = L.grid;
-    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (g[y][x] && eqc(g[y][x], from)) { g[y][x] = to.slice(); n++; }
-    for (const [k, c] of L.ext) if (eqc(c, from)) L.ext.set(k, to.slice()); }
-  const pi = S.palette.findIndex((p) => eqc(p, from));
-  if (pi >= 0) { if (S.palette.some((p, i) => i !== pi && eqc(p, to))) S.palette.splice(pi, 1); else S.palette[pi] = to.slice(); }
-  if (eqc(S.active, from)) S.active = to.slice();
+    for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (g[y][x] && sources.some((f) => eqc(g[y][x], f))) { g[y][x] = target.slice(); n++; }
+    for (const [k, c] of L.ext) if (sources.some((f) => eqc(c, f))) L.ext.set(k, target.slice()); }
+  if (!S.palette.some((p) => eqc(p, target))) S.palette.push(target.slice());
+  if (sources.some((f) => eqc(S.active, f))) S.active = target.slice();
   dirtyAll(); bus.emit('palette'); bus.emit('render'); bus.emit('layers');
-  toast(n ? t('toast.recoloredN', { n }) : t('toast.paletteReplaced'));
+  toast(t('toast.recoloredN', { n }));
 }
 
-export function startReplace(from) { S.replaceMode = { from: from.slice() }; bus.emit('render'); toast(t('toast.replaceHint')); }
+export function startReplace(from) { S.replaceMode = { from: Array.isArray(from && from[0]) ? from.map((c) => c.slice()) : from.slice() }; bus.emit('render'); toast(t('toast.replaceHint')); }
 
 actions.register('recolor.all', recolorAll);
 actions.register('recolor.start', startReplace);

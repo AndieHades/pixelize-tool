@@ -102,8 +102,8 @@
     #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
     .sw { position: relative; width: 30px; height: 30px; border-radius: 0; }
     .sw.on { box-shadow: inset 0 0 0 2px #fff; border-color: transparent; }
-    .sw.shade-sel { box-shadow: inset 0 0 0 2px var(--accent); }
-    .sw.shade-sel.on { box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent); }
+    .sw.pal-sel, .sw.shade-sel { box-shadow: inset 0 0 0 2px var(--accent); }
+    .sw.pal-sel.on, .sw.shade-sel.on { box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent); }
     .sw.shade-pending { outline: 2px solid var(--accent); outline-offset: -2px; }
     .sw.used::after { content: ""; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px;
       border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .55); pointer-events: none; }

@@ -34,9 +34,10 @@ export function drawOverlays(ctx, ox, oy, z) {
       ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);
       ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke(); } }
   if (S.lassoPath && S.lassoPath.pts.length) drawLasso(ctx, ox, oy, z);
-  if (S.replaceMode) { ctx.fillStyle = 'rgba(61,139,253,.5)';
+  if (S.replaceMode) { const replaceColors = Array.isArray(S.replaceMode.from && S.replaceMode.from[0]) ? S.replaceMode.from : [S.replaceMode.from];
+    ctx.fillStyle = 'rgba(61,139,253,.5)';
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      let hit = false; for (let i = 0; i < S.layers.length; i++) { if (!effVis(i)) continue; const c = S.layers[i].grid[y][x]; if (c && eqc(c, S.replaceMode.from)) { hit = true; break; } }
+      let hit = false; for (let i = 0; i < S.layers.length; i++) { if (!effVis(i)) continue; const c = S.layers[i].grid[y][x]; if (c && replaceColors.some((f) => eqc(c, f))) { hit = true; break; } }
       if (hit) ctx.fillRect(ox + x * z, oy + y * z, z, z); } }
   if (S.cropMode) { const c = S.cropMode, x = ox + c.x0 * z, y = oy + c.y0 * z, w = (c.x1 - c.x0 + 1) * z, h = (c.y1 - c.y0 + 1) * z;
     ctx.fillStyle = 'rgba(0,0,0,.45)';

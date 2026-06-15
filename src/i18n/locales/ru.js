@@ -202,5 +202,5 @@ export const ru = {
   'toast.sizeRange': 'Размеры от 2 до {max}',
   'toast.canvasSize': 'Холст: {w}×{h}',
   'toast.recoloredN': 'Перекрашено: {n} пикс.', 'toast.exported': 'Экспортировано файлов: {n}', 'toast.exportEmpty': 'Нечего экспортировать',
-  'menu.copyHex': 'Копировать HEX', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
+  'menu.copyHex': 'Копировать HEX', 'menu.shading': 'Shading', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
 };

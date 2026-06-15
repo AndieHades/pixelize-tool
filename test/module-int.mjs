@@ -320,8 +320,12 @@ t('effects-render: fxOnCanvas накладывает эффект (новый к
   const out = fxr.fxOnCanvas(src, [{ type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }], 8, 8);
   assert.notEqual(out, src); assert.equal(out.width, 8); }); // эффект → новый полнохолстовый канвас
 
-t('recolor: меняет цвет на слоях и в палитре', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.palette = [[9, 9, 9]]; cache.dirtyAll();
-  recolorAll([9, 9, 9, 255], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.palette[0], [200, 100, 50]); });
+t('recolor: меняет пиксели и добавляет новый цвет, не переписывая палитру', () => { resetWH(4, 4);
+  S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.layers[0].grid[2][2] = [8, 8, 8, 255]; S.palette = [[9, 9, 9], [8, 8, 8]]; cache.dirtyAll();
+  recolorAll([[9, 9, 9], [8, 8, 8]], [200, 100, 50]);
+  assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[2][2], [200, 100, 50]);
+  assert.deepEqual(S.palette, [[9, 9, 9], [8, 8, 8], [200, 100, 50]]);
+});
 t('free-rotate: поворачивает слой без ошибок', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
   freeRotateLayer(S.layers[0], Math.PI / 4, 4); assert.ok(true); });
 t('bc: применение поднимает яркость', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
@@ -347,6 +351,10 @@ t('selection: deleteSelContent чистит', () => { resetWH(6, 6); S.layers[0]
   assert.equal(sel.deleteSelContent(), true); assert.equal(S.layers[0].grid[2][2], null); });
 t('selection: selectColorPixels строит маску', () => { resetWH(6, 6); S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.sel = null; S.selMask = null;
   sel.selectColorPixels([9, 9, 9]); assert.ok(S.selMask && S.selMask.has('2,2') && S.selMask.has('4,4')); });
+t('selection: selectColorPixels принимает несколько цветов', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[0].grid[2][2] = [2, 2, 2, 255]; S.layers[0].grid[3][3] = [3, 3, 3, 255];
+  sel.selectColorPixels([[1, 1, 1], [3, 3, 3]]);
+  assert.ok(S.selMask && S.selMask.has('1,1') && S.selMask.has('3,3') && !S.selMask.has('2,2'));
+});
 t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null; sel.invertSelection();
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
 
@@ -531,23 +539,90 @@ t('palette: кнопка used отмечает использованные цв
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
 });
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
-t('palette: drag ЛКМ выделяет диапазон для Shading с направлением', () => {
-  shading.mount(); S.palette = [[0, 0, 0], [40, 40, 40], [80, 80, 80], [120, 120, 120]]; S.active = [0, 0, 0]; S.shading = { colors: [] }; pal.buildPalette();
+t('palette: drag ЛКМ выделяет диапазон, Shading включается через ПКМ', () => {
+  shading.mount(); shading.clear(); S.palette = [[0, 0, 0], [40, 40, 40], [80, 80, 80], [120, 120, 120]]; S.active = [0, 0, 0]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
     sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
+    assert.deepEqual(S.shading.colors, []);
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
+    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+    document.elementFromPoint = () => sw[1];
+    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.querySelector('#ctx [data-act="shade"]').click();
     assert.deepEqual(S.shading.colors, [[0, 0, 0], [40, 40, 40], [80, 80, 80]]);
     assert.ok(document.getElementById('shade-pop').classList.contains('on'));
-    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .shade-sel').length, 3);
+    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
+    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; sw[3].click(); sw[3].click(); // снять диапазон перед обратным выделением
     sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
     document.elementFromPoint = () => sw[0];
     sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
+    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+    document.elementFromPoint = () => sw[1];
+    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.querySelector('#ctx [data-act="shade"]').click();
     assert.deepEqual(S.shading.colors, [[80, 80, 80], [40, 40, 40], [0, 0, 0]]);
+    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; sw[3].click(); sw[3].click();
+  } finally { document.elementFromPoint = oldHit; }
+});
+t('palette: Ctrl+клик выбирает общий диапазон, Shading берёт первые 6 через меню', () => {
+  shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[7].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.deepEqual(S.shading.colors, []);
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1);
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 8);
+  assert.deepEqual(S.shading.colors, []);
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[4];
+    sw[4].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+  } finally { document.elementFromPoint = oldHit; }
+  document.querySelector('#ctx [data-act="shade"]').click();
+  assert.deepEqual(S.shading.colors, [[7, 7, 7], [6, 6, 6], [5, 5, 5], [4, 4, 4], [3, 3, 3], [2, 2, 2]]);
+  assert.equal(document.querySelectorAll('#pal .shade-sel').length, 6);
+  assert.ok(document.getElementById('shade-pop').classList.contains('on'));
+});
+t('palette: ПКМ меню удаляет выделенный диапазон цветов', () => {
+  shading.clear(); S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[2];
+    sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    document.querySelector('#ctx [data-act="delete"]').click();
+    assert.deepEqual(S.palette, [[0, 0, 0], [4, 4, 4]]);
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
+  } finally { document.elementFromPoint = oldHit; }
+});
+t('palette: выделенный диапазон можно перетащить как блок', () => {
+  S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => sw[4];
+    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
+    assert.deepEqual(S.palette, [[0, 0, 0], [3, 3, 3], [4, 4, 4], [1, 1, 1], [2, 2, 2]]);
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2);
   } finally { document.elementFromPoint = oldHit; }
 });
 t('palette: drag ПКМ переставляет цвета', () => {

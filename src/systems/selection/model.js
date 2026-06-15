@@ -51,9 +51,10 @@ export function applySelectionOp(addition, op) { commitFloat();
 export function symmetrizeSelection() { const sa = symA(), sha = symHA(); if (!S.sel || (!sa && !sha)) return;
   maskFromCells(expandMask(selAsSet(), S.W, S.H, sa, sha)); }
 
-export function selectColorPixels(col) { commitFloat(); const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
+export function selectColorPixels(col) { commitFloat(); const colors = (Array.isArray(col && col[0]) ? col : [col]).filter(Boolean);
+  const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = g[y][x];
-    if (c && eqc(c, col)) { mask.add(x + ',' + y); nn++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+    if (c && colors.some((target) => eqc(c, target))) { mask.add(x + ',' + y); nn++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
   if (!nn) { toast(t('toast.noColorOnLayer')); return; }
   S.sel = { x0, y0, x1, y1 }; S.selMask = mask; setTool('select'); bus.emit('selection'); bus.emit('render'); // инструмент выделения: клик мимо маски снимает выделение
   toast(t('toast.selectedColorN', { n: nn })); }

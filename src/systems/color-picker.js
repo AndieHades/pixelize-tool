@@ -6,7 +6,7 @@ import * as actions from '../core/actions.js';
 import { $, t } from '../core/dom.js';
 import { rgb, rgbToHex, rgbToHsv, hsvToRgb, hexToRgb, eqc } from '../logic/color.js';
 
-let colH = 0, colS = 0, colV = 100, replaceFrom = null; // replaceFrom — режим «заменить цвет» вместо смены активного
+let colH = 0, colS = 0, colV = 100, replaceFrom = null; // replaceFrom — цвет или список цветов для режима замены
 let onPick = null; // режим «выбрать цвет для произвольной цели» (эффекты): колбэк(hex) на каждое изменение
 const setAddLabel = () => { $('col-add').textContent = t(onPick ? 'btn.done' : replaceFrom ? 'btn.replaceColor' : 'btn.addPalette'); };
 
@@ -35,7 +35,8 @@ export function openColPick() { replaceFrom = null; onPick = null; setAddLabel()
 
 // открыть наш пикер в режиме «заменить цвет from на выбранный по всему рисунку»
 export function openColReplace(from) { replaceFrom = null; onPick = null; replaceFrom = from.slice(); $('fx-edit').classList.remove('on');
-  const [h, s, v] = rgbToHsv(from[0], from[1], from[2]); colH = h; colS = s; colV = v; syncColUI(); setAddLabel(); $('colpop').classList.add('on'); }
+  const seed = Array.isArray(from[0]) ? S.active : from;
+  const [h, s, v] = rgbToHsv(seed[0], seed[1], seed[2]); colH = h; colS = s; colV = v; syncColUI(); setAddLabel(); $('colpop').classList.add('on'); }
 
 // открыть наш пикер для произвольной цели (эффекты): cb(hex) на каждое изменение; окно эффекта не прячем
 export function openColFor(hex, cb) { replaceFrom = null; onPick = cb || null;
