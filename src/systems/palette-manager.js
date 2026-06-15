@@ -1,16 +1,24 @@
 // Менеджер палитр: сохранить текущую, загрузить, собрать из изображения.
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
-import { $, toast, t } from '../core/dom.js';
-import { rgb } from '../logic/color.js';
-import { medianCut, dedupePal } from '../logic/quantize.js';
+import { $, showMenuAt, toast, t } from '../core/dom.js';
+import { rgb, eqc } from '../logic/color.js';
+import { medianCut, dedupePal, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
 
 const STORE = 'palettes';
+const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
 const palStore = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
 const saveStore = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
+const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
+const hasFileTransfer = (dt) => dt && Array.from(dt.types || []).includes('Files');
 
 function loadPalette(arr, name) { S.palette = dedupePal(arr); if (S.palette.length) S.active = S.palette[0].slice();
   bus.emit('palette'); bus.emit('render'); $('pal-ovl').classList.remove('on'); if (name) toast(t('toast.paletteLoaded', { name })); }
+function replaceFromImage(pal) { loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); }
+function addFromImage(pal) { let n = 0;
+  for (const c of pal) if (!S.palette.some((p) => eqc(p, c))) { S.palette.push(c.slice()); n++; }
+  bus.emit('palette'); bus.emit('render'); toast(t('toast.tsgAdded', { n }));
+}
 
 function palListUI() { const box = $('pal-list'); box.innerHTML = '';
   const st = palStore(), names = Object.keys(st);
@@ -27,6 +35,49 @@ function palListUI() { const box = $('pal-list'); box.innerHTML = '';
     sw.onclick = () => loadPalette(st[nm], nm);
     row.append(head, sw); box.appendChild(row); } }
 
+export function paletteFromImageData(data) {
+  const exact = exactPaletteFromRgba(data, EXACT_LIMIT);
+  if (!exact.overflow) return exact.colors;
+  const samples = samplesFromRgba(data);
+  return samples.length ? medianCut(samples, QUANT_COLORS) : [];
+}
+
+function readImagePalette(im) {
+  const exact = im.naturalWidth * im.naturalHeight <= EXACT_MAX_PIXELS;
+  const k = exact ? 1 : Math.min(1, SAMPLE_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
+  const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = k < 1; x.drawImage(im, 0, 0, w, h);
+  return paletteFromImageData(x.getImageData(0, 0, w, h).data);
+}
+
+function showDropChoice(pal, pt) {
+  const m = $('rowctx'); m.innerHTML = '';
+  const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('palette.dropTitle', { n: pal.length });
+  const add = document.createElement('button'); add.textContent = t('palette.dropAdd');
+  const create = document.createElement('button'); create.textContent = t('palette.dropNew');
+  add.onclick = () => { m.classList.remove('on'); addFromImage(pal); };
+  create.onclick = () => { m.classList.remove('on'); replaceFromImage(pal); };
+  m.append(head, add, create); showMenuAt(m, pt.x, pt.y, true);
+}
+
+export function paletteFromImageFile(file, mode = 'replace', pt = null) {
+  if (!isImageFile(file)) { toast(t('toast.notImage')); return; }
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onerror = () => { URL.revokeObjectURL(url); toast(t('toast.imgOpenFail')); };
+  im.onload = () => { URL.revokeObjectURL(url);
+    const pal = readImagePalette(im); if (!pal.length) { toast(t('toast.imgEmpty')); return; }
+    if (mode === 'ask') showDropChoice(pal, pt || { x: innerWidth / 2, y: innerHeight / 2 }); else replaceFromImage(pal); };
+  im.src = url;
+}
+
+function dropPalette(e) {
+  if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); e.stopPropagation(); }
+  const f = e.dataTransfer && [...e.dataTransfer.files].find(isImageFile);
+  if (!f) { if (e.dataTransfer && e.dataTransfer.files.length) toast(t('toast.notImage')); return; }
+  paletteFromImageFile(f, 'ask', { x: e.clientX, y: e.clientY });
+}
+
 export function mount() {
   $('pal-menu').addEventListener('pointerdown', (e) => e.stopPropagation());
   $('pal-menu').addEventListener('click', () => { $('pal-name').value = ''; palListUI(); $('pal-ovl').classList.add('on'); });
@@ -37,14 +88,9 @@ export function mount() {
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
   $('pal-from-img').onclick = () => palImg.click();
   palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
-    im.onload = () => { const MAX = 160, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
-      const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
-      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(im, 0, 0, w, h);
-      const d = c.getContext('2d').getImageData(0, 0, w, h).data, samples = [];
-      for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 127) samples.push([d[i], d[i + 1], d[i + 2]]);
-      if (!samples.length) { toast(t('toast.imgEmpty')); return; }
-      const pal = medianCut(samples, 16);
-      loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); };
-    im.src = URL.createObjectURL(f); };
+    paletteFromImageFile(f); };
+  const stopPaletteDrag = (e) => { if (hasFileTransfer(e.dataTransfer)) { e.preventDefault(); e.stopPropagation(); } };
+  $('palbar').addEventListener('dragenter', stopPaletteDrag);
+  $('palbar').addEventListener('dragover', stopPaletteDrag);
+  $('palbar').addEventListener('drop', dropPalette);
 }

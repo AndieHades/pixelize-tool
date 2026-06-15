@@ -8,7 +8,7 @@ import { parseKey, blendOver, mergeCells, gridBounds, alphaBounds, boundsWithExt
 import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
-import { medianCut, nearest, paletteFromGrid, dedupePal } from '../src/logic/quantize.js';
+import { medianCut, nearest, paletteFromGrid, dedupePal, exactPaletteFromRgba, samplesFromRgba } from '../src/logic/quantize.js';
 import { despeckle, cropEmpty } from '../src/logic/cleanup.js';
 import { rotSprite } from '../src/logic/rotsprite.js';
 import { computeGlow } from '../src/logic/glow.js';
@@ -130,6 +130,18 @@ t('quantize: medianCut поглощает редкие переходные то
 t('quantize: paletteFromGrid по частоте', () => {
   const g = [[[1, 1, 1, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], null]];
   assert.deepEqual(paletteFromGrid(g)[0], [1, 1, 1]);
+});
+t('quantize: exactPaletteFromRgba сохраняет все цвета strip-палитры', () => {
+  const d = new Uint8ClampedArray(46 * 4);
+  for (let i = 0; i < 46; i++) { d[i * 4] = i; d[i * 4 + 1] = 80 + i; d[i * 4 + 2] = 160 - i; d[i * 4 + 3] = 255; }
+  const r = exactPaletteFromRgba(d, 64);
+  assert.equal(r.overflow, false); assert.equal(r.colors.length, 46);
+  assert.deepEqual(r.colors[0], [0, 80, 160]); assert.deepEqual(r.colors[45], [45, 125, 115]);
+});
+t('quantize: exactPaletteFromRgba сообщает переполнение, samplesFromRgba берёт непрозрачные', () => {
+  const d = new Uint8ClampedArray([1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 255]);
+  assert.deepEqual(samplesFromRgba(d), [[1, 2, 3], [7, 8, 9]]);
+  const r = exactPaletteFromRgba(d, 1); assert.equal(r.overflow, true); assert.equal(r.colors.length, 2);
 });
 t('quantize: dedupePal', () => { assert.deepEqual(dedupePal([[1, 1, 1], [1, 1, 1]]), [[1, 1, 1]]); assert.deepEqual(dedupePal([]), [[12, 12, 16]]); });
 t('cleanup: cropEmpty до контура', () => {

@@ -543,6 +543,13 @@ t('windows: preview/reference монтируются без ошибок', () =>
 t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]); });
+t('palette-manager: палитра из картинки сохраняет 46 точных цветов', () => {
+  const d = new Uint8ClampedArray(46 * 2 * 4);
+  for (let i = 0; i < 46; i++) for (let y = 0; y < 2; y++) { const o = (y * 46 + i) * 4;
+    d[o] = i; d[o + 1] = 120 - i; d[o + 2] = 40 + i; d[o + 3] = 255; }
+  const pal = palMgr.paletteFromImageData(d);
+  assert.equal(pal.length, 46); assert.deepEqual(pal[0], [0, 120, 40]); assert.deepEqual(pal[45], [45, 75, 85]);
+});
 
 t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
   tsg.mount(); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [200, 100, 50];

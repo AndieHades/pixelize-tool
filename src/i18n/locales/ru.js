@@ -88,6 +88,7 @@ export const ru = {
   'gallery.photo': 'Фото',
   'gallery.folderName': 'Папка',
   'palette.menu': 'Палитры: сохранить, загрузить, из изображения', 'palette.namePlaceholder': 'Имя палитры', 'palette.addActiveTitle': 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый',
+  'palette.dropTitle': 'Палитра из изображения · {n}', 'palette.dropAdd': 'Добавить в текущую', 'palette.dropNew': 'Создать новую',
   'menu.pickLayer': 'Слой:',
   'crop.center': 'От центра (или зажми Shift)', 'crop.apply': 'Применить кроп (Enter)', 'crop.cancel': 'Отмена (Esc)',
   'transform.apply': 'Применить трансформацию (Enter или ПКМ)', 'transform.cancel': 'Отменить трансформацию (Esc)',

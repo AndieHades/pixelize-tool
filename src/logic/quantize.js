@@ -49,6 +49,20 @@ export function paletteFromGrid(g, cap = 32) { const m = new Map();
     const e = m.get(k); if (e) e.n++; else m.set(k, { c: [c[0], c[1], c[2]], n: 1 }); }
   return [...m.values()].sort((a, b) => b.n - a.n).slice(0, cap).map((e) => e.c); }
 
+export function exactPaletteFromRgba(data, limit = Infinity) {
+  const seen = new Set(), colors = [];
+  for (let i = 0; i < data.length; i += 4) { if (data[i + 3] <= 127) continue;
+    const k = data[i] + ',' + data[i + 1] + ',' + data[i + 2]; if (seen.has(k)) continue;
+    seen.add(k); colors.push([data[i], data[i + 1], data[i + 2]]);
+    if (colors.length > limit) return { colors, overflow: true }; }
+  return { colors, overflow: false };
+}
+
+export function samplesFromRgba(data) { const samples = [];
+  for (let i = 0; i < data.length; i += 4) if (data[i + 3] > 127) samples.push([data[i], data[i + 1], data[i + 2]]);
+  return samples;
+}
+
 export function dedupePal(arr) { const seen = new Set(), out = [];
   for (const c of arr || []) { if (!c) continue; const k = c[0] + ',' + c[1] + ',' + c[2];
     if (!seen.has(k)) { seen.add(k); out.push([c[0], c[1], c[2]]); } }
