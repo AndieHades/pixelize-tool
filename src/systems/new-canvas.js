@@ -69,12 +69,17 @@ export function mount() {
   // «Новый холст» — всегда поверх галереи, не эдитора: из эдитора сперва уводим в галерею
   const openDlg = (ensureGallery = true) => {
     if (ensureGallery) showGallery();
-    editIdx = null; closeEditor(); buildList(); $('new-ovl').classList.add('on');
+    editIdx = null; closeEditor(); buildList();
+    const ovl = $('new-ovl'); ovl.dataset.openedAt = Date.now(); ovl.classList.add('on');
   };
+  const closeDlg = () => { editIdx = null; closeEditor(); $('new-ovl').classList.remove('on'); };
+  const toggleDlg = (ensureGallery) => ($('new-ovl').classList.contains('on') ? closeDlg() : openDlg(ensureGallery));
   const bindOpen = (el, ensureGallery) => {
-    if (!el) return;
-    el.onclick = () => openDlg(ensureGallery);
-    el.addEventListener('pointerup', (e) => { if (e.pointerType === 'touch') { e.preventDefault(); openDlg(ensureGallery); } });
+    if (!el) return; let suppressClick = 0;
+    el.onclick = (e) => { if (Date.now() < suppressClick) { e.preventDefault(); return; } toggleDlg(ensureGallery); };
+    el.addEventListener('touchend', (e) => {
+      e.preventDefault(); suppressClick = Date.now() + 500; setTimeout(() => toggleDlg(ensureGallery), 0);
+    }, { passive: false });
   };
   bindOpen($('new'), true); bindOpen($('gal-new'), false);
   actions.register('doc.new', () => openDlg(true));

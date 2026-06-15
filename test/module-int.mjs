@@ -944,6 +944,8 @@ t('gallery: плюс открывает диалог нового холста',
   const ovl = document.getElementById('new-ovl'); ovl.classList.remove('on');
   document.getElementById('gal-new').click();
   assert.ok(ovl.classList.contains('on'));
+  document.getElementById('gal-new').click();
+  assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });

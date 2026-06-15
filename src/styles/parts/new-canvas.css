@@ -1,6 +1,9 @@
 /* ── Диалог «Новый холст» (список, как в Procreate) ── */
 /* New Canvas и конвертер показываются ПОВЕРХ галереи (галерея — z-index 100). */
 #new-ovl, #imp-ovl { z-index: 130; }
+/* Новый холст ведёт себя как popover: фон не перехватывает клики, чтобы галерейный плюс мог закрыть окно. */
+#new-ovl { background: transparent; pointer-events: none; }
+#new-ovl .new-panel, #new-ovl #new-custom { pointer-events: auto; }
 /* окна «Новый холст» (пресеты и редактор) — перетаскиваемые, по центру, как все */
 .new-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
