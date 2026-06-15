@@ -698,8 +698,8 @@ body.gallery-open #pal-ovl {
 /* шапка как в Procreate (крупный заголовок + ряд действий), плюс/шестерёнка —
    иконками в правом верхнем углу как в Pixquare */
 #gal-top { display: flex; flex-direction: column; gap: 2px;
-  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(20px, env(safe-area-inset-right, 0px)) 6px max(20px, env(safe-area-inset-left, 0px));
-  background: rgba(0, 0, 0, .2); } /* шапка чуть темнее тела, без линии-разделителя */
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) max(20px, env(safe-area-inset-right, 0px)) 6px max(20px, env(safe-area-inset-left, 0px));
+  background: rgba(0, 0, 0, .2); } /* верх = safe-zone + малый зазор; без линии-разделителя */
 #gal-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 #gal-title { font-weight: 700; font-size: 26px; line-height: 1.1; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #gal-back { width: auto; min-width: 32px; max-width: 42vw; height: 34px; padding: 0; font-size: 17px; font-weight: 600;
@@ -718,7 +718,7 @@ body.gallery-open #pal-ovl {
 .gal-actions button.on { background: var(--accent); color: var(--on-accent); }
 #gal-del { color: var(--danger); }
 .gal-actions button:disabled { opacity: .4; pointer-events: none; }
-#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px; padding: 10px 16px 16px; align-content: start; } /* мельче плитки, ~3 колонки как в Procreate; малый отступ сверху */
+#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px; padding: 10px 16px 16px; align-content: start; } /* плитки среднего размера; малый отступ сверху */
 .gal-tile { cursor: pointer; user-select: none; }
 .gal-thumb { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
   box-shadow: var(--win-shadow); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center;

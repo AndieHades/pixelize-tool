@@ -68,9 +68,9 @@ async function tileEl(d) {
   const chk = document.createElement('div'); chk.className = 'gal-check' + (selected.has(d.id) ? ' on' : ''); thumb.appendChild(chk);
   const cap = document.createElement('div'); cap.className = 'gal-cap';
   const nm = document.createElement('b'); nm.textContent = d.name;
-  const sub = document.createElement('small');
-  if (d.kind !== 'folder') { const rt = relTime(d.updated); sub.textContent = `${d.W}×${d.H} px` + (rt ? ` · ${rt}` : ''); }
-  cap.append(nm, sub); tile.append(thumb, cap);
+  const sub = document.createElement('small'), tm = document.createElement('small');
+  if (d.kind !== 'folder') { sub.textContent = `${d.W}×${d.H} px`; tm.textContent = relTime(d.updated); } // размеры и время — на разных строках
+  cap.append(nm, sub, tm); tile.append(thumb, cap);
   thumb.onclick = () => { if (selecting) { const on = !selected.has(d.id); if (on) selected.add(d.id); else selected.delete(d.id);
       tile.classList.toggle('sel', on); chk.classList.toggle('on', on); updateSel(); }
     else if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); };
