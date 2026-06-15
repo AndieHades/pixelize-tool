@@ -89,6 +89,7 @@ export const en = {
   'gallery.duplicate': 'Duplicate',
   'gallery.photo': 'Photo',
   'gallery.folderName': 'Stack',
+  'time.now': 'just now', 'time.min': 'min', 'time.hour': 'h', 'time.yesterday': 'yesterday', 'time.days': 'd',
   'palette.menu': 'Palettes: save, load, import from image', 'palette.namePlaceholder': 'Palette name', 'palette.addActiveTitle': 'Add active color · long-press/right-click to pick a new one',
   'palette.new': 'New palette', 'palette.fromCanvas': 'Palette from canvas', 'palette.presets': 'Palette presets', 'palette.used': 'Show used colors',
   'palette.dropTitle': 'Palette from image · {n}', 'palette.dropAdd': 'Add to current', 'palette.dropNew': 'Create new',

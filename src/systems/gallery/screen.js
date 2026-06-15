@@ -7,6 +7,18 @@ import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 
 const FOLDER_IC = '<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.5h7A2 2 0 0 1 20.5 10v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7.5z"/></svg>';
+
+// относительное время последнего изменения (как в галереях): только что / N мин / N ч / вчера / N дн / дата
+function relTime(ts) {
+  if (!ts) return '';
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return t('time.now');
+  if (m < 60) return m + ' ' + t('time.min');
+  const h = Math.floor(m / 60); if (h < 24) return h + ' ' + t('time.hour');
+  const d = Math.floor(h / 24); if (d === 1) return t('time.yesterday');
+  if (d < 7) return d + ' ' + t('time.days');
+  return new Date(ts).toLocaleDateString();
+}
 let viewFolder = null, selecting = false, onOpen = null, rootTitle = ''; const selected = new Set();
 export const configure = (o) => { onOpen = o.onOpen; rootTitle = $('gal-title').textContent; };
 const gridEl = () => $('gal-grid');
@@ -56,7 +68,8 @@ async function tileEl(d) {
   const chk = document.createElement('div'); chk.className = 'gal-check' + (selected.has(d.id) ? ' on' : ''); thumb.appendChild(chk);
   const cap = document.createElement('div'); cap.className = 'gal-cap';
   const nm = document.createElement('b'); nm.textContent = d.name;
-  const sub = document.createElement('small'); sub.textContent = d.kind === 'folder' ? '' : `${d.W}×${d.H} px`;
+  const sub = document.createElement('small');
+  if (d.kind !== 'folder') { const rt = relTime(d.updated); sub.textContent = `${d.W}×${d.H} px` + (rt ? ` · ${rt}` : ''); }
   cap.append(nm, sub); tile.append(thumb, cap);
   thumb.onclick = () => { if (selecting) { const on = !selected.has(d.id); if (on) selected.add(d.id); else selected.delete(d.id);
       tile.classList.toggle('sel', on); chk.classList.toggle('on', on); updateSel(); }

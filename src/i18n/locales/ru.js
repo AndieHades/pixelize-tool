@@ -92,6 +92,7 @@ export const ru = {
   'gallery.duplicate': 'Дублировать',
   'gallery.photo': 'Фото',
   'gallery.folderName': 'Папка',
+  'time.now': 'только что', 'time.min': 'мин', 'time.hour': 'ч', 'time.yesterday': 'вчера', 'time.days': 'дн',
   'palette.menu': 'Палитры: сохранить, загрузить, из изображения', 'palette.namePlaceholder': 'Имя палитры', 'palette.addActiveTitle': 'Добавить активный цвет · долгий тап/ПКМ — выбрать новый',
   'palette.new': 'Новая палитра', 'palette.fromCanvas': 'Палитра с холста', 'palette.presets': 'Пресеты палитр', 'palette.used': 'Показать использованные цвета',
   'palette.dropTitle': 'Палитра из изображения · {n}', 'palette.dropAdd': 'Добавить в текущую', 'palette.dropNew': 'Создать новую',
