@@ -125,8 +125,8 @@ export function start() {
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
   window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
     document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());
-    document.querySelectorAll('.gal-drop-slot').forEach((g) => g.remove());
-    document.querySelectorAll('.dragging, .lift, .lifting, .over, .drop-into, .drop-before, .drop-above').forEach((n) => n.classList.remove('dragging', 'lift', 'lifting', 'over', 'drop-into', 'drop-before', 'drop-above')); });
+    document.querySelectorAll('.drop-gap').forEach((g) => g.remove());
+    document.querySelectorAll('.dragging, .lift, .lifting, .over, .drop-into, .drop-before, .drop-above, .drop-below').forEach((n) => n.classList.remove('dragging', 'lift', 'lifting', 'over', 'drop-into', 'drop-before', 'drop-above', 'drop-below')); });
 
   requestAnimationFrame(() => { fitView(); });
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});

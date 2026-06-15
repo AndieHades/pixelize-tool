@@ -5,6 +5,7 @@ import { snapshot } from '../../core/history.js';
 import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
+import { dropZone, makeDropGap } from '../../core/drop-gap.js';
 import { folderChain } from '../../core/layers.js';
 import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 import { setSquelch } from './list.js';
@@ -64,21 +65,22 @@ export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
-    let started = false, ghost = null, dropRow = null, dropBelow = false, holdTimer = null;
+    let started = false, ghost = null, dropRow = null, dropKey = '', holdTimer = null;
+    const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });
 
-    // Зазор открывается сразу на любой строке: drop-above (над строкой) или
-    // drop-below (под строкой — единственный способ встать ниже самой нижней).
-    // Над папкой после FOLDER_HOLD_MS добавляется drop-into (синий) — зазор НЕ
+    // Зазор открывается сразу на любой строке: над строкой или под строкой
+    // (единственный способ встать ниже самой нижней).
+    // Над папкой после FOLDER_HOLD_MS добавляется drop-into (синий) — gap НЕ
     // закрываем, иначе папка съезжает и выскальзывает из-под курсора.
-    const setDrop = (row, below) => {
-      if (row === dropRow && below === dropBelow) return;
+    const setDrop = (row, zone) => {
+      const into = row.classList.contains('frow') && zone.zone === 'center' && canIntoFolder(info, +row.dataset.fid);
+      const below = zone.after, key = row.dataset.li + ':' + row.dataset.fid + ':' + (into ? 'center' : (below ? 'after' : 'before'));
+      if (key === dropKey) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      if (dropRow) dropRow.classList.remove('drop-above', 'drop-below', 'drop-into');
-      dropRow = row; dropBelow = below; if (!row) return;
-      row.classList.add(below ? 'drop-below' : 'drop-above');
-      if (row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid)) {
-        holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS);
-      }
+      if (dropRow) dropRow.classList.remove('drop-into');
+      dropRow = row; dropKey = key;
+      if (into) { gap.remove(); holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS); return; }
+      gap.show(box, row, below, row);
     };
 
     const move = (ev) => {
@@ -106,8 +108,8 @@ export function dragRow(el, info) {
       const row = t && t.closest ? t.closest('#lay-list .lrow:not(.dragging)') : null;
       if (!row) return; // над открытым зазором/пустотой — держим текущую цель, не дёргаемся
       // нижняя половина строки-слоя → встать под неё (для папок — только над/внутрь)
-      const r = row.getBoundingClientRect();
-      setDrop(row, row.dataset.li !== undefined && gy > r.top + r.height / 2);
+      const canInto = row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid);
+      setDrop(row, dropZone(row, gx, gy, 'y', canInto ? undefined : 0));
     };
 
     const up = () => {
@@ -115,9 +117,9 @@ export function dragRow(el, info) {
       if (holdTimer) clearTimeout(holdTimer);
       if (ghost) ghost.remove();
       box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
-      const intoEl = box.querySelector('.drop-into'), slotEl = box.querySelector('.drop-above, .drop-below'), target = intoEl || slotEl;
-      const below = !intoEl && !!slotEl && slotEl.classList.contains('drop-below');
-      box.querySelectorAll('.drop-above,.drop-below,.drop-into').forEach((r) => r.classList.remove('drop-above', 'drop-below', 'drop-into'));
+      const intoEl = box.querySelector('.drop-into'), target = intoEl || (gap.active ? gap.target : null), below = !intoEl && gap.after;
+      box.querySelectorAll('.drop-into').forEach((r) => r.classList.remove('drop-into'));
+      gap.remove();
       if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0);
       if (target) { layDrop(info, target, !!intoEl, below);
         const dropped = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]');

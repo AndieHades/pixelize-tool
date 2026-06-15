@@ -7,6 +7,7 @@ import * as actions from '../core/actions.js';
 import { $, toast, t, copyText, showMenuAt } from '../core/dom.js';
 import { rgbToHex, eqc } from '../logic/color.js';
 import { LONG_PRESS_MS } from '../config/timings.js';
+import { dropZone, makeDropGap } from '../core/drop-gap.js';
 
 const PANEL_TARGETS = []; // нативных панелей с input[type=color] больше нет — цвет везде через наш #colpop
 let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1, ctxIdxs = [];
@@ -37,6 +38,8 @@ function rangeIdx(from, to, max = Infinity) {
 const colorsFromIdx = (idxs) => idxs.map((i) => S.palette[i].slice(0, 3));
 function setPaletteSelection(idxs, anchor = idxs[0]) { palSel = new Set(idxs); palAnchorIdx = anchor ?? -1; rebuild(); }
 function setShadingFromSelection(idxs) { const cols = colorsFromIdx(idxs); palSel = new Set(); palAnchorIdx = -1; actions.run('shading.setRamp', cols); }
+function markMoving(idxs, on) { const set = new Set(idxs);
+  for (const sw of $('pal').querySelectorAll('.sw:not(.plus)')) sw.classList.toggle('dragging', on && set.has(+sw.dataset.i)); }
 function ctrlPaletteSelect(idx) {
   if (palAnchorIdx < 0 || !palSel.size) setPaletteSelection([idx], idx);
   else setPaletteSelection(rangeIdx(palAnchorIdx, idx), palAnchorIdx);
@@ -91,34 +94,38 @@ export function wireSwatch(b, c, idx) {
   b.addEventListener('contextmenu', (e) => e.preventDefault());
   b.addEventListener('pointerdown', (e) => {
     const movingSelection = palSel.has(idx) && palSel.size && !e.ctrlKey && !e.metaKey;
-    const moveIdxs = movingSelection ? [...palSel] : [idx];
+    const moveIdxs = movingSelection ? [...palSel] : [idx], gap = makeDropGap({ className: 'palette-drop-gap', enabled: false });
     if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY; clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), LONG_PRESS_MS);
-      palDrag = { b, idx, touch: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs }; }
-    else if (e.button === 0) palDrag = { b, idx, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs };
-    else if (e.button === 2) { e.preventDefault(); palDrag = { b, idx, rmb: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs }; } });
+      palDrag = { b, idx, touch: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap }; }
+    else if (e.button === 0) palDrag = { b, idx, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap };
+    else if (e.button === 2) { e.preventDefault(); palDrag = { b, idx, rmb: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap }; } });
 }
 
 function palDragMove(e) { if (!palDrag) return; const pal = $('pal'), chip = $('paldrag');
   if (!palDrag.moved) { if (Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) <= 6) return;
     palDrag.moved = true; clearTimeout(swHold); }
   const el = document.elementFromPoint(e.clientX, e.clientY), tg = el && el.closest ? el.closest('#pal .sw:not(.plus)') : null;
-  if (palDrag.moveSel) { chip.classList.add('on'); chip.style.background = palDrag.b.style.background; chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px'; return; }
+  if (palDrag.moveSel) { markMoving(palDrag.moveIdxs, true); chip.classList.add('on'); if (palDrag.moveIdxs.length > 1) chip.dataset.stack = palDrag.moveIdxs.length > 2 ? '3' : '2';
+    chip.style.background = palDrag.b.style.background; chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px';
+    if (tg) palDrag.gap.show(pal, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); return; }
   if (!palDrag.rmb && tg && tg !== palDrag.b) { palDrag.selecting = true; palDrag.b.classList.remove('dragging'); chip.classList.remove('on'); markShadeRange(+tg.dataset.i); return; }
   if (palDrag.selecting) { if (tg) markShadeRange(+tg.dataset.i); return; }
-  if (palDrag.rmb && tg && tg !== palDrag.b) { const r = tg.getBoundingClientRect(); palDrag.reordering = true; chip.classList.remove('on');
-    palDrag.b.classList.add('dragging'); pal.insertBefore(palDrag.b, (e.clientX < r.left + r.width / 2) ? tg : tg.nextSibling); return; }
+  if (palDrag.rmb && tg && tg !== palDrag.b) { palDrag.reordering = true; chip.classList.remove('on');
+    palDrag.b.classList.add('dragging'); palDrag.gap.show(pal, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); return; }
   palDrag.b.classList.add('dragging');
   chip.style.background = palDrag.b.style.background; chip.classList.add('on');
   chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px'; }
 
 function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
-  const d = palDrag; palDrag = null; d.b.classList.remove('dragging'); $('paldrag').classList.remove('on'); clearShadePending();
+  const d = palDrag, chip = $('paldrag'); palDrag = null; markMoving(d.moveIdxs || [d.idx], false);
+  d.b.classList.remove('dragging'); chip.classList.remove('on'); delete chip.dataset.stack; clearShadePending();
   const tgt = e ? document.elementFromPoint(e.clientX, e.clientY) : null;
-  const targetSw = tgt && tgt.closest ? tgt.closest('#pal .sw:not(.plus)') : null;
+  const targetSw = d.gap?.target || (tgt && tgt.closest ? tgt.closest('#pal .sw:not(.plus)') : null), gapAfter = !!d.gap?.after, gapActive = !!d.gap?.active;
+  d.gap?.remove();
   if (d.moveSel && !d.moved) { if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); return; }
   if (d.moveSel) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     if (targetSw) { const r = targetSw.getBoundingClientRect();
-      if (reorderIdxs(d.moveIdxs, +targetSw.dataset.i, e.clientX >= r.left + r.width / 2)) rebuild(); }
+      if (reorderIdxs(d.moveIdxs, +targetSw.dataset.i, gapActive ? gapAfter : e.clientX >= r.left + r.width / 2)) rebuild(); }
     return; }
   if (d.selecting) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     if (d.idxs && d.idxs.length > 1) {
@@ -126,7 +133,7 @@ function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
       else setPaletteSelection(d.idxs, d.idx);
     } return; }
   if (d.reordering) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
-    S.palette = [...$('pal').querySelectorAll('.sw:not(.plus)')].map((el) => S.palette[+el.dataset.i]); rebuild(); return; }
+    if (targetSw) reorderIdxs(d.moveIdxs, +targetSw.dataset.i, gapAfter); rebuild(); return; }
   if (d.moved) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     const onPal = tgt && tgt.closest && tgt.closest('#pal');
     if (!onPal) { if (!actions.run('layer.dropColorAt', S.palette[d.idx], e.clientX, e.clientY)) actions.run('edit.dropColorAt', S.palette[d.idx], e.clientX, e.clientY); rebuild(); return; } // бросок мимо палитры → слой/заливка холста

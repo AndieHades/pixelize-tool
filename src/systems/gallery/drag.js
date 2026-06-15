@@ -3,6 +3,7 @@
 import { DRAG_THRESHOLD, FOLDER_HOLD_MS } from '../../config/timings.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
+import { dropZone, makeDropGap } from '../../core/drop-gap.js';
 
 let clickGuard = false, clickGuardUntil = 0;
 
@@ -19,20 +20,8 @@ function pointIn(el, x, y) {
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
-function insertSlot(grid, slot, target, after) {
-  if (!target) { if (slot.parentNode !== grid || slot.nextSibling) grid.appendChild(slot); return; }
-  const ref = after ? target.nextSibling : target;
-  if (ref !== slot) grid.insertBefore(slot, ref);
-}
-
-function nextTile(slot, source) {
-  let n = slot.nextElementSibling;
-  while (n && (n === source || !n.classList.contains('gal-tile'))) n = n.nextElementSibling;
-  return n;
-}
-
-function slotFromPoint(grid, source, x, y) {
-  const tiles = [...grid.querySelectorAll('.gal-tile')].filter((n) => n !== source && !n.classList.contains('dragging'));
+function slotFromPoint(grid, dragged, x, y) {
+  const tiles = [...grid.querySelectorAll('.gal-tile')].filter((n) => !dragged.has(n) && !n.classList.contains('dragging'));
   for (const t of tiles) {
     const r = t.getBoundingClientRect();
     if (y < r.top + r.height / 2 || (y <= r.bottom && x < r.left + r.width / 2)) return t;
@@ -43,15 +32,20 @@ function slotFromPoint(grid, source, x, y) {
 export function attachDrag(tile, id, ctx) {
   ensureClickGuard();
   tile.addEventListener('pointerdown', (e) => {
-    if (ctx.selecting() || (e.pointerType === 'mouse' && e.button)) return;
+    if (e.pointerType === 'mouse' && e.button) return;
     if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
-    const sx = e.clientX, sy = e.clientY; let started = false, ghost = null, dwell = null, overId = null, stackTo = null, onBack = false;
+    const sx = e.clientX, sy = e.clientY; let started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
+    let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
-    const slot = document.createElement('div'); slot.className = 'gal-drop-slot';
+    const gap = makeDropGap({ className: 'gal-drop-gap' });
     const hold = setTimeout(() => begin(sx, sy), e.pointerType === 'touch' ? 250 : 1e9); // тач: долгий тап; мышь: по сдвигу
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
-      const ghostW = tile.getBoundingClientRect().width; tile.classList.add('dragging'); ghost = dragGhost(tile, ghostW); ghost.move(x, y);
-      grid.insertBefore(slot, tile);
+      dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
+      dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
+      dragged = new Set(dragEls);
+      const ghostW = tile.getBoundingClientRect().width; dragEls.forEach((el) => el.classList.add('dragging'));
+      ghost = dragGhost(tile, ghostW, dragIds.length); ghost.move(x, y);
+      gap.show(grid, tile, false, tile);
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
     const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
@@ -60,25 +54,29 @@ export function attachDrag(tile, id, ctx) {
       ghost.move(ev.clientX, ev.clientY);
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const overBack = back.style.display !== 'none' && el && el.closest && el.closest('#gal-back'); // бросок на «назад» — на уровень выше
-      if (overBack) { if (!onBack) { onBack = true; clearTimeout(dwell); stackTo = null; clearMarks(); back.classList.add('over'); } return; }
+      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; gap.remove(); clearMarks(); back.classList.add('over'); } return; }
       onBack = false;
-      const tg = el && el.closest ? el.closest('.gal-tile') : null;
-      const tid = tg && tg !== tile ? tg.dataset.id : null;
-      if (tid !== overId) { overId = tid; clearTimeout(dwell); stackTo = null; clearMarks();
-        if (tg && tg !== tile && canStack(tg)) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
+      const raw = el && el.closest ? el.closest('.gal-tile') : null;
+      const tg = raw && !dragged.has(raw) ? raw : null;
+      const tid = tg ? tg.dataset.id : null;
+      const zone = tg ? dropZone(tg, ev.clientX, ev.clientY, 'x') : null, into = tg && zone.zone === 'center' && canStack(tg);
+      const key = tg ? tid + ':' + (into ? 'center' : (zone.after ? 'after' : 'before')) : '';
+      if (key !== overKey) { overKey = key; clearTimeout(dwell); stackTo = null; clearMarks();
+        if (into) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
       if (stackTo) return;
-      if (tg && tg !== tile) { const r = tg.getBoundingClientRect(); insertSlot(grid, slot, tg, ev.clientX > r.left + r.width / 2); }
-      else if (pointIn(grid, ev.clientX, ev.clientY)) insertSlot(grid, slot, slotFromPoint(grid, tile, ev.clientX, ev.clientY), false);
+      if (tg && !into) gap.show(grid, tg, zone.after, tg);
+      else if (into) gap.remove();
+      else if (pointIn(grid, ev.clientX, ev.clientY)) gap.show(grid, slotFromPoint(grid, dragged, ev.clientX, ev.clientY), false, tile);
     };
     const up = (ev) => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);
-      if (ghost) ghost.remove(); tile.classList.remove('dragging', 'lifting'); back.classList.remove('lift', 'over');
+      if (ghost) ghost.remove(); dragEls.forEach((el) => el.classList.remove('dragging', 'lifting')); back.classList.remove('lift', 'over');
       const target = stackTo, toBack = onBack; clearMarks();
-      const before = slot.parentNode ? nextTile(slot, tile) : null; slot.remove();
+      const hadGap = gap.active, before = gap.next('.gal-tile', dragged); gap.remove();
       if (!started) return; clickGuardUntil = Date.now() + 450;
-      if (toBack) ctx.onBack(id);
-      else if (target) ctx.onStack(id, target.dataset.id, target.dataset.kind);
-      else ctx.onReorder(id, before ? before.dataset.id : null);
+      if (toBack) ctx.onBack(dragIds);
+      else if (target) ctx.onStack(dragIds, target.dataset.id, target.dataset.kind);
+      else if (hadGap) ctx.onReorder(dragIds, before ? before.dataset.id : null);
     };
     tile.addEventListener('pointermove', move); tile.addEventListener('pointerup', up); tile.addEventListener('pointercancel', up); tile.addEventListener('lostpointercapture', up);
   });

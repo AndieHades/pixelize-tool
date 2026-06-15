@@ -961,14 +961,14 @@ await ta('gallery: drag открывает слот и отдаёт точку �
   let drop = null; const prevPoint = document.elementFromPoint;
   document.elementFromPoint = (x) => (x < 220 ? b : c);
   try {
-    attachGalleryDrag(a, 'a', { gridEl: () => grid, selecting: () => false, onBack() {}, onStack() {}, onReorder: (id, before) => { drop = { id, before }; } });
+    attachGalleryDrag(a, 'a', { gridEl: () => grid, selecting: () => false, dragIds: () => ['a'], onBack() {}, onStack() {}, onReorder: (ids, before) => { drop = { ids, before }; } });
     a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 20, clientY: 20, button: 0 }));
-    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 190, clientY: 20, button: 0 }));
-    assert.ok(grid.querySelector('.gal-drop-slot'));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
+    assert.ok(grid.querySelector('.drop-gap'));
     assert.ok(a.classList.contains('dragging'));
-    a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 190, clientY: 20, button: 0 }));
-    assert.deepEqual(drop, { id: 'a', before: 'c' });
-    assert.equal(grid.querySelector('.gal-drop-slot'), null);
+    a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
+    assert.deepEqual(drop, { ids: ['a'], before: 'c' });
+    assert.equal(grid.querySelector('.drop-gap'), null);
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';
     await new Promise((resolve) => setTimeout(resolve, 460));

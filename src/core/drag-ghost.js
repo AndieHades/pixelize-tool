@@ -5,7 +5,7 @@
 export function dragGhost(el, width, stack) {
   const g = el.cloneNode(true);
   g.classList.add('drag-ghost');
-  for (const c of ['dragging', 'lifting', 'sel', 'on', 'marked', 'swiping-right', 'drop-into', 'drop-before', 'drop-above']) g.classList.remove(c);
+  for (const c of ['dragging', 'lifting', 'sel', 'on', 'marked', 'swiping-right', 'drop-into', 'drop-before', 'drop-above', 'drop-below']) g.classList.remove(c);
   g.querySelectorAll('.swipe-acts').forEach((n) => n.remove());
   const f = g.querySelector('.swipe-front'); if (f) f.style.transform = '';
   g.style.margin = '0';

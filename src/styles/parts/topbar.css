@@ -24,6 +24,10 @@
     #swdrop.on { display: block; }
     #paldrag { position: fixed; z-index: 95; display: none; width: 32px; height: 32px; border-radius: var(--r-md);
       transform: translate(-50%, -50%) scale(1.15); border: 2px solid var(--marker); box-shadow: var(--win-shadow); pointer-events: none; }
+    /* Стек цветов палитры: используется при переносе выделенного диапазона. */
+    #paldrag[data-stack] { box-shadow: var(--win-shadow), 6px 7px 0 var(--panel-solid), 6px 7px 0 1px var(--line); }
+    #paldrag[data-stack="3"] { box-shadow: var(--win-shadow), 6px 7px 0 var(--panel-solid), 6px 7px 0 1px var(--line),
+      12px 14px 0 var(--panel-solid), 12px 14px 0 1px var(--line); }
     #paldrag.on { display: block; }
     #dropmask { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center;
       background: rgba(13, 13, 16, .72); backdrop-filter: blur(2px); pointer-events: none; }

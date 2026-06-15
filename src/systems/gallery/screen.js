@@ -20,21 +20,46 @@ function relTime(ts) {
   if (d < 30) return d + ' ' + t('time.days');
   const dt = new Date(ts); return dt.toLocaleDateString(getLocale(), { month: 'long' }) + ' ' + dt.getFullYear(); // больше месяца — «май 2025»
 }
-let viewFolder = null, selecting = false, onOpen = null, rootTitle = ''; const selected = new Set();
+let viewFolder = null, selecting = false, onOpen = null, rootTitle = '', selAnchor = null; const selected = new Set();
 export const configure = (o) => { onOpen = o.onOpen; rootTitle = $('gal-title').textContent; };
 const gridEl = () => $('gal-grid');
 export const isSelecting = () => selecting;
 
-export function setSelecting(v) { selecting = v; selected.clear();
-  const sb = $('gal-select'); sb.textContent = v ? '✓' : t('gallery.select');
-  sb.classList.toggle('confirm', v); sb.classList.toggle('gal-round', v); sb.title = v ? t('gallery.done') : '';
-  for (const id of ['gal-stack', 'gal-dup', 'gal-del']) $(id).style.display = v ? '' : 'none';
-  for (const id of ['gal-import', 'gal-photo', 'gal-new', 'gal-settings']) $(id).style.display = v ? 'none' : '';
-  gridEl().classList.toggle('selecting', v); updateSel(); return render(); }
+export function setSelecting(v) { selecting = v; selected.clear(); selAnchor = null; syncSelUi(); return render(); }
 function updateSel() { const n = selected.size;
   setBtn('gal-stack', 'gallery.stack', n, n < 2); setBtn('gal-dup', 'gallery.duplicate', n, !n); setBtn('gal-del', 'gallery.delete', n, !n);
   $('gal-stack').classList.toggle('lit', n >= 2); }
 function setBtn(id, key, n, dis) { const b = $(id); if (!b) return; b.textContent = t(key) + (n ? ` (${n})` : ''); b.disabled = dis; }
+
+function syncSelUi() {
+  const on = selecting || selected.size > 0, grid = gridEl();
+  const sb = $('gal-select'); sb.textContent = on ? '✓' : t('gallery.select'); sb.title = on ? t('gallery.done') : '';
+  sb.classList.toggle('confirm', on); sb.classList.toggle('gal-round', on);
+  for (const id of ['gal-stack', 'gal-dup', 'gal-del']) $(id).style.display = on ? '' : 'none';
+  for (const id of ['gal-import', 'gal-photo', 'gal-new', 'gal-settings']) $(id).style.display = on ? 'none' : '';
+  grid.classList.toggle('selecting', on);
+  for (const t of grid.querySelectorAll('.gal-tile')) {
+    const sel = selected.has(t.dataset.id); t.classList.toggle('sel', sel);
+    t.querySelector('.gal-check')?.classList.toggle('on', sel);
+  }
+  updateSel();
+}
+
+function rangeSelect(id) {
+  const ids = [...gridEl().querySelectorAll('.gal-tile')].map((t) => t.dataset.id);
+  if (!selected.size || !selAnchor || !ids.includes(selAnchor)) selAnchor = id;
+  const a = ids.indexOf(selAnchor), b = ids.indexOf(id);
+  selected.clear(); ids.slice(Math.min(a, b), Math.max(a, b) + 1).forEach((x) => selected.add(x));
+  selecting = true; syncSelUi();
+}
+
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  if (!selected.size) selAnchor = null; else selAnchor ||= id;
+  syncSelUi();
+}
+
+function dragIds(id) { return selected.has(id) && selected.size > 1 ? [...selected] : [id]; }
 
 async function openItem(id) { if (await openWork(id) && onOpen) onOpen(); }
 export function goBack() { viewFolder = null; render(); }
@@ -73,21 +98,25 @@ async function tileEl(d) {
   if (d.kind === 'folder') { const st = await folderStats(d.id); sub.textContent = t('gallery.files', { n: st.files }); tm.textContent = relTime(st.updated); }
   else { sub.textContent = `${d.W}×${d.H} px`; tm.textContent = relTime(d.updated); } // размеры и время — на разных строках
   cap.append(nm, sub, tm); tile.append(thumb, cap);
-  thumb.onclick = () => { if (selecting) { const on = !selected.has(d.id); if (on) selected.add(d.id); else selected.delete(d.id);
-      tile.classList.toggle('sel', on); chk.classList.toggle('on', on); updateSel(); }
+  thumb.onclick = (e) => { if (e.ctrlKey || e.metaKey) { rangeSelect(d.id); return; }
+    if (selecting) { toggleSelect(d.id); }
     else if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); };
   nm.onclick = (e) => { e.stopPropagation(); if (!nm.isContentEditable) renameInline(nm, d); };
   nm.ondblclick = (e) => e.stopPropagation();
-  attachDrag(tile, d.id, { gridEl, selecting: isSelecting,
-    onBack: async (dragId) => { const f = viewFolder ? await getItem(viewFolder) : null; // бросок на «назад» — на уровень выше
-      await moveToFolder([dragId], f ? (f.folder ?? null) : null); render(); },
-    onStack: async (dragId, targetId, kind) => {
-      if (kind === 'folder') { await moveToFolder([dragId], targetId); await render(); }
-      else { const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, dragId], viewFolder); await render(); editName(fid); } },
-    onReorder: async (dragId, beforeId) => { const items = (await childrenOf(viewFolder)).filter((x) => x.id !== dragId).sort((a, b) => (b.order || 0) - (a.order || 0));
-      let ord; if (!beforeId) ord = (items.length ? items[items.length - 1].order : Date.now()) - 1000;
-      else { const i = items.findIndex((x) => x.id === beforeId); const bo = items[i].order, ao = i > 0 ? items[i - 1].order : bo + 2000; ord = (ao + bo) / 2; }
-      await setOrder(dragId, ord); render(); } });
+  attachDrag(tile, d.id, { gridEl, selecting: isSelecting, dragIds,
+    onBack: async (ids) => { const f = viewFolder ? await getItem(viewFolder) : null; // бросок на «назад» — на уровень выше
+      await moveToFolder(ids, f ? (f.folder ?? null) : null); render(); },
+    onStack: async (ids, targetId, kind) => {
+      if (kind === 'folder') { await moveToFolder(ids.filter((x) => x !== targetId), targetId); await render(); }
+      else { const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder); await render(); editName(fid); } },
+    onReorder: async (ids, beforeId) => {
+      const moving = [...gridEl().querySelectorAll('.gal-tile')].map((t) => t.dataset.id).filter((x) => ids.includes(x));
+      const items = (await childrenOf(viewFolder)).filter((x) => !ids.includes(x.id)).sort((a, b) => (b.order || 0) - (a.order || 0));
+      let orders;
+      if (!beforeId || !items.some((x) => x.id === beforeId)) { const base = (items.length ? items[items.length - 1].order : Date.now()) - 1000; orders = moving.map((_, i) => base - i * 1000); }
+      else { const i = items.findIndex((x) => x.id === beforeId), lo = items[i].order, hi = i > 0 ? items[i - 1].order : lo + 2000, step = (hi - lo) / (moving.length + 1);
+        orders = moving.map((_, k) => hi - step * (k + 1)); }
+      for (let i = 0; i < moving.length; i++) await setOrder(moving[i], orders[i]); render(); } });
   return tile;
 }
 
