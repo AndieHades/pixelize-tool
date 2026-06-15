@@ -60,6 +60,7 @@ const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const gallery = await import('../src/systems/gallery/index.js');
 const newCanvas = await import('../src/systems/new-canvas.js');
+const { attachDrag: attachGalleryDrag } = await import('../src/systems/gallery/drag.js');
 const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
@@ -947,6 +948,31 @@ t('gallery: плюс открывает диалог нового холста',
   document.getElementById('gal-new').click();
   assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
+});
+await ta('gallery: drag открывает слот и отдаёт точку вставки', async () => {
+  const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
+  grid.innerHTML = ''; back.style.display = 'none';
+  Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
+  const tile = (id, left) => { const el = document.createElement('div'); el.className = 'gal-tile'; el.dataset.id = id; el.dataset.kind = 'doc';
+    el.innerHTML = '<div class="gal-thumb"></div><div class="gal-cap"><b>' + id + '</b></div>';
+    Object.defineProperty(el, 'getBoundingClientRect', { configurable: true, value: () => ({ left, top: 0, right: left + 100, bottom: 160, width: 100, height: 160 }) });
+    grid.appendChild(el); return el; };
+  const a = tile('a', 0), b = tile('b', 120), c = tile('c', 240);
+  let drop = null; const prevPoint = document.elementFromPoint;
+  document.elementFromPoint = (x) => (x < 220 ? b : c);
+  try {
+    attachGalleryDrag(a, 'a', { gridEl: () => grid, selecting: () => false, onBack() {}, onStack() {}, onReorder: (id, before) => { drop = { id, before }; } });
+    a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 20, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 190, clientY: 20, button: 0 }));
+    assert.ok(grid.querySelector('.gal-drop-slot'));
+    assert.ok(a.classList.contains('dragging'));
+    a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 190, clientY: 20, button: 0 }));
+    assert.deepEqual(drop, { id: 'a', before: 'c' });
+    assert.equal(grid.querySelector('.gal-drop-slot'), null);
+  } finally {
+    document.elementFromPoint = prevPoint; grid.innerHTML = '';
+    await new Promise((resolve) => setTimeout(resolve, 460));
+  }
 });
 t('new-canvas: поля размера считают относительные выражения', () => {
   newCanvas.mount(); gallery.show();

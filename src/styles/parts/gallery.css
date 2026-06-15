@@ -60,7 +60,13 @@
 /* иконка папки, когда внутри нет превью */
 .gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.gal-tile.dragging { opacity: .35; }
+.gal-tile.dragging { flex-basis: 0; width: 0; height: 0; opacity: 0; overflow: hidden; pointer-events: none; }
+.gal-tile.dragging .gal-thumb, .gal-tile.dragging .gal-cap { display: none; }
+.gal-drop-slot { flex: 0 0 var(--gal-tile); width: var(--gal-tile); min-height: calc(var(--gal-tile) + 66px); pointer-events: none; }
+.gal-drop-slot::before { content: ''; display: block; width: var(--gal-tile); height: var(--gal-tile); border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.drag-ghost.gal-tile { box-shadow: none; border-radius: 0; }
+.drag-ghost.gal-tile .gal-thumb { transform: none; box-shadow: var(--win-shadow); }
 /* цель, в которую кладут — увеличивается и держится, пока над ней висит объект */
 .gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); transform: scale(1.12); }
 

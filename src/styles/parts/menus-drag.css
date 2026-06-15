@@ -32,8 +32,13 @@
     .sw.drop { box-shadow: inset 0 0 0 2px var(--accent); }
     .sw.plus { background: transparent; box-shadow: inset 0 0 0 1px var(--txt2); color: var(--txt2); display: grid; place-items: center; }
     .sw.plus svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
-    .dragging { opacity: .4; } /* галерея и прочие объекты — чуть прозрачные */
-    /* Ghost строки слоя — непрозрачный, слегка приподнят */
+    .dragging { opacity: .4; } /* общее состояние до локальных уточнений */
+    /* Единый ghost: клон перетаскиваемого объекта под курсором. */
+    .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: 1;
+      transform: translate(-50%, -50%) scale(1.06); box-shadow: var(--win-shadow); border-radius: var(--r-xl); }
+    .reorder-ghost { position: fixed; z-index: 300; pointer-events: none; opacity: .9;
+      transform: translate(-50%, -50%) scale(1.12); box-shadow: var(--win-shadow); }
+    /* Ghost пачки: дополнительные карточки видны только при переносе нескольких элементов. */
     .drag-ghost[data-stack] { box-shadow: var(--win-shadow), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line); }
     .drag-ghost[data-stack="3"] { box-shadow: var(--win-shadow), 7px 10px 0 var(--panel-solid), 7px 10px 0 1px var(--line), 14px 20px 0 var(--panel-solid), 14px 20px 0 1px var(--line); }
 

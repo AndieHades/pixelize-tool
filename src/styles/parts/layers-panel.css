@@ -100,12 +100,7 @@
     /* Приземление: строка «садится» на место */
     .lrow.dropped { animation: lrow-drop-in var(--anim-pop) var(--ease-pop); transform-origin: top center; }
     @keyframes lrow-drop-in { 0% { transform: scaleY(.2); opacity: 0; } 65% { transform: scaleY(1.04); } 100% { transform: scaleY(1); opacity: 1; } }
-    /* Единый призрак перетаскивания (плитки, слои) — клон объекта под курсором. */
-    .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: 1;
-      transform: translate(-50%, -50%) scale(1.06); box-shadow: var(--win-shadow); border-radius: var(--r-xl); }
     /* перестановка кнопок панелей (как цвета в палитре) */
-    .reorder-ghost { position: fixed; z-index: 300; pointer-events: none; opacity: .9;
-      transform: translate(-50%, -50%) scale(1.12); box-shadow: var(--win-shadow); }
     .pbtn.reordering, .lay-action-btn.reordering { opacity: .3; }
 
 

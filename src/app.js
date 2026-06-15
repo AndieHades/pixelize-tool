@@ -125,6 +125,7 @@ export function start() {
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');
   window.addEventListener('blur', () => { // защита: не оставлять призрак/состояние драга при потере фокуса (скриншот, alt-tab)
     document.querySelectorAll('.drag-ghost').forEach((g) => g.remove());
+    document.querySelectorAll('.gal-drop-slot').forEach((g) => g.remove());
     document.querySelectorAll('.dragging, .lift, .lifting, .over, .drop-into, .drop-before, .drop-above').forEach((n) => n.classList.remove('dragging', 'lift', 'lifting', 'over', 'drop-into', 'drop-before', 'drop-above')); });
 
   requestAnimationFrame(() => { fitView(); });
