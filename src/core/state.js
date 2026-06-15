@@ -41,6 +41,7 @@ export const S = {
   fxSel: new Set(), fxCur: null, fxDraft: null, // выделенные строки эффектов + черновик окна
 
   palette: pal0, active: pal0[DEFAULT_ACTIVE].slice(),
+  colorMode: 'rgba',
   shading: { colors: [], on: false, open: false, picking: false }, // palette ramp + Aseprite-like shading brush mode
   tool: 'pencil', sym: false, symH: false, symD1: false, symD2: false,
   symLines: { x: null, y: null, d1: null, d2: null, mode: null, hover: null },

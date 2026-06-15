@@ -8,8 +8,8 @@
     /* окно перетаскивается за любое свободное место (JS ставит .fw-win); прокрутка
        внутренних списков сохраняется через touch-action: pan-y */
     .fw-win { touch-action: none; }
-    .fw-win #lay-list, .fw-win #brush-list, .fw-win #gal-grid, .fw-win #tsg-body, .fw-win .new-list,
-    #lay-list, #brush-list, #gal-grid, #tsg-body, .new-list { touch-action: pan-y; }
+    .fw-win #lay-list, .fw-win #brush-list, .fw-win #gal-grid, .fw-win #tsg-body, .fw-win .new-scroll,
+    #lay-list, #brush-list, #gal-grid, #tsg-body, .new-scroll { touch-action: pan-y; }
 
     /* ---- кнопки ---- */
     button { background: transparent; border: 0; color: var(--txt); width: var(--btn); height: var(--btn);

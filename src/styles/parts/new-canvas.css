@@ -1,58 +1,103 @@
-/* ── Диалог «Новый холст» (список, как в Procreate) ── */
-/* New Canvas и конвертер показываются ПОВЕРХ галереи (галерея — z-index 100). */
-#new-ovl, #imp-ovl { z-index: 130; }
-/* Новый холст ведёт себя как popover: фон не перехватывает клики, чтобы галерейный плюс мог закрыть окно. */
-#new-ovl { background: transparent; pointer-events: none; }
-#new-ovl .new-panel, #new-ovl #new-custom { pointer-events: auto; }
-/* окна «Новый холст» (пресеты и редактор) — перетаскиваемые, по центру, как все */
-.new-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); overflow: hidden; }
-.new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
-.new-head:active { cursor: grabbing; }
-.new-head h3 { margin: 0; font-size: 22px; font-weight: 700; color: var(--txt); }
-.new-head .gal-round { background: var(--accent-soft); color: var(--txt); }
-.new-list { overflow: auto; padding: 4px 0; }
-.new-row { position: relative; cursor: pointer; }
-.new-row .swipe-front, .new-row:not(.swipe-row) { display: flex; align-items: center; gap: 12px; padding: 14px 20px;
-  background: var(--panel-solid); border-top: 1px solid var(--line); }
-.new-name { color: var(--txt); font-size: 16px; }
-.new-size { margin-left: auto; color: var(--txt2); font-size: 13px; background: var(--surface); padding: 4px 10px; border-radius: var(--r-md); }
-.new-row:hover .new-name { color: var(--accent); }
-/* в #new-ovl две панели: пресеты (.new-panel) и редактор (#new-custom); переключение по .editing */
-#new-custom { display: none; }
-#new-ovl.editing #new-custom { display: block; }
-#new-ovl.editing .new-panel { display: none; }
-.sheet#new-custom { width: min(96vw, 560px); padding: 0; overflow: hidden; border-radius: var(--win-radius); }
-#new-custom h3 { margin: 0; padding: 13px 18px 9px; border-bottom: 1px solid var(--line);
-  font-size: 14px; font-weight: 700; }
-.se-name { display: flex; align-items: center; gap: 8px; height: 40px; margin: 10px 12px 8px;
-  padding: 0 9px; background: var(--row); border-radius: var(--r-lg); }
-.se-name span, .se-row > span { color: var(--txt2); font-size: 11px; font-weight: 700; }
-.se-name input { flex: 1; min-width: 0; height: 28px; padding: 0 2px; border: 0; background: transparent;
-  color: var(--txt); font: 700 13px/1 ui-monospace, monospace; outline: none; }
-.se-dims { display: flex; align-items: center; gap: 6px; margin: 0 12px 12px; flex-wrap: wrap; }
-.se-row { display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 8px;
-  background: var(--row); border-radius: var(--r-lg); }
-.se-row input { width: 54px; height: 28px; box-sizing: border-box; text-align: right; padding: 0 6px;
-  color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
-  font: 700 13px/1 ui-monospace, monospace; }
-.se-row em { color: var(--txt2); font-style: normal; font-size: 11px; font-weight: 700; }
-.se-link { align-self: center; width: 38px; height: 40px; flex: none; border-radius: var(--r-lg); background: var(--row); color: var(--txt2); }
-.se-link.on { background: var(--accent); color: var(--on-accent); }
-.se-link svg { width: 18px; height: 18px; }
-.se-actions { display: flex; gap: 6px; margin-left: auto; }
-.se-actions button { width: var(--btn); height: var(--btn); border-radius: var(--r-lg); flex: none; color: var(--txt2); }
-.se-actions button svg { width: 22px; height: 22px; }
-#new-create { color: var(--ok); }
-#new-cancel:hover, #new-create:hover { background: var(--accent-soft); }
-#new-cancel:hover { color: var(--txt); }
-#new-create:hover { color: var(--ok); }
-@media (max-width: 520px) {
-  .sheet#new-custom { width: min(96vw, 360px); }
-  .se-dims { display: grid; grid-template-columns: 1fr 38px 1fr; }
-  .se-row { min-width: 0; }
-  .se-row input { width: 48px; }
-  .se-actions { grid-column: 1 / -1; justify-self: end; }
+/* ── Диалог «Новый холст» ──────────────────────────────────────────────── */
+/* Окно живёт поверх галереи: фон ловит тап мимо панели и закрывает попап. */
+#new-ovl, #imp-ovl { z-index: 130 !important; }
+#new-ovl { background: transparent; pointer-events: auto; }
+#new-ovl .new-panel { pointer-events: auto; }
+
+/* Основная карточка: стрелка визуально привязана к галерейному плюсу. */
+.new-panel { position: fixed; right: clamp(12px, 5vw, 96px); top: clamp(118px, 15vh, 150px);
+  width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 142px); min-height: min(620px, calc(100dvh - 142px));
+  display: grid; grid-template-rows: auto minmax(168px, 1fr) auto; overflow: hidden;
+  background: var(--panel); backdrop-filter: blur(14px); border: 1px solid var(--line);
+  border-radius: var(--win-radius); box-shadow: var(--win-shadow); }
+.new-panel::before { content: ""; position: absolute; right: 24px; top: -11px; width: 20px; height: 20px;
+  background: var(--panel); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
+.new-head { position: relative; padding: 24px 28px 10px; text-align: center; }
+.new-head h3 { margin: 0; color: var(--txt); font-size: 25px; line-height: 1.15; font-weight: 800; }
+
+/* Прокручиваемая зона: только пресеты и Saved, чтобы Custom не уезжал. */
+.new-scroll { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  padding: 0 26px 14px; overscroll-behavior: contain; }
+.new-scroll::-webkit-scrollbar { width: 7px; }
+.new-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-pill); }
+.new-presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.new-group h4, .new-saved h4, .new-custom h4 { margin: 0 0 12px; color: var(--txt); font-size: 18px; font-weight: 800; }
+.new-saved { margin-top: 24px; }
+
+/* Списки размеров: одинаковая высота строк и стабильные границы. */
+.new-stack { overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-lg); background: color-mix(in srgb, var(--row) 72%, transparent); }
+.new-row { width: 100%; min-height: 61px; display: flex; align-items: center; gap: 12px; padding: 0 18px;
+  color: var(--txt); background: transparent; border-radius: 0; border-top: 1px solid var(--line); text-align: left; cursor: pointer; }
+.new-row:first-child { border-top: 0; }
+.new-row:hover { background: color-mix(in srgb, var(--txt) 7%, transparent); }
+.new-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; font-weight: 650; }
+.new-size { flex: none; color: var(--txt2); font-size: 17px; font-weight: 600; }
+.new-row.saved .new-name { font-size: 17px; }
+.new-dots { width: 38px; height: 38px; flex: none; border-radius: var(--r-lg); color: var(--txt); font-size: 22px; line-height: 1; }
+.new-empty { margin: 0; padding: 20px 18px; color: var(--txt2); font-size: 15px; }
+
+/* Закреплённый Custom-блок: здесь правятся имя, размер, фон и режим цвета. */
+.new-custom { padding: 14px 26px 26px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--panel-solid) 42%, transparent); }
+.new-name-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 12px; margin-bottom: 14px; }
+.new-name-field span, .new-custom-grid span, .new-mode > span { color: var(--txt); font-size: 15px; font-weight: 650; }
+.new-name-field input, .new-custom-grid input { width: 100%; height: 44px; box-sizing: border-box; padding: 0 14px;
+  color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); outline: none;
+  font: 650 17px/1 system-ui, sans-serif; }
+.new-custom-grid { display: grid; grid-template-columns: minmax(84px, 1fr) 50px minmax(84px, 1fr) 172px; align-items: end; gap: 14px; }
+.new-custom-grid label { display: grid; gap: 8px; }
+.new-link { width: 50px; height: 44px; margin-bottom: 0; border: 1px solid var(--line); border-radius: var(--r-lg);
+  color: var(--txt2); background: var(--surface); }
+.new-link.on { color: var(--on-accent); background: var(--accent); }
+.new-link svg { width: 20px; height: 20px; }
+
+/* BG-превью: тап циклом меняет transparent → white → black. */
+.new-bg { width: 100%; height: 98px; align-self: end; display: grid; gap: 7px; padding: 7px; border: 1px solid var(--line);
+  border-radius: var(--r-lg); background: var(--surface); color: var(--txt2); }
+#new-bg-swatch { display: block; min-height: 58px; border-radius: var(--r-sm); border: 1px solid var(--line); }
+#new-bg-swatch.transparent { background:
+  linear-gradient(45deg, #8b8b8b 25%, transparent 25%),
+  linear-gradient(-45deg, #8b8b8b 25%, transparent 25%),
+  linear-gradient(45deg, transparent 75%, #8b8b8b 75%),
+  linear-gradient(-45deg, transparent 75%, #8b8b8b 75%),
+  #d8d8d8; background-size: 18px 18px; background-position: 0 0, 0 9px, 9px -9px, -9px 0; }
+.new-bg em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-size: 12px; font-weight: 700; }
+
+/* Save preset и Color mode стоят перед Create, чтобы решение было видно до запуска. */
+.new-save { min-height: 44px; display: inline-flex; align-items: center; gap: 12px; margin-top: 12px; color: var(--txt); cursor: pointer; }
+.new-save input { position: absolute; opacity: 0; pointer-events: none; }
+.new-save span { width: 27px; height: 27px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); }
+.new-save input:checked + span { background: var(--accent); box-shadow: inset 0 0 0 6px var(--surface); }
+.new-save b { font-size: 17px; font-weight: 650; }
+.new-mode { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 6px 0 16px; }
+.new-mode div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(280px, 58%); padding: 3px; border: 1px solid var(--line);
+  border-radius: var(--r-lg); background: var(--surface); }
+.new-mode button { width: 100%; height: 36px; border-radius: var(--r-md); color: var(--txt2); font-size: 13px; font-weight: 800; }
+.new-mode button.on { color: var(--on-accent); background: var(--accent); }
+#new-create { width: 100%; height: 58px; border-radius: var(--r-lg); font-size: 19px; font-weight: 800; }
+
+@media (max-width: 720px) {
+  .new-panel { left: 16px; right: 16px; top: 126px; width: auto; max-height: calc(100dvh - 150px); min-height: 0; }
+  .new-head { padding: 22px 24px 10px; }
+  .new-scroll, .new-custom { padding-left: 24px; padding-right: 24px; }
+  .new-presets { gap: 16px; }
+  .new-row { min-height: 56px; padding: 0 15px; }
+  .new-name { font-size: 17px; }
+  .new-size { font-size: 16px; }
+  .new-custom-grid { grid-template-columns: minmax(78px, 1fr) 48px minmax(78px, 1fr) 142px; gap: 11px; }
+  .new-bg { height: 91px; }
 }
 
+@media (max-width: 460px) {
+  .new-panel { left: 12px; right: 12px; top: 116px; max-height: calc(100dvh - 136px); }
+  .new-scroll, .new-custom { padding-left: 20px; padding-right: 20px; }
+  .new-presets { gap: 12px; }
+  .new-group h4, .new-saved h4, .new-custom h4 { font-size: 16px; }
+  .new-row { min-height: 52px; padding: 0 12px; }
+  .new-name, .new-row.saved .new-name { font-size: 16px; }
+  .new-size { font-size: 15px; }
+  .new-name-field { grid-template-columns: 1fr; gap: 8px; }
+  .new-custom-grid { grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); }
+  .new-bg { grid-column: 1 / -1; height: 82px; }
+  .new-mode { display: grid; gap: 9px; }
+  .new-mode div { width: 100%; }
+}

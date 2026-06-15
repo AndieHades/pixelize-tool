@@ -463,22 +463,30 @@
   </div></div>
 
   <div id="new-ovl" class="ovl gallery-only"><div class="new-panel">
-    <header class="new-head"><h3 data-i18n="dialog.newCanvas"></h3>
-      <button id="new-add" class="gal-round" data-i18n-title="new.addCustom">＋</button></header>
-    <div id="new-list" class="new-list"></div>
-  </div>
-  <div id="new-custom" class="sheet">
-    <h3 id="new-title" data-i18n="new.addCustom"></h3>
-    <div class="se-name"><span data-i18n="label.name"></span><input id="new-name-in" type="text" maxlength="24" /></div>
-    <div class="se-dims">
-      <div class="se-row"><span data-i18n="label.width"></span><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
-      <button id="new-link" class="se-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-      <div class="se-row"><span data-i18n="label.height"></span><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
-      <span class="se-actions">
-        <button id="new-create" data-i18n-title="btn.apply"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
-        <button id="new-cancel" data-i18n-title="btn.cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </span>
+    <header class="new-head"><h3 data-i18n="dialog.newCanvas"></h3></header>
+    <div id="new-scroll" class="new-scroll">
+      <div class="new-presets">
+        <section class="new-group"><h4 data-i18n="new.sprites"></h4><div id="new-sprites" class="new-stack"></div></section>
+        <section class="new-group"><h4 data-i18n="new.gameFrames"></h4><div id="new-frames" class="new-stack"></div></section>
+      </div>
+      <section class="new-saved"><h4 data-i18n="new.saved"></h4><div id="new-saved" class="new-stack"></div></section>
     </div>
+    <section class="new-custom">
+      <h4 data-i18n="new.custom"></h4>
+      <div class="new-name-field"><span data-i18n="label.name"></span><input id="new-name-in" type="text" maxlength="24" value="64 x 64" /></div>
+      <div class="new-custom-grid">
+        <label><span data-i18n="label.width"></span><input id="new-w" type="number" min="2" max="640" step="1" value="64" inputmode="numeric" /></label>
+        <button id="new-link" class="new-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
+        <label><span data-i18n="label.height"></span><input id="new-h" type="number" min="2" max="640" step="1" value="64" inputmode="numeric" /></label>
+        <button id="new-bg" class="new-bg" type="button" data-i18n-title="new.background"><span id="new-bg-swatch"></span><em id="new-bg-text"></em></button>
+      </div>
+      <label class="new-save"><input id="new-save" type="checkbox" /><span></span><b data-i18n="new.savePreset"></b></label>
+      <div class="new-mode"><span data-i18n="new.colorMode"></span><div>
+        <button id="new-mode-rgba" type="button" class="on">RGBA</button>
+        <button id="new-mode-gray" type="button">Grayscale</button>
+      </div></div>
+      <button id="new-create" class="txtbtn primary" data-i18n="btn.create"></button>
+    </section>
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">
