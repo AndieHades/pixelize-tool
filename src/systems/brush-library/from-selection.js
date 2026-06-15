@@ -7,6 +7,7 @@ import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { toast, t } from '../../core/dom.js';
 import { paintStack } from '../../core/composite.js';
+import { makeCanvas } from '../../core/canvas.js';
 import { inMask } from '../../core/selection.js';
 import { setStampBrush } from '../../core/stamp-brush.js';
 import { setTool } from '../../core/tools.js';
@@ -22,7 +23,7 @@ function region() {
     return x1 >= x0 && y1 >= y0 ? { x0, y0, x1, y1, masked: false } : null; }
   return null;
 }
-function composite() { const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+function composite() { const c = makeCanvas(S.W, S.H);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false; paintStack(x, false);
   return x.getImageData(0, 0, S.W, S.H).data; }
 function uniqueName() { const base = t('brush.stampName'), used = new Set(allBrushes().map((b) => b.name));

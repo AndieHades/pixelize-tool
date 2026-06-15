@@ -44,7 +44,7 @@ export function layerExtCanvas(i) {
 // обтравка и композит видят фрагмент так, будто он уже лежит в слое
 export function layerFloatCanvas(i) {
   const f = S.selFloat; if (!f || (f.li ?? S.cur) !== i) return layerCanvas(i);
-  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const c = makeCanvas(S.W, S.H);
   const x = c.getContext('2d'); x.drawImage(layerCanvas(i), 0, 0);
   const put = (xx, yy, cc) => { if (xx >= 0 && yy >= 0 && xx < S.W && yy < S.H) {
     x.fillStyle = 'rgba(' + cc[0] + ',' + cc[1] + ',' + cc[2] + ',' + (cc.length > 3 ? cc[3] : 255) / 255 + ')'; x.fillRect(xx, yy, 1, 1); } };
@@ -58,7 +58,7 @@ export function clippedCanvas(i, base) { return clippedShift(i, base, 0, 0, 0, 0
 // то же, но слой и база могут быть сдвинуты раздельно (в пикселях сетки) —
 // нужно для живого превью Move: маска едет вместе с базой, а не «застывает»
 export function clippedShift(i, base, dix, diy, dbx, dby) {
-  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const c = makeCanvas(S.W, S.H);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   x.drawImage(layerSrcCanvas(i), dix, diy); // слой с его эффектами, обрезанный по силуэту базы
   const ex = layerExtCanvas(i); if (ex) x.drawImage(ex.canvas, ex.ox + dix, ex.oy + diy); // запас из-за края едет вместе со слоем

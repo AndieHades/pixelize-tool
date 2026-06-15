@@ -10,13 +10,13 @@ import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { hexToRgb } from '../../logic/color.js';
 import { clamp01 } from '../../logic/math.js';
-import { syncCanvasSize } from '../../core/canvas.js';
+import { makeCanvas, syncCanvasSize } from '../../core/canvas.js';
 import { drawOverlays } from './overlays.js';
 import { drawBrushCursor } from './cursor.js';
 import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
-const buf = document.createElement('canvas'); // композит слой+эффекты в пиксельном масштабе
+const buf = makeCanvas(1, 1); // композит слой+эффекты в пиксельном масштабе (размер ставится по кадру)
 const gridOpacity = (v) => clamp01((+v || 70) / 100);
 function gridStroke(hex, opacity) {
   const c = hexToRgb(hex || '#4aa3ff');

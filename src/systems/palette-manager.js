@@ -4,6 +4,7 @@ import * as bus from '../core/bus.js';
 import { $, showMenuAt, toast, t } from '../core/dom.js';
 import { paintStack } from '../core/composite.js';
 import { compositeAt } from '../core/layer-cache.js';
+import { makeCanvas } from '../core/canvas.js';
 import { rgb, eqc } from '../logic/color.js';
 import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
 
@@ -55,7 +56,7 @@ function readImagePalette(im, limit = EXACT_LIMIT) {
   const exact = im.naturalWidth * im.naturalHeight <= EXACT_MAX_PIXELS;
   const k = exact ? 1 : Math.min(1, SAMPLE_MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight));
   const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const c = makeCanvas(w, h);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = k < 1; x.drawImage(im, 0, 0, w, h);
   return paletteFromImageData(x.getImageData(0, 0, w, h).data, limit);
 }
@@ -68,7 +69,7 @@ function fallbackCanvasPalette() { const seen = new Set(), pal = [];
 }
 
 export function paletteFromCanvas() {
-  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H;
+  const c = makeCanvas(S.W, S.H);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false; paintStack(x, false);
   const exact = exactPaletteFromRgba(x.getImageData(0, 0, S.W, S.H).data);
   return exact.colors.length ? exact.colors : fallbackCanvasPalette();

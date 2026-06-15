@@ -9,7 +9,7 @@ import { rgb } from '../../logic/color.js';
 import { BP_SMAX } from '../../config/limits.js';
 import { CURSOR_MODES, CURSOR_TOOLS } from '../../config/cursor.js';
 import { footprintMask, footprintRotation } from '../../logic/brush-cursor.js';
-import { paintCanvas, fillMask } from '../../core/canvas.js';
+import { makeCanvas, paintCanvas, fillMask } from '../../core/canvas.js';
 import { C } from '../../styles/canvas-colors.js';
 
 const RING = () => C.fg; // курсор без чёрной обводки — только светлый контур-прицел (токен темы)
@@ -44,7 +44,7 @@ function silhouette() {
 // перекраска силуэта в цвет fill — кеш по цвету, переиспользуем готовый bitmap
 function tinted(shape, fill) {
   let cv = tints.get(fill); if (cv) return cv;
-  cv = document.createElement('canvas'); cv.width = shape.width; cv.height = shape.height;
+  cv = makeCanvas(shape.width, shape.height);
   const cx = cv.getContext('2d'); cx.drawImage(shape, 0, 0); cx.globalCompositeOperation = 'source-in';
   cx.fillStyle = fill; cx.fillRect(0, 0, cv.width, cv.height); tints.set(fill, cv); return cv;
 }

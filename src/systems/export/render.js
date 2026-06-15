@@ -3,9 +3,8 @@
 import { S } from '../../core/state.js';
 import { paintStack } from '../../core/composite.js';
 import { layerSrcCanvas } from '../../core/layer-cache.js';
+import { makeCanvas as cv } from '../../core/canvas.js';
 import { collectIdx } from './tree.js';
-
-const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
 // склейка набора узлов в один canvas W×H (эффекты слоёв/папок и обтравка — внутри paintStack)
 export function flattenNodes(nodes, showHidden) {

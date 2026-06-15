@@ -5,12 +5,12 @@ import { $ } from '../core/dom.js';
 import { compositeLayers } from '../core/layer-cache.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
-import { syncCanvasSize } from '../core/canvas.js';
+import { makeCanvas, syncCanvasSize } from '../core/canvas.js';
 
 let prevOn = false; const pv = { z: 0, x: 0, y: 0 }; let prevComp = null;
 const pcv = () => $('prevcv');
 
-function prevComposite() { if (!prevComp) prevComp = document.createElement('canvas');
+function prevComposite() { if (!prevComp) prevComp = makeCanvas(S.W, S.H);
   if (prevComp.width !== S.W) prevComp.width = S.W; if (prevComp.height !== S.H) prevComp.height = S.H;
   const px = prevComp.getContext('2d'); px.clearRect(0, 0, S.W, S.H); px.imageSmoothingEnabled = false; compositeLayers(px); return prevComp; }
 

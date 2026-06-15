@@ -3,6 +3,7 @@
 import { S, newLayer, cloneFx, cloneLayer } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { compositeLayers, dirtyAll } from '../../core/layer-cache.js';
+import { makeCanvas } from '../../core/canvas.js';
 import { dedupePal } from '../../logic/quantize.js';
 import { defaultPalette, DEFAULT_ACTIVE } from '../../config/palette.js';
 import { saveDoc, getDoc } from '../../core/storage.js';
@@ -13,7 +14,7 @@ let curId = null, curFolder = null, saveT = null;
 export const curWorkId = () => curId;
 
 function record() {
-  const c = document.createElement('canvas'); c.width = S.W; c.height = S.H; compositeLayers(c.getContext('2d'));
+  const c = makeCanvas(S.W, S.H); compositeLayers(c.getContext('2d'));
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
     layers: S.layers.map((L) => cloneLayer(L)),

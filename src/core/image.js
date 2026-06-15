@@ -1,5 +1,6 @@
 // Разбор картинки: пиксели RGBA и эвристика «это уже пиксель-арт».
-export const imageData = (im, w, h, smooth) => { const c = document.createElement('canvas'); c.width = w; c.height = h;
+import { makeCanvas } from './canvas.js';
+export const imageData = (im, w, h, smooth) => { const c = makeCanvas(w, h);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = smooth; x.drawImage(im, 0, 0, w, h); return x.getImageData(0, 0, w, h); };
 
 export function looksPixelArt(im) { // мало цветов и/или маленький размер → уже пиксель-арт

@@ -3,7 +3,7 @@
 import { $, toast, t } from '../core/dom.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
-import { syncCanvasSize } from '../core/canvas.js';
+import { makeCanvas, syncCanvasSize } from '../core/canvas.js';
 
 let refOn = false, refSrc = null; const rv = { z: 1, x: 0, y: 0 };
 const rcv = () => $('refcv');
@@ -23,9 +23,9 @@ function toggleRef(on) { refOn = on === undefined ? !refOn : on;
   $('refwin').classList.toggle('on', refOn); $('refbtn').classList.toggle('on', refOn);
   if (refOn) requestAnimationFrame(refFit); }
 
-function rotateRef() { if (!refSrc) return; const c = document.createElement('canvas'); c.width = refSrc.height; c.height = refSrc.width;
+function rotateRef() { if (!refSrc) return; const c = makeCanvas(refSrc.height, refSrc.width);
   const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(refSrc, 0, 0); refSrc = c; refFit(); }
-function flipRef() { if (!refSrc) return; const c = document.createElement('canvas'); c.width = refSrc.width; c.height = refSrc.height;
+function flipRef() { if (!refSrc) return; const c = makeCanvas(refSrc.width, refSrc.height);
   const x = c.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(refSrc, 0, 0); refSrc = c; refRender(); }
 
 export function mount() {
@@ -35,7 +35,7 @@ export function mount() {
   $('ref-open').onclick = () => file.click();
   file.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     const im = new Image(); im.onerror = () => toast(t('toast.imgOpenFail'));
-    im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    im.onload = () => { const c = makeCanvas(im.naturalWidth, im.naturalHeight);
       c.getContext('2d').drawImage(im, 0, 0); refSrc = c; refFit(); }; im.src = URL.createObjectURL(f); };
   floatingWindow($('refwin'), { grip: $('refgrip'), handle: $('refrsz'), clampRight: 70,
     onResize: (w, h) => { $('refwin').style.width = Math.max(140, Math.min(innerWidth - 12, w)) + 'px';

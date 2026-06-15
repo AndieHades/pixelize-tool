@@ -2,6 +2,7 @@
 // пикселям» (Trim). Trim считается по итоговому композиту, поэтому запечённые
 // эффекты слоёв (обводка/свечение/тени) автоматически входят в границы.
 import { alphaBounds } from '../../logic/raster.js';
+import { makeCanvas } from '../../core/canvas.js';
 
 // границы непрозрачных пикселей canvas (или null)
 export function visibleBounds(canvas) {
@@ -19,9 +20,9 @@ export function unionBounds(list) {
 
 // вырезать прямоугольник b из canvas; b=null → пустой 1×1 (нечего экспортировать)
 export function cropTo(canvas, b) {
-  if (!b) { const e = document.createElement('canvas'); e.width = e.height = 1; return e; }
-  const w = b.maxx - b.minx + 1, h = b.maxy - b.miny + 1, c = document.createElement('canvas');
-  c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  if (!b) return makeCanvas(1, 1);
+  const w = b.maxx - b.minx + 1, h = b.maxy - b.miny + 1, c = makeCanvas(w, h);
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   x.drawImage(canvas, b.minx, b.miny, w, h, 0, 0, w, h); return c;
 }
 
