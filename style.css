@@ -718,17 +718,19 @@ body.gallery-open #pal-ovl {
 .gal-actions button.on { background: var(--accent); color: var(--on-accent); }
 #gal-del { color: var(--danger); }
 .gal-actions button:disabled { opacity: .4; pointer-events: none; }
-#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px; padding: 10px 16px 16px; align-content: start; } /* плитки среднего размера; малый отступ сверху */
+/* ровно 3 колонки, плитка ≤128px и ужимается, чтобы влезть на любой ширине */
+#gal-grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 128px)); justify-content: center; gap: 16px; padding: 10px 16px 16px; align-content: start; }
 .gal-tile { cursor: pointer; user-select: none; }
-.gal-thumb { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-  box-shadow: var(--win-shadow); overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
-  transition: transform var(--anim-fast) var(--ease-out), border-color var(--anim-fast), box-shadow var(--anim-fast); }
-.gal-tile:not(.folder) .gal-thumb { display: block; }
-.gal-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.gal-tile.folder .gal-thumb { gap: 2px; padding: 6px; background: var(--panel-solid); }
-.gal-tile.folder .gal-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-xs); }
-.gal-tile:hover .gal-thumb { border-color: var(--accent); }
-.gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
+/* ячейка квадратная (ряды ровные), а превью внутри — в пропорциях работы (≤128 в любую сторону) */
+.gal-thumb { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center;
+  transition: transform var(--anim-fast) var(--ease-out); }
+.gal-thumb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: cover; image-rendering: pixelated;
+  border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--win-shadow); background: var(--surface);
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast); }
+/* папка — квадратная карточка со значком */
+.gal-tile.folder .gal-thumb { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden; }
+.gal-tile:hover .gal-thumb img, .gal-tile.folder:hover .gal-thumb { border-color: var(--accent); }
+.gal-tile.sel .gal-thumb img, .gal-tile.folder.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
 /* чек-кружок в углу плитки (виден только в режиме выбора) */
 .gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
   border: 2px solid var(--marker); background: rgba(0,0,0,.4); box-shadow: var(--win-shadow);

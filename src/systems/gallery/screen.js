@@ -62,7 +62,7 @@ async function tileEl(d) {
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
   if (d.kind === 'folder') { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } // у всех папок — значок папки
-  else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; thumb.appendChild(im); }
+  else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; im.style.aspectRatio = `${d.W} / ${d.H}`; thumb.appendChild(im); } // плитка в пропорциях работы
   tile.addEventListener('dragstart', (e) => e.preventDefault()); // не запускать нативный драг картинки (мешает своему)
   tile.addEventListener('contextmenu', (e) => { e.preventDefault(); tileMenu(e.clientX, e.clientY, d); }); // ПКМ (десктоп) — меню
   const chk = document.createElement('div'); chk.className = 'gal-check' + (selected.has(d.id) ? ' on' : ''); thumb.appendChild(chk);
