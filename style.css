@@ -53,16 +53,45 @@
     #dropmask small { color: var(--txt2); font-size: 13px; font-weight: 400; }
 
     /* ---- кастомный HSV-пикер ---- */
-    .col-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    #col-sw { width: 40px; height: 32px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .25); flex: none; }
+    #colpop { width: min(92vw, 332px); }
+    #col-disc { --col-hue: #ff0000; position: relative; width: min(100%, 286px); aspect-ratio: 1;
+      margin: 0 auto 12px; border-radius: 50%; touch-action: none; cursor: crosshair; flex: none; }
+    #col-wheel { position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(from -90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 1px 3px rgba(0, 0, 0, .35); }
+    #col-wheel::after { content: ""; position: absolute; inset: 24%; border-radius: 50%;
+      background: var(--panel-solid); box-shadow: 0 0 0 5px var(--panel-solid), inset 0 0 0 1px rgba(255, 255, 255, .06); }
+    #col-svdisc { position: absolute; inset: 27%; border-radius: 50%; overflow: hidden;
+      background:
+        linear-gradient(to top, #000 0%, rgba(0, 0, 0, .88) 12%, rgba(0, 0, 0, .28) 42%, rgba(0, 0, 0, 0) 70%),
+        radial-gradient(circle at 19% 21%, #fff 0%, rgba(255,255,255,.96) 12%, rgba(255,255,255,.42) 32%, rgba(255,255,255,0) 55%),
+        linear-gradient(110deg, color-mix(in srgb, var(--col-hue) 20%, #fff) 0%, var(--col-hue) 58%, color-mix(in srgb, var(--col-hue) 82%, #000) 100%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+    #col-hmark, #col-svmark { position: absolute; width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .45), 0 1px 4px rgba(0, 0, 0, .45);
+      transform: translate(-50%, -50%); pointer-events: none; }
+    #col-svmark.white { border-color: transparent; }
+    .col-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    #col-sw { width: 42px; height: 34px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .25); flex: none; }
     #col-hex { flex: 1; width: auto; background: var(--surface); color: var(--txt); border: 1px solid var(--line);
       border-radius: 10px; padding: 9px 10px; font: 14px ui-monospace, monospace; text-transform: uppercase; }
-    #colpop input[type=range] { height: 20px; border-radius: 5px; border: 1px solid var(--line); }
+    #col-add, #col-commit { width: 34px; height: 34px; border-radius: 9px; background: var(--row); color: var(--txt2); flex: none; }
+    #col-add:hover, #col-commit:hover { background: var(--accent-soft); color: var(--txt); }
+    #col-add svg, #col-commit svg { width: 18px; height: 18px; }
+    #col-commit { color: #6fdb8b; }
+    #col-commit.hide { display: none; }
+    #colpop input[type=range] { height: 12px; border-radius: 6px; border: 1px solid var(--line); }
     #colpop input[type=range].hue { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
-    #colpop input[type=range]::-webkit-slider-runnable-track { height: 18px; background: transparent; }
-    #colpop input[type=range]::-moz-range-track { height: 18px; background: transparent; }
-    #colpop input[type=range]::-webkit-slider-thumb { width: 12px; height: 24px; border-radius: 4px; margin-top: -4px; border: 2px solid #fff; background: rgba(0,0,0,.25); box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
-    #colpop input[type=range]::-moz-range-thumb { width: 10px; height: 22px; border-radius: 4px; border: 2px solid #fff; background: rgba(0,0,0,.25); }
+    #colpop input[type=range]::-webkit-slider-runnable-track { height: 10px; background: transparent; }
+    #colpop input[type=range]::-moz-range-track { height: 10px; background: transparent; }
+    #colpop input[type=range]::-webkit-slider-thumb { width: 10px; height: 18px; border-radius: 4px; margin-top: -4px; border: 2px solid #fff; background: rgba(0,0,0,.25); box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+    #colpop input[type=range]::-moz-range-thumb { width: 9px; height: 17px; border-radius: 4px; border: 2px solid #fff; background: rgba(0,0,0,.25); }
+    .col-hist-head { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 12px; font-weight: 700; color: var(--txt); }
+    .col-hist-head span { flex: 1; }
+    #col-hist-clear { height: 24px; min-width: 56px; padding: 0 10px; border-radius: 7px; font-size: 12px; background: rgba(255, 255, 255, .08); }
+    #col-hist { display: flex; overflow: hidden; border-radius: 10px; margin-top: 6px; min-height: 30px; background: rgba(255, 255, 255, .04); }
+    #col-hist button { flex: 1 1 0; min-width: 0; height: 30px; border-radius: 0; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .08); }
+    #col-hist button:first-child { box-shadow: none; }
 
     /* ---- боковая колонка (как в Procreate) ---- */
     #sidebar { position: fixed; left: calc(max(8px, env(safe-area-inset-left, 0px)) + 64px); top: 50%;
@@ -372,7 +401,9 @@
     .toolpop .iact { gap: 8px; margin-top: 10px; }
     .toolpop .iact .txtbtn { height: 40px; border-radius: 10px; }
     .toolpop input[type=range] { height: 24px; }
+    .toolpop#colpop input[type=range] { height: 12px; }
     .toolpop input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; }
+    .toolpop#colpop input[type=range]::-webkit-slider-thumb { width: 10px; height: 18px; }
     /* ---- левая полоса кисти (как в Procreate) ---- */
     #brushbar { position: fixed; left: max(6px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%);
       z-index: 900; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 16px 6px 14px;

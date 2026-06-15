@@ -790,6 +790,27 @@ t('gallery: режим галереи сохраняет открытые окн
   ids.forEach((id) => document.getElementById(id).classList.remove('on'));
 });
 t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
+t('color-picker: диск, плюс и история работают без большой Add-кнопки', () => { cp.mount(); localStorage.removeItem('pixel-heart:color-history'); document.getElementById('col-hist-clear').click(); S.palette = [];
+  assert.ok(document.getElementById('col-disc')); assert.equal(document.querySelector('#colpop .iact'), null);
+  const hex = document.getElementById('col-hex'); hex.value = '#123456'; hex.dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('col-add').click(); assert.deepEqual(S.palette[0], [18, 52, 86]);
+  assert.equal(document.querySelectorAll('#col-hist button').length, 1);
+  document.getElementById('col-hist-clear').click(); assert.equal(document.querySelectorAll('#col-hist button').length, 0);
+});
+t('color-picker: двойной клик во внутреннем круге снапает к ближайшей крайней точке', () => {
+  const disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
+  disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 });
+  sv.getBoundingClientRect = () => ({ left: 54, top: 54, width: 92, height: 92, right: 146, bottom: 146 });
+  Object.defineProperty(disc, 'clientWidth', { value: 200, configurable: true });
+  Object.defineProperty(sv, 'clientWidth', { value: 92, configurable: true });
+  S.active = [120, 20, 20]; cp.syncColFromActive();
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 68, clientY: 68 }));
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 68, clientY: 68 }));
+  assert.deepEqual(S.active, [255, 255, 255]);
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 142 }));
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 142 }));
+  assert.deepEqual(S.active, [0, 0, 0]);
+});
 
 t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
 

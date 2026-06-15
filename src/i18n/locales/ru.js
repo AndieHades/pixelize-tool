@@ -48,10 +48,10 @@ export const ru = {
   'menu.fxCopy': 'Скопировать эффект', 'menu.fxAsLayer': 'Как слой', 'menu.copyEffects': 'Скопировать эффекты', 'menu.pasteEffect': 'Вставить эффект',
   'toast.fxCopied': 'Эффект скопирован', 'toast.fxPasted': 'Эффект вставлен', 'toast.noFxClipboard': 'Эффект не скопирован', 'toast.fxAdded': 'Эффект добавлен',
   'toast.noFxToCopy': 'Нет эффектов для копирования', 'toast.fxToLayer': 'Эффект превращён в слой',
-  'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
+  'label.strength': 'Сила за штрих', 'label.current': 'Текущая', 'label.history': 'История', 'label.layerOpacity': 'Непрозрачность', 'label.preview': 'Превью',
   'label.reference': 'Референс', 'label.palette': 'Палитра', 'label.paletteN': 'Палитра · {n}',
   // кнопки
-  'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить',
+  'btn.apply': 'Применить', 'btn.cancel': 'Отмена', 'btn.close': 'Закрыть', 'btn.save': 'Сохранить', 'btn.clear': 'Очистить',
   'btn.done': 'Готово', 'btn.addPalette': 'Добавить в палитру', 'btn.replaceColor': 'Заменить цвет', 'btn.outline': 'Обвести', 'btn.shadow': 'Создать тень',
   'btn.glow': 'Добавить свечение', 'btn.insertAsIs': 'Вставить как есть', 'btn.resetPanels': 'Сбросить панели',
   'btn.fromImage': 'Палитра из изображения…', 'btn.export': 'Экспорт',

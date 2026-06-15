@@ -356,11 +356,21 @@
 
   <div id="colpop" class="toolpop">
     <div class="bp-head"><span class="bp-title" data-i18n="pop.color"></span><button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="col-row"><span id="col-sw"></span><input id="col-hex" type="text" maxlength="7" spellcheck="false" /></div>
+    <div id="col-disc" data-i18n-title="pop.color">
+      <div id="col-wheel"></div>
+      <div id="col-svdisc"></div>
+      <span id="col-hmark"></span>
+      <span id="col-svmark"></span>
+    </div>
+    <div class="col-row"><span id="col-sw"></span><input id="col-hex" type="text" maxlength="7" spellcheck="false" />
+      <button id="col-add" data-i18n-title="btn.addPalette"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+      <button id="col-commit" data-i18n-title="btn.done"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+    </div>
     <div class="irow"><label data-i18n="label.hue"></label><input id="col-h" type="range" min="0" max="360" step="1" class="hue" /><b id="col-hv">0</b></div>
     <div class="irow"><label data-i18n="label.saturation"></label><input id="col-s" type="range" min="0" max="100" step="1" /><b id="col-sv">0</b></div>
     <div class="irow"><label data-i18n="label.brightness"></label><input id="col-v" type="range" min="0" max="100" step="1" /><b id="col-vv">0</b></div>
-    <div class="iact"><button id="col-add" data-i18n="btn.addPalette" class="txtbtn primary"></button></div>
+    <div class="col-hist-head"><span data-i18n="label.history"></span><button id="col-hist-clear" class="txtbtn" data-i18n="btn.clear"></button></div>
+    <div id="col-hist"></div>
   </div>
   <div id="lctx">
     <button id="lctx-ren" data-i18n="menu.rename"></button>
