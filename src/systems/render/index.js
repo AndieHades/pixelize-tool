@@ -8,12 +8,27 @@ import { $ } from '../../core/dom.js';
 import { paintStack } from '../../core/composite.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
+import { hexToRgb } from '../../logic/color.js';
 import { drawOverlays } from './overlays.js';
 import { drawBrushCursor } from './cursor.js';
 import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
 const buf = document.createElement('canvas'); // композит слой+эффекты в пиксельном масштабе
+const gridOpacity = (v) => Math.max(0, Math.min(1, (+v || 70) / 100));
+function gridStroke(hex, opacity) {
+  const c = hexToRgb(hex || '#4aa3ff');
+  return c.some((v) => !Number.isFinite(v)) ? C.grid : `rgba(${c[0]},${c[1]},${c[2]},${gridOpacity(opacity)})`;
+}
+function drawGrid(stepX, stepY, stroke, W, H, ox, oy, z) {
+  const gw = Math.max(1, Math.round(stepX) || 1), gh = Math.max(1, Math.round(stepY) || 1);
+  ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.beginPath();
+  const vx = new Set([W]); for (let x = 0; x <= W; x += gw) vx.add(x);
+  const hy = new Set([H]); for (let y = 0; y <= H; y += gh) hy.add(y);
+  for (const x of vx) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
+  for (const y of hy) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
+  ctx.stroke();
+}
 
 export function render() {
   const W = S.W, H = S.H;
@@ -30,13 +45,8 @@ export function render() {
   ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // итог клипуется холстом
   ctx.drawImage(buf, ox, oy, W * z, H * z);
   ctx.restore();
-  if ((z >= 7 || (S.grid && S.grid.preview)) && (!S.grid || S.grid.visible !== false)) { const gw = Math.max(1, Math.round(S.grid && S.grid.w) || 16), gh = Math.max(1, Math.round(S.grid && S.grid.h) || 16);
-    ctx.strokeStyle = (S.grid && S.grid.color) || C.grid; ctx.lineWidth = 1; ctx.beginPath();
-    const vx = new Set([W]); for (let x = 0; x <= W; x += gw) vx.add(x);
-    const hy = new Set([H]); for (let y = 0; y <= H; y += gh) hy.add(y);
-    for (const x of vx) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
-    for (const y of hy) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
-    ctx.stroke(); }
+  if (z >= 7) drawGrid(1, 1, C.grid, W, H, ox, oy, z); // обычная попиксельная сетка
+  if (S.grid && (S.grid.preview || S.grid.visible)) drawGrid(S.grid.w || 16, S.grid.h || 16, gridStroke(S.grid.color, S.grid.opacity), W, H, ox, oy, z);
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)
   drawOverlays(ctx, ox, oy, z);
   drawBrushCursor(ctx, ox, oy, z); // курсор-предпросмотр отпечатка кисти — поверх всего
