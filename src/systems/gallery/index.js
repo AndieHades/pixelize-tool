@@ -15,7 +15,10 @@ function setGalleryOpen(on) {
 }
 
 export function show() { saveCurrent(); render(); setGalleryOpen(true); }
-export function hide() { setGalleryOpen(false); $('new-ovl').classList.remove('on'); } // галерейный диалог не утекает в эдитор
+// выходя в эдитор, гасим ВСЕ галерейные оверлеи (.gallery-only) — системно, без
+// списка id: новый галерейный элемент с этим классом закрывается автоматически
+export function hide() { setGalleryOpen(false);
+  document.querySelectorAll('.gallery-only.on').forEach((el) => el.classList.remove('on')); }
 
 function pick(accept, fn) { const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
   i.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) fn(f); }; i.click(); }

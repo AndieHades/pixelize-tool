@@ -632,6 +632,13 @@
       button svg { width: 18px; height: 18px; }
     }
 
+/* ---- Системное разделение режимов галерея/эдитор ----
+   Помечай окно/оверлей контекстом — и оно ПО ПОСТРОЕНИЮ не покажется в чужом
+   режиме. Новый галерейный элемент = class="… gallery-only" (никаких списков id,
+   ничего не «упадёт» в эдитор). Новый редакторский = class="… editor-only". */
+body:not(.gallery-open) .gallery-only { display: none !important; }
+body.gallery-open .editor-only { display: none !important; }
+
 /* ---- режим галереи: редакторские окна прячутся, но их состояние сохраняется ---- */
 body.gallery-open #topbar,
 body.gallery-open #sidebar,
