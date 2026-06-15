@@ -835,6 +835,20 @@ t('color-picker: двойной клик во внутреннем круге с
   disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 142 }));
   assert.deepEqual(S.active, [0, 0, 0]);
 });
+t('color-picker: hue-кольцо совпадает с HSV и зазор не выбирает цвет', () => {
+  const disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
+  disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 });
+  sv.getBoundingClientRect = () => ({ left: 33, top: 33, width: 134, height: 134, right: 167, bottom: 167 });
+  Object.defineProperty(disc, 'clientWidth', { value: 200, configurable: true });
+  Object.defineProperty(sv, 'clientWidth', { value: 134, configurable: true });
+  S.active = [255, 0, 0]; cp.syncColFromActive();
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 10 }));
+  assert.equal(document.getElementById('col-hv').textContent, '0');
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 190, clientY: 100 }));
+  assert.equal(document.getElementById('col-hv').textContent, '90');
+  disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 31 }));
+  assert.equal(document.getElementById('col-hv').textContent, '90');
+});
 
 t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
 

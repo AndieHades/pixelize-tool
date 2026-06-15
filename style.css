@@ -54,13 +54,13 @@
 
     /* ---- кастомный HSV-пикер ---- */
     #colpop { width: min(92vw, 332px); }
-    #col-disc { --col-hue: #ff0000; position: relative; width: min(100%, 286px); aspect-ratio: 1;
+    #col-disc { --col-hue: #ff0000; --col-gap: 5px; position: relative; width: min(100%, 286px); aspect-ratio: 1;
       margin: 0 auto 12px; border-radius: 50%; touch-action: none; cursor: crosshair; flex: none; }
     #col-wheel { position: absolute; inset: 0; border-radius: 50%;
-      background: conic-gradient(from -90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+      background: conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 1px 3px rgba(0, 0, 0, .35); }
     #col-wheel::after { content: ""; position: absolute; inset: 16.667%; border-radius: 50%;
-      background: var(--panel-solid); box-shadow: 0 0 0 3px var(--panel-solid), inset 0 0 0 1px rgba(255, 255, 255, .06); }
+      background: var(--panel-solid); box-shadow: 0 0 0 var(--col-gap) var(--panel-solid), inset 0 0 0 1px rgba(255, 255, 255, .06); }
     #col-svdisc { position: absolute; inset: 16.667%; border-radius: 50%; overflow: hidden;
       background:
         linear-gradient(to top, #000 0%, rgba(0, 0, 0, .88) 12%, rgba(0, 0, 0, .28) 42%, rgba(0, 0, 0, 0) 70%),

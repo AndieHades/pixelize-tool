@@ -9,6 +9,7 @@ import { rgb, rgbToHex, rgbToHsv, hsvToRgb, hexToRgb } from '../logic/color.js';
 let colH = 0, colS = 0, colV = 100, replaceFrom = null; // replaceFrom — цвет или список цветов для режима замены
 let onPick = null; // режим «выбрать цвет для произвольной цели» (эффекты): колбэк(hex) на каждое изменение
 const COL_HISTORY_STORE = 'pixel-heart:color-used-history';
+const DISC_INNER_RATIO = 2 / 3, DISC_GAP = 5;
 let colHistory = [];
 let prevColor = S.active.slice(0, 3);
 
@@ -53,7 +54,7 @@ function syncColUI() { const hex = rgbToHex(hsvToRgb(colH, colS, colV)).toUpperC
   $('col-prev-sw').style.background = prevHex; $('col-prev-sw').title = prevHex;
   $('col-sw').style.background = hex; $('col-sw').title = hex; if (document.activeElement !== $('col-hex')) $('col-hex').value = hex;
   const hueHex = rgbToHex(hsvToRgb(colH, 100, 100)); $('col-disc').style.setProperty('--col-hue', hueHex);
-  const r = $('col-disc').clientWidth / 2 || 143, ringR = r * .835, a = (colH - 90) * Math.PI / 180;
+  const r = $('col-disc').clientWidth / 2 || 143, hueInner = Math.min(r, r * DISC_INNER_RATIO + DISC_GAP), ringR = (r + hueInner) / 2, a = (colH - 90) * Math.PI / 180;
   $('col-hmark').style.left = (r + Math.cos(a) * ringR) + 'px'; $('col-hmark').style.top = (r + Math.sin(a) * ringR) + 'px'; $('col-hmark').style.background = hueHex;
   const sv = $('col-svdisc'), svD = sv.clientWidth || Math.round(r * 2 * 2 / 3), svR = svD / 2;
   let sx = sv.offsetLeft + svD * colS / 100, sy = sv.offsetTop + svD * (100 - colV) / 100;
@@ -124,8 +125,8 @@ export function mount() {
   };
   const discPick = (e) => {
     const r = rectWithSize($('col-disc'), 286), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy), outer = Math.min(r.width, r.height) / 2, inner = outer * (2 / 3);
-    if (d >= inner && d <= outer) { setColorFromHsv((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360, colS, colV); return 'hue'; }
+    const dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy), outer = Math.min(r.width, r.height) / 2, inner = outer * DISC_INNER_RATIO;
+    if (d >= inner + DISC_GAP && d <= outer) { setColorFromHsv((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360, colS, colV); return 'hue'; }
     const p = svPoint(e); if (p) { setColorFromHsv(colH, p.s, p.v); return 'sv'; }
     return '';
   };
