@@ -28,7 +28,7 @@ export function setSelecting(v) { selecting = v; selected.clear();
   const sb = $('gal-select'); sb.textContent = v ? '✓' : t('gallery.select');
   sb.classList.toggle('confirm', v); sb.classList.toggle('gal-round', v); sb.title = v ? t('gallery.done') : '';
   for (const id of ['gal-stack', 'gal-dup', 'gal-del']) $(id).style.display = v ? '' : 'none';
-  for (const id of ['gal-convert', 'gal-import', 'gal-photo', 'gal-new', 'gal-settings']) $(id).style.display = v ? 'none' : '';
+  for (const id of ['gal-import', 'gal-photo', 'gal-new', 'gal-settings']) $(id).style.display = v ? 'none' : '';
   gridEl().classList.toggle('selecting', v); updateSel(); return render(); }
 function updateSel() { const n = selected.size;
   setBtn('gal-stack', 'gallery.stack', n, n < 2); setBtn('gal-dup', 'gallery.duplicate', n, !n); setBtn('gal-del', 'gallery.delete', n, !n);

@@ -27,14 +27,13 @@ function pick(accept, fn) { const i = document.createElement('input'); i.type = 
 function fromFile(f) { const im = new Image(); im.onerror = () => {};
   im.onload = () => { if (looksPixelArt(im)) { const d = imageData(im, im.naturalWidth, im.naturalHeight, false); hide(); newWorkFromImage(d.width, d.height, d.data, f.name.replace(/\.\w+$/, '')); }
     else { beginConvertedWork(); actions.run('import.openFile', f); } }; im.src = URL.createObjectURL(f); } // конвертер поверх галереи; уйдём по «Применить»
-function photo() { pick('image/*', fromFile); }
-function convert() { pick('image/*', (f) => { beginConvertedWork(); actions.run('import.openFile', f); }); }
+function photo() { pick('image/*', fromFile); } // не-пиксельная графика уходит в конвертер автоматически (fromFile)
 function importPsd() { pick('.psd,image/vnd.adobe.photoshop', async (f) => { try { const psd = readPsd(await f.arrayBuffer());
   if (psd && psd.layers.length) { hide(); newWorkFromLayers(psd.W, psd.H, psd.layers, f.name.replace(/\.psd$/i, '')); } } catch (e) {} }); }
 
 export async function mount() {
   configure({ onOpen: hide });
-  $('gal-photo').onclick = photo; $('gal-convert').onclick = convert; $('gal-import').onclick = importPsd;
+  $('gal-photo').onclick = photo; $('gal-import').onclick = importPsd;
   $('gal-select').onclick = () => setSelecting(!isSelecting());
   $('gal-stack').onclick = stackSelected; $('gal-dup').onclick = dupSelected; $('gal-del').onclick = delSelected;
   $('gal-back').onclick = goBack;
