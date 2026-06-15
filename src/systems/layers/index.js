@@ -12,6 +12,9 @@ import { mountActionBars } from './actions-bar.js';
 import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
 
+const vw = () => window.innerWidth || document.documentElement.clientWidth || 1024;
+const vh = () => window.innerHeight || document.documentElement.clientHeight || 768;
+
 function openLayerMenu(px, py) { const m = $('cctx'); m.innerHTML = '';
   const head = document.createElement('div'); head.className = 'cctx-head'; head.textContent = t('menu.pickLayer'); m.appendChild(head);
   for (let i = S.layers.length - 1; i >= 0; i--) { const b = document.createElement('button'); b.textContent = S.layers[i].name;
@@ -24,10 +27,11 @@ export function mount() {
   mountActionBars();
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });
-  floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220,
+  floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220, resizeEdges: true,
     onClose: () => { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); },
-    onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(innerWidth - 12, w)) + 'px';
-      $('lay-list').style.maxHeight = Math.max(80, h - 198) + 'px'; } }); // высота окна — по содержимому; ресайз тянет область списка
+    onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(vw() - 12, w)) + 'px';
+      $('lay-pop').style.height = Math.max(220, Math.min(vh() - 12, h)) + 'px';
+      $('lay-list').style.maxHeight = 'none'; } }); // высота окна независима от числа слоёв; список занимает свободное место
   mountMenu();
   mountPinch();
   bus.on('layers', layList);

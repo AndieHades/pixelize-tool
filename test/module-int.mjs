@@ -27,7 +27,7 @@ const { setTool } = await import('../src/core/tools.js');
 const { stamp } = await import('../src/systems/draw/stamp.js');
 const stroke = await import('../src/systems/draw/stroke.js');
 const { flood, dropColorAt } = await import('../src/systems/draw/fill.js');
-const { commitLine } = await import('../src/systems/draw/shapes.js');
+const { commitLine, commitContour } = await import('../src/systems/draw/shapes.js');
 const { SHAPE_SNAP_MS } = await import('../src/config/timings.js');
 const { rotateCanvas } = await import('../src/systems/rotate-canvas.js');
 const { flipLayer } = await import('../src/systems/flip.js');
@@ -261,6 +261,13 @@ t('draw: контур рисует круглой кистью, замыкает
   assert.deepEqual(S.layers[0].grid[3][3], [7, 8, 9, 255]); // заливка внутри
   assert.deepEqual(S.layers[0].grid[0][1], [7, 8, 9, 255]); // толщина от круглой кисти size=3
   S.lineMode = 'line'; });
+t('draw: контур с внутренней петлёй не оставляет дырки', () => { resetWH(10, 10); S.active = [2, 3, 4]; S.brushes.pencil.size = 1; S.tool = 'line'; S.lineMode = 'contour';
+  const pts = [[1, 1], [8, 1], [8, 8], [1, 8], [1, 1], [3, 3], [6, 3], [6, 6], [3, 6], [3, 3]];
+  commitContour(pts);
+  assert.deepEqual(S.layers[0].grid[4][4], [2, 3, 4, 255]);
+  assert.deepEqual(S.layers[0].grid[2][2], [2, 3, 4, 255]);
+  S.lineMode = 'line';
+});
 t('draw: смена инструмента финализирует уже начатый контур', () => { resetWH(8, 8); S.active = [4, 5, 6]; S.brushes.pencil.size = 1; S.lineMode = 'contour'; setTool('line');
   const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 1, e: {} }); h.move({ gx: 5, gy: 5, e: {} });
   setTool('pencil');
@@ -980,7 +987,20 @@ t('toolbars: выделение и Free Transform подсвечивают то�
   assert.ok(document.getElementById('t-move').classList.contains('on'));
   assert.ok(!document.getElementById('t-select').classList.contains('on'));
   tf.exitRotMode(false); assert.ok(!document.getElementById('t-move').classList.contains('on')); });
-t('toolbars: переключатель симметрии', () => { S.sym = false; document.getElementById('sym').click(); assert.equal(S.sym, true); });
+t('toolbars: симметрия и флип свернуты в кнопки с режимами', () => { tb.mount(); resetWH(4, 4);
+  S.sym = false; S.symH = false; document.getElementById('sym').click();
+  assert.ok(document.getElementById('sym-choice').classList.contains('on'));
+  document.querySelector('#sym-choice [data-sym-flag="sym"]').click();
+  assert.equal(S.sym, true); assert.ok(document.getElementById('sym').classList.contains('on'));
+  document.getElementById('sym').click(); document.querySelector('#sym-choice [data-sym-flag="symH"]').click();
+  assert.equal(S.symH, true);
+  S.layers[0].grid[1][0] = [5, 5, 5, 255]; document.getElementById('flip-h').click();
+  assert.ok(document.getElementById('flip-choice').classList.contains('on'));
+  document.querySelector('#flip-choice [data-flip-mode="h"]').click();
+  assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
+  assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
+  S.sym = false; S.symH = false;
+});
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
   localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();
   document.getElementById('pp').click(); document.getElementById('stab').click();
@@ -1280,6 +1300,20 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
+  const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
+  assert.ok(edge);
+  pop.style.left = '100px'; pop.style.top = '100px'; pop.style.width = '272px'; pop.style.height = '220px';
+  pop.getBoundingClientRect = () => {
+    const left = parseFloat(pop.style.left) || 0, top = parseFloat(pop.style.top) || 0;
+    const width = parseFloat(pop.style.width) || 0, height = parseFloat(pop.style.height) || 0;
+    return { left, top, width, height, right: left + width, bottom: top + height };
+  };
+  edge.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 120 }));
+  edge.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 60, clientY: 120 }));
+  edge.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 60, clientY: 120 }));
+  assert.equal(pop.style.left, '60px'); assert.equal(pop.style.width, '312px'); assert.equal(document.getElementById('lay-list').style.maxHeight, 'none');
+});
 t('layers-ui: папка показывает количество слоёв, пустая без счётчика', () => { resetWH(4, 4); const mk = (name, fid) => ({ name, fid, grid: blank(4, 4), opacity: 1, visible: true, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('a', 1), mk('b', 1), mk('top', null)];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }, { id: 2, name: 'Empty', open: true, visible: true, parent: null, effects: [] }];
@@ -1323,6 +1357,26 @@ t('layers-ui: цвет можно бросить прямо на слой', () =
   } finally { document.elementFromPoint = prev; }
   assert.deepEqual(S.layers[1].grid[0][0], [9, 8, 7, 255]); assert.equal(S.layers[0].grid[0][0], null);
   assert.ok([...document.querySelectorAll('#col-hist button')].some((b) => b.title === '#090807'));
+});
+t('layers-ui: цвет на заполненный слой перекрашивает только содержимое', () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
+  S.layers[0].grid[1][1] = [1, 2, 3, 128]; S.layers[0].ext = new Map([['-1,0', [4, 5, 6, 200]]]); layList();
+  const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 0);
+  const prev = document.elementFromPoint; document.elementFromPoint = () => row;
+  try {
+    assert.equal(actions.run('layer.dropColorAt', [9, 8, 7], 12, 12), true);
+  } finally { document.elementFromPoint = prev; }
+  assert.deepEqual(S.layers[0].grid[1][1], [9, 8, 7, 128]); assert.equal(S.layers[0].grid[0][0], null);
+  assert.deepEqual(S.layers[0].ext.get('-1,0'), [9, 8, 7, 200]);
+});
+t('layers-ui: цвет можно бросить на строку эффекта', () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }]; layList();
+  const row = document.querySelector('#lay-list .fxrow');
+  const prev = document.elementFromPoint; document.elementFromPoint = () => row;
+  try {
+    assert.equal(actions.run('layer.dropColorAt', [12, 34, 56], 10, 10), true);
+  } finally { document.elementFromPoint = prev; }
+  assert.equal(S.layers[0].effects[0].params.color, '#0c2238'); assert.equal(S.fxCur, S.layers[0].effects[0]);
+  assert.ok(S.fxSel.has(S.layers[0].effects[0]));
 });
 t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });

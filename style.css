@@ -143,9 +143,10 @@
     /* ---- панель слоёв ---- */
     #lay-pop { position: fixed; right: max(10px, env(safe-area-inset-right, 0px));
       top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 20; width: 272px;
+      min-height: 220px; box-sizing: border-box; flex-direction: column;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px;
       box-shadow: var(--win-shadow); display: none; overflow: hidden; }
-    #lay-pop.on { display: block; animation: pop .18s ease-out; }
+    #lay-pop.on { display: flex; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
     .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
       padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
@@ -158,7 +159,7 @@
     .pop-head button:hover, .bp-head button:hover, .pop-acts button:hover, #pal-menu:hover, #tsg-btn:hover { color: var(--txt); }
     .pop-head button svg, .bp-head button svg, .pop-acts button svg, #pal-menu svg, #tsg-btn svg { width: 18px; height: 18px; }
     .win-x:hover { background: var(--accent); color: var(--on-accent); }
-    #lay-list { max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: 12px; }
+    #lay-list { flex: 1 1 auto; min-height: 80px; max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: 12px; }
     .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer;
       margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
       max-height: 100px; overflow: hidden;
@@ -192,8 +193,17 @@
     .lay-act button:active { color: var(--txt); }
     .lay-act button.on { background: var(--accent); color: var(--on-accent); } /* активная — синий фон + белая иконка */
     #lay-rsz { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; cursor: nwse-resize;
-      touch-action: none; color: var(--txt2); display: grid; place-items: center; }
+      touch-action: none; color: var(--txt2); display: grid; place-items: center; z-index: 4; }
     #lay-rsz svg { width: 16px; height: 16px; }
+    .fw-rsz-edge { position: absolute; z-index: 3; touch-action: none; }
+    .fw-rsz-n { left: 14px; right: 14px; top: 0; height: 8px; cursor: ns-resize; }
+    .fw-rsz-s { left: 14px; right: 14px; bottom: 0; height: 8px; cursor: ns-resize; }
+    .fw-rsz-e { top: 14px; right: 0; bottom: 14px; width: 8px; cursor: ew-resize; }
+    .fw-rsz-w { top: 14px; left: 0; bottom: 14px; width: 8px; cursor: ew-resize; }
+    .fw-rsz-nw, .fw-rsz-ne, .fw-rsz-sw { width: 16px; height: 16px; }
+    .fw-rsz-nw { left: 0; top: 0; cursor: nwse-resize; }
+    .fw-rsz-ne { right: 0; top: 0; cursor: nesw-resize; }
+    .fw-rsz-sw { left: 0; bottom: 0; cursor: nesw-resize; }
     .lrow.inf { margin-left: 16px; }
     .lchk { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--txt2); flex: none; }
     .lchk.on { background: var(--accent); border-color: var(--accent); }
