@@ -437,13 +437,16 @@
   </div>
   <div id="new-custom" class="sheet">
     <h3 id="new-title" data-i18n="new.addCustom"></h3>
-    <div class="irow"><label data-i18n="label.name"></label><input id="new-name-in" type="text" maxlength="24" style="flex:1" /></div>
+    <div class="se-name"><span data-i18n="label.name"></span><input id="new-name-in" type="text" maxlength="24" /></div>
     <div class="se-dims">
       <div class="se-row"><span data-i18n="label.width"></span><input id="new-w" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
       <button id="new-link" class="se-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
       <div class="se-row"><span data-i18n="label.height"></span><input id="new-h" type="number" min="2" max="640" step="1" value="32" inputmode="numeric" /><em>px</em></div>
+      <span class="se-actions">
+        <button id="new-create" data-i18n-title="btn.apply"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
+        <button id="new-cancel" data-i18n-title="btn.cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </span>
     </div>
-    <div class="iact"><button id="new-cancel" data-i18n="btn.cancel" class="txtbtn"></button><button id="new-create" data-i18n="btn.apply" class="txtbtn primary"></button></div>
   </div></div>
 
   <div id="ovl" class="ovl"><div id="ovlbox" class="sheet">

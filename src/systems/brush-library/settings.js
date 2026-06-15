@@ -42,7 +42,7 @@ export function mountSettings(modeFn, actions) {
   $('bs-dup').onclick = () => { const r = activeRec(); if (r && act.dup) act.dup(r); };
   $('bs-del').onclick = () => { const r = activeRec(); if (r && act.del) { act.del(r); close(); } };
   initTestCanvas(getMode);
-  floatingWindow($('brush-settings'), { grip: $('brush-set-head'), storeKey: 'brushsetwin', minW: 220, minH: 160, onClose: close });
+  floatingWindow($('brush-settings'), { grip: $('brush-set-head'), storeKey: 'brushsetwin', minW: 220, minH: 160, avoidOverlap: false, onClose: close });
 }
 
 export function openSettings() { if (activeRec()) { $('brush-settings').classList.add('on'); syncSettings(); clearTest(); } }

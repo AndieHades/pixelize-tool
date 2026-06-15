@@ -1,13 +1,27 @@
+const allWins = new Set(); // все плавающие окна — чтобы новое вставало в свободное место
 // Плавающее окно: перетаскивание за грип + ресайз за уголок + сохранение
 // геометрии. Один помощник на палитру, боковую панель, окна слоёв/превью/референса.
-let zTop = 30; // общий счётчик: окно, за которое взялись, поднимается над остальными
-export const nextFloatingZ = () => ++zTop;
-const bringToFront = (el) => { el.style.zIndex = nextFloatingZ(); };
-
-const allWins = new Set(); // все плавающие окна — чтобы новое вставало в свободное место
+const NORMAL_Z_BASE = 30, NORMAL_Z_MAX = 860, TOOLBAR_Z = 900;
+let zTop = NORMAL_Z_BASE; // общий счётчик: окно, за которое взялись, поднимается над остальными
 const TOPBAR = 58;         // не залезаем под верхнюю панель
-const shown = (e) => { const s = window.getComputedStyle(e); return s.display !== 'none' && s.visibility !== 'hidden'; };
+const hostFor = (el) => el.closest('.ovl') || el;
+const shown = (e) => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const s = window.getComputedStyle(n);
+  if (s.display === 'none' || s.visibility === 'hidden') return false; } return true; };
 const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+const interactive = 'button,input,select,textarea,label,a,[contenteditable="true"]';
+const zOf = (el) => { const host = hostFor(el), n = parseFloat(window.getComputedStyle(host).zIndex || host.style.zIndex);
+  return Number.isFinite(n) ? n : 0; };
+function rebalanceNormalZ() {
+  const wins = [...allWins].filter((el) => !el.__fwAlwaysOnTop && shown(el)).sort((a, b) => zOf(a) - zOf(b));
+  zTop = NORMAL_Z_BASE;
+  for (const el of wins) { const host = hostFor(el); host.style.zIndex = ++zTop; if (host !== el) el.style.zIndex = ''; }
+}
+export const nextFloatingZ = () => { if (zTop >= NORMAL_Z_MAX) rebalanceNormalZ(); return ++zTop; };
+const bringToFront = (el, alwaysOnTop = false) => {
+  const host = hostFor(el);
+  host.style.zIndex = alwaysOnTop ? TOOLBAR_Z : nextFloatingZ();
+  if (host !== el) el.style.zIndex = '';
+};
 // первое свободное место для окна el среди других видимых окон (или null — места нет)
 function freeSpot(el) { const r = el.getBoundingClientRect(), w = r.width, h = r.height, m = 8, step = 24;
   const occ = [...allWins].filter((x) => x !== el && shown(x)).map((x) => x.getBoundingClientRect());
@@ -17,7 +31,8 @@ function freeSpot(el) { const r = el.getBoundingClientRect(), w = r.width, h = r
 
 export function floatingWindow(el, opts = {}) {
   if (el.__fw) return; el.__fw = true; // идемпотентно: окно делается перетаскиваемым один раз
-  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, onResize, onClose } = opts;
+  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, avoidOverlap = true, alwaysOnTop = false, onResize, onClose } = opts;
+  el.__fwAlwaysOnTop = alwaysOnTop;
   let placed = false; // есть ли осмысленная позиция (восстановлена / выбрана пользователем / переставлена)
   const place = (l, t) => {
     el.style.left = Math.max(4, Math.min(l, innerWidth - clampRight)) + 'px';
@@ -37,10 +52,10 @@ export function floatingWindow(el, opts = {}) {
   const xb = el.querySelector('.win-x');
   if (xb) xb.addEventListener('click', (e) => { e.stopPropagation(); if (onClose) onClose(); else el.classList.remove('on'); });
 
-  el.addEventListener('pointerdown', () => bringToFront(el), true); // любой тык по окну — наверх стопки
+  el.addEventListener('pointerdown', () => bringToFront(el, alwaysOnTop), true); // любой тык по окну — наверх стопки
   let d = null;
-  grip.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return;
-    grip.setPointerCapture(e.pointerId); bringToFront(el); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
+  grip.addEventListener('pointerdown', (e) => { if (e.target.closest(interactive)) return;
+    grip.setPointerCapture(e.pointerId); bringToFront(el, alwaysOnTop); const r = el.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
   grip.addEventListener('pointermove', (e) => { if (d) place(e.clientX - d.dx, e.clientY - d.dy); });
   const dEnd = () => { if (d) { d = null; placed = true; save(); } };
   grip.addEventListener('pointerup', dEnd); grip.addEventListener('pointercancel', dEnd);
@@ -55,13 +70,15 @@ export function floatingWindow(el, opts = {}) {
   // при открытии: поднять окно над остальными; если перекрывает другое окно и
   // позиция ещё не выбрана — переставить в свободное место (или наверх, если места нет)
   allWins.add(el);
-  const onShow = () => { bringToFront(el);
-    if (placed) return;
+  const onShow = () => { bringToFront(el, alwaysOnTop);
+    if (placed || !avoidOverlap) return;
     const r = el.getBoundingClientRect();
     const occ = [...allWins].filter((x) => x !== el && shown(x)).map((x) => x.getBoundingClientRect());
     if (occ.some((o) => hit(r, o))) { const s = freeSpot(el);
       place(s ? s.l : Math.max(4, (innerWidth - r.width) / 2), s ? s.t : TOPBAR); placed = true; save(); } };
   let wasShown = shown(el);
-  new window.MutationObserver(() => { const v = shown(el); if (v && !wasShown) onShow(); wasShown = v; })
-    .observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  const mo = new window.MutationObserver(() => { const v = shown(el); if (v && !wasShown) onShow(); wasShown = v; });
+  mo.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  const host = hostFor(el);
+  if (host !== el) mo.observe(host, { attributes: true, attributeFilter: ['class', 'style'] });
 }

@@ -8,6 +8,17 @@ import { folderChain } from './layers.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
 import { toast, t } from './dom.js';
+import { ZOOM_MIN, ZOOM_MAX } from '../config/limits.js';
+
+function keepCanvasScreenSize(oldW, oldH, newW, newH) {
+  const z0 = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number.isFinite(S.view.zoom) ? S.view.zoom : ZOOM_MIN));
+  const sw = oldW * z0, sh = oldH * z0;
+  const cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
+  const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(sw / newW, sh / newH)));
+  S.view.zoom = Number.isFinite(z) ? z : z0;
+  S.view.ox = Math.round(cx - (newW * S.view.zoom) / 2);
+  S.view.oy = Math.round(cy - (newH * S.view.zoom) / 2);
+}
 
 // добавить пустые ряды/колонки по краям (во все слои); рисунок визуально на месте
 export function expandCanvas(pl, pt, pr, pb) {
@@ -53,6 +64,7 @@ export function expandForEffects(target) {
 // расширяет); отрезанное уходит в запас ext, чтобы не теряться
 export function applyCropRect(x0, y0, x1, y1) {
   snapshot();
+  const oldW = S.W, oldH = S.H;
   const nw = x1 - x0 + 1, nh = y1 - y0 + 1;
   for (const L of S.layers) { const ne = new Map();
     const out = Array.from({ length: nh }, () => new Array(nw).fill(null));
@@ -62,8 +74,8 @@ export function applyCropRect(x0, y0, x1, y1) {
     for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx - x0, ay = ky - y0;
       if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; } else ne.set(ax + ',' + ay, c); }
     L.grid = out; L.ext = ne; }
-  S.W = nw; S.H = nh; S.sel = null;
-  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('fit');
+  S.W = nw; S.H = nh; keepCanvasScreenSize(oldW, oldH, nw, nh); S.sel = null;
+  bus.emit('selection'); dirtyAll(); bus.emit('layers'); bus.emit('render');
   toast(t('toast.canvasSize', { w: S.W, h: S.H }));
 }
 

@@ -86,7 +86,7 @@ const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
 const { showMenuAt } = await import('../src/core/dom.js');
-const { nextFloatingZ } = await import('../src/core/floating-window.js');
+const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = false; cache.dirtyAll(); };
@@ -271,7 +271,11 @@ t('eyedropper: color.setActive ставит активный цвет, не ме
 t('rotate-canvas: поворачивает содержимое без изменения размера холста', () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
   rotateCanvas(); assert.equal(S.W, 4); assert.equal(S.H, 6); assert.deepEqual(S.layers[0].ext.get('4,1'), [7, 7, 7, 255]); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
-t('trim: обрезает до контура', () => { resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); });
+t('trim: обрезает до контура и сохраняет экранный размер холста', () => { resetWH(6, 6); S.view = { zoom: 8, ox: 30, oy: 40 };
+  const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
+  S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
+  assert.equal(S.W * S.view.zoom, sw); assert.equal(S.H * S.view.zoom, sh);
+  assert.equal(S.view.ox + S.W * S.view.zoom / 2, cx); assert.equal(S.view.oy + S.H * S.view.zoom / 2, cy); });
 t('center: объект встаёт в центр холста', () => { resetWH(8, 8); S.sel = null; S.selMask = null; S.layers[0].grid[1][1] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[4][4], [1, 1, 1, 255]); assert.equal(S.layers[0].grid[1][1], null); });
 t('center: с выделением — в центр выделения', () => { resetWH(10, 10); S.layers[0].grid[0][0] = [2, 2, 2, 255]; S.sel = { x0: 4, y0: 4, x1: 5, y1: 5 }; S.selMask = null; cache.dirtyAll();
@@ -742,6 +746,26 @@ t('menus: контекстное меню выше активной панели
   assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
   assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
 });
+await ta('floating-window: новое окно и активное окно поднимаются, toolbar выше всех', async () => {
+  const root = document.createElement('div'), rootGrip = document.createElement('div');
+  const ovl = document.createElement('div'), sheet = document.createElement('div'), sheetGrip = document.createElement('div');
+  const toolbar = document.createElement('div'), toolbarGrip = document.createElement('div');
+  root.style.display = 'none'; ovl.className = 'ovl'; ovl.style.display = 'none'; sheet.appendChild(sheetGrip); ovl.appendChild(sheet);
+  root.appendChild(rootGrip); toolbar.appendChild(toolbarGrip); document.body.append(root, ovl, toolbar);
+  try {
+    floatingWindow(root, { grip: rootGrip, avoidOverlap: false });
+    floatingWindow(sheet, { grip: sheetGrip, avoidOverlap: false });
+    floatingWindow(toolbar, { grip: toolbarGrip, avoidOverlap: false, alwaysOnTop: true });
+    root.style.display = 'block'; await Promise.resolve();
+    const rootZ1 = +root.style.zIndex; assert.ok(rootZ1 > 0);
+    ovl.style.display = 'flex'; await Promise.resolve();
+    assert.ok(+ovl.style.zIndex > rootZ1);
+    root.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true }));
+    assert.ok(+root.style.zIndex > +ovl.style.zIndex);
+    toolbar.style.display = 'block'; toolbar.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true }));
+    assert.ok(+toolbar.style.zIndex > +root.style.zIndex);
+  } finally { root.remove(); ovl.remove(); toolbar.remove(); }
+});
 t('gallery: режим галереи сохраняет открытые окна редактора', () => {
   const ids = ['lay-pop', 'brush-pop', 'adjpop', 'prevwin'];
   ids.forEach((id) => document.getElementById(id).classList.add('on'));
@@ -969,8 +993,12 @@ t('effects: цвет эффекта — наш #colpop, не системный 
   assert.deepEqual(S.active, active0); // активный цвет не тронут
   document.getElementById('fx-cancel').click(); });
 
-t('crop: toggle из выделения + apply кадрирует', () => { resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
-  crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4); });
+t('crop: toggle из выделения + apply кадрирует без fit-to-screen', () => { resetWH(8, 8); S.view = { zoom: 5, ox: 11, oy: 13 };
+  const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
+  S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
+  crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4);
+  assert.equal(S.W * S.view.zoom, sw); assert.equal(S.H * S.view.zoom, sh);
+  assert.equal(S.view.ox + S.W * S.view.zoom / 2, cx); assert.equal(S.view.oy + S.H * S.view.zoom / 2, cy); });
 
 t('crop: поля размера и скрепка меняют рамку', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');

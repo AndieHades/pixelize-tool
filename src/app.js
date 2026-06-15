@@ -60,6 +60,36 @@ import { mount as mountKeyboard } from './systems/keyboard/index.js';
 
 const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops];
 
+const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
+function sidebarMetrics() {
+  const bar = $('sidebar'), cs = window.getComputedStyle(bar);
+  const buttons = [...bar.querySelectorAll('button')];
+  const bcs = buttons[0] ? window.getComputedStyle(buttons[0]) : null;
+  return {
+    n: buttons.length,
+    btnW: px(bcs && bcs.width, 38),
+    btnH: px(bcs && bcs.height, 38),
+    gap: px(cs.rowGap || cs.gap, 3),
+    padT: px(cs.paddingTop, 16),
+    padB: px(cs.paddingBottom, 12),
+  };
+}
+function sidebarMinHeight(width) {
+  const m = sidebarMetrics();
+  if (!m.n) return 80;
+  const cols = Math.max(1, Math.floor((Math.max(m.btnW, width) + m.gap) / (m.btnW + m.gap)));
+  const rows = Math.ceil(m.n / cols);
+  return Math.ceil(m.padT + m.padB + rows * m.btnH + Math.max(0, rows - 1) * m.gap);
+}
+function resizeSidebar(w, h) {
+  const bar = $('sidebar'), m = sidebarMetrics();
+  const width = Math.max(m.btnW, Math.min(window.innerWidth - 12, w));
+  const minH = sidebarMinHeight(width);
+  bar.style.width = width + 'px';
+  bar.style.minHeight = minH + 'px';
+  bar.style.maxHeight = Math.max(minH, Math.min(window.innerHeight - 12, h)) + 'px';
+}
+
 export function start() {
   detect(); applyTheme(); refreshColors();
   for (const m of MOUNTS) if (m.mount) m.mount();
@@ -69,8 +99,12 @@ export function start() {
   floatingWindow($('palbar'), { grip: $('palgrip'), handle: $('palrsz'), storeKey: 'palwin', clampBottom: 50,
     onClose: () => $('palbar').classList.add('closed'), // крестик прячет палитру; вернуть — кружком цвета
     onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
+  resizeSidebar(px(window.getComputedStyle($('sidebar')).width, 50), sidebarMinHeight(50));
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
-    onResize: (w, h) => { $('sidebar').style.width = Math.max(48, Math.min(innerWidth - 12, w)) + 'px'; $('sidebar').style.maxHeight = Math.max(80, Math.min(innerHeight - 12, h)) + 'px'; } });
+    alwaysOnTop: true, onResize: resizeSidebar });
+  for (const id of ['selbar', 'cropbar', 'rotbar']) {
+    const bar = $(id); if (bar) floatingWindow(bar, { grip: bar, storeKey: 'action-' + id, minW: 120, minH: 44, clampBottom: 64, avoidOverlap: false });
+  }
 
   // ЕДИНО: любой модальный диалог (.ovl .sheet) — перетаскиваемое окно за заголовок.
   // Уже подключённые окна (конвертер/экспорт) пропускаются идемпотентным floatingWindow.
