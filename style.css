@@ -699,15 +699,14 @@ body.gallery-open #pal-ovl {
    иконками в правом верхнем углу как в Pixquare */
 #gal-top { display: flex; flex-direction: column; gap: 10px;
   padding: calc(env(safe-area-inset-top, 0px) + 16px) max(20px, env(safe-area-inset-right, 0px)) 14px max(20px, env(safe-area-inset-left, 0px));
-  border-bottom: 1px solid var(--line); }
+  background: rgba(0, 0, 0, .2); } /* шапка чуть темнее тела, без линии-разделителя */
 .gal-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 #gal-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 #gal-title { font-weight: 700; font-size: 26px; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* плоские белые иконочные кнопки (как остальные кнопки, без эмодзи) */
-.gal-icons { display: flex; align-items: center; gap: 6px; flex: none; }
-.gal-icons button { width: 40px; height: 40px; border-radius: var(--r-lg); color: var(--txt); background: var(--surface); }
-.gal-icons button:hover { background: var(--accent-soft); }
-.gal-icons button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+/* плоские белые иконки в углу (Procreate): без фона-бокса, тонкий штрих */
+.gal-icons { display: flex; align-items: center; gap: 2px; flex: none; }
+.gal-icons button { width: 40px; height: 40px; color: var(--txt); }
+.gal-icons button svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 #gal-back { width: auto; min-width: 32px; max-width: 42vw; height: 36px; padding: 0 12px; font-size: 17px; font-weight: 600;
   color: var(--txt); border-radius: var(--r-lg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #gal-back:hover { background: var(--accent-soft); }
@@ -744,7 +743,7 @@ body.gallery-open #pal-ovl {
 .gal-actions button.confirm { background: var(--accent); color: var(--on-accent); }
 /* круглые иконочные кнопки (＋, ✓) */
 .gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
-.gal-cap { padding: 8px 4px 0; text-align: left; } /* Procreate: подпись слева под плиткой */
+.gal-cap { padding: 8px 4px 0; text-align: center; } /* название работы — по центру под плиткой */
 .gal-cap b { display: block; color: var(--txt); font-size: 14px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gal-cap b.editing { background: var(--panel-solid); border-radius: var(--r-xs); padding: 1px 4px; white-space: normal; }
 .gal-cap small { display: block; color: var(--txt2); font-size: 11px; margin-top: 1px; }
