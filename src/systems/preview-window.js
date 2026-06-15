@@ -5,6 +5,7 @@ import { $ } from '../core/dom.js';
 import { compositeLayers } from '../core/layer-cache.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
+import { syncCanvasSize } from '../core/canvas.js';
 
 let prevOn = false; const pv = { z: 0, x: 0, y: 0 }; let prevComp = null;
 const pcv = () => $('prevcv');
@@ -18,7 +19,7 @@ function prevReset() { const c = pcv(), cw = c.clientWidth || 200, ch = c.client
 
 function syncPrev() { if (!prevOn) return; const cv = pcv();
   const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, ch = cv.clientHeight;
-  if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(ch * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); }
+  syncCanvasSize(cv, cw, ch, dpr);
   if (pv.z <= 0) prevReset();
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, cw, ch); c.imageSmoothingEnabled = false;
   c.drawImage(prevComposite(), pv.x, pv.y, S.W * pv.z, S.H * pv.z); }

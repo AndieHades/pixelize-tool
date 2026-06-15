@@ -7,6 +7,7 @@ import { rgb, eqc } from '../../logic/color.js';
 import { sampleGrid } from '../../logic/sample.js';
 import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
 import { cloneGrid } from '../../logic/raster.js';
+import { syncCanvasSize } from '../../core/canvas.js';
 import { symmetrizeV, despeckle, cropEmpty } from '../../logic/cleanup.js';
 import { setTool } from '../../core/tools.js';
 import { dirtyAll } from '../../core/layer-cache.js';
@@ -46,7 +47,7 @@ export function drawTo(cvp, g, nx, ny) {
   const dpr = window.devicePixelRatio || 1, cw = cvp.clientWidth, chh = cvp.clientHeight;
   if (cw < 2 || chh < 2) { if (!cvp._retry && typeof requestAnimationFrame === 'function') { cvp._retry = 1; requestAnimationFrame(() => drawTo(cvp, g, nx, ny)); } return; } // раскладка ещё не готова — одна повторная попытка
   cvp._retry = 0;
-  if (cvp.width !== Math.round(cw * dpr) || cvp.height !== Math.round(chh * dpr)) { cvp.width = Math.round(cw * dpr); cvp.height = Math.round(chh * dpr); }
+  syncCanvasSize(cvp, cw, chh, dpr);
   const c = cvp.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.imageSmoothingEnabled = false;
   c.fillStyle = '#101014'; c.fillRect(0, 0, cw, chh);
   const z = Math.max(1, Math.floor(Math.min((cw - 8) / nx, (chh - 8) / ny))), ox = Math.floor((cw - nx * z) / 2), oy = Math.floor((chh - ny * z) / 2);

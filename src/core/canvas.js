@@ -14,3 +14,10 @@ export function fillMask(d, mask, w, h, color) {
   const [r, g, b, a] = color;
   for (let i = 0; i < w * h; i++) if (mask[i]) { const o = i * 4; d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = a; }
 }
+
+// подогнать буфер canvas под CSS-размер × dpr; вернуть true, если размер изменился
+export function syncCanvasSize(canvas, cssW, cssH, dpr) {
+  const w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
+  if (canvas.width === w && canvas.height === h) return false;
+  canvas.width = w; canvas.height = h; return true;
+}

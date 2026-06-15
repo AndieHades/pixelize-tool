@@ -10,6 +10,7 @@ import { ZOOM_MIN, ZOOM_MAX } from '../../config/limits.js';
 import { C } from '../../styles/canvas-colors.js';
 import { hexToRgb } from '../../logic/color.js';
 import { clamp01 } from '../../logic/math.js';
+import { syncCanvasSize } from '../../core/canvas.js';
 import { drawOverlays } from './overlays.js';
 import { drawBrushCursor } from './cursor.js';
 import { updateAnts } from './ants.js';
@@ -34,7 +35,7 @@ function drawGrid(stepX, stepY, stroke, W, H, ox, oy, z) {
 export function render() {
   const W = S.W, H = S.H;
   const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
-  if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(chh * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(chh * dpr); }
+  syncCanvasSize(cv, cw, chh, dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, cw, chh);
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
