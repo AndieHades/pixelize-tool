@@ -12,6 +12,7 @@ import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
+import { folderLayers } from './helpers.js';
 import { appendEffects } from './fx-rows.js';
 import { syncLayerActionButtons } from './actions-bar.js';
 
@@ -43,6 +44,12 @@ function nameSpan(text) { const nm = document.createElement('span'); nm.classNam
   nm.addEventListener('pointerdown', (e) => { if (nm.isContentEditable) e.stopPropagation(); });
   nm.addEventListener('click', (e) => { if (nm.isContentEditable) e.stopPropagation(); }); return nm; }
 
+function folderCountSpan(f) {
+  const n = folderLayers(f).length;
+  if (!n) return null;
+  const c = document.createElement('span'); c.className = 'fcount'; c.textContent = '· ' + n; return c;
+}
+
 // глаз видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
 function wireVis(vis, obj) {
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -58,9 +65,9 @@ function folderRow(f, depth) {
   car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return;
     if (f.open && activeInside(f)) { S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; }
     f.open = !f.open; layList(); });
-  const nm = nameSpan(f.name);
+  const nm = nameSpan(f.name), cnt = folderCountSpan(f);
   const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
-  fr.append(car, nm);
+  fr.append(car, nm); if (cnt) fr.append(cnt);
   if (S.sym || S.symH) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (f.symLock ? ' off' : ''); sy.innerHTML = SYM_IC;
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.symLock = !f.symLock; sy.classList.toggle('off', f.symLock); bus.emit('render'); }); fr.append(sy); }
@@ -115,20 +122,33 @@ function layerRow(L, i, depth) {
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
 }
 
+function appendFolderRow(box, f, depth, rendered) {
+  if (rendered.has(f.id)) return;
+  rendered.add(f.id); box.appendChild(folderRow(f, depth)); appendEffects(box, f, depth + 1);
+  if (f.open) appendEmptyFolders(box, f.id, depth + 1, rendered);
+}
+
+function appendEmptyFolders(box, parent, depth, rendered) {
+  for (const f of S.folders) {
+    if ((f.parent ?? null) !== parent || rendered.has(f.id) || folderLayers(f).length) continue;
+    appendFolderRow(box, f, depth, rendered);
+  }
+}
+
 export function layList() {
-  const used = new Set(); for (const L of S.layers) for (const f of folderChain(L.fid)) used.add(f.id); // убрать пустые папки (по всему поддереву)
-  S.folders = S.folders.filter((f) => used.has(f.id));
   const box = $('lay-list'); if (!box) return; box.innerHTML = '';
+  const rendered = new Set();
   const stack = []; // папки-предки сверху вниз (учтённые в текущем месте обхода)
   for (let i = S.layers.length - 1; i >= 0; i--) { const L = S.layers[i];
     const chain = folderChain(L.fid).reverse(); // от корня к ближайшей папке
     let common = 0; while (common < stack.length && common < chain.length && stack[common].id === chain[common].id) common++;
     stack.length = common; let hidden = stack.some((f) => !f.open);
     for (let d = common; d < chain.length; d++) { const f = chain[d];
-      if (!hidden) { box.appendChild(folderRow(f, d)); appendEffects(box, f, d + 1); } stack.push(f); if (!f.open) hidden = true; }
+      if (!hidden) appendFolderRow(box, f, d, rendered); stack.push(f); if (!f.open) hidden = true; }
     if (hidden) continue;
     box.appendChild(layerRow(L, i, chain.length)); appendEffects(box, L, chain.length + 1);
   }
+  appendEmptyFolders(box, null, 0, rendered);
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   syncLayerActionButtons();
 }
