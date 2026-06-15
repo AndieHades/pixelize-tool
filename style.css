@@ -193,15 +193,15 @@
     .lay-act button svg { width: 20px; height: 20px; }
     .lay-act button:active { color: var(--txt); }
     .lay-act button.on { background: var(--accent); color: var(--on-accent); } /* активная — синий фон + белая иконка */
-    #lay-rsz { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; cursor: nwse-resize;
+    #lay-rsz { position: absolute; right: 2px; bottom: 2px; width: 12px; height: 12px; cursor: nwse-resize;
       touch-action: none; color: var(--txt2); display: grid; place-items: center; z-index: 4; }
-    #lay-rsz svg { width: 16px; height: 16px; }
+    #lay-rsz svg { width: 12px; height: 12px; }
     .fw-rsz-edge { position: absolute; z-index: 3; touch-action: none; }
-    .fw-rsz-n { left: 14px; right: 14px; top: 0; height: 8px; cursor: ns-resize; }
-    .fw-rsz-s { left: 14px; right: 14px; bottom: 0; height: 8px; cursor: ns-resize; }
-    .fw-rsz-e { top: 14px; right: 0; bottom: 14px; width: 8px; cursor: ew-resize; }
-    .fw-rsz-w { top: 14px; left: 0; bottom: 14px; width: 8px; cursor: ew-resize; }
-    .fw-rsz-nw, .fw-rsz-ne, .fw-rsz-sw { width: 16px; height: 16px; }
+    .fw-rsz-n { left: 14px; right: 14px; top: 0; height: 4px; cursor: ns-resize; }
+    .fw-rsz-s { left: 14px; right: 14px; bottom: 0; height: 4px; cursor: ns-resize; }
+    .fw-rsz-e { top: 14px; right: 0; bottom: 14px; width: 4px; cursor: ew-resize; }
+    .fw-rsz-w { top: 14px; left: 0; bottom: 14px; width: 4px; cursor: ew-resize; }
+    .fw-rsz-nw, .fw-rsz-ne, .fw-rsz-sw { width: 12px; height: 12px; }
     .fw-rsz-nw { left: 0; top: 0; cursor: nwse-resize; }
     .fw-rsz-ne { right: 0; top: 0; cursor: nesw-resize; }
     .fw-rsz-sw { left: 0; bottom: 0; cursor: nesw-resize; }
