@@ -39,6 +39,9 @@ export function sampleGrid(im, cell, bgTol) {
     // поиск периода имеет смысл только для апскейлов пиксель-арта; если сетка вышла
     // слишком грубой — это обычное фото, целимся в ~64 клетки по большой стороне
     if (Math.max(im.w / cw, im.h / ch) < 32) { cw = ch = Math.max(im.w, im.h) / 64; } }
+  // клетка < 1 px = больше клеток, чем пикселей в исходнике = апскейл; пиксель-арт
+  // конвертер никогда не увеличивает разрешение (ручная «Детализация» выше натуральной — потолок 1:1)
+  cw = Math.max(1, cw); ch = Math.max(1, ch);
   const nx = Math.max(1, Math.round(im.w / cw)), ny = Math.max(1, Math.round(im.h / ch)), full = [];
   for (let j = 0; j < ny; j++) { const row = []; for (let i = 0; i < nx; i++) row.push(cellColor(im, i * im.w / nx, j * im.h / ny, (i + 1) * im.w / nx, (j + 1) * im.h / ny)); full.push(row); }
   const isBg = floodBackground(full, nx, ny, bgTol), grid = [], samples = [];

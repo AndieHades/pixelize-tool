@@ -98,6 +98,12 @@ t('sample: автосетка находит настоящий период, н
   const r = sampleGrid({ w: 300, h: 300, ch: 4, data }, 0, 0);
   assert.equal(r.nx, 50); assert.equal(r.ny, 50);
 });
+t('sample: «Детализация» выше натуральной не апскейлит (потолок 1:1)', () => {
+  // 51×128 исходник, cell<1 (ручная детализация > ширины) — клеток не больше пикселей
+  const data = new Uint8ClampedArray(51 * 128 * 4).fill(200);
+  const r = sampleGrid({ w: 51, h: 128, ch: 4, data }, 51 / 120, 0); // detail=120 → cell≈0.425
+  assert.equal(r.nx, 51); assert.equal(r.ny, 128);
+});
 t('sample: прозрачные пиксели → прозрачная клетка (вырез по альфе)', () => {
   // 2×1: слева непрозрачный красный, справа полностью прозрачный
   const data = new Uint8ClampedArray([200, 10, 10, 255, 0, 0, 0, 0]);
