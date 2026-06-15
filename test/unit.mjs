@@ -26,6 +26,7 @@ import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke, stampIcon } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
+import { sortGalleryItems } from '../src/logic/gallery-grid.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
@@ -401,6 +402,17 @@ t('key-code: физическая клавиша не зависит от рас
 t('key-code: eventKey покрывает и буквы, и модификаторы по позиции', () => {
   assert.equal(eventKey({ code: 'KeyD' }), 'd'); assert.equal(eventKey({ code: 'AltLeft' }), 'alt');
   assert.equal(eventKey({ code: 'ControlRight' }), 'control'); assert.equal(eventKey({ code: 'F7' }), null);
+});
+
+t('gallery-grid: папки идут перед артами, арты newest first', () => {
+  const items = [
+    { id: 'old', kind: 'doc', name: 'Old', updated: 20 },
+    { id: 'f1', kind: 'folder', name: 'Folder 1', order: 10 },
+    { id: 'new', kind: 'doc', name: 'New', updated: 40 },
+    { id: 'f2', kind: 'folder', name: 'Folder 2', order: 30 },
+  ];
+  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['f2', 'f1', 'new', 'old']);
+  assert.deepEqual(items.map((x) => x.id), ['old', 'f1', 'new', 'f2']);
 });
 
 // --- Symmetry mapper ---

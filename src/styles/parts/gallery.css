@@ -1,0 +1,69 @@
+/* ---- галерея работ (Procreate-стиль) ---- */
+#gallery { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
+#gallery.on { display: flex; }
+/* шапка как в Procreate (крупный заголовок + ряд действий), плюс/шестерёнка —
+   иконками в правом верхнем углу как в Pixquare */
+#gal-top { display: flex; flex-direction: column; gap: 2px;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) max(20px, env(safe-area-inset-right, 0px)) 6px max(20px, env(safe-area-inset-left, 0px));
+  background: rgba(0, 0, 0, .2); } /* верх = safe-zone + малый зазор; без линии-разделителя */
+#gal-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#gal-title { font-weight: 700; font-size: 26px; line-height: 1.1; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#gal-back { width: auto; min-width: 32px; max-width: 42vw; height: 34px; padding: 0; font-size: 17px; font-weight: 600;
+  color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#gal-back.lift { transform: scale(1.18); }        /* перетаскивание — увеличена всё время, без акцента */
+#gal-back.lift.over { transform: scale(1.34); }   /* прямо над кнопкой — крупнее, «сюда вернётся» */
+/* ряд действий: текст слева вровень с заголовком, иконки прижаты вправо; края равны
+   (margin -8 гасит падинг кнопок слева; оптический центр иконки ≈8 — справа) */
+.gal-actions { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; margin: 0 -8px; }
+.gal-actions button { width: auto; height: 34px; padding: 0 8px; border-radius: var(--r-lg); color: var(--txt); font-size: 15px; font-weight: 600; }
+.gal-actions button:hover { color: var(--accent); }
+/* плоские белые иконки (Procreate): без фона-бокса, тонкий штрих, прижаты вправо */
+.gal-icons { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+.gal-icons button { width: 40px; height: 40px; color: var(--txt); padding: 0; }
+.gal-icons button svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.gal-actions button.on { background: var(--accent); color: var(--on-accent); }
+#gal-del { color: var(--danger); }
+.gal-actions button:disabled { opacity: .4; pointer-events: none; }
+/* GalleryGrid: количество колонок считает JS-компонент, ряды идут слева направо */
+#gal-grid { --gal-cols: 1; --gal-tile: var(--gal-tile-min); flex: 1; overflow: auto; display: grid;
+  grid-template-columns: repeat(var(--gal-cols), minmax(0, var(--gal-tile))); justify-content: start;
+  gap: var(--gal-grid-gap); padding: var(--gal-grid-pad-top) var(--gal-grid-pad-x) var(--gal-grid-pad-bottom);
+  align-content: start; align-items: start; }
+.gal-tile { cursor: pointer; user-select: none; min-width: 0; }
+/* ячейка квадратная (ряды ровные), а превью внутри влезает целиком */
+.gal-thumb { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center;
+  transition: transform var(--anim-fast) var(--ease-out); }
+.gal-thumb img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; image-rendering: pixelated;
+  border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--win-shadow); background: var(--surface);
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast); }
+.gal-tile[data-orient="landscape"] .gal-thumb img { width: 100%; height: auto; }
+.gal-tile[data-orient="portrait"] .gal-thumb img { width: auto; height: 100%; }
+/* папка — квадратная карточка со значком */
+.gal-tile.folder .gal-thumb { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden; }
+.gal-tile:hover .gal-thumb img, .gal-tile.folder:hover .gal-thumb { border-color: var(--accent); }
+.gal-tile.sel .gal-thumb img, .gal-tile.folder.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
+/* чек-кружок в углу плитки (виден только в режиме выбора) */
+.gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
+  border: 2px solid var(--marker); background: rgba(0,0,0,.4); box-shadow: var(--win-shadow);
+  display: none; align-items: center; justify-content: center; color: var(--on-accent); font-size: 15px; line-height: 1; }
+#gal-grid.selecting .gal-check { display: flex; }
+.gal-check::after { content: '✓'; opacity: 0; }
+.gal-check.on { background: var(--accent); border-color: var(--accent); }
+.gal-check.on::after { opacity: 1; }
+/* кнопка Stack «загорается», когда выбрано 2+ */
+.gal-actions button.lit { background: var(--accent); color: var(--on-accent); }
+/* кнопка подтверждения выбора (галочка) */
+.gal-actions button.confirm { background: var(--accent); color: var(--on-accent); }
+/* круглые иконочные кнопки (＋, ✓) */
+.gal-actions button.gal-round { width: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
+.gal-cap { padding: 8px 4px 0; text-align: center; } /* название работы — по центру под плиткой */
+.gal-cap b { display: block; color: color-mix(in srgb, var(--txt) 68%, var(--bg)); font-size: 13px; font-weight: 600; outline: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* название приглушённое, не чисто белое */
+.gal-cap b.editing { background: var(--panel-solid); border-radius: var(--r-xs); padding: 1px 4px; white-space: normal; }
+.gal-cap small { display: block; color: var(--txt2); font-size: 11px; margin-top: 1px; }
+/* иконка папки, когда внутри нет превью */
+.gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
+.gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.gal-tile.dragging { opacity: .35; }
+/* цель, в которую кладут — увеличивается и держится, пока над ней висит объект */
+.gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); transform: scale(1.12); }
+

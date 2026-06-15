@@ -26,6 +26,12 @@
   --btn: 40px;            /* главная иконочная кнопка (тулбар) */
   --btn-sm: 34px;         /* вторичная action-кнопка (выбор инструмента, действия слоёв/цвета) */
   --btn-xs: 32px;         /* кнопка в шапке окна */
+  --gal-grid-pad-x: clamp(14px, 3vw, 40px);
+  --gal-grid-pad-top: 10px;
+  --gal-grid-pad-bottom: 16px;
+  --gal-grid-gap: clamp(12px, 2vw, 18px);
+  --gal-tile-min: clamp(112px, 18vw, 144px);
+  --gal-tile-max: 156px;
   --ico-lg: 22px; --ico: 20px; --ico-sm: 18px; /* шкала иконок-глифов внутри кнопок */
   --win-btn: 26px; --win-ico: 14px; --win-title: 12px; /* единая шапка окна (как Tint): «призрачные» кнопки, мелкий заголовок */
   --win-radius: 16px;    /* скругление углов ВСЕХ окон — один источник */

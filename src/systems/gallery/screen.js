@@ -5,6 +5,7 @@ import { t, getLocale } from '../../i18n/index.js';
 import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplicateItem, setOrder, getItem, nextFolderName } from './store.js';
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
+import { renderGalleryGrid } from './grid.js';
 
 const FOLDER_IC = '<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.5h7A2 2 0 0 1 20.5 10v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7.5z"/></svg>';
 
@@ -60,6 +61,7 @@ function tileMenu(x, y, d) { const m = $('rowctx'); m.innerHTML = ''; // ПКМ 
 async function tileEl(d) {
   const tile = document.createElement('div'); tile.className = 'gal-tile' + (d.kind === 'folder' ? ' folder' : '') + (selected.has(d.id) ? ' sel' : '');
   tile.dataset.id = d.id; tile.dataset.kind = d.kind || 'doc';
+  if (d.kind !== 'folder') tile.dataset.orient = d.W > d.H ? 'landscape' : d.H > d.W ? 'portrait' : 'square';
   const thumb = document.createElement('div'); thumb.className = 'gal-thumb';
   if (d.kind === 'folder') { const ic = document.createElement('i'); ic.className = 'gal-folder-ic'; ic.innerHTML = FOLDER_IC; thumb.appendChild(ic); } // у всех папок — значок папки
   else { const im = document.createElement('img'); im.src = d.preview || ''; im.draggable = false; im.style.aspectRatio = `${d.W} / ${d.H}`; thumb.appendChild(im); } // плитка в пропорциях работы
@@ -94,8 +96,7 @@ export async function render() { const grid = gridEl(); grid.innerHTML = '';
   const back = $('gal-back'); back.style.display = viewFolder ? '' : 'none';
   back.textContent = viewFolder ? '‹ ' + (f ? f.name : '') : '‹';
   $('gal-title').style.display = viewFolder ? 'none' : ''; $('gal-title').textContent = rootTitle;
-  const items = (await childrenOf(viewFolder)).sort((a, b) => (b.order || b.updated) - (a.order || a.updated));
-  for (const d of items) grid.appendChild(await tileEl(d)); }
+  await renderGalleryGrid(grid, await childrenOf(viewFolder), tileEl); }
 
 export async function stackSelected() { if (selected.size < 2) return; const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [...selected], viewFolder); await setSelecting(false); editName(fid); }
 export async function dupSelected() { for (const id of selected) await duplicateItem(id); setSelecting(false); }

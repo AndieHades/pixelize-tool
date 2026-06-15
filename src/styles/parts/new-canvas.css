@@ -1,0 +1,55 @@
+/* ── Диалог «Новый холст» (список, как в Procreate) ── */
+/* New Canvas и конвертер показываются ПОВЕРХ галереи (галерея — z-index 100). */
+#new-ovl, #imp-ovl { z-index: 130; }
+/* окна «Новый холст» (пресеты и редактор) — перетаскиваемые, по центру, как все */
+.new-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); overflow: hidden; }
+.new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.new-head:active { cursor: grabbing; }
+.new-head h3 { margin: 0; font-size: 22px; font-weight: 700; color: var(--txt); }
+.new-head .gal-round { background: var(--accent-soft); color: var(--txt); }
+.new-list { overflow: auto; padding: 4px 0; }
+.new-row { position: relative; cursor: pointer; }
+.new-row .swipe-front, .new-row:not(.swipe-row) { display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+  background: var(--panel-solid); border-top: 1px solid var(--line); }
+.new-name { color: var(--txt); font-size: 16px; }
+.new-size { margin-left: auto; color: var(--txt2); font-size: 13px; background: var(--surface); padding: 4px 10px; border-radius: var(--r-md); }
+.new-row:hover .new-name { color: var(--accent); }
+/* в #new-ovl две панели: пресеты (.new-panel) и редактор (#new-custom); переключение по .editing */
+#new-custom { display: none; }
+#new-ovl.editing #new-custom { display: block; }
+#new-ovl.editing .new-panel { display: none; }
+.sheet#new-custom { width: min(96vw, 560px); padding: 0; overflow: hidden; border-radius: var(--win-radius); }
+#new-custom h3 { margin: 0; padding: 13px 18px 9px; border-bottom: 1px solid var(--line);
+  font-size: 14px; font-weight: 700; }
+.se-name { display: flex; align-items: center; gap: 8px; height: 40px; margin: 10px 12px 8px;
+  padding: 0 9px; background: var(--row); border-radius: var(--r-lg); }
+.se-name span, .se-row > span { color: var(--txt2); font-size: 11px; font-weight: 700; }
+.se-name input { flex: 1; min-width: 0; height: 28px; padding: 0 2px; border: 0; background: transparent;
+  color: var(--txt); font: 700 13px/1 ui-monospace, monospace; outline: none; }
+.se-dims { display: flex; align-items: center; gap: 6px; margin: 0 12px 12px; flex-wrap: wrap; }
+.se-row { display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 8px;
+  background: var(--row); border-radius: var(--r-lg); }
+.se-row input { width: 54px; height: 28px; box-sizing: border-box; text-align: right; padding: 0 6px;
+  color: var(--txt); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  font: 700 13px/1 ui-monospace, monospace; }
+.se-row em { color: var(--txt2); font-style: normal; font-size: 11px; font-weight: 700; }
+.se-link { align-self: center; width: 38px; height: 40px; flex: none; border-radius: var(--r-lg); background: var(--row); color: var(--txt2); }
+.se-link.on { background: var(--accent); color: var(--on-accent); }
+.se-link svg { width: 18px; height: 18px; }
+.se-actions { display: flex; gap: 6px; margin-left: auto; }
+.se-actions button { width: var(--btn); height: var(--btn); border-radius: var(--r-lg); flex: none; color: var(--txt2); }
+.se-actions button svg { width: 22px; height: 22px; }
+#new-create { color: var(--ok); }
+#new-cancel:hover, #new-create:hover { background: var(--accent-soft); }
+#new-cancel:hover { color: var(--txt); }
+#new-create:hover { color: var(--ok); }
+@media (max-width: 520px) {
+  .sheet#new-custom { width: min(96vw, 360px); }
+  .se-dims { display: grid; grid-template-columns: 1fr 38px 1fr; }
+  .se-row { min-width: 0; }
+  .se-row input { width: 48px; }
+  .se-actions { grid-column: 1 / -1; justify-self: end; }
+}
+
