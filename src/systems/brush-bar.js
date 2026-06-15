@@ -8,6 +8,7 @@ import { doUndo, doRedo } from '../core/history.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { BP_SMAX, BP_SIZE_CURVE } from '../config/limits.js';
 import { clamp01, clampRound } from '../logic/math.js';
+import { nextFloatingZ } from '../core/floating-window.js';
 
 const curBrush = brushKey;
 const clampSize = (v) => clampRound(v, 1, BP_SMAX);
@@ -38,6 +39,7 @@ function setSize(size, show = false) { const b = S.brushes[curBrush()];
   bus.emit('brush'); bus.emit('render'); }
 
 export function mount() {
+  $('brushbar').addEventListener('pointerdown', () => { $('brushbar').style.zIndex = nextFloatingZ(); }, true); // в общий порядок: тронули — наверх
   vslDrag('bp-size-sl', (f) => setSize(sizeFromFrac(f), true));
   vslDrag('bp-op-sl', (f) => { S.brushes[curBrush()].op = Math.max(0, Math.min(1, f));
     saveBrushPrefs(S); syncBars(); showBbVal('bp-op-sl', Math.round(S.brushes[curBrush()].op * 100) + '%'); });

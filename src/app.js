@@ -3,7 +3,7 @@
 import { S } from './core/state.js';
 import * as bus from './core/bus.js';
 import { $ } from './core/dom.js';
-import { floatingWindow } from './core/floating-window.js';
+import { floatingWindow, nextFloatingZ } from './core/floating-window.js';
 import { fitView } from './systems/render/index.js';
 import { detect, applyDom } from './i18n/index.js';
 import { applyTheme } from './styles/theme.js';
@@ -103,7 +103,8 @@ export function start() {
     onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
   resizeSidebar(px(window.getComputedStyle($('sidebar')).width, 50), sidebarMinHeight(50));
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
-    alwaysOnTop: true, onResize: resizeSidebar });
+    onResize: resizeSidebar }); // сайдбар — в общем порядке: последний тронутый сверху (без alwaysOnTop)
+  $('topbar').addEventListener('pointerdown', () => { $('topbar').style.zIndex = nextFloatingZ(); }, true); // верхняя панель — в общий порядок, поднимается по тапу
   for (const id of ['selbar', 'cropbar', 'rotbar']) {
     const bar = $(id); if (bar) floatingWindow(bar, { grip: bar, storeKey: 'action-' + id, minW: 120, minH: 44, clampBottom: 64, avoidOverlap: false });
   }
