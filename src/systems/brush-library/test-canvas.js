@@ -5,12 +5,13 @@ import { S } from '../../core/state.js';
 import { $ } from '../../core/dom.js';
 import { BP_SMAX } from '../../config/limits.js';
 import { brushMask, grainAt, stampSize, planDab } from '../../logic/brush-stamp.js';
+import { C } from '../../styles/canvas-colors.js';
 
 const TW = 46, TH = 30, Z = 4;
 let grid = new Uint8Array(TW * TH), st = { acc: 0 }, last = null, getMode = () => 'pencil', ctx = null;
 
 function render() { if (!ctx) return;
-  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) { ctx.fillStyle = (x + y) & 1 ? '#2a2a31' : '#232329'; ctx.fillRect(x * Z, y * Z, Z, Z); }
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) { ctx.fillStyle = (x + y) & 1 ? C.checkA : C.checkB; ctx.fillRect(x * Z, y * Z, Z, Z); }
   const c = S.active; ctx.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
   for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) if (grid[y * TW + x]) ctx.fillRect(x * Z, y * Z, Z, Z);
 }

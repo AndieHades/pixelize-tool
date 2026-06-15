@@ -4,6 +4,7 @@ import { $, toast, t } from '../core/dom.js';
 import { floatingWindow } from '../core/floating-window.js';
 import { attachPanZoom } from '../core/pan-zoom.js';
 import { makeCanvas, syncCanvasSize } from '../core/canvas.js';
+import { C } from '../styles/canvas-colors.js';
 
 let refOn = false, refSrc = null; const rv = { z: 1, x: 0, y: 0 };
 const rcv = () => $('refcv');
@@ -12,8 +13,8 @@ function refRender() { if (!refOn) return; const cv = rcv();
   const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, ch = cv.clientHeight;
   syncCanvasSize(cv, cw, ch, dpr);
   const c = cv.getContext('2d', { willReadFrequently: true });
-  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, cw, ch); c.fillStyle = '#101014'; c.fillRect(0, 0, cw, ch);
-  if (!refSrc) { c.fillStyle = '#9a9aa3'; c.font = '12px system-ui'; c.textAlign = 'center'; c.fillText(t('reference.emptyHint'), cw / 2, ch / 2); return; }
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, cw, ch); c.fillStyle = C.prevBg; c.fillRect(0, 0, cw, ch);
+  if (!refSrc) { c.fillStyle = C.hint; c.font = '12px system-ui'; c.textAlign = 'center'; c.fillText(t('reference.emptyHint'), cw / 2, ch / 2); return; }
   c.imageSmoothingEnabled = rv.z < 2; c.drawImage(refSrc, rv.x, rv.y, refSrc.width * rv.z, refSrc.height * rv.z); }
 
 function refFit() { if (!refSrc) { refRender(); return; } const cv = rcv(), cw = cv.clientWidth, ch = cv.clientHeight;

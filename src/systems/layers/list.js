@@ -8,6 +8,7 @@ import { longPress } from '../../core/long-press.js';
 import { inlineRename } from '../../core/inline-rename.js';
 import { layerCanvas } from '../../core/layer-cache.js';
 import { makeCanvas } from '../../core/canvas.js';
+import { C } from '../../styles/canvas-colors.js';
 import { folderChain } from '../../core/layers.js';
 import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
@@ -32,7 +33,7 @@ export const setSquelch = (v) => { layDragSquelch = v; };
 export { longPress }; // переэкспорт общего жеста (используется fx-rows)
 
 function thumbFor(i) { const th = makeCanvas(40, 40); th.className = 'lth';
-  const tx = th.getContext('2d'); tx.imageSmoothingEnabled = false; tx.fillStyle = '#26262c'; tx.fillRect(0, 0, 40, 40); tx.fillStyle = '#1d1d23';
+  const tx = th.getContext('2d'); tx.imageSmoothingEnabled = false; tx.fillStyle = C.checkA; tx.fillRect(0, 0, 40, 40); tx.fillStyle = C.checkB;
   for (let yy = 0; yy < 5; yy++) for (let xx = 0; xx < 5; xx++) if ((xx + yy) & 1) tx.fillRect(xx * 8, yy * 8, 8, 8);
   const k = Math.min(40 / S.W, 40 / S.H), w2 = Math.max(1, Math.round(S.W * k)), h2 = Math.max(1, Math.round(S.H * k));
   tx.drawImage(layerCanvas(i), (40 - w2) / 2, (40 - h2) / 2, w2, h2); return th; }

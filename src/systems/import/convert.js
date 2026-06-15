@@ -8,6 +8,7 @@ import { sampleGrid } from '../../logic/sample.js';
 import { medianCut, nearest, paletteFromGrid } from '../../logic/quantize.js';
 import { cloneGrid } from '../../logic/raster.js';
 import { makeCanvas, syncCanvasSize } from '../../core/canvas.js';
+import { C } from '../../styles/canvas-colors.js';
 import { symmetrizeV, despeckle, cropEmpty } from '../../logic/cleanup.js';
 import { setTool } from '../../core/tools.js';
 import { dirtyAll } from '../../core/layer-cache.js';
@@ -49,9 +50,9 @@ export function drawTo(cvp, g, nx, ny) {
   cvp._retry = 0;
   syncCanvasSize(cvp, cw, chh, dpr);
   const c = cvp.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.imageSmoothingEnabled = false;
-  c.fillStyle = '#101014'; c.fillRect(0, 0, cw, chh);
+  c.fillStyle = C.prevBg; c.fillRect(0, 0, cw, chh);
   const z = Math.max(1, Math.floor(Math.min((cw - 8) / nx, (chh - 8) / ny))), ox = Math.floor((cw - nx * z) / 2), oy = Math.floor((chh - ny * z) / 2);
-  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const col = g[y][x]; c.fillStyle = col ? rgb(col) : (((x + y) & 1) ? '#222228' : '#1a1a20'); c.fillRect(ox + x * z, oy + y * z, z, z); }
+  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const col = g[y][x]; c.fillStyle = col ? rgb(col) : (((x + y) & 1) ? C.checkA : C.checkB); c.fillRect(ox + x * z, oy + y * z, z, z); }
 }
 
 // вставить результат пикселизации ВЕРХНИМ слоем текущего документа (не стирая его);

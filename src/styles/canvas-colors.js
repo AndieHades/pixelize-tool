@@ -2,8 +2,10 @@
 // обновляются при смене темы. Дефолты — тёмная тема (на случай headless).
 import * as bus from '../core/bus.js';
 
-export const C = { bg: '#0d0d10', doc: '#141419', grid: 'rgba(255,255,255,.05)', accent: '#3d8bfd', fg: '#fff' };
-const KEYS = { bg: '--cv-bg', doc: '--cv-doc', grid: '--cv-grid', accent: '--accent', fg: '--cv-fg' };
+export const C = { bg: '#0d0d10', doc: '#141419', grid: 'rgba(255,255,255,.05)', accent: '#3d8bfd', fg: '#fff',
+  checkA: '#26262c', checkB: '#1d1d23', prevBg: '#101014', hint: '#9a9aa3' };
+const KEYS = { bg: '--cv-bg', doc: '--cv-doc', grid: '--cv-grid', accent: '--accent', fg: '--cv-fg',
+  checkA: '--cv-check-a', checkB: '--cv-check-b', prevBg: '--cv-prev-bg', hint: '--cv-hint' };
 
 export function refreshColors() {
   if (typeof getComputedStyle !== 'function') return;
