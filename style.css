@@ -4,6 +4,11 @@
       touch-action: manipulation; overscroll-behavior: none;
       -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+    /* окно перетаскивается за любое свободное место (JS ставит .fw-win); прокрутка
+       внутренних списков сохраняется через touch-action: pan-y */
+    .fw-win { touch-action: none; }
+    .fw-win #lay-list, .fw-win #brush-list, .fw-win #gal-grid, .fw-win #tsg-body, .fw-win .new-list,
+    #lay-list, #brush-list, #gal-grid, #tsg-body, .new-list { touch-action: pan-y; }
 
     /* ---- кнопки ---- */
     button { background: transparent; border: 0; color: var(--txt); width: var(--btn); height: var(--btn);
@@ -11,7 +16,7 @@
       font: inherit; flex: none; transition: background .12s, transform .08s, color .12s; }
     button:active { background: rgba(255, 255, 255, .1); transform: scale(.94); }
     button.on { background: var(--accent); color: var(--on-accent); }
-    button svg { width: 22px; height: 22px; stroke: currentColor; fill: none;
+    button svg { width: var(--ico-lg); height: var(--ico-lg); stroke: currentColor; fill: none;
       stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
     .toolfill svg rect, .toolfill svg ellipse { fill: currentColor; } /* режим залитой фигуры (ПКМ по иконке) */
     .txtbtn { width: auto; min-width: 44px; height: 44px; padding: 0 18px; border-radius: var(--r-xl);
@@ -76,9 +81,9 @@
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .16); }
     #col-hex { flex: 1; width: auto; background: var(--surface); color: var(--txt); border: 1px solid var(--line);
       border-radius: var(--r-lg); padding: 9px 10px; font: 14px ui-monospace, monospace; text-transform: uppercase; min-width: 82px; }
-    #col-copy, #col-add, #col-commit { width: 34px; height: 34px; border-radius: var(--r-md); background: var(--row); color: var(--txt2); flex: none; }
+    #col-copy, #col-add, #col-commit { width: var(--btn-sm); height: var(--btn-sm); border-radius: var(--r-md); background: var(--row); color: var(--txt2); flex: none; }
     #col-copy:hover, #col-add:hover, #col-commit:hover { background: var(--accent-soft); color: var(--txt); }
-    #col-copy svg, #col-add svg, #col-commit svg { width: 18px; height: 18px; }
+    #col-copy svg, #col-add svg, #col-commit svg { width: var(--ico-sm); height: var(--ico-sm); }
     #col-commit { color: var(--ok); }
     #col-commit.hide { display: none; }
     #colpop input[type=range] { height: 12px; border-radius: var(--r-sm); border: 1px solid var(--line); }
@@ -117,7 +122,7 @@
       bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); z-index: 12;
       width: min(92vw, 560px); display: flex; flex-direction: column;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border: 1px solid var(--line); border-radius: var(--r-2xl); padding: 0 8px 8px;
+      border: 1px solid var(--line); border-radius: var(--win-radius); padding: 0 8px 8px;
       box-shadow: var(--win-shadow); }
     #palbar.closed { display: none; } /* палитру можно закрыть крестиком; открыть снова — кружком цвета */
     #palgrip { flex: none; -webkit-user-select: none; user-select: none; } /* остальное — общий .pop-head */
@@ -145,21 +150,25 @@
     #lay-pop { position: fixed; right: max(10px, env(safe-area-inset-right, 0px));
       top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 20; width: 272px;
       min-height: 220px; box-sizing: border-box; flex-direction: column;
-      background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-2xl);
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius);
       box-shadow: var(--win-shadow); display: none; overflow: hidden; }
     #lay-pop.on { display: flex; animation: pop .18s ease-out; }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
     .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
       padding: 9px 8px 9px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
       cursor: grab; touch-action: none; }
-    .pop-title, .bp-title { flex: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pop-title, .bp-title { flex: 1; font-size: var(--win-title); font-weight: 600; color: var(--txt2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pop-acts { display: flex; align-items: center; gap: 4px; flex: none; }
-    /* единые кнопки в шапке любого окна: новый слой, меню палитры, тинты, закрытие */
-    .pop-head button, .bp-head button, .pop-acts button, #pal-menu, #tsg-btn {
-      width: 32px; height: 32px; border-radius: var(--r-md); background: var(--row); color: var(--txt2); flex: none; }
-    .pop-head button:hover, .bp-head button:hover, .pop-acts button:hover, #pal-menu:hover, #tsg-btn:hover { color: var(--txt); }
-    .pop-head button svg, .bp-head button svg, .pop-acts button svg, #pal-menu svg, #tsg-btn svg { width: 18px; height: 18px; }
+    /* единые «призрачные» кнопки шапки любого окна (как Tint): новый слой, меню палитры, закрытие */
+    .pop-head button, .bp-head button, .pop-acts button, #pal-menu, #tsg-grip button, .win-x {
+      width: var(--win-btn); height: var(--win-btn); border-radius: var(--r-md); background: transparent; color: var(--txt2); flex: none; }
+    .pop-head button:hover, .bp-head button:hover, .pop-acts button:hover, #pal-menu:hover, #tsg-grip button:hover { color: var(--txt); }
+    .pop-head button svg, .bp-head button svg, .pop-acts button svg, #pal-menu svg, #tsg-grip button svg, .win-x svg { width: var(--win-ico); height: var(--win-ico); }
     .win-x:hover { background: var(--accent); color: var(--on-accent); }
+    /* #tsg-btn — кнопка тулбара (не шапка окна): сохраняет залитый вид */
+    #tsg-btn { width: var(--btn-xs); height: var(--btn-xs); border-radius: var(--r-md); background: var(--row); color: var(--txt2); flex: none; }
+    #tsg-btn:hover { color: var(--txt); }
+    #tsg-btn svg { width: var(--ico-sm); height: var(--ico-sm); }
     #lay-list { flex: 1 1 auto; min-height: 80px; max-height: 42vh; overflow-y: auto; padding: 6px; background: var(--surface); border-radius: var(--r-xl); }
     .lrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--r-lg); cursor: pointer;
       margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
@@ -176,12 +185,12 @@
     .fcount { flex: none; color: var(--txt2); font-size: 12px; font-weight: 700; opacity: .9; }
     .fcount::before { content: '· '; } /* декоративный разделитель счётчика слоёв папки — в стилях, не в JS */
     .eye { width: 30px; height: 24px; color: var(--txt2); flex: none; }
-    .eye svg { width: 22px; height: 22px; }
+    .eye svg { width: var(--ico-lg); height: var(--ico-lg); }
     .eye.off { opacity: .4; }
     .eye .slash { display: none; }
     .eye.off .slash { display: block; }
-    .symlock { width: 32px; height: 34px; color: var(--accent); flex: none; }
-    .symlock svg { width: 19px; height: 19px; }
+    .symlock { width: var(--btn-xs); height: var(--btn-sm); color: var(--accent); flex: none; }
+    .symlock svg { width: var(--ico); height: var(--ico); }
     .symlock .slash { display: none; }
     .symlock.off { color: var(--txt2); opacity: .5; }
     .symlock.off .slash { display: block; }
@@ -190,8 +199,8 @@
     .lay-ops b { min-width: 42px; text-align: right; font-size: 13px; }
     .lay-act { display: flex; justify-content: space-around; padding: 6px 4px; border-top: 1px solid var(--line); }
     .lay-act.lay-act-top { border-top: 0; border-bottom: 1px solid var(--line); }
-    .lay-act button { width: 34px; height: 36px; color: var(--txt2); }
-    .lay-act button svg { width: 20px; height: 20px; }
+    .lay-act button { width: var(--btn-sm); height: var(--btn-sm); color: var(--txt2); }
+    .lay-act button svg { width: var(--ico); height: var(--ico); }
     .lay-act button:active { color: var(--txt); }
     .lay-act button.on { background: var(--accent); color: var(--on-accent); } /* активная — синий фон + белая иконка */
     #lay-rsz { position: absolute; right: 2px; bottom: 2px; width: 12px; height: 12px; cursor: nwse-resize;
@@ -273,7 +282,7 @@
     /* модальный диалог = перетаскиваемое окно (фикс. по центру, тащим за h3) */
     .sheet { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0;
       width: min(92vw, 520px); background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: var(--r-2xl);
+      border: 1px solid var(--line); border-radius: var(--win-radius);
       padding: 14px 18px calc(env(safe-area-inset-bottom, 0px) + 16px);
       max-height: 88vh; overflow-y: auto; box-shadow: var(--win-shadow); animation: fadein .15s ease-out; }
     @keyframes up { from { transform: translateY(48px); opacity: .5; } }
@@ -283,7 +292,7 @@
     /* конвертер — перетаскиваемое окно по центру (а не «шторка»), без закрытия по фону.
        Всё помещается без прокрутки: превью гибкое и ужимается на низких экранах */
     #imp-box { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: min(480px, 94vw); max-width: none; border-radius: var(--r-2xl); animation: pop .18s ease-out;
+      width: min(480px, 94vw); max-width: none; border-radius: var(--win-radius); animation: pop .18s ease-out;
       display: flex; flex-direction: column; max-height: 94vh; overflow: hidden; }
     #imp-box .irow { min-height: 40px; flex: none; }
     #imp-box .iact { flex: none; }
@@ -306,7 +315,7 @@
     .chips button.on { background: var(--accent); }
     /* окно Export — перетаскиваемое, как конвертер; параметры в виде сегментов (chips) */
     #export-win { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: min(460px, 94vw); max-width: none; border-radius: var(--r-2xl); animation: pop .18s ease-out;
+      width: min(460px, 94vw); max-width: none; border-radius: var(--win-radius); animation: pop .18s ease-out;
       display: flex; flex-direction: column; max-height: 94vh; overflow-y: auto; }
     #export-grip { cursor: grab; touch-action: none; user-select: none; }
     #export-grip:active { cursor: grabbing; }
@@ -375,10 +384,10 @@
     .tool-choice { position: fixed; z-index: 70; display: none; gap: 4px; padding: 5px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--win-shadow); }
     .tool-choice.on { display: flex; }
-    .tool-choice button { width: 34px; height: 34px; border-radius: var(--r-sm); background: var(--row); color: var(--txt); }
+    .tool-choice button { width: var(--btn-sm); height: var(--btn-sm); border-radius: var(--r-sm); background: var(--row); color: var(--txt); }
     .tool-choice button:hover { background: var(--accent-soft); }
     .tool-choice button.on { background: var(--accent); color: var(--on-accent); }
-    .tool-choice button svg { width: 21px; height: 21px; }
+    .tool-choice button svg { width: var(--ico); height: var(--ico); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
     #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on { display: flex; }
@@ -409,7 +418,7 @@
     .toolpop { position: fixed; left: 50%; transform: translateX(-50%);
       bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 16; display: none; flex-direction: column;
       width: min(92vw, 330px); padding: 10px 16px 14px; background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--win-shadow); }
+      border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); }
     .toolpop { overflow: hidden; } /* шапка с border-bottom не торчит из скруглённых углов */
     .toolpop.on { display: flex; }
     /* шапка toolpop приведена к виду #lay-pop: тянется на всю ширину (компенсируем падинг) */
@@ -502,7 +511,7 @@
     #prevwin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px));
       top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 13; width: 220px; height: 220px;
       display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
-      border-radius: var(--r-xl); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
+      border-radius: var(--win-radius); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #prevwin.on { display: flex; }
     #prevgrip { display: flex; align-items: center; gap: 6px; height: 28px; flex: none;
       cursor: grab; touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; }
@@ -521,7 +530,7 @@
     /* ---- Shading ramp ---- */
     #shade-pop { position: fixed; left: 50%; transform: translateX(-50%);
       bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); z-index: 19; width: 244px; display: none;
-      background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--win-shadow); overflow: hidden; }
+      background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); overflow: hidden; }
     #shade-pop.on { display: block; animation: pop .18s ease-out; }
     #shade-list { display: flex; flex-wrap: wrap; gap: 0; padding: 10px; min-height: 50px; }
     .shade-sw { width: 32px; height: 32px; border-radius: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
@@ -535,7 +544,7 @@
     /* ---- окно референса ---- */
     #refwin { position: fixed; left: 60%; top: 26%; z-index: 13; width: 270px; height: 250px;
       display: none; flex-direction: column; background: var(--panel-solid); border: 1px solid var(--line);
-      border-radius: var(--r-xl); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
+      border-radius: var(--win-radius); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #refwin.on { display: flex; }
     #refgrip { display: flex; align-items: center; gap: 2px; height: 28px; cursor: grab;
       touch-action: none; color: var(--txt2); font-size: 11px; padding-left: 6px; flex: none; }
@@ -561,19 +570,17 @@
     .pswatches i { width: 26px; height: 26px; display: block; }
     /* окно палитр — единая шапка как у плавающих окон (заголовок + крестик) */
     #pal-sheet { padding-top: 0; }
-    #pal-sheet .pop-head { margin: 0 -18px 12px; padding: 11px 10px 11px 18px; border-radius: var(--r-2xl) var(--r-2xl) 0 0; }
+    #pal-sheet .pop-head { margin: 0 -18px 12px; padding: 11px 10px 11px 18px; border-radius: var(--win-radius) var(--win-radius) 0 0; }
 
     /* ---- Tint & Shade Generator ---- */
     #tsg-btn svg { width: 18px; height: 18px; }
     #tsg-win { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 14;
       width: 340px; height: auto; max-height: calc(100dvh - 24px); display: none; flex-direction: column; background: var(--panel-solid);
-      border: 1px solid var(--line); border-radius: var(--r-xl); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
+      border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); padding: 0 6px 6px; }
     #tsg-win.on { display: flex; }
     #tsg-grip { display: flex; align-items: center; height: 30px; cursor: grab; touch-action: none;
-      color: var(--txt2); font-size: 12px; font-weight: 600; padding-left: 8px; flex: none; }
-    #tsg-grip span { flex: 1; }
-    #tsg-grip button { width: 24px; height: 24px; color: var(--txt2); flex: none; }
-    #tsg-grip button svg { width: 14px; height: 14px; }
+      color: var(--txt2); font-size: var(--win-title); font-weight: 600; padding-left: 8px; flex: none; }
+    #tsg-grip span { flex: 1; } /* кнопки шапки — общий «призрачный» стиль выше */
     #tsg-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 4px; scrollbar-width: thin; }
     .tsg-base { display: flex; align-items: center; gap: 8px; padding-right: 7px; }
     #tsg-baseprev { width: 28px; height: 28px; border-radius: var(--r-md); border: 1px solid var(--line); flex: none; }
@@ -739,7 +746,7 @@ body.gallery-open #pal-ovl {
 /* окна «Новый холст» (пресеты и редактор) — перетаскиваемые, по центру, как все */
 .new-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(440px, 92vw); max-height: 84vh; display: flex; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--win-shadow); overflow: hidden; }
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); overflow: hidden; }
 .new-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 .new-head:active { cursor: grabbing; }
 .new-head h3 { margin: 0; font-size: 22px; font-weight: 700; color: var(--txt); }
@@ -755,7 +762,7 @@ body.gallery-open #pal-ovl {
 #new-custom { display: none; }
 #new-ovl.editing #new-custom { display: block; }
 #new-ovl.editing .new-panel { display: none; }
-.sheet#new-custom { width: min(96vw, 560px); padding: 0; overflow: hidden; border-radius: var(--r-2xl); }
+.sheet#new-custom { width: min(96vw, 560px); padding: 0; overflow: hidden; border-radius: var(--win-radius); }
 #new-custom h3 { margin: 0; padding: 13px 18px 9px; border-bottom: 1px solid var(--line);
   font-size: 14px; font-weight: 700; }
 .se-name { display: flex; align-items: center; gap: 8px; height: 40px; margin: 10px 12px 8px;
@@ -830,7 +837,7 @@ body.gallery-open #pal-ovl {
 /* === Эффекты слоя (панель, окно, строки в списке) === */
 #fx-panel { position: fixed; left: 50%; transform: translateX(-50%);
   top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 18; width: 232px; display: none; flex-direction: column;
-  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--win-shadow); overflow: hidden; }
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); overflow: hidden; }
 #fx-panel.on { display: flex; animation: pop .18s ease-out; }
 #fx-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
 #fx-types button { height: 46px; border-radius: var(--r-lg); background: var(--row); color: var(--txt); }
@@ -862,7 +869,7 @@ body.gallery-open #pal-ovl {
 /* --- библиотека кистей (панель в стиле слоёв) --- */
 #brush-pop { position: fixed; display: none; z-index: 31; width: 304px; max-width: calc(100vw - 20px); overflow: hidden;
   box-sizing: border-box; top: calc(env(safe-area-inset-top, 0px) + 70px); left: 50%; transform: translateX(-50%);
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--win-shadow); }
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); }
 #brush-pop.on { display: block; animation: pop .18s ease-out; }
 #brush-body { padding: 8px; }
 #brush-list { overflow-y: auto; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px;
