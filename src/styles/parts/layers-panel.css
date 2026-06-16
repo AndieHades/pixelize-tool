@@ -27,6 +27,10 @@
       margin-bottom: 3px; background: var(--row); /* светлее подложки списка — между строками тонкий тёмный зазор */
       max-height: 100px; overflow: hidden;
       transition: margin-top var(--anim-pop) var(--ease-out), max-height 180ms ease, padding 180ms ease, opacity 150ms; }
+    /* строки сами обрабатывают жесты (тап/удержание→драг/щипок/двойной тап); браузер их
+       не перехватывает под скролл/зум — иначе на тач подъём и pinch не срабатывают */
+    .lrow, .fxrow { touch-action: none; }
+    .lrow.lifting, .fxrow.lifting { transform: scale(1.03); box-shadow: var(--win-shadow); z-index: 2; } /* поднято удержанием */
     .lrow.marked { background: color-mix(in srgb, var(--accent) 42%, var(--row)); }  /* выбранные — приглушённо */
     .lrow.on { background: var(--accent); color: var(--on-accent); }                                     /* активный — ярко-синий */
     .lrow.on .lname, .lrow.on .fcount, .lrow.on .eye, .lrow.on .caret { color: var(--on-accent); }
