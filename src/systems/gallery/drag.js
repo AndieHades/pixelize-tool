@@ -80,7 +80,8 @@ export function attachDrag(tile, id, ctx) {
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
       dragged = new Set(dragEls);
       ghost = galleryGhost(tile, grid); ghost.move(x, y);
-      dragEls.forEach((el) => el.classList.add('dragging')); // исходник остаётся на месте, лишь затемняется
+      // исходник возвращается к обычному размеру и затемняется; увеличение уходит в призрак
+      dragEls.forEach((el) => { el.classList.remove('lifting'); el.classList.add('dragging'); });
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
     const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; clearMarks(); };
