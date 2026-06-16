@@ -60,7 +60,9 @@
 /* иконка папки, когда внутри нет превью */
 .gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.gal-tile.lifting .gal-thumb { transform: scale(1.08); } /* удержание: увеличиваем только картинку (подписи не трогаем), пока зажато */
+/* удержание: увеличиваем только картинку (растём от низа вверх — нижняя граница у
+   подписи зафиксирована, подпись остаётся ровно на своём месте) */
+.gal-tile.lifting .gal-thumb { transform: scale(1.08); transform-origin: center bottom; }
 /* исходник остаётся на месте затемнённым (без схлопывания/реколонки сетки) */
 .gal-tile.dragging { opacity: .35; pointer-events: none; }
 /* лёгкий призрак на курсоре — только увеличенная картинка превью, без подписей */
