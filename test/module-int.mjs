@@ -969,7 +969,7 @@ await ta('gallery: drag открывает слот и отдаёт точку �
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     assert.ok(a.classList.contains('dragging'));
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
-    if (drop) assert.deepEqual(drop, { ids: ['a'], before: 'c' });
+    assert.deepEqual(drop, { ids: ['a'], before: 'c' });
     assert.equal(grid.querySelector('.drop-gap'), null);
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';
@@ -987,10 +987,11 @@ await ta('gallery: touch drag стартует только после подн�
   const a = mk('ta', 0), b = mk('tb', 120);
   const prevPoint = document.elementFromPoint;
   document.elementFromPoint = () => b;
+  let drop = null;
   const pe = (type, x, y) => { const ev = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
     Object.defineProperty(ev, 'pointerType', { value: 'touch' }); Object.defineProperty(ev, 'pointerId', { value: 7 }); return ev; };
   try {
-    attachGalleryDrag(a, 'ta', { gridEl: () => grid, selecting: () => false, dragIds: () => ['ta'], onBack() {}, onStack() {}, onReorder() {} });
+    attachGalleryDrag(a, 'ta', { gridEl: () => grid, selecting: () => false, dragIds: () => ['ta'], onBack() {}, onStack() {}, onReorder: (ids, before) => { drop = { ids, before }; } });
     a.dispatchEvent(pe('pointerdown', 10, 10));
     a.dispatchEvent(pe('pointermove', 30, 10));
     assert.ok(!a.classList.contains('dragging'));
@@ -998,7 +999,9 @@ await ta('gallery: touch drag стартует только после подн�
     assert.ok(a.classList.contains('lifting'));
     a.dispatchEvent(pe('pointermove', 42, 10));
     assert.ok(a.classList.contains('dragging'));
-    a.dispatchEvent(pe('pointerup', 42, 10));
+    a.dispatchEvent(pe('pointermove', 190, 10));
+    a.dispatchEvent(pe('pointerup', 190, 10));
+    assert.deepEqual(drop, { ids: ['ta'], before: null });
     assert.ok(!a.classList.contains('dragging'));
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';

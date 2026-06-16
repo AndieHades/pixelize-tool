@@ -36,6 +36,12 @@ function slotFromPoint(grid, dragged, x, y) {
   return { node: row[row.length - 1].el, after: true };
 }
 
+function nextTile(node, ignored) {
+  let n = node ? node.nextElementSibling : null;
+  while (n && (!n.matches('.gal-tile') || ignored.has(n))) n = n.nextElementSibling;
+  return n;
+}
+
 export function attachDrag(tile, id, ctx) {
   ensureClickGuard();
   tile.addEventListener('pointerdown', (e) => {
@@ -45,6 +51,7 @@ export function attachDrag(tile, id, ctx) {
     if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
     const sx = e.clientX, sy = e.clientY, originRect = tile.getBoundingClientRect();
     let lifted = false, started = false, sourceOpen = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
+    let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
     const gap = makeDropGap({ className: 'gal-drop-gap' });
@@ -63,8 +70,9 @@ export function attachDrag(tile, id, ctx) {
       sourceOpen = true;
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
-    const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; clearMarks(); };
+    const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; clearMarks(); };
     const closeSource = () => { if (!sourceOpen) return; sourceOpen = false; dragEls.forEach((el) => el.classList.remove('source-gap')); };
+    const setDrop = (node, after) => { dropReady = true; dropBefore = after ? nextTile(node, dragged) : node; };
     const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
     const move = (ev) => {
       if (isTouch && (lifted || started) && ev.cancelable) ev.preventDefault();
@@ -77,7 +85,7 @@ export function attachDrag(tile, id, ctx) {
       closeSource();
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const overBack = back.style.display !== 'none' && el && el.closest && el.closest('#gal-back'); // бросок на «назад» — на уровень выше
-      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; gap.cancel(); clearMarks(); back.classList.add('over'); } return; }
+      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; gap.cancel(); clearMarks(); back.classList.add('over'); } return; }
       onBack = false;
       const raw = el && el.closest ? el.closest('.gal-tile') : null;
       const tg = raw && !dragged.has(raw) ? raw : null;
@@ -86,26 +94,27 @@ export function attachDrag(tile, id, ctx) {
       const key = tg ? tid + ':' + (into ? 'center' : (zone.after ? 'after' : 'before')) : '';
       if (key !== overKey) { resetHover(key); if (into) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
       if (stackTo) return;
-      if (tg && !into) gap.request(grid, tg, zone.after, tg, key, DROP_GAP_HOLD_MS);
-      else if (into) gap.cancel();
+      if (tg && !into) { setDrop(tg, zone.after); gap.request(grid, tg, zone.after, tg, key, DROP_GAP_HOLD_MS); }
+      else if (into) { setDrop(tg, zone.after); gap.cancel(); }
       else if (pointIn(grid, ev.clientX, ev.clientY)) {
         const pos = slotFromPoint(grid, dragged, ev.clientX, ev.clientY);
-        if (!pos) { gap.cancel(); return; }
+        if (!pos) { resetHover(''); gap.cancel(); return; }
         const gkey = 'empty:' + pos.node.dataset.id + ':' + (pos.after ? 'after' : 'before');
-        resetHover(gkey); gap.request(grid, pos.node, pos.after, pos.node, gkey, DROP_GAP_HOLD_MS);
-      } else gap.cancel();
+        resetHover(gkey); setDrop(pos.node, pos.after); gap.request(grid, pos.node, pos.after, pos.node, gkey, DROP_GAP_HOLD_MS);
+      } else { resetHover(''); gap.cancel(); }
     };
     const up = () => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);
       if (tile.hasPointerCapture && tile.hasPointerCapture(e.pointerId)) try { tile.releasePointerCapture(e.pointerId); } catch (err) {}
       if (ghost) ghost.remove(); dragEls.forEach((el) => { el.classList.remove('dragging', 'source-gap', 'lifting'); el.style.removeProperty('--gal-source-gap'); }); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
       const target = stackTo, toBack = onBack; clearMarks();
-      const hadGap = gap.active, before = gap.next('.gal-tile', dragged); gap.remove();
+      const before = dropReady ? dropBefore : (gap.active ? gap.next('.gal-tile', dragged) : null);
+      const canReorder = dropReady || gap.active; gap.remove();
       if (!started) { if (lifted) clickGuardUntil = Date.now() + 350; return; }
       clickGuardUntil = Date.now() + 450;
       if (toBack) ctx.onBack(dragIds);
       else if (target) ctx.onStack(dragIds, target.dataset.id, target.dataset.kind);
-      else if (hadGap) ctx.onReorder(dragIds, before ? before.dataset.id : null);
+      else if (canReorder) ctx.onReorder(dragIds, before ? before.dataset.id : null);
     };
     tile.addEventListener('pointermove', move); tile.addEventListener('pointerup', up); tile.addEventListener('pointercancel', up); tile.addEventListener('lostpointercapture', up);
   });
