@@ -66,13 +66,14 @@ export function attachDrag(tile, id, ctx) {
     if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
     const isTouch = e.pointerType === 'touch';
     if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
+    tile.classList.add('pressing'); setTimeout(() => tile.classList.remove('pressing'), 220); // нажатие: вся плитка чуть сжимается и возвращается
     const sx = e.clientX, sy = e.clientY;
     let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back');
-    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); };
-    const hold = setTimeout(lift, isTouch ? 250 : 1e9); // тач: долгий тап только приподнимает плитку
+    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); }; // удержание → увеличиваем картинку (готовим к переносу)
+    const hold = setTimeout(lift, 250); // и тач, и мышь: после короткого удержания картинка увеличивается
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
@@ -113,7 +114,7 @@ export function attachDrag(tile, id, ctx) {
       if (tile.hasPointerCapture && tile.hasPointerCapture(e.pointerId)) try { tile.releasePointerCapture(e.pointerId); } catch (err) {}
       if (ghost) ghost.remove(); dragEls.forEach((el) => el.classList.remove('dragging', 'lifting')); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
       const target = stackTo, toBack = onBack, before = dropReady ? dropBefore : null; clearMarks();
-      if (!started) { if (lifted) clickGuardUntil = Date.now() + 350; return; }
+      if (!started) { if (lifted && isTouch) clickGuardUntil = Date.now() + 350; return; } // на тач долгий тап не открывает; мышь — клик всегда открывает
       clickGuardUntil = Date.now() + 450;
       if (toBack) ctx.onBack(dragIds);
       else if (target) ctx.onStack(dragIds, target.dataset.id, target.dataset.kind);

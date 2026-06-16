@@ -32,6 +32,11 @@
 @keyframes ghost-in { 0% { transform: translate(-50%, -50%) scale(.88); } 55% { transform: translate(-50%, -50%) scale(1.01); } 100% { transform: translate(-50%, -50%) scale(.96); } }
 .drag-ghost { animation: ghost-in var(--anim-pop) var(--ease-pop); }
 
+/* Отклик плитки на нажатие: вся плитка (с подписями) чуть сжимается и сразу
+   возвращается; затем по удержанию увеличивается только картинка (.lifting). */
+@keyframes gal-press { 0% { transform: scale(1); } 45% { transform: scale(.94); } 100% { transform: scale(1); } }
+.gal-tile.pressing { animation: gal-press 200ms var(--ease-out); }
+
 /* Десктоп: только плитки галереи слегка растут при наведении (кнопкам/слоям не нужно). */
 @media (hover: hover) {
   .gal-tile:hover:not(.dragging) { transform: scale(1.03); }
