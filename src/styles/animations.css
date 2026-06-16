@@ -37,8 +37,8 @@
 @keyframes gal-press { 0% { transform: scale(1); } 45% { transform: scale(.94); } 100% { transform: scale(1); } }
 .gal-tile.pressing { animation: gal-press 200ms var(--ease-out); }
 
-/* Десктоп: при наведении плавно растёт только картинка плитки (как удержание на
-   тач) — подписи не трогаем; это же увеличенное изображение уезжает призраком. */
+/* Десктоп: при наведении вся плитка (с подписями) чуть сжимается и сразу
+   возвращается — тот же «клевок», что при нажатии. */
 @media (hover: hover) {
-  .gal-tile:hover:not(.dragging) .gal-thumb { transform: scale(1.08); }
+  .gal-tile:hover:not(.dragging) { animation: gal-press 200ms var(--ease-out); }
 }
