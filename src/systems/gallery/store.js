@@ -17,9 +17,9 @@ export const listAll = () => listDocs();
 export const childrenOf = async (folder) => (await listDocs()).filter((d) => (d.folder ?? null) === (folder ?? null));
 export const getItem = getDoc;
 
-export async function createFolder(name, childIds, parent = null) {
+export async function createFolder(name, childIds, parent = null, order = Date.now()) {
   const id = uid('f');
-  await saveDoc({ id, kind: 'folder', name, folder: parent ?? null, order: Date.now(), updated: Date.now() });
+  await saveDoc({ id, kind: 'folder', name, folder: parent ?? null, order, updated: Date.now() });
   for (const cid of childIds) { const d = await getDoc(cid); if (d) { d.folder = id; await saveDoc(d); } }
   return id;
 }

@@ -109,7 +109,9 @@ async function tileEl(d) {
       await moveToFolder(ids, f ? (f.folder ?? null) : null); render(); },
     onStack: async (ids, targetId, kind) => {
       if (kind === 'folder') { await moveToFolder(ids.filter((x) => x !== targetId), targetId); await render(); }
-      else { const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder); await render(); editName(fid); } },
+      else { const tgt = await getItem(targetId); // новая папка встаёт на место файла-цели, не в начало
+        const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder, tgt ? (tgt.order ?? tgt.updated ?? Date.now()) : Date.now());
+        await render(); editName(fid); } },
     onReorder: async (ids, beforeId) => {
       const seq = reorderedIds(await childrenOf(viewFolder), ids, beforeId);
       if (!seq) return;

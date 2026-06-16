@@ -416,14 +416,14 @@ t('key-code: eventKey покрывает и буквы, и модификато�
   assert.equal(eventKey({ code: 'ControlRight' }), 'control'); assert.equal(eventKey({ code: 'F7' }), null);
 });
 
-t('gallery-grid: папки идут перед артами, арты newest first', () => {
+t('gallery-grid: папки и файлы в одном ряду, сортировка по order/updated', () => {
   const items = [
     { id: 'old', kind: 'doc', name: 'Old', updated: 20 },
     { id: 'f1', kind: 'folder', name: 'Folder 1', order: 10 },
     { id: 'new', kind: 'doc', name: 'New', updated: 40 },
     { id: 'f2', kind: 'folder', name: 'Folder 2', order: 30 },
   ];
-  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['f2', 'f1', 'new', 'old']);
+  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['new', 'f2', 'old', 'f1']); // без выделения папок вперёд — общий порядок по rank
   assert.deepEqual(items.map((x) => x.id), ['old', 'f1', 'new', 'f2']);
 });
 t('gallery-grid: ручной order работ важнее свежего updated (перестановка не отскакивает)', () => {
@@ -450,12 +450,13 @@ t('gallery-grid: reorderedIds переставляет работу перед �
   assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'c', 'a']); // без цели → в конец
   assert.equal(reorderedIds(items, ['zzz'], 'c'), null); // нечего двигать
 });
-t('gallery-grid: reorderedIds держит папки и работы в разных секциях', () => {
+t('gallery-grid: reorderedIds переставляет любую плитку среди всех (папки и файлы)', () => {
   const items = [
     { id: 'f1', kind: 'folder', order: 50 }, { id: 'a', kind: 'doc', order: 300 }, { id: 'b', kind: 'doc', order: 200 },
   ];
-  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'a']); // работа переставляется только среди работ, папка не трогается
-  assert.deepEqual(reorderedIds(items, ['f1'], null), ['f1']); // папка — в своей секции
+  // общий порядок по order desc: a(300), b(200), f1(50)
+  assert.deepEqual(reorderedIds(items, ['f1'], 'a'), ['f1', 'a', 'b']); // папку можно увести в начало, перед файлом a
+  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'f1', 'a']); // файл — в самый конец, мимо папки
 });
 
 // --- Symmetry mapper ---
