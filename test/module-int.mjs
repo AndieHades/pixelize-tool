@@ -663,67 +663,51 @@ t('palette: кнопка used отмечает использованные цв
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
 });
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
-t('palette: drag ЛКМ выделяет диапазон, Shading включается через ПКМ', () => {
-  shading.mount(); shading.clear(); S.palette = [[0, 0, 0], [40, 40, 40], [80, 80, 80], [120, 120, 120]]; S.active = [0, 0, 0]; pal.buildPalette();
-  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
+await ta('palette: ЛКМ-протяжка переставляет цвет без выделения (без gap)', async () => {
+  shading.mount(); shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
+  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
     sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
-    assert.deepEqual(S.shading.colors, []);
-    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
-    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-    document.elementFromPoint = () => sw[1];
-    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-    document.querySelector('#ctx [data-act="shade"]').click();
-    assert.deepEqual(S.shading.colors, [[0, 0, 0], [40, 40, 40], [80, 80, 80]]);
-    assert.equal(S.shading.on, true);
-    assert.ok(document.getElementById('shade-pop').classList.contains('on'));
-    pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0); assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
-    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-    document.elementFromPoint = () => sw[0];
-    sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 0, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0 }));
-    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-    document.elementFromPoint = () => sw[1];
-    sw[1].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-    document.querySelector('#ctx [data-act="shade"]').click();
-    assert.deepEqual(S.shading.colors, [[80, 80, 80], [40, 40, 40], [0, 0, 0]]);
-    sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; sw[3].click(); sw[3].click();
+    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]); // цвет 0 переставлен в конец
+    assert.deepEqual(S.shading.colors, []); // ЛКМ-драг больше не выделяет диапазон
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0); // одиночный перенос не оставляет выделения
+    assert.equal(document.querySelectorAll('.palette-drop-gap').length, 0); // gap отключён
   } finally { document.elementFromPoint = oldHit; }
+  await new Promise((r) => setTimeout(r)); // сбросить отложенный palSquelch до следующего теста
 });
-t('palette: Ctrl+клик выбирает общий диапазон, Shading берёт первые 6 через меню', () => {
-  shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); pal.buildPalette();
+t('palette: Ctrl+клик — поштучный выбор и снятие', () => {
+  shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); S.active = [0, 0, 0]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[7].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.deepEqual(S.shading.colors, []);
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1);
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 8);
-  assert.deepEqual(S.shading.colors, []);
-  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
-  try {
-    document.elementFromPoint = () => sw[4];
-    sw[4].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
-  } finally { document.elementFromPoint = oldHit; }
-  document.querySelector('#ctx [data-act="shade"]').click();
-  assert.deepEqual(S.shading.colors, [[7, 7, 7], [6, 6, 6], [5, 5, 5], [4, 4, 4], [3, 3, 3], [2, 2, 2]]);
-  assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
-  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
-  assert.ok(document.getElementById('shade-pop').classList.contains('on'));
-});
-t('palette: ПКМ меню удаляет выделенный диапазон цветов', () => {
-  shading.clear(); S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; pal.buildPalette();
-  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2); // поштучно, не диапазон
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1); // повторный ctrl снимает
+  assert.deepEqual(S.shading.colors, []);
+});
+t('palette: Shift+клик — диапазон от активного/якоря', () => {
+  shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); S.active = [0, 0, 0]; pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // обычный клик задаёт активный = якорь
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[5].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 6); // 0..5
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3); // якорь 0 → 0..2
+});
+t('palette: ПКМ меню удаляет выделенный shift-диапазон цветов', () => {
+  shading.clear(); S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; S.active = [1, 1, 1]; pal.buildPalette();
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // активный = якорь [1,1,1]
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // диапазон 1..3
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
@@ -750,15 +734,18 @@ t('palette: выделенный диапазон можно перетащит�
     assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2);
   } finally { document.elementFromPoint = oldHit; }
 });
-t('palette: drag ПКМ переставляет цвета', () => {
-  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
+t('palette: ПКМ-протяжка выделяет свотчи наведением, не переставляет', () => {
+  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
     sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
-    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
+    document.elementFromPoint = () => sw[3];
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 40, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 40, clientY: 0 }));
+    assert.deepEqual(S.palette, [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]); // ПКМ-драг не переставляет
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3); // наведено на 0,2,3
   } finally { document.elementFromPoint = oldHit; }
 });
 await ta('palette: долгий тап поднимает свотч и переставляет с зазором', async () => {
@@ -776,7 +763,7 @@ await ta('palette: долгий тап поднимает свотч и пере
     assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]); // цвет 0 переставлен в конец, не выделил соседей
   } finally { document.elementFromPoint = oldHit; }
 });
-t('palette: кнопка Shading выбирает ramp без залипшего выделения палитры', () => {
+await ta('palette: кнопка Shading выбирает ramp без залипшего выделения палитры', async () => {
   shading.clear(); S.palette = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40]]; pal.buildPalette();
   document.getElementById('shade-pick').click();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
@@ -791,6 +778,7 @@ t('palette: кнопка Shading выбирает ramp без залипшего
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
   assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
+  await new Promise((r) => setTimeout(r)); // сбросить отложенный palSquelch до следующего теста
 });
 t('shading: максимум 6 цветов и клик по линейке разворачивает направление', () => {
   shading.setRamp([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]);
@@ -802,14 +790,13 @@ t('shading: максимум 6 цветов и клик по линейке ра
 t('shading: закрытие и смена инструмента сбрасывают режим без потери ramp', () => {
   shading.setRamp([[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
   S.palette = [[0, 0, 0], [80, 80, 80], [160, 160, 160]]; pal.buildPalette();
-  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
-  try {
-    document.elementFromPoint = () => sw[2];
-    sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
-    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
-    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
-  } finally { document.elementFromPoint = oldHit; }
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; // выделение через ctrl+клик
+  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
   shading.close();
   assert.deepEqual(S.shading.colors, [[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
   assert.equal(S.shading.on, false); assert.equal(S.shading.open, false); assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
