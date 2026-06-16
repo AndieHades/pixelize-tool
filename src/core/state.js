@@ -45,6 +45,7 @@ export const S = {
   colorMode: 'rgba',
   shading: { colors: [], on: false, open: false, picking: false }, // palette ramp + Aseprite-like shading brush mode
   tool: 'pencil', sym: false, symH: false, symD1: false, symD2: false,
+  xMirror: false, // зажатый X — временное горизонтальное зеркало кисти во время рисования
   symLines: { x: null, y: null, d1: null, d2: null, mode: null, hover: null },
   grid: { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true },
   lineMode: 'line', shapeTool: 'rect',

@@ -99,7 +99,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
@@ -108,7 +108,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
@@ -2054,6 +2054,12 @@ t('i18n: html-шаблон не хранит локализованные fallba
   assert.deepEqual(textLeaks, []);
   assert.deepEqual(attrLeaks, []);
 });
+t('x-mirror: зажатый X отражает кисть по горизонтали', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5];
+  S.xMirror = true; stamp(0, 1); // x=0 → зеркало по центру (axisX=1.5) → x=3
+  assert.deepEqual(S.layers[0].grid[1][0], [5, 5, 5, 255]); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
+  S.xMirror = false; S.layers[0].grid = blank(4, 4); stamp(0, 0); // без X — только исходная клетка
+  assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);
+});
 t('background: paintStack заливает фон под слоями, скрытый — нет', () => { resetWH(4, 4);
   S.bg = { color: [10, 20, 30], visible: true };
   let filled = null; const mock = { globalAlpha: 1, fillStyle: '', fillRect: (x, y, w, h) => { filled = [x, y, w, h, mock.fillStyle]; }, drawImage() {} };
@@ -2067,7 +2073,7 @@ t('background: undo восстанавливает цвет фона', () => { r
   history.doUndo(); assert.deepEqual(S.bg.color, [1, 1, 1]); S.bg = { color: null, visible: true };
 });
 t('background: строка фона внизу, выбор/глаз/заливка цветом', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
-  S.bg = { color: null, visible: true }; S.bgSel = false; layList();
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; layList();
   let bgr = document.querySelector('#lay-list [data-bg]');
   assert.ok(bgr && bgr.classList.contains('bgrow')); assert.equal(document.getElementById('lay-list').lastElementChild, bgr); // в самом низу
   assert.equal(document.querySelectorAll('#lay-list .lrow[data-bg]').length, 0); // фон — не .lrow (не попадает в выборку/drag)
@@ -2077,7 +2083,7 @@ t('background: строка фона внизу, выбор/глаз/залив�
   try { assert.equal(actions.run('layer.dropColorAt', [7, 8, 9], 5, 5), true); } finally { document.elementFromPoint = prev; }
   assert.deepEqual(S.bg.color, [7, 8, 9]); // фон залит брошенным цветом
   document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
-  S.bg = { color: null, visible: true }; S.bgSel = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
 });
 t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
   S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup(); // doGroup не должен трогать фон, primary не слой

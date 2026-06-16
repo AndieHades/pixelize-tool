@@ -34,11 +34,11 @@ export const anySym = () => symA() || symHA() || symDA() || symDB();
 export function symmetryConfig() {
   const c = centerSymmetryAxes(S.W, S.H), l = S.symLines || {};
   return symmetryAxes(S.W, S.H, {
-    x: symA(),
+    x: symA() || S.xMirror, // зажатый X добавляет горизонтальное зеркало по центру
     y: symHA(),
     d1: symDA(),
     d2: symDB(),
-    axisX: Number.isFinite(l.x) ? l.x : c.axisX,
+    axisX: symA() && Number.isFinite(l.x) ? l.x : c.axisX,
     axisY: Number.isFinite(l.y) ? l.y : c.axisY,
     diagP: Number.isFinite(l.d1) ? l.d1 : c.diagP,
     diagN: Number.isFinite(l.d2) ? l.d2 : c.diagN,

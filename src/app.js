@@ -59,8 +59,9 @@ import './systems/mono.js';
 import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
+import * as xMirror from './systems/x-mirror.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {
