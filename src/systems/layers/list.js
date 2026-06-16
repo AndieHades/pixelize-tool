@@ -14,7 +14,7 @@ import { dragRow } from './drag.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
-import { folderLayers, folderStackPos } from './helpers.js';
+import { folderLayers, folderStackPos, activeOpacityRef } from './helpers.js';
 import { appendEffects } from './fx-rows.js';
 import { bgRow } from './bg-row.js';
 import { syncLayerActionButtons } from './actions-bar.js';
@@ -165,6 +165,6 @@ export function layList() {
   const rendered = new Set();
   appendChildren(box, null, 0, rendered);
   box.appendChild(bgRow()); // фон-слой Background — всегда в самом низу, с отступом (CSS)
-  const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
+  const ref = activeOpacityRef(), op = $('lay-op'); if (op && ref) { const v = Math.round((ref.opacity ?? 1) * 100); op.value = v; $('lay-opv').textContent = v + '%'; } // ползунок — прозрачность активной строки
   syncLayerActionButtons();
 }

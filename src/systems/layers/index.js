@@ -8,6 +8,7 @@ import { snapshot } from '../../core/history.js';
 import { effVis } from '../../core/layers.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { layList } from './list.js';
+import { activeOpacityRef } from './helpers.js';
 import { mountActionBars } from './actions-bar.js';
 import { mountPinch } from './pinch.js';
 import { mountMenu } from './menu.js';
@@ -27,7 +28,8 @@ export function mount() {
   $('layers').addEventListener('click', () => { const p = $('lay-pop'); const on = p.classList.toggle('on'); $('layers').classList.toggle('on', on); if (on) layList(); });
   mountActionBars();
   $('lay-op').addEventListener('pointerdown', () => snapshot());
-  $('lay-op').addEventListener('input', () => { S.layers[S.cur].opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(S.layers[S.cur].opacity * 100) + '%'; bus.emit('render'); });
+  $('lay-op').addEventListener('input', () => { const ref = activeOpacityRef(); if (!ref) return; // прозрачность активной строки: слой/папка/эффект/настройка
+    ref.opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(ref.opacity * 100) + '%'; bus.emit('render'); });
   floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220, resizeEdges: true,
     onClose: () => { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); },
     onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(vw() - 12, w)) + 'px';

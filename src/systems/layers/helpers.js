@@ -34,6 +34,14 @@ export function commonParent(layers) { const f0 = layers.length ? (layers[0].fid
 // выделенные слои = активный + отмеченные; одиночные операции работают и над ними
 export const selectedIdx = () => [...new Set([...S.marked, S.cur])].filter((i) => S.layers[i]).sort((a, b) => a - b);
 
+// активная строка для ползунка прозрачности: эффект/настройка → папка → слой.
+// У каждой свой opacity (по умолчанию 1), ползунок правит именно её.
+export function activeOpacityRef() {
+  if (S.fxCur) return S.fxCur;
+  if (S.selFolder != null) return S.folders.find((f) => f.id === S.selFolder) || null;
+  return S.layers[S.cur] || null;
+}
+
 // следующий id папки — заведомо больше всех существующих (даже если folderSeq
 // отстал после загрузки старого проекта) → никаких коллизий id у папок
 export function nextFolderId() { const max = S.folders.reduce((m, f) => Math.max(m, f.id), 0);

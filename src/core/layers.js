@@ -11,6 +11,8 @@ export function folderChain(fid) { const a = []; let id = fid; while (id != null
 
 export const effVis = (i) => { const L = S.layers[i]; if (!L.visible) return false;
   for (const f of folderChain(L.fid)) if (!f.visible) return false; return true; };
+// произведение прозрачностей цепочки папок (для прозрачности папки целиком)
+export const folderOpacity = (fid) => folderChain(fid).reduce((a, f) => a * (f.opacity ?? 1), 1);
 
 export const layerSymLocked = (L) => !!(L && (L.symLock || folderChain(L.fid).some((f) => f.symLock)));
 

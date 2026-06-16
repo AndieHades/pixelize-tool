@@ -13,7 +13,7 @@ for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'm
 globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL не принимает jsdom-Blob
 globalThis.URL.revokeObjectURL = () => {};
 
-const { S, blank, BP_SMAX, newEffect } = await import('../src/core/state.js');
+const { S, blank, BP_SMAX, newEffect, cloneFx } = await import('../src/core/state.js');
 const { BRUSH_PREFS_STORE, loadBrushPrefs, saveBrushPrefs } = await import('../src/core/brush-prefs.js');
 const cache = await import('../src/core/layer-cache.js');
 const io = await import('../src/core/io.js');
@@ -2053,6 +2053,30 @@ t('i18n: html-шаблон не хранит локализованные fallba
   ].map((el) => el.id || el.dataset.i18nTitle || el.dataset.i18nPh || el.dataset.i18nAlt);
   assert.deepEqual(textLeaks, []);
   assert.deepEqual(attrLeaks, []);
+});
+t('opacity: прозрачность папки умножается на прозрачность слоя в композите', () => { resetWH(4, 4);
+  S.layers = [{ name: 'in', grid: blank(4, 4), opacity: 0.5, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] }];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [], opacity: 0.5 }];
+  S.layers[0].grid[0][0] = [1, 2, 3, 255]; cache.dirtyAll();
+  let alpha = null; const mock = { globalAlpha: 1, fillStyle: '', fillRect() {}, drawImage() { alpha = mock.globalAlpha; } };
+  cache.compositeLayers(mock);
+  assert.ok(Math.abs(alpha - 0.25) < 1e-9); // 0.5 (слой) × 0.5 (папка)
+  S.folders = []; S.layers[0].fid = null; S.layers[0].opacity = 1;
+});
+t('opacity: cloneFx сохраняет прозрачность эффекта', () => {
+  const out = cloneFx([{ type: 'glow', visible: true, opacity: 0.3, params: {} }]); assert.ok(Math.abs(out[0].opacity - 0.3) < 1e-9);
+});
+t('opacity: ползунок правит активную строку (папка/эффект), не слой', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [], opacity: 1 }]; S.layers[0].fid = 1;
+  S.selFolder = 1; S.markedFolders = new Set([1]); S.fxCur = null; S.fxSel = new Set(); layList();
+  const op = document.getElementById('lay-op'); assert.equal(op.value, '100');
+  op.value = '40'; op.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.ok(Math.abs(S.folders[0].opacity - 0.4) < 1e-9); assert.equal(S.layers[0].opacity, 1); // изменилась папка, не слой
+  const eff = { id: 9, type: 'stroke', visible: true, opacity: 1, params: { size: 1, color: '#fff' } };
+  S.layers[0].effects = [eff]; S.selFolder = null; S.markedFolders = new Set(); S.fxCur = eff; S.fxSel = new Set([eff]); layList();
+  op.value = '25'; op.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.ok(Math.abs(eff.opacity - 0.25) < 1e-9); // изменился эффект
+  S.layers[0].effects = []; S.fxCur = null; S.fxSel = new Set(); S.folders = []; S.layers[0].fid = null;
 });
 t('x-mirror: зажатый X отражает кисть по горизонтали', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5];
   S.xMirror = true; stamp(0, 1); // x=0 → зеркало по центру (axisX=1.5) → x=3

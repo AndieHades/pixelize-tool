@@ -2,7 +2,7 @@
 // обтравка, эффекты папок (под группой и поверх неё) и живые превью move/transform.
 // Единая точка для видимого рендера, экспорта и окна-превью.
 import { S } from './state.js';
-import { effVis, clipBase, folderChain } from './layers.js';
+import { effVis, clipBase, folderChain, folderOpacity } from './layers.js';
 import { layerSrcCanvas, clippedShift } from './layer-cache.js';
 import { folderFx, folderEffectsFor, layerMoveCanvas } from './effects-render.js';
 
@@ -34,18 +34,19 @@ export function paintStack(ctx, live, opt0 = {}) {
   if (opt0.bg) paintBackground(ctx);
   const iox = live && S.cropMode ? S.cropMode.idx : 0, ioy = live && S.cropMode ? S.cropMode.idy : 0;
   const groups = fxGroups(opt);
-  const drawC = (c) => { if (c) { ctx.globalAlpha = 1; ctx.drawImage(c, iox, ioy); } };
+  const drawC = (c, f) => { if (c) { ctx.globalAlpha = f ? folderOpacity(f.id) : 1; ctx.drawImage(c, iox, ioy); } }; // эффекты папки гаснут вместе с её прозрачностью
   for (let i = 0; i < S.layers.length; i++) {
-    groups.filter((g) => g.bottom === i).sort((a, b) => depth(a.f) - depth(b.f)).forEach((g) => drawC(folderFx(g.f, 'below')));
+    groups.filter((g) => g.bottom === i).sort((a, b) => depth(a.f) - depth(b.f)).forEach((g) => drawC(folderFx(g.f, 'below'), g.f));
     drawLayer(ctx, i, live, iox, ioy, vis);
-    groups.filter((g) => g.top === i).sort((a, b) => depth(b.f) - depth(a.f)).forEach((g) => drawC(folderFx(g.f, 'above')));
+    groups.filter((g) => g.top === i).sort((a, b) => depth(b.f) - depth(a.f)).forEach((g) => drawC(folderFx(g.f, 'above'), g.f));
   }
   ctx.globalAlpha = 1;
 }
 
 function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vis(i) || L.opacity <= 0) return;
   const cb = clipBase(i); if (L.clip && (cb < 0 || !vis(cb))) return;
-  ctx.globalAlpha = L.opacity;
+  const alpha = L.opacity * folderOpacity(L.fid); // прозрачность слоя × прозрачность его папок
+  ctx.globalAlpha = alpha;
   const inRot = live && S.rotMode && S.rotMode.idxs && S.rotMode.idxs.includes(i);
   if (inRot && !S.rotMode.selection) { // живое превью трансформации целого слоя/папки
     if (i === (S.rotPrev && S.rotPrev.idx) && S.rotPrev.canvas) ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh);
@@ -56,5 +57,5 @@ function drawLayer(ctx, i, live, iox, ioy, vis) { const L = S.layers[i]; if (!vi
   } else if (di) ctx.drawImage(layerMoveCanvas(i, di.dx, di.dy), iox, ioy); // содержимое+ext+эффекты, пересчитанные для сдвига
   else ctx.drawImage(layerSrcCanvas(i), iox, ioy);
   if (inRot && S.rotMode.selection && i === S.rotMode.idx && S.rotPrev && S.rotPrev.canvas) {
-    ctx.globalAlpha = L.opacity; ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh); }
+    ctx.globalAlpha = alpha; ctx.drawImage(S.rotPrev.canvas, S.rotPrev.px, S.rotPrev.py, S.rotPrev.ow, S.rotPrev.oh); }
 }

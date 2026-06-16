@@ -27,7 +27,8 @@ function applyAdjustments(src, effects, W, H) {
   const id = x.getImageData(0, 0, W, H), d = id.data;
   for (let i = 0; i < d.length; i += 4) { if (d[i + 3] <= 0) continue;
     let cc = [d[i], d[i + 1], d[i + 2], d[i + 3]];
-    for (const e of adj) cc = adjustColor(cc, e.params);
+    for (const e of adj) { const a = e.opacity ?? 1, after = adjustColor(cc, e.params); // прозрачность настройки = доля смешения с исходным
+      cc = a >= 1 ? after : cc.map((v, k) => Math.round(v + ((after[k] ?? v) - v) * a)); }
     d[i] = cc[0]; d[i + 1] = cc[1]; d[i + 2] = cc[2]; d[i + 3] = cc.length > 3 ? cc[3] : d[i + 3]; }
   x.putImageData(id, 0, 0); return c;
 }
@@ -56,12 +57,12 @@ function effCanvas(pixels, col, W, H) { return paintCanvas(W, H, (d) => {
 function build(src, mask, effects, W, H) { const c = cv(W, H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   const px = visiblePixelEffects(effects), adjSrc = applyAdjustments(src, effects, W, H);
   for (const e of px) { if (INNER_EFFECTS.has(e.type)) continue;
-    x.drawImage(effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H), 0, 0); }
-  x.drawImage(adjSrc, 0, 0);
+    x.globalAlpha = e.opacity ?? 1; x.drawImage(effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H), 0, 0); }
+  x.globalAlpha = 1; x.drawImage(adjSrc, 0, 0);
   for (const e of px) { if (!INNER_EFFECTS.has(e.type)) continue;
     const ic = effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H);
-    const ix = ic.getContext('2d'); ix.globalCompositeOperation = 'destination-in'; ix.drawImage(src, 0, 0); x.drawImage(ic, 0, 0); }
-  return c; }
+    const ix = ic.getContext('2d'); ix.globalCompositeOperation = 'destination-in'; ix.drawImage(src, 0, 0); x.globalAlpha = e.opacity ?? 1; x.drawImage(ic, 0, 0); }
+  x.globalAlpha = 1; return c; }
 
 const lcache = new Map(); // i → { sig, canvas }
 export function layerFxCanvas(i) { const L = S.layers[i], src = layerFloatCanvas(i), W = S.W, H = S.H, allEffects = layerRenderEffects(i);
@@ -109,8 +110,8 @@ function folderFxOn(grp, effects, which, W, H) {
   const mask = maskFromAlpha(grp.getContext('2d').getImageData(0, 0, W, H).data, W, H), ox = out.getContext('2d');
   for (const e of eff) { const ec = effCanvas(EFFECT_PIXELS[e.type](mask, W, H, e.params), hexToRgb(e.params.color), W, H);
     if (which === 'above') { const ix = ec.getContext('2d'); ix.globalCompositeOperation = 'destination-in'; ix.drawImage(grp, 0, 0); }
-    ox.drawImage(ec, 0, 0); }
-  return out; }
+    ox.globalAlpha = e.opacity ?? 1; ox.drawImage(ec, 0, 0); }
+  ox.globalAlpha = 1; return out; }
 
 // Превью трансформации с эффектами: mems = [{ idx, L, content }] — трансформированный
 // контент каждого слоя на полном W×H, снизу вверх. Кладёт эффекты каждого слоя и
