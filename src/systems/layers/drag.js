@@ -12,7 +12,7 @@ import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, reme
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 import { fxDrop, fxBlock } from './fx-drag.js';
-import { FOLDER_HOLD_MS } from '../../config/timings.js';
+import { FOLDER_HOLD_MS, LIFT_MS } from '../../config/timings.js';
 
 // выделение для перетаскивания: слои S.marked+S.cur + слои из выделенных папок
 export function dragBlock(srcIdx) { const sel = new Set(S.marked); sel.add(S.cur);
@@ -98,10 +98,16 @@ export function dragRow(el, info) {
   const targetSel = isFx ? '#lay-list .fxrow:not(.dragging), #lay-list .lrow:not(.dragging)' : '#lay-list .lrow:not(.dragging)';
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const isTouch = e.pointerType === 'touch';
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
-    if (!e.ctrlKey && !e.metaKey && !inSelection(info)) selectGrabbed(el, info, box); // нажал ЛКМ → этот стал активным (синим)
-    let started = false, ghost = null, blk = null, dropRow = null, dropKey = '', dropBelow = false, dropInto = false, holdTimer = null;
+    const pickUp = () => { if (!e.ctrlKey && !e.metaKey && !inSelection(info)) selectGrabbed(el, info, box); }; // взятый = активный (синий)
+    if (!isTouch) pickUp(); // мышь: нажал ЛКМ — взял (как зажатая кнопка)
+    let started = false, lifted = false, ghost = null, blk = null, dropRow = null, dropKey = '', dropBelow = false, dropInto = false, holdTimer = null;
     const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });
+    // тач: удержание (зажатый тап) = зажатая кнопка мыши → поднимаем строку под перенос;
+    // движение до подъёма — это скролл списка/свайп строки, не drag
+    const lift = () => { if (lifted || started) return; lifted = true; el.classList.add('lifting'); pickUp(); };
+    const liftTimer = setTimeout(lift, isTouch ? LIFT_MS : 1e9);
 
     // Место вставки фиксируем синхронно (dropRow/dropBelow/dropInto) и читаем на
     // отпускании — зазор визуальный и раскрывается с задержкой. Центр папки/слоя
@@ -117,23 +123,30 @@ export function dragRow(el, info) {
       gap.request(box, row, below, row, key, DROP_GAP_HOLD_MS);
     };
 
+    const begin = (x, y) => {
+      started = true; el.classList.add('dragging');
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      if (isFx) { blk = fxBlock(info.eff);
+        box.querySelectorAll('#lay-list .fxrow').forEach((r) => { if (blk.includes(r.__eff)) r.classList.add('dragging'); }); }
+      else { blk = dragBlock(info.idx);
+        if (info.kind === 'layer' && blk.length > 1)
+          box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); });
+        if (info.kind === 'folder' && S.markedFolders.has(info.fid) && S.markedFolders.size > 1)
+          box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); }); }
+      const count = isFx ? blk.length : (info.kind === 'folder' ? (S.markedFolders.has(info.fid) ? S.markedFolders.size : 1) : blk.length);
+      ghost = dragGhost(el, el.getBoundingClientRect().width, count); ghost.move(x, y);
+    };
+
     const move = (ev) => {
       if (pinchActive()) return;
+      if (isTouch && (lifted || started) && ev.cancelable) ev.preventDefault();
       const ddx = ev.clientX - sx, ddy = ev.clientY - sy;
-      if (!started && Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx)) {
-        started = true; el.classList.add('dragging');
-        try { el.setPointerCapture(e.pointerId); } catch (err) {}
-        if (isFx) { blk = fxBlock(info.eff);
-          box.querySelectorAll('#lay-list .fxrow').forEach((r) => { if (blk.includes(r.__eff)) r.classList.add('dragging'); }); }
-        else { blk = dragBlock(info.idx);
-          if (info.kind === 'layer' && blk.length > 1)
-            box.querySelectorAll('#lay-list .lrow[data-li]').forEach((r) => { if (blk.includes(S.layers[+r.dataset.li])) r.classList.add('dragging'); });
-          if (info.kind === 'folder' && S.markedFolders.has(info.fid) && S.markedFolders.size > 1)
-            box.querySelectorAll('#lay-list .lrow[data-fid]').forEach((r) => { if (S.markedFolders.has(+r.dataset.fid)) r.classList.add('dragging'); }); }
-        const count = isFx ? blk.length : (info.kind === 'folder' ? (S.markedFolders.has(info.fid) ? S.markedFolders.size : 1) : blk.length);
-        ghost = dragGhost(el, el.getBoundingClientRect().width, count); ghost.move(ev.clientX, ev.clientY);
+      if (!started) {
+        const moved = Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx);
+        if (moved && (!isTouch || lifted)) { clearTimeout(liftTimer); begin(ev.clientX, ev.clientY); }
+        else if (isTouch && !lifted && Math.hypot(ddx, ddy) > 7) { clearTimeout(liftTimer); return; } // двинул до подъёма → скролл/свайп
+        else return;
       }
-      if (!started) return;
       // призрак не выносим за пределы окна слоёв — иначе он «зависает»
       const pr = ($('lay-pop') || box).getBoundingClientRect();
       const gx = Math.max(pr.left + 8, Math.min(ev.clientX, pr.right - 8));
@@ -146,9 +159,11 @@ export function dragRow(el, info) {
     };
 
     const up = () => {
+      clearTimeout(liftTimer);
       el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
       if (holdTimer) clearTimeout(holdTimer);
       if (ghost) ghost.remove();
+      el.classList.remove('lifting');
       box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
       const target = dropRow, into = dropInto, below = !into && dropBelow;
       box.querySelectorAll('.drop-into').forEach((r) => r.classList.remove('drop-into'));

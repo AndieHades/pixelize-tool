@@ -1483,6 +1483,26 @@ t('layers-ui: взятие неактивного слоя сразу делае
   assert.equal(S.cur, 0); assert.ok(row0.classList.contains('on')); // взятый ЛКМ слой стал активным
   row0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }));
 });
+t('layers-ui: тап по имени активного слоя — переименование, по неактивному — выбор', () => {
+  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
+  const tap = (el) => { for (const type of ['pointerdown', 'pointerup', 'click']) el.dispatchEvent(new window.MouseEvent(type, { bubbles: true, button: 0, clientX: 5, clientY: 5 })); };
+  const nm0 = () => [...document.querySelectorAll('#lay-list .lrow')].find((r) => r.dataset.li === '0').querySelector('.lname');
+  tap(nm0()); // слой 0 был неактивен → тап выбирает его, не переименовывает
+  assert.equal(S.cur, 0); assert.ok(!nm0().classList.contains('editing'));
+  tap(nm0()); // теперь активен → тап по имени переименовывает
+  assert.ok(nm0().classList.contains('editing'));
+  nm0().dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+});
+t('effects: быстрый двойной тап открывает окно правки эффекта', () => {
+  resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); effects.mount();
+  const eff = newEffect('stroke', { size: 1, color: '#112233' }); S.layers[0].effects = [eff]; S.fxSel = new Set(); S.fxCur = null; layList();
+  document.getElementById('fx-edit').classList.remove('on');
+  const row = document.querySelector('#lay-list .fxrow');
+  row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
+  row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 })); // быстрый двойной тап
+  assert.ok(document.getElementById('fx-edit').classList.contains('on'));
+  document.getElementById('fx-edit').classList.remove('on'); S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null;
+});
 await ta('effects: единый dragRow переставляет эффект через зазор', async () => {
   resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   const A = { id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } };

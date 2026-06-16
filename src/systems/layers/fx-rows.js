@@ -7,7 +7,8 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { t } from '../../core/dom.js';
-import { longPress, EYE, layList, layDragSquelch } from './list.js';
+import { EYE, layList, layDragSquelch } from './list.js';
+import { onDoubleTap, onContext } from '../../core/long-press.js';
 import { dragRow } from './drag.js';
 
 let fxUid = 0; // уникальный ключ строки эффекта для дедупликации цели зазора
@@ -36,9 +37,9 @@ function effectRow(target, eff, depth) {
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); eff.visible = eff.visible === false;
     vis.classList.toggle('off', eff.visible === false); row.classList.toggle('fxoff', eff.visible === false); bus.emit('visibility'); bus.emit('render'); });
   row.append(star, nm, vis);
-  row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); });
-  row.addEventListener('dblclick', (e) => { e.stopPropagation(); actions.run('fx.edit', target, eff); });
-  longPress(row, (x, y) => { if (!S.fxSel.has(eff)) selectFx(eff, false); actions.run('fx.menu', x, y, target, eff); });
+  row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); }); // тап — выбрать
+  onDoubleTap(row, () => actions.run('fx.edit', target, eff)); // быстрый двойной тап/клик — правка эффекта/настройки
+  onContext(row, (x, y) => { if (!S.fxSel.has(eff)) selectFx(eff, false); actions.run('fx.menu', x, y, target, eff); }); // ПКМ — меню
   dragRow(row, { kind: 'fx', eff, owner: target }); return row;
 }
 

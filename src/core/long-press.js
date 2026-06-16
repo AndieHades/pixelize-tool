@@ -7,3 +7,29 @@ export function longPress(el, fn) {
   el.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 8) { clearTimeout(t); t = null; } });
   const c = () => { clearTimeout(t); t = null; }; el.addEventListener('pointerup', c); el.addEventListener('pointercancel', c);
 }
+
+// Меню по двойному тапу/клику или ПКМ → fn(x, y). Удержание (зажатый тап)
+// оставлено под перетаскивание (зажатый тап = зажатая кнопка мыши), поэтому
+// контекст-меню — отдельным жестом. Одиночный тап (выделение) не задевается.
+// Быстрый двойной тап/клик по элементу → fn(x, y). Зона ignoreSel (например имя,
+// у которого свой жест переименования) пропускается. Отличается от «второго тапа
+// по активному» (rename) тем, что это именно быстрый двойной тап.
+export function onDoubleTap(el, fn, ignoreSel) {
+  let last = 0, lx = 0, ly = 0;
+  el.addEventListener('pointerup', (e) => {
+    if (e.button && e.button !== 0) return; // ПКМ — отдельно (onContext)
+    if (ignoreSel && e.target.closest && e.target.closest(ignoreSel)) return;
+    const now = Date.now();
+    if (now - last < 320 && Math.hypot(e.clientX - lx, e.clientY - ly) < 24) { last = 0; fn(e.clientX, e.clientY); }
+    else { last = now; lx = e.clientX; ly = e.clientY; }
+  });
+}
+
+// Правый клик (десктоп) → fn(x, y).
+export function onContext(el, fn) {
+  el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); fn(e.clientX, e.clientY); });
+}
+
+// Контекст-меню: ПКМ или быстрый двойной тап (для строк без отдельного «edit» —
+// слои/папки). ignoreSel исключает зону имени (там переименование).
+export function menuGesture(el, fn, ignoreSel) { onContext(el, fn); onDoubleTap(el, fn, ignoreSel); }
