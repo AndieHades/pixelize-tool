@@ -27,9 +27,9 @@
 @keyframes lit-pulse { 0% { box-shadow: 0 0 0 0 var(--accent-soft); } 100% { box-shadow: 0 0 0 5px var(--accent-soft); } }
 .gal-actions button.lit { animation: lit-pulse var(--anim-pop) var(--ease-out); }
 
-/* Призрак перетаскивания (общий для плиток и слоёв): появляется «из руки» —
-   сжать → вырасти → держаться слегка увеличенным, пока тащишь. */
-@keyframes ghost-in { 0% { transform: translate(-50%, -50%) scale(.85); } 55% { transform: translate(-50%, -50%) scale(1.12); } 100% { transform: translate(-50%, -50%) scale(1.06); } }
+/* Призрак перетаскивания (общий для плиток и слоёв): появляется из руки
+   и держится немного меньше оригинала, чтобы не перекрывать цель броска. */
+@keyframes ghost-in { 0% { transform: translate(-50%, -50%) scale(.88); } 55% { transform: translate(-50%, -50%) scale(1.01); } 100% { transform: translate(-50%, -50%) scale(.96); } }
 .drag-ghost { animation: ghost-in var(--anim-pop) var(--ease-pop); }
 
 /* Десктоп: только плитки галереи слегка растут при наведении (кнопкам/слоям не нужно). */

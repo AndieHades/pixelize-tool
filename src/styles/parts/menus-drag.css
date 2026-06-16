@@ -44,7 +44,7 @@
     .drop-gap.closing { flex-basis: 0; width: 0; min-width: 0; height: 0; min-height: 0; }
     /* Единый ghost: клон перетаскиваемого объекта под курсором. */
     .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: 1;
-      transform: translate(-50%, -50%) scale(1.06); box-shadow: var(--win-shadow); border-radius: var(--r-xl); }
+      transform: translate(-50%, -50%) scale(.96); box-shadow: var(--win-shadow); border-radius: var(--r-xl); }
     .reorder-ghost { position: fixed; z-index: 300; pointer-events: none; opacity: .9;
       transform: translate(-50%, -50%) scale(1.12); box-shadow: var(--win-shadow); }
     /* Ghost пачки: дополнительные карточки видны только при переносе нескольких элементов. */

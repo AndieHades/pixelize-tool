@@ -62,6 +62,7 @@ const gallery = await import('../src/systems/gallery/index.js');
 const newCanvas = await import('../src/systems/new-canvas.js');
 const { attachDrag: attachGalleryDrag } = await import('../src/systems/gallery/drag.js');
 const { makeDropGap } = await import('../src/core/drop-gap.js');
+const { dragGhost } = await import('../src/core/drag-ghost.js');
 const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
@@ -992,6 +993,20 @@ await ta('drop-gap: открывается после задержки и отд
     await new Promise((resolve) => setTimeout(resolve, 220));
     assert.equal(box.querySelector('.drop-gap'), null);
   } finally { gap.remove(); box.remove(); }
+});
+t('drag-ghost: клон плитки галереи сохраняет размер превью', () => {
+  const tile = document.createElement('div'), thumb = document.createElement('div');
+  tile.className = 'gal-tile dragging source-gap'; thumb.className = 'gal-thumb'; tile.appendChild(thumb);
+  Object.defineProperty(tile, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 118, height: 176 }) });
+  Object.defineProperty(thumb, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 118, height: 118 }) });
+  const ghost = dragGhost(tile, 118, 1);
+  const el = document.body.querySelector('.drag-ghost.gal-tile');
+  assert.ok(el);
+  assert.equal(el.style.width, '118px');
+  assert.equal(el.style.getPropertyValue('--gal-tile'), '118px');
+  assert.ok(!el.classList.contains('dragging'));
+  assert.ok(!el.classList.contains('source-gap'));
+  ghost.remove();
 });
 t('new-canvas: поля размера считают относительные выражения', () => {
   newCanvas.mount(); gallery.show();

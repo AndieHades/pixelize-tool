@@ -60,7 +60,11 @@
 /* иконка папки, когда внутри нет превью */
 .gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.gal-tile.dragging { opacity: 0; pointer-events: none; }
+.gal-tile.lifting .gal-thumb { transform: scale(1.05); } /* подняли, но ещё не тащим: плитка остаётся на месте */
+.gal-tile.dragging { width: 0; opacity: 0; overflow: hidden; pointer-events: none;
+  transition: width 160ms var(--ease-out), opacity var(--anim-fast) var(--ease-out); }
+.gal-tile.dragging.source-gap { width: var(--gal-source-gap, 48px); } /* исходный слот до ухода курсора от места захвата */
+.gal-tile.dragging .gal-thumb, .gal-tile.dragging .gal-cap { visibility: hidden; }
 .gal-drop-gap { height: calc(var(--gal-tile) + 66px); min-height: calc(var(--gal-tile) + 66px); }
 .gal-drop-gap.closing { height: 0; min-height: 0; }
 .drag-ghost.gal-tile { box-shadow: none; border-radius: 0; }
