@@ -36,8 +36,6 @@ export function mount() {
       $('lay-pop').style.height = Math.max(220, Math.min(vh() - 12, h)) + 'px';
       $('lay-list').style.maxHeight = 'none'; } }); // высота окна независима от числа слоёв; список занимает свободное место
   mountMenu();
-  $('bgctx').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; $('bgctx').classList.remove('on');
-    if (b.dataset.act === 'fill') actions.run('bg.fill'); else if (b.dataset.act === 'clear') actions.run('bg.clear'); });
   mountPinch();
   bus.on('layers', layList);
   bus.on('locale', layList);

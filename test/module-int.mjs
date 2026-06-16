@@ -2222,10 +2222,13 @@ t('background: заливка/очистка/контекст-меню на вы
   const cv = document.getElementById('cv'); const prev = document.elementFromPoint; document.elementFromPoint = () => cv;
   try { actions.run('edit.dropColorAt', [2, 2, 2], 5, 5); } finally { document.elementFromPoint = prev; }
   assert.deepEqual(S.bg.color, [2, 2, 2]); // бросок цвета на холст красит фон
-  S.active = [9, 9, 9]; document.querySelector('#bgctx [data-act="fill"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.deepEqual(S.bg.color, [9, 9, 9]); // меню фона: Залить
-  document.querySelector('#bgctx [data-act="clear"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(S.bg.color, null); // меню фона: Очистить
+  S.active = [9, 9, 9];
+  let bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true })); // меню фона = общее #lctx
+  assert.ok(document.getElementById('lctx').classList.contains('on')); // то же меню, что у слоёв
+  assert.equal(document.getElementById('lctx-del').style.display, 'none'); // фон нельзя удалить — пункт скрыт
+  document.getElementById('lctx-fill').click(); assert.deepEqual(S.bg.color, [9, 9, 9]); // меню: Залить
+  bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  document.getElementById('lctx-clear').click(); assert.equal(S.bg.color, null); // меню: Очистить
   S.bgSel = false; S.bg = { color: null, visible: true };
 });
 t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
