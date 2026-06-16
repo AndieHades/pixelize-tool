@@ -32,15 +32,13 @@
 @keyframes ghost-in { 0% { transform: translate(-50%, -50%) scale(.88); } 55% { transform: translate(-50%, -50%) scale(1.01); } 100% { transform: translate(-50%, -50%) scale(.96); } }
 .drag-ghost { animation: ghost-in var(--anim-pop) var(--ease-pop); }
 
-/* Отклик плитки на нажатие: вся плитка (с подписями) чуть сжимается и сразу
-   возвращается; затем по удержанию увеличивается только картинка (.lifting). */
-/* медленный «клевок» всей плитки ВМЕСТЕ с подписью: уменьшение ~800мс (до 55%) на
-   10%, возврат ~650мс. Увеличивается потом только картинка (.lifting) — подпись нет. */
+/* «Клевок»: чуть сжимается и сразу возвращается ТОЛЬКО картинка (подпись не
+   масштабируется — иначе на ПК текст замыливается при scale); по удержанию
+   картинка увеличивается (.lifting). Уменьшение ~800мс (до 55%) на 10%, возврат ~650мс. */
 @keyframes gal-press { 0% { transform: scale(1); } 55% { transform: scale(.9); } 100% { transform: scale(1); } }
-.gal-tile.pressing { animation: gal-press 1800ms ease-in-out; }
+.gal-tile.pressing .gal-thumb { animation: gal-press 1800ms ease-in-out; }
 
-/* Десктоп: при наведении вся плитка (с подписями) чуть сжимается и сразу
-   возвращается — тот же «клевок», что при нажатии. */
+/* Десктоп: при наведении тот же «клевок» картинки (текст не трогаем). */
 @media (hover: hover) {
-  .gal-tile:hover:not(.dragging) { animation: gal-press 450ms ease-in-out; }
+  .gal-tile:hover:not(.dragging) .gal-thumb { animation: gal-press 450ms ease-in-out; }
 }
