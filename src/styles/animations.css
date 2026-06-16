@@ -36,7 +36,7 @@
    масштабируется — иначе на ПК текст замыливается при scale); по удержанию
    картинка увеличивается (.lifting). Уменьшение ~800мс (до 55%) на 10%, возврат ~650мс. */
 @keyframes gal-press { 0% { transform: scale(1); } 55% { transform: scale(.9); } 100% { transform: scale(1); } }
-.gal-tile.pressing .gal-thumb { animation: gal-press 1800ms ease-in-out; }
+.gal-tile.pressing .gal-thumb { animation: gal-press 1600ms ease-in-out; }
 
 /* Десктоп: при наведении тот же «клевок» картинки (текст не трогаем). */
 @media (hover: hover) {

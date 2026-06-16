@@ -105,7 +105,7 @@ async function tileEl(d) {
     // десктоп: «клевок» уже отыграл на hover — открываем сразу; тач: даём клевку
     // проиграться целиком (1450мс = длительность gal-press), потом открываем
     if (window.matchMedia('(hover: hover)').matches) { open(); return; }
-    tile.classList.add('pressing'); setTimeout(() => { tile.classList.remove('pressing'); open(); }, 1800);
+    tile.classList.add('pressing'); setTimeout(() => { tile.classList.remove('pressing'); open(); }, 1600);
   };
   nm.onclick = (e) => { e.stopPropagation(); if (!nm.isContentEditable) renameInline(nm, d); };
   nm.ondblclick = (e) => e.stopPropagation();
