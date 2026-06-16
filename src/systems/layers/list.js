@@ -91,8 +91,8 @@ function activeInside(f) {
 }
 
 function selectLayerRange(i) {
-  const a = Math.min(S.cur, i), b = Math.max(S.cur, i);
-  S.marked = new Set(); for (let k = a; k <= b; k++) if (k !== S.cur && S.layers[k]) S.marked.add(k);
+  const ord = [...($('lay-list')?.querySelectorAll('.lrow[data-li]') || [])].map((r) => +r.dataset.li); let a = ord.indexOf(S.cur), b = ord.indexOf(i); if (a < 0 || b < 0) { a = S.cur; b = i; ord.length = 0; } // диапазон по видимому порядку строк (учитывает папки), не по индексам массива
+  S.marked = new Set(); for (let k = Math.min(a, b); k <= Math.max(a, b); k++) { const li = ord.length ? ord[k] : k; if (li !== S.cur && S.layers[li]) S.marked.add(li); }
   S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; S.bgSel = false; layList();
 }
 

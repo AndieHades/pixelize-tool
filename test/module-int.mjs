@@ -1897,6 +1897,15 @@ t('layers-ui: Shift-клик выделяет диапазон до активн
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
   target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
   assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
+t('layers-ui: Shift-клик берёт диапазон по видимому порядку строк (с папкой)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.layers[2].fid = 1; // папка тасует видимый порядок относительно индексов массива
+  S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
+  const ord = [...document.querySelectorAll('#lay-list .lrow[data-li]')].map((r) => +r.dataset.li); // видимый порядок строк-слоёв
+  S.cur = ord[0]; layList(); // активный — верхняя видимая строка
+  [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === ord[ord.length - 1])
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по нижней строке
+  assert.deepEqual([...S.marked].sort((a, b) => a - b), ord.filter((li) => li !== ord[0]).sort((a, b) => a - b)); // выделены все строки между верхом и низом
+  S.layers[0].fid = null; S.layers[2].fid = null; S.folders = []; });
 t('layers-ui: цвет можно бросить прямо на слой', () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
   const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 1);
   const prev = document.elementFromPoint; document.elementFromPoint = () => row;
