@@ -1513,6 +1513,20 @@ t('layers-ui: ПКМ-протяжка выбирает несколько сло
     assert.ok(sel.has(0) && sel.has(1)); // оба слоя попали в выборку протяжкой ПКМ
   } finally { document.elementFromPoint = prevPoint; S.marked = new Set(); }
 });
+t('layers-ui: ПКМ-протяжка цепляет и строки эффектов', () => {
+  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }];
+  S.fxSel = new Set(); S.fxCur = null; S.marked = new Set(); layList();
+  const lrow = document.querySelector('#lay-list .lrow[data-li="0"]'), fxrow = document.querySelector('#lay-list .fxrow');
+  const prevPoint = document.elementFromPoint; document.elementFromPoint = () => fxrow;
+  try {
+    lrow.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 50 }));
+    lrow.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
+    lrow.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
+    assert.ok(S.fxSel.has(S.layers[0].effects[0])); // эффект попал в выборку протяжкой
+    assert.equal(S.cur, 0); // слой под началом протяжки тоже выбран
+  } finally { document.elementFromPoint = prevPoint; S.marked = new Set(); S.fxSel = new Set(); S.fxCur = null; S.layers[0].effects = []; }
+});
 t('layers-ui: тап по имени активного слоя — переименование, по неактивному — выбор', () => {
   resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
   const tap = (el) => { for (const type of ['pointerdown', 'pointerup', 'click']) el.dispatchEvent(new window.MouseEvent(type, { bubbles: true, button: 0, clientX: 5, clientY: 5 })); };

@@ -96,21 +96,26 @@ const rowKey = (row) => (row.dataset.li != null ? 'l' + row.dataset.li
 // если была протяжка). Строки помечаем сразу классом, состояние пишем на отпускании.
 function rmbSweep(e, el) {
   try { el.setPointerCapture(e.pointerId); } catch (err) {}
-  let moved = false; const layers = new Set(), folders = new Set();
+  let moved = false; const layers = new Set(), folders = new Set(), effects = new Set();
   const add = (row) => { if (!row) return;
     if (row.dataset.li != null) { layers.add(+row.dataset.li); row.classList.add('marked'); }
-    else if (row.dataset.fid != null) { folders.add(+row.dataset.fid); row.classList.add('marked'); } };
+    else if (row.dataset.fid != null) { folders.add(+row.dataset.fid); row.classList.add('marked'); }
+    else if (row.__eff) { effects.add(row.__eff); row.classList.add('marked'); } }; // эффекты/настройки тоже
   add(el);
   const move = (ev) => { if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) > 6) moved = true;
-    const t = document.elementFromPoint(ev.clientX, ev.clientY); add(t && t.closest ? t.closest('#lay-list .lrow') : null); };
+    const t = document.elementFromPoint(ev.clientX, ev.clientY); add(t && t.closest ? t.closest('#lay-list .lrow, #lay-list .fxrow') : null); };
   const up = () => {
     el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
     if (!moved) return; // без протяжки — обычное контекст-меню
     squelchContextMenu();
     const li = [...layers].sort((a, b) => a - b);
-    S.markedFolders = folders; S.selFolder = folders.size ? [...folders][0] : null;
-    if (li.length) { S.cur = li[li.length - 1]; S.marked = new Set(li.slice(0, -1)); } else S.marked = new Set();
-    S.fxSel.clear(); S.fxCur = null; bus.emit('layers');
+    if (li.length) S.cur = li[li.length - 1];
+    S.markedFolders = folders; S.fxSel = effects;
+    // primary (синяя строка) один: эффект → папка → слой; остальное помечается marked
+    if (effects.size) { S.fxCur = [...effects][0]; S.selFolder = null; S.marked = new Set(li); }
+    else if (folders.size) { S.selFolder = [...folders][0]; S.fxCur = null; S.marked = new Set(li); }
+    else { S.selFolder = null; S.fxCur = null; S.marked = new Set(li.slice(0, -1)); }
+    bus.emit('layers');
   };
   el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
 }
@@ -123,7 +128,7 @@ export function dragRow(el, info) {
   const targetSel = isFx ? '#lay-list .fxrow:not(.dragging), #lay-list .lrow:not(.dragging)' : '#lay-list .lrow:not(.dragging)';
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return;
-    if (e.button === 2) { if (!isFx) rmbSweep(e, el); return; } // ПКМ-протяжка — множественный выбор
+    if (e.button === 2) { rmbSweep(e, el); return; } // ПКМ-протяжка — множественный выбор (слои/папки/эффекты)
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const isTouch = e.pointerType === 'touch';
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
