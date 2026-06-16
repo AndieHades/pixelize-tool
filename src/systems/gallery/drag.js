@@ -41,13 +41,15 @@ export function attachDrag(tile, id, ctx) {
   tile.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button) return;
     if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
+    const isTouch = e.pointerType === 'touch';
+    if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
     const sx = e.clientX, sy = e.clientY, originRect = tile.getBoundingClientRect();
     let lifted = false, started = false, sourceOpen = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
     const gap = makeDropGap({ className: 'gal-drop-gap' });
     const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); };
-    const hold = setTimeout(lift, e.pointerType === 'touch' ? 250 : 1e9); // тач: долгий тап только приподнимает плитку
+    const hold = setTimeout(lift, isTouch ? 250 : 1e9); // тач: долгий тап только приподнимает плитку
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
@@ -65,7 +67,11 @@ export function attachDrag(tile, id, ctx) {
     const closeSource = () => { if (!sourceOpen) return; sourceOpen = false; dragEls.forEach((el) => el.classList.remove('source-gap')); };
     const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
     const move = (ev) => {
-      if (!started) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > DRAG_THRESHOLD) { clearTimeout(hold); begin(ev.clientX, ev.clientY); } else return; }
+      if (isTouch && (lifted || started) && ev.cancelable) ev.preventDefault();
+      if (!started) {
+        const moved = Math.hypot(ev.clientX - sx, ev.clientY - sy) > DRAG_THRESHOLD;
+        if (moved && (!isTouch || lifted)) { clearTimeout(hold); begin(ev.clientX, ev.clientY); } else return;
+      }
       ghost.move(ev.clientX, ev.clientY);
       if (sourceOpen && pointInRect(originRect, ev.clientX, ev.clientY, 10)) { gap.cancel(); resetHover('source'); return; }
       closeSource();
@@ -89,8 +95,9 @@ export function attachDrag(tile, id, ctx) {
         resetHover(gkey); gap.request(grid, pos.node, pos.after, pos.node, gkey, DROP_GAP_HOLD_MS);
       } else gap.cancel();
     };
-    const up = (ev) => { clearTimeout(hold); clearTimeout(dwell);
+    const up = () => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);
+      if (tile.hasPointerCapture && tile.hasPointerCapture(e.pointerId)) try { tile.releasePointerCapture(e.pointerId); } catch (err) {}
       if (ghost) ghost.remove(); dragEls.forEach((el) => { el.classList.remove('dragging', 'source-gap', 'lifting'); el.style.removeProperty('--gal-source-gap'); }); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
       const target = stackTo, toBack = onBack; clearMarks();
       const hadGap = gap.active, before = gap.next('.gal-tile', dragged); gap.remove();

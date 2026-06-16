@@ -976,6 +976,35 @@ await ta('gallery: drag открывает слот и отдаёт точку �
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
 });
+await ta('gallery: touch drag стартует только после поднятия плитки', async () => {
+  const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
+  grid.innerHTML = ''; back.style.display = 'none';
+  Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
+  const mk = (id, left) => { const el = document.createElement('div'); el.className = 'gal-tile'; el.dataset.id = id; el.dataset.kind = 'doc';
+    el.innerHTML = '<div class="gal-thumb"></div><div class="gal-cap"><b>' + id + '</b></div>';
+    Object.defineProperty(el, 'getBoundingClientRect', { configurable: true, value: () => ({ left, top: 0, right: left + 100, bottom: 160, width: 100, height: 160 }) });
+    grid.appendChild(el); return el; };
+  const a = mk('ta', 0), b = mk('tb', 120);
+  const prevPoint = document.elementFromPoint;
+  document.elementFromPoint = () => b;
+  const pe = (type, x, y) => { const ev = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
+    Object.defineProperty(ev, 'pointerType', { value: 'touch' }); Object.defineProperty(ev, 'pointerId', { value: 7 }); return ev; };
+  try {
+    attachGalleryDrag(a, 'ta', { gridEl: () => grid, selecting: () => false, dragIds: () => ['ta'], onBack() {}, onStack() {}, onReorder() {} });
+    a.dispatchEvent(pe('pointerdown', 10, 10));
+    a.dispatchEvent(pe('pointermove', 30, 10));
+    assert.ok(!a.classList.contains('dragging'));
+    await new Promise((resolve) => setTimeout(resolve, 280));
+    assert.ok(a.classList.contains('lifting'));
+    a.dispatchEvent(pe('pointermove', 42, 10));
+    assert.ok(a.classList.contains('dragging'));
+    a.dispatchEvent(pe('pointerup', 42, 10));
+    assert.ok(!a.classList.contains('dragging'));
+  } finally {
+    document.elementFromPoint = prevPoint; grid.innerHTML = '';
+    await new Promise((resolve) => setTimeout(resolve, 460));
+  }
+});
 await ta('drop-gap: открывается после задержки и отдаёт точку вставки', async () => {
   const box = document.createElement('div'); document.body.appendChild(box);
   const a = document.createElement('i'), b = document.createElement('i'); a.className = b.className = 'item';
