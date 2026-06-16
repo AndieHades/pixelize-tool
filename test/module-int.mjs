@@ -1861,10 +1861,17 @@ t('layers-ui: reference-кнопка синяя на выбранном referenc
   assert.ok(document.getElementById('lay-ref').classList.contains('on')); assert.equal(document.querySelectorAll('#lay-list .lref').length, 1);
   document.querySelector('#lay-list .lref').click(); layList();
   assert.equal(S.layers[0].reference, false); assert.ok(!document.getElementById('lay-ref').classList.contains('on')); });
-t('layers-ui: Ctrl-клик выделяет диапазон до активного слоя', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+t('layers-ui: Ctrl-клик выбирает слои поштучно (тумблер)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
+  const rowFor = (li) => [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === li);
+  rowFor(2).dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(S.cur, 2); assert.deepEqual([...S.marked].sort((a, b) => a - b), [0]); // 2 — активный, 0 в наборе; слой 1 НЕ выбран (не диапазон)
+  rowFor(2).dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), []); }); // повторный ctrl снимает активный, повышая оставшийся
+t('layers-ui: Shift-клик выделяет диапазон до активного слоя', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
-  target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
   assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
 t('layers-ui: цвет можно бросить прямо на слой', () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
   const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 1);

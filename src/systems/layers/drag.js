@@ -127,7 +127,7 @@ export function dragRow(el, info) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const isTouch = e.pointerType === 'touch';
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
-    const pickUp = () => { if (!e.ctrlKey && !e.metaKey && !inSelection(info)) selectGrabbed(el, info, box); }; // взятый = активный (синий)
+    const pickUp = () => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !inSelection(info)) selectGrabbed(el, info, box); }; // взятый = активный (синий); ctrl/shift — это выбор, не захват
     if (!isTouch) pickUp(); // мышь: нажал ЛКМ — взял (как зажатая кнопка)
     let started = false, lifted = false, ghost = null, blk = null, dropRow = null, dropKey = '', dropBelow = false, dropInto = false, holdTimer = null;
     const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });

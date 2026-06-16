@@ -94,6 +94,17 @@ function selectLayerRange(i) {
   S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList();
 }
 
+// ЛКМ+Ctrl — поштучный тумблер слоя, не сбрасывая выбранные папки/эффекты:
+// общий набор может смешивать слои, папки и настройки (как в палитре)
+function toggleLayerSelect(i) {
+  if (S.selFolder == null && !S.fxCur) {
+    if (i === S.cur) { if (S.marked.size) { const nx = [...S.marked][0]; S.marked.delete(nx); S.cur = nx; } } // снять активный → повысить другой
+    else if (S.marked.has(i)) S.marked.delete(i); // убрать из набора
+    else { S.marked.add(S.cur); S.cur = i; } // добавить: прежний активный → в набор, кликнутый → активный
+  } else { S.marked.delete(i); S.cur = i; S.selFolder = null; S.fxCur = null; } // папка/эффект были активны → активный теперь слой, их пометки остаются
+  layList();
+}
+
 function layerRow(L, i, depth) {
   // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
   // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
@@ -115,7 +126,8 @@ function layerRow(L, i, depth) {
     fl.addEventListener('click', (ev) => { ev.stopPropagation(); if (L.lock) toggleLock(L); else toggleAlphaLock(L); }); row.append(fl); }
   row.append(vis);
   row.addEventListener('click', (ev) => { if (layDragSquelch) return;
-    if (ev.ctrlKey || ev.metaKey) { selectLayerRange(i); return; } // ctrl/cmd-клик — диапазон от активного слоя до кликнутого
+    if (ev.ctrlKey || ev.metaKey) { toggleLayerSelect(i); return; } // ctrl/cmd-клик — поштучный выбор
+    if (ev.shiftKey) { selectLayerRange(i); return; } // shift-клик — диапазон от активного слоя до кликнутого
     S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); }); // тап — выбрать только этот слой активным
   menuGesture(row, (x, y) => { if (S.cur !== i) { S.cur = i; S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); } openLctx(x, y, 'layer', L); }, '.lname');
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
