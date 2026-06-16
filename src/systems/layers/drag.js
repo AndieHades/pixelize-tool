@@ -131,10 +131,12 @@ export function dragRow(el, info) {
     if (!isTouch) pickUp(); // мышь: нажал ЛКМ — взял (как зажатая кнопка)
     let started = false, lifted = false, ghost = null, blk = null, dropRow = null, dropKey = '', dropBelow = false, dropInto = false, holdTimer = null;
     const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });
-    // тач: удержание (зажатый тап) = зажатая кнопка мыши → поднимаем строку под перенос;
-    // движение до подъёма — это скролл списка/свайп строки, не drag
+    // Подъём строки под перенос по удержанию (LIFT_MS): «взято», можно тащить в любую
+    // сторону. Тач — так список листается (быстрый сдвиг = скролл, не drag). Мышь — то же
+    // удержание показывает захват, но сдвиг начинает drag сразу (ниже). Разовый клик без
+    // удержания и без сдвига — просто выбор строки.
     const lift = () => { if (lifted || started || pinchActive()) return; lifted = true; el.classList.add('lifting'); pickUp(); }; // не поднимаем во время щипка-слияния
-    const liftTimer = setTimeout(lift, isTouch ? LIFT_MS : 1e9);
+    const liftTimer = setTimeout(lift, LIFT_MS);
 
     // Место вставки фиксируем синхронно (dropRow/dropBelow/dropInto) и читаем на
     // отпускании — зазор визуальный и раскрывается с задержкой. Центр папки/слоя
@@ -172,8 +174,7 @@ export function dragRow(el, info) {
         const far = Math.hypot(ddx, ddy) > 7;
         if (lifted) { if (!far) return; clearTimeout(liftTimer); begin(ev.clientX, ev.clientY); } // поднято — тащим в любую сторону
         else if (isTouch) { if (far) clearTimeout(liftTimer); return; } // тач без подъёма — это скролл/свайп, не drag
-        else if (far && Math.abs(ddy) >= Math.abs(ddx)) begin(ev.clientX, ev.clientY); // мышь — вертикальный порог
-        else return;
+        else { if (!far) return; clearTimeout(liftTimer); begin(ev.clientX, ev.clientY); } // мышь: сдвиг сразу начинает drag (любая сторона)
       }
       // призрак не выносим за пределы окна слоёв — иначе он «зависает»
       const pr = ($('lay-pop') || box).getBoundingClientRect();
