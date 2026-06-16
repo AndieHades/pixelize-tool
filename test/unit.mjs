@@ -426,6 +426,22 @@ t('gallery-grid: папки идут перед артами, арты newest fi
   assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['f2', 'f1', 'new', 'old']);
   assert.deepEqual(items.map((x) => x.id), ['old', 'f1', 'new', 'f2']);
 });
+t('gallery-grid: ручной order работ важнее свежего updated (перестановка не отскакивает)', () => {
+  // у работ есть order (доки создаются с order=Date.now()); перестановка двигает
+  // order, а автосейв бампает только updated — порядок должен держать order
+  const items = [
+    { id: 'a', kind: 'doc', name: 'A', order: 300, updated: 999 }, // только что отредактирован → свежий updated
+    { id: 'b', kind: 'doc', name: 'B', order: 200, updated: 100 },
+    { id: 'c', kind: 'doc', name: 'C', order: 100, updated: 50 },
+  ];
+  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['a', 'b', 'c']); // по order, не по updated
+  const moved = [
+    { id: 'a', kind: 'doc', name: 'A', order: 150, updated: 999 }, // переставили A между C и B
+    { id: 'b', kind: 'doc', name: 'B', order: 200, updated: 100 },
+    { id: 'c', kind: 'doc', name: 'C', order: 100, updated: 50 },
+  ];
+  assert.deepEqual(sortGalleryItems(moved).map((x) => x.id), ['b', 'a', 'c']); // новый order держится
+});
 
 // --- Symmetry mapper ---
 t('symmetry: expandMask зеркалит по X (лево-право)', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);

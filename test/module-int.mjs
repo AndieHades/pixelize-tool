@@ -1008,6 +1008,27 @@ await ta('gallery: touch drag стартует только после подн�
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
 });
+await ta('layers-ui: быстрый бросок слоя переставляет до раскрытия зазора', async () => {
+  resetWH(4, 4); lops.doAddLayer(); layList(); // два слоя: index1 сверху, index0 ('a') снизу
+  const rows = [...document.querySelectorAll('#lay-list .lrow')];
+  const src = rows.find((r) => r.dataset.li === '0'), tgt = rows.find((r) => r.dataset.li === '1');
+  const pop = document.getElementById('lay-pop');
+  Object.defineProperty(pop, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 200, bottom: 400 }) });
+  Object.defineProperty(tgt, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 200, bottom: 40, width: 200, height: 40 }) });
+  const prevPoint = document.elementFromPoint;
+  document.elementFromPoint = () => tgt;
+  try {
+    src.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 80 }));
+    src.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 10 })); // вертикальный — старт драга + наведение на верхнюю строку
+    assert.ok(src.classList.contains('dragging'));
+    src.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 50, clientY: 10 })); // отпускаем сразу, зазор ещё не раскрылся
+    assert.equal(S.layers[1].name, 'a'); // слой 'a' переставлен наверх
+  } finally {
+    document.elementFromPoint = prevPoint;
+    delete pop.getBoundingClientRect; // вернуть прототипную реализацию для следующих тестов
+    await new Promise((resolve) => setTimeout(resolve, 320));
+  }
+});
 await ta('drop-gap: открывается после задержки и отдаёт точку вставки', async () => {
   const box = document.createElement('div'); document.body.appendChild(box);
   const a = document.createElement('i'), b = document.createElement('i'); a.className = b.className = 'item';

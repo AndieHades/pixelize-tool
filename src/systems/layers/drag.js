@@ -66,21 +66,23 @@ export function dragRow(el, info) {
   el.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
-    let started = false, ghost = null, dropRow = null, dropKey = '', holdTimer = null;
+    let started = false, ghost = null, dropRow = null, dropKey = '', dropBelow = false, dropInto = false, holdTimer = null;
     const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });
 
-    // Зазор открывается сразу на любой строке: над строкой или под строкой
-    // (единственный способ встать ниже самой нижней).
-    // Над папкой после FOLDER_HOLD_MS добавляется drop-into (синий) — gap НЕ
-    // закрываем, иначе папка съезжает и выскальзывает из-под курсора.
+    // Место вставки фиксируем синхронно (dropRow/dropBelow/dropInto) и читаем
+    // его на отпускании — зазор (gap) только визуальный и раскрывается с
+    // задержкой, поэтому опираться на gap.active нельзя: быстрый бросок до
+    // раскрытия зазора иначе ничего не делает.
+    // Над папкой после FOLDER_HOLD_MS добавляется drop-into (синий) — до этого
+    // момента отпускание над папкой работает как обычная перестановка рядом.
     const setDrop = (row, zone) => {
       const into = row.classList.contains('frow') && zone.zone === 'center' && canIntoFolder(info, +row.dataset.fid);
       const below = zone.after, key = row.dataset.li + ':' + row.dataset.fid + ':' + (into ? 'center' : (below ? 'after' : 'before'));
       if (key === dropKey) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
       if (dropRow) dropRow.classList.remove('drop-into');
-      dropRow = row; dropKey = key;
-      if (into) { gap.cancel(); holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS); return; }
+      dropRow = row; dropKey = key; dropBelow = below; dropInto = false;
+      if (into) { gap.cancel(); holdTimer = setTimeout(() => { row.classList.add('drop-into'); dropInto = true; }, FOLDER_HOLD_MS); return; }
       gap.request(box, row, below, row, key, DROP_GAP_HOLD_MS);
     };
 
@@ -118,11 +120,11 @@ export function dragRow(el, info) {
       if (holdTimer) clearTimeout(holdTimer);
       if (ghost) ghost.remove();
       box.querySelectorAll('.dragging').forEach((r) => r.classList.remove('dragging'));
-      const intoEl = box.querySelector('.drop-into'), target = intoEl || (gap.active ? gap.target : null), below = !intoEl && gap.after;
+      const target = dropRow, into = dropInto, below = !into && dropBelow;
       box.querySelectorAll('.drop-into').forEach((r) => r.classList.remove('drop-into'));
       gap.remove();
       if (!started) return; setSquelch(true); setTimeout(() => setSquelch(false), 0);
-      if (target) { layDrop(info, target, !!intoEl, below);
+      if (target) { layDrop(info, target, into, below);
         const dropped = $('lay-list').querySelector('.lrow[data-li="' + S.cur + '"]');
         if (dropped) { dropped.classList.add('dropped'); dropped.addEventListener('animationend', () => dropped.classList.remove('dropped'), { once: true }); } }
     };
