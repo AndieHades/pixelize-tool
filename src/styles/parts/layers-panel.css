@@ -102,4 +102,17 @@
     /* перестановка кнопок панелей (как цвета в палитре) */
     .pbtn.reordering, .lay-action-btn.reordering { opacity: .3; }
 
+    /* Фон-слой Background: всегда внизу, отделён отступом и тонкой линией; свотч
+       вместо миниатюры (показывает цвет или прозрачность). Не перетаскивается,
+       отдельный класс (не .lrow) — не попадает в выборку/drag/ПКМ-протяжку. */
+    .bgrow { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 8px;
+      border-radius: var(--r-lg); cursor: pointer; background: var(--row); margin-top: 12px; }
+    .bgrow::before { content: ''; position: absolute; left: 8px; right: 8px; top: -7px; height: 1px; background: var(--line); }
+    .bgrow.on { background: var(--accent); color: var(--on-accent); }
+    .bgrow.on .lname, .bgrow.on .eye { color: var(--on-accent); }
+    .bg-sw { width: 40px; height: 40px; border-radius: var(--r-md); border: 1px solid var(--line); flex: none; }
+    .bg-sw.transparent { background-color: var(--surface);
+      background-image: linear-gradient(45deg, var(--line) 25%, transparent 0), linear-gradient(-45deg, var(--line) 25%, transparent 0), linear-gradient(45deg, transparent 75%, var(--line) 0), linear-gradient(-45deg, transparent 75%, var(--line) 0);
+      background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0; }
+
 

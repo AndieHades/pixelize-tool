@@ -18,6 +18,7 @@ function record() {
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
     layers: S.layers.map((L) => cloneLayer(L)),
+    bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
     folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })), palette: S.palette.map((p) => p.slice()), active: S.active.slice(), colorMode: S.colorMode || 'rgba',
     preview: c.toDataURL('image/png'), order: Date.now(), updated: Date.now() };
 }
@@ -31,6 +32,7 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   S.layers.forEach((L) => { if (!L.effects) L.effects = []; L.reference = !!L.reference; }); S.folders.forEach((f) => { if (!f.effects) f.effects = []; }); // старые проекты без эффектов/reference
   // folderSeq всегда впереди реальных id — иначе новые папки могут получить чужой id (старые проекты)
   S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
+  S.bg = rec.bg ? { color: rec.bg.color ? rec.bg.color.slice() : null, visible: rec.bg.visible !== false } : { color: null, visible: true }; S.bgSel = false;
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.docName = rec.name; S.colorMode = rec.colorMode || 'rgba'; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null;
@@ -41,12 +43,11 @@ function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder
   S.colorMode = colorMode; S.palette = colorMode === 'grayscale' ? grayscalePalette() : defaultPalette();
   S.active = colorMode === 'grayscale' ? S.palette[S.palette.length - 1].slice() : S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
   S.shading = { colors: [], on: false, open: false, picking: false };
+  S.bg = { color: null, visible: true }; S.bgSel = false;
   S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null; }
 
-function fillBackground(color) { if (!color) return;
-  for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) S.layers[0].grid[y][x] = [color[0], color[1], color[2], 255]; }
-
-export function newWork(w, h, name, bg = null, colorMode = 'rgba') { blankWork(w, h, name, colorMode); fillBackground(bg);
+export function newWork(w, h, name, bg = null, colorMode = 'rgba') { blankWork(w, h, name, colorMode);
+  S.bg = { color: bg ? bg.slice(0, 3) : null, visible: true }; // выбранный при создании цвет → фон-слой Background (не пиксели слоя)
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('fit'); saveCurrent(); }
 
 export function newWorkFromImage(w, h, data, name) { blankWork(w, h, name);

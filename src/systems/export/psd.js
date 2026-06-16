@@ -31,7 +31,7 @@ export const PSD = {
   // один файл со всей структурой слоёв/папок
   encodeLayered(doc, base) {
     const layers = []; emit(doc.root, layers);
-    const comp = splitChannels(flattenNodes(doc.root, false), S.W, S.H);
+    const comp = splitChannels(flattenNodes(doc.root, false, true), S.W, S.H);
     return Promise.resolve({ name: base + '.psd', blob: writePsd({ W: S.W, H: S.H, layers, comp }), mime: this.mime, desc: this.desc });
   },
   // одиночный склеенный canvas → однослойный PSD (для flattened/separate)

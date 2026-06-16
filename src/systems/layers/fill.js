@@ -40,6 +40,10 @@ export function dropColorAtLayer(color, clientX, clientY) {
     S.fxCur = fxrow.__eff; S.fxSel = new Set([fxrow.__eff]);
     actions.run('color.used', color); dirtyAll(); bus.emitDoc(); return true;
   }
+  const bgr = el && el.closest ? el.closest('#lay-list [data-bg]') : null;
+  if (bgr) { snapshot(); S.bg.color = [color[0], color[1], color[2]]; S.bg.visible = true; // залить фон-слой любым цветом
+    actions.run('color.used', color); S.bgSel = true; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
+    dirtyAll(); bus.emitDoc(); return true; }
   const row = el && el.closest ? el.closest('#lay-list .lrow[data-li], #lay-list .lrow[data-fid]') : null;
   if (!row) return false;
   if (row.dataset.li != null) return fillLayerRefs([S.layers[+row.dataset.li]], color);

@@ -20,10 +20,18 @@ function fxGroups(opt) { const res = [];
     if (top >= 0) res.push({ f, bottom, top }); }
   return res; }
 
-// opt0: { include(i), showHidden } — по умолчанию весь видимый стек (видимый рендер).
+// фон-слой Background: плоская заливка под всем стеком (если задан цвет и видим)
+function paintBackground(ctx) {
+  if (!S.bg || !S.bg.visible || !S.bg.color) return;
+  ctx.globalAlpha = 1; ctx.fillStyle = `rgb(${S.bg.color[0]},${S.bg.color[1]},${S.bg.color[2]})`;
+  ctx.fillRect(0, 0, S.W, S.H);
+}
+
+// opt0: { include(i), showHidden, bg } — по умолчанию весь видимый стек (видимый рендер).
 export function paintStack(ctx, live, opt0 = {}) {
   const opt = { inc: opt0.include || (() => true), showHidden: !!opt0.showHidden };
   const vis = (i) => opt.inc(i) && (opt.showHidden || effVis(i));
+  if (opt0.bg) paintBackground(ctx);
   const iox = live && S.cropMode ? S.cropMode.idx : 0, ioy = live && S.cropMode ? S.cropMode.idy : 0;
   const groups = fxGroups(opt);
   const drawC = (c) => { if (c) { ctx.globalAlpha = 1; ctx.drawImage(c, iox, ioy); } };

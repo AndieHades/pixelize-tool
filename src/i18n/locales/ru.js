@@ -77,7 +77,7 @@ export const ru = {
   'menu.ungroup': 'Расформировать папку',
   'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…',
   'menu.deleteLayer': 'Удалить слой', 'menu.deleteFolder': 'Удалить папку',
-  'layer.name': 'Слой', 'folder.name': 'Папка', 'layer.imageName': 'Картинка', 'layer.pasteName': 'Вставка', 'layer.copySuffix': 'копия', // имена по умолчанию для новых слоёв/папок
+  'layer.name': 'Слой', 'folder.name': 'Папка', 'layer.imageName': 'Картинка', 'layer.pasteName': 'Вставка', 'layer.copySuffix': 'копия', 'layer.background': 'Фон', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Тема', 'ui.language': 'Язык', 'ui.settings': 'Настройки', 'ui.lightTheme': 'Светлая тема',
   'brsz.key': 'Клавиша размера кисти', 'brsz.dir': 'Направление изменения', 'brsz.sens': 'Чувствительность', 'brsz.press': 'Нажмите клавишу…',
   'brsz.both': 'Обе оси', 'brsz.horizontal': 'Горизонталь', 'brsz.vertical': 'Вертикаль', 'brsz.low': 'Низкая', 'brsz.medium': 'Средняя', 'brsz.high': 'Высокая',

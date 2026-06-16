@@ -19,6 +19,7 @@ const ADJUST = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path 
 const INDENT = 16;
 
 function selectFx(eff, additive) {
+  S.bgSel = false;
   if (additive) { if (S.fxSel.has(eff)) { S.fxSel.delete(eff); if (S.fxCur === eff) S.fxCur = [...S.fxSel][0] || null; }
     else { S.fxSel.add(eff); S.fxCur = eff; } }
   else { S.fxSel = new Set([eff]); S.fxCur = eff; S.marked.clear(); S.markedFolders.clear(); }

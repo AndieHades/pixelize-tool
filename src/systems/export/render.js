@@ -6,10 +6,11 @@ import { layerSrcCanvas } from '../../core/layer-cache.js';
 import { makeCanvas as cv } from '../../core/canvas.js';
 import { collectIdx } from './tree.js';
 
-// склейка набора узлов в один canvas W×H (эффекты слоёв/папок и обтравка — внутри paintStack)
-export function flattenNodes(nodes, showHidden) {
+// склейка набора узлов в один canvas W×H (эффекты слоёв/папок и обтравка — внутри paintStack).
+// withBg — подложить фон-слой Background (для цельного экспорта всего документа)
+export function flattenNodes(nodes, showHidden, withBg = false) {
   const set = collectIdx(nodes), c = cv(S.W, S.H), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-  paintStack(x, false, { include: (i) => set.has(i), showHidden });
+  paintStack(x, false, { include: (i) => set.has(i), showHidden, bg: withBg });
   return c;
 }
 

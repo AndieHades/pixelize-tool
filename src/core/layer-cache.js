@@ -75,4 +75,4 @@ export function compositeAt(x, y) { let r = 0, g = 0, b = 0, a = 0;
 
 // нарисовать все видимые слои (с эффектами и обтравкой) в произвольный 2D-контекст —
 // единственная точка композита; раскладку слой/папка/эффекты держит paintStack.
-export function compositeLayers(x) { paintStack(x, false); }
+export function compositeLayers(x) { paintStack(x, false, { bg: true }); }

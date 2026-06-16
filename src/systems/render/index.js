@@ -43,7 +43,7 @@ export function render() {
   ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
   if (buf.width !== W || buf.height !== H) { buf.width = W; buf.height = H; }
   const bx = buf.getContext('2d'); bx.imageSmoothingEnabled = false; bx.clearRect(0, 0, W, H);
-  paintStack(bx, true); // слои + эффекты слоёв/папок + живые превью move/transform/crop
+  paintStack(bx, true, { bg: true }); // фон + слои + эффекты слоёв/папок + живые превью move/transform/crop
   ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // итог клипуется холстом
   ctx.drawImage(buf, ox, oy, W * z, H * z);
   ctx.restore();

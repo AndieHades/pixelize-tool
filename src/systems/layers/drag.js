@@ -22,6 +22,7 @@ function inSelection(info) {
 // взятый ЛКМ элемент сразу становится активным (синим): данные + классы без
 // ре-рендера (полный ре-рендер уничтожил бы строку и сорвал drag)
 function selectGrabbed(el, info, box) {
+  S.bgSel = false;
   if (info.kind === 'layer') { S.cur = info.idx; S.marked = new Set(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; }
   else if (info.kind === 'folder') { S.selFolder = info.fid; S.markedFolders = new Set([info.fid]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; }
   else { S.fxSel = new Set([info.eff]); S.fxCur = info.eff; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; }

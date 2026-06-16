@@ -73,7 +73,7 @@ function effectOwner(eff) {
 // владельцев выделенных эффектов/настроек — всё уезжает в одну новую папку
 export function doGroup() {
   const layerSet = new Set(S.marked);
-  if (S.selFolder == null && !S.fxCur) layerSet.add(S.cur); // активный слой входит, только если primary именно слой
+  if (S.selFolder == null && !S.fxCur && !S.bgSel) layerSet.add(S.cur); // активный слой входит, только если primary именно слой
   const folderSet = new Set(S.markedFolders);
   for (const eff of S.fxSel) { const o = effectOwner(eff); if (!o) continue; if (o.layer != null) layerSet.add(o.layer); else folderSet.add(o.fid); }
   // папку, чей предок тоже выделен, не двигаем отдельно — она уедет вместе с ним

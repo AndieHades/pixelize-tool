@@ -16,6 +16,7 @@ import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
 import { folderLayers, folderStackPos } from './helpers.js';
 import { appendEffects } from './fx-rows.js';
+import { bgRow } from './bg-row.js';
 import { syncLayerActionButtons } from './actions-bar.js';
 
 const INDENT = 16; // отступ на уровень вложенности
@@ -76,6 +77,7 @@ function folderRow(f, depth) {
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); f.symLock = !f.symLock; sy.classList.toggle('off', f.symLock); bus.emit('render'); }); fr.append(sy); }
   fr.append(vis);
   fr.addEventListener('click', (ev) => { if (layDragSquelch) return;
+    S.bgSel = false;
     if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
       else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
     S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); }); // тап — только эта папка активна
@@ -91,12 +93,13 @@ function activeInside(f) {
 function selectLayerRange(i) {
   const a = Math.min(S.cur, i), b = Math.max(S.cur, i);
   S.marked = new Set(); for (let k = a; k <= b; k++) if (k !== S.cur && S.layers[k]) S.marked.add(k);
-  S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList();
+  S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; S.bgSel = false; layList();
 }
 
 // ЛКМ+Ctrl — поштучный тумблер слоя, не сбрасывая выбранные папки/эффекты:
 // общий набор может смешивать слои, папки и настройки (как в палитре)
 function toggleLayerSelect(i) {
+  S.bgSel = false;
   if (S.selFolder == null && !S.fxCur) {
     if (i === S.cur) { if (S.marked.size) { const nx = [...S.marked][0]; S.marked.delete(nx); S.cur = nx; } } // снять активный → повысить другой
     else if (S.marked.has(i)) S.marked.delete(i); // убрать из набора
@@ -108,10 +111,10 @@ function toggleLayerSelect(i) {
 function layerRow(L, i, depth) {
   // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
   // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
-  const isCurPrim = i === S.cur && !S.selFolder && !S.fxCur;
+  const isCurPrim = i === S.cur && !S.selFolder && !S.fxCur && !S.bgSel;
   const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
-  const nm = nameSpan(L.name, () => i === S.cur && !S.selFolder && !S.fxCur, L);
+  const nm = nameSpan(L.name, () => i === S.cur && !S.selFolder && !S.fxCur && !S.bgSel, L);
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
   if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; ar.innerHTML = CLIP_IC; row.append(ar); } // обтравка: стрелка вниз + сдвиг строки
   row.append(thumbFor(i), nm);
@@ -128,7 +131,7 @@ function layerRow(L, i, depth) {
   row.addEventListener('click', (ev) => { if (layDragSquelch) return;
     if (ev.ctrlKey || ev.metaKey) { toggleLayerSelect(i); return; } // ctrl/cmd-клик — поштучный выбор
     if (ev.shiftKey) { selectLayerRange(i); return; } // shift-клик — диапазон от активного слоя до кликнутого
-    S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); }); // тап — выбрать только этот слой активным
+    S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; S.bgSel = false; layList(); }); // тап — выбрать только этот слой активным
   menuGesture(row, (x, y) => { if (S.cur !== i) { S.cur = i; S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); } openLctx(x, y, 'layer', L); }, '.lname');
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;
 }
@@ -161,6 +164,7 @@ export function layList() {
   const box = $('lay-list'); if (!box) return; box.innerHTML = '';
   const rendered = new Set();
   appendChildren(box, null, 0, rendered);
+  box.appendChild(bgRow()); // фон-слой Background — всегда в самом низу, с отступом (CSS)
   const cur = S.layers[S.cur], op = $('lay-op'); if (op) { const v = Math.round(cur.opacity * 100); op.value = v; $('lay-opv').textContent = v + '%'; }
   syncLayerActionButtons();
 }

@@ -99,6 +99,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
@@ -107,6 +108,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
@@ -1853,12 +1855,12 @@ t('layers-ui: папка показывает количество слоёв, �
   assert.equal(full.querySelector('.fcount').textContent, '2'); assert.equal(empty.querySelector('.fcount'), null); // '· ' — в CSS (.fcount::before)
   assert.ok(S.folders.some((f) => f.id === 2));
 });
-t('layers-ui: два бара действий по 6 кнопок и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
+t('layers-ui: бары действий слоя и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
   const top = [...document.querySelectorAll('#lay-act-top > button')], bot = [...document.querySelectorAll('#lay-act-bottom > button')];
-  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']);
+  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'fx-btn', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']); // кнопка эффектов переехала сюда из тулбара
   assert.deepEqual(bot.map((b) => b.id), ['lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
   assert.equal(document.querySelector('#lay-head #lay-add'), null);
-  assert.equal(document.querySelectorAll('.lay-action-btn').length, 12);
+  assert.equal(document.querySelectorAll('.lay-action-btn').length, 13);
   S.layers[0].grid[0][0] = [9, 9, 9, 255]; document.getElementById('lay-symm').click(); assert.deepEqual(S.layers[0].grid[0][7], [9, 9, 9, 255]);
   document.getElementById('lay-alpha').click(); document.getElementById('lay-clip').click(); document.getElementById('lay-ref').click(); layList();
   assert.ok(document.getElementById('lay-alpha').classList.contains('on')); assert.ok(document.getElementById('lay-clip').classList.contains('on')); assert.ok(document.getElementById('lay-ref').classList.contains('on'));
@@ -2043,6 +2045,36 @@ t('i18n: html-шаблон не хранит локализованные fallba
   ].map((el) => el.id || el.dataset.i18nTitle || el.dataset.i18nPh || el.dataset.i18nAlt);
   assert.deepEqual(textLeaks, []);
   assert.deepEqual(attrLeaks, []);
+});
+t('background: paintStack заливает фон под слоями, скрытый — нет', () => { resetWH(4, 4);
+  S.bg = { color: [10, 20, 30], visible: true };
+  let filled = null; const mock = { globalAlpha: 1, fillStyle: '', fillRect: (x, y, w, h) => { filled = [x, y, w, h, mock.fillStyle]; }, drawImage() {} };
+  cache.compositeLayers(mock);
+  assert.deepEqual(filled.slice(0, 4), [0, 0, 4, 4]); assert.equal(filled[4], 'rgb(10,20,30)');
+  S.bg = { color: [1, 2, 3], visible: false }; let n2 = 0; cache.compositeLayers({ globalAlpha: 1, fillStyle: '', fillRect: () => { n2++; }, drawImage() {} });
+  assert.equal(n2, 0); S.bg = { color: null, visible: true };
+});
+t('background: undo восстанавливает цвет фона', () => { resetWH(4, 4);
+  S.bg = { color: [1, 1, 1], visible: true }; history.snapshot(); S.bg.color = [9, 9, 9];
+  history.doUndo(); assert.deepEqual(S.bg.color, [1, 1, 1]); S.bg = { color: null, visible: true };
+});
+t('background: строка фона внизу, выбор/глаз/заливка цветом', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  S.bg = { color: null, visible: true }; S.bgSel = false; layList();
+  let bgr = document.querySelector('#lay-list [data-bg]');
+  assert.ok(bgr && bgr.classList.contains('bgrow')); assert.equal(document.getElementById('lay-list').lastElementChild, bgr); // в самом низу
+  assert.equal(document.querySelectorAll('#lay-list .lrow[data-bg]').length, 0); // фон — не .lrow (не попадает в выборку/drag)
+  S.cur = 0; bgr.click(); assert.equal(S.bgSel, true); // выбор фона
+  document.querySelector('#lay-list .lrow[data-li]').click(); assert.equal(S.bgSel, false); // клик по слою снимает выбор фона
+  bgr = document.querySelector('#lay-list [data-bg]'); const prev = document.elementFromPoint; document.elementFromPoint = () => bgr;
+  try { assert.equal(actions.run('layer.dropColorAt', [7, 8, 9], 5, 5), true); } finally { document.elementFromPoint = prev; }
+  assert.deepEqual(S.bg.color, [7, 8, 9]); // фон залит брошенным цветом
+  document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
+  S.bg = { color: null, visible: true }; S.bgSel = false;
+});
+t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
+  S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup(); // doGroup не должен трогать фон, primary не слой
+  assert.equal(S.bgSel, true); // фон остаётся фоном (не в S.layers, не группируется)
+  S.bgSel = false;
 });
 t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
   S.folders = []; S.folderSeq = 0; S.layers = [S.layers[0], { ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) }, { ...S.layers[0], name: 'c', grid: S.layers[0].grid.map((r) => r.slice()) }]; S.cur = 0; S.marked = new Set([1, 2]);

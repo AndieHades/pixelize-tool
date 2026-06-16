@@ -74,7 +74,7 @@ export const en = {
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…',
   'menu.deleteLayer': 'Delete layer', 'menu.deleteFolder': 'Delete folder',
-  'layer.name': 'Layer', 'folder.name': 'Folder', 'layer.imageName': 'Image', 'layer.pasteName': 'Pasted', 'layer.copySuffix': 'copy', // имена по умолчанию для новых слоёв/папок
+  'layer.name': 'Layer', 'folder.name': 'Folder', 'layer.imageName': 'Image', 'layer.pasteName': 'Pasted', 'layer.copySuffix': 'copy', 'layer.background': 'Background', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Theme', 'ui.language': 'Language', 'ui.settings': 'Settings', 'ui.lightTheme': 'Light theme',
   'brsz.key': 'Brush size key', 'brsz.dir': 'Resize direction', 'brsz.sens': 'Resize sensitivity', 'brsz.press': 'Press a key…',
   'brsz.both': 'Both', 'brsz.horizontal': 'Horizontal', 'brsz.vertical': 'Vertical', 'brsz.low': 'Low', 'brsz.medium': 'Medium', 'brsz.high': 'High',

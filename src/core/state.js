@@ -37,6 +37,7 @@ const brushPrefs = loadBrushPrefs(BRUSH_DEFAULTS(), FLAGS_DEFAULT);
 export const S = {
   W: DEFAULT_DOC.w, H: DEFAULT_DOC.h, layerSeq: 1, docName: '',
   layers: [newLayer(t('layer.name') + ' 1', DEFAULT_DOC.w, DEFAULT_DOC.h)], cur: 0,
+  bg: { color: null, visible: true }, bgSel: false, // фон-слой Background: цвет (null=прозрачный) и видимость; bgSel — выбран ли он
   folders: [], folderSeq: 0, marked: new Set(), selFolder: null, markedFolders: new Set(),
   fxSel: new Set(), fxCur: null, fxDraft: null, // выделенные строки эффектов + черновик окна
 

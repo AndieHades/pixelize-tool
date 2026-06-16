@@ -44,7 +44,7 @@ export async function runExport(opts) {
     const list = separateCanvases(doc.root, { ...opts, includeHidden: doc.includeHidden });
     for (const c of list) outputs.push(await fmt.encode(c.canvas, c.name));
   } else {
-    const canvas = applyBounds(flattenNodes(doc.root, doc.includeHidden), opts.canvasBounds);
+    const canvas = applyBounds(flattenNodes(doc.root, doc.includeHidden, true), opts.canvasBounds);
     outputs = [await fmt.encode(canvas, base)];
   }
   for (const o of outputs) await saveOne(o);

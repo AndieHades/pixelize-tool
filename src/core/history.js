@@ -12,6 +12,7 @@ export { cloneGrid }; // канон — в logic/raster.js; реэкспорт �
 
 function snapState() {
   return { cur: S.cur, W: S.W, H: S.H, folderSeq: S.folderSeq, folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })),
+    bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
     layers: S.layers.map((L) => cloneLayer(L)) };
 }
 
@@ -21,6 +22,7 @@ export function snapshot() { S.undoStack.push(snapState());
   S.redoStack.length = 0; bus.emit('snapshot'); }
 
 export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folders = s.folders; S.folderSeq = s.folderSeq;
+  S.bg = s.bg ? { color: s.bg.color ? s.bg.color.slice() : null, visible: s.bg.visible !== false } : { color: null, visible: true }; S.bgSel = false;
   S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); S.fxSel.clear(); S.fxCur = null;
   S.fxDraft = null;
   dirtyAll(); bus.emitDoc(); }

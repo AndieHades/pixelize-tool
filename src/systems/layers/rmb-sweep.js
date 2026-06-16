@@ -19,7 +19,7 @@ export function rmbSweep(e, el) {
   const up = () => {
     el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
     if (!moved) return; // без протяжки — обычное контекст-меню
-    squelchContextMenu();
+    squelchContextMenu(); S.bgSel = false;
     const li = [...layers].sort((a, b) => a - b);
     if (li.length) S.cur = li[li.length - 1];
     S.markedFolders = folders; S.fxSel = effects;
