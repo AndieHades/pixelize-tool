@@ -1,68 +1,16 @@
-// Перетаскивание слоёв/папок: между собой и внутрь папки (с задержкой).
+// Перетаскивание строк панели слоёв (жест): призрак, зазор, drop-into. Данные
+// переносят lay-drop.js (слои/папки) и fx-drag.js (эффекты); ПКМ-протяжка — rmb-sweep.js.
 import { S } from '../../core/state.js';
-import * as bus from '../../core/bus.js';
-import { snapshot } from '../../core/history.js';
-import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { dropZone, makeDropGap } from '../../core/drop-gap.js';
 import { DROP_GAP_HOLD_MS } from '../../config/drag-drop.js';
-import { folderChain } from '../../core/layers.js';
-import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 import { fxDrop, fxBlock } from './fx-drag.js';
-import { squelchContextMenu } from '../../core/long-press.js';
+import { dragBlock, canIntoFolder, layDrop } from './lay-drop.js';
+import { rmbSweep } from './rmb-sweep.js';
 import { FOLDER_HOLD_MS, LIFT_MS } from '../../config/timings.js';
-
-// выделение для перетаскивания: слои S.marked+S.cur + слои из выделенных папок
-export function dragBlock(srcIdx) { const sel = new Set(S.marked); sel.add(S.cur);
-  for (const fid of S.markedFolders) { const f = S.folders.find((x) => x.id === fid);
-    if (f) for (const L of folderLayers(f)) { const i = S.layers.indexOf(L); if (i >= 0) sel.add(i); } }
-  return (sel.size > 1 && (sel.has(srcIdx) || S.markedFolders.size > 0)) ? [...sel].filter((i) => S.layers[i]).sort((a, b) => a - b).map((i) => S.layers[i]) : [S.layers[srcIdx]]; }
-
-// набор папок для перетаскивания: все выделенные папки если src в их числе, иначе одна
-function dragFolderBlock(srcFid) {
-  return (S.markedFolders.has(srcFid) && S.markedFolders.size > 1)
-    ? [...S.markedFolders].map((fid) => S.folders.find((f) => f.id === fid)).filter(Boolean)
-    : [S.folders.find((f) => f.id === srcFid)].filter(Boolean); }
-
-// можно ли бросить перетаскиваемое внутрь папки fid (нельзя в себя/в своё поддерево)
-function canIntoFolder(info, fid) {
-  if (info.kind === 'layer') return true;
-  return !dragFolderBlock(info.fid).some((f) => folderChain(fid).some((x) => x.id === f.id)); }
-
-function layDrop(src, row, into, below) { const tIsFolder = row.classList.contains('frow');
-  if (src.kind === 'layer') { const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
-    const block = dragBlock(src.idx);
-    if (tL && block.includes(tL)) return;
-    const movedIdx = block.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0);
-    const restoreEmptyFolders = rememberEmptyFolderPositions(movedIdx);
-    snapshot();
-    for (const L of block) { const i = S.layers.indexOf(L); if (i >= 0) S.layers.splice(i, 1); }
-    const dstFid = tIsFolder ? (into ? tFid : null) : (tL ? tL.fid : null);
-    for (const L of block) L.fid = dstFid;
-    // список рисуется сверху вниз от большего индекса к меньшему: «над целью» = индекс цели+1, «под целью» = индекс цели
-    let dstIdx = tIsFolder ? folderInsertIndex(tFid) : S.layers.indexOf(tL) + (below ? 0 : 1); if (dstIdx < 0) dstIdx = S.layers.length;
-    S.layers.splice(dstIdx, 0, ...block); restoreEmptyFolders(); clearFolderEmptyPos(dstFid);
-    const ni = block.map((L) => S.layers.indexOf(L)).filter((i) => i >= 0); // сохранить выделение на новом месте
-    S.cur = ni[ni.length - 1]; S.marked = ni.length > 1 ? new Set(ni) : new Set(); S.markedFolders.clear(); S.selFolder = null;
-  } else { const foldersToMove = dragFolderBlock(src.fid);
-    const tL = tIsFolder ? null : S.layers[+row.dataset.li], tFid = tIsFolder ? +row.dataset.fid : null;
-    if (tIsFolder && foldersToMove.some((f) => f.id === +row.dataset.fid)) return;
-    if (foldersToMove.some((f) => (tL && folderChain(tL.fid).some((x) => x.id === f.id)) || (tFid != null && folderChain(tFid).some((x) => x.id === f.id)))) return;
-    snapshot(); const block = [];
-    for (let i = S.layers.length - 1; i >= 0; i--) if (foldersToMove.some((f) => folderChain(S.layers[i].fid).some((x) => x.id === f.id))) block.unshift(S.layers.splice(i, 1)[0]);
-    const newParent = tIsFolder ? (into ? tFid : (S.folders.find((f) => f.id === tFid)?.parent ?? null)) : (tL ? (tL.fid ?? null) : null);
-    for (const f of foldersToMove) f.parent = newParent;
-    let dstIdx; if (tIsFolder) dstIdx = folderInsertIndex(tFid); else if (tL && tL.fid != null) dstIdx = topOfFolder(tL.fid) + 1; else dstIdx = (tL ? S.layers.indexOf(tL) : S.layers.length - 1) + 1;
-    dstIdx = Math.min(Math.max(dstIdx, 0), S.layers.length);
-    if (block.length) S.layers.splice(dstIdx, 0, ...block);
-    else for (const f of foldersToMove) f.emptyPos = dstIdx;
-    for (const f of foldersToMove) if (block.length) delete f.emptyPos;
-    clearFolderEmptyPos(newParent);
-    S.cur = Math.min(S.cur, S.layers.length - 1); S.markedFolders = new Set(foldersToMove.map((f) => f.id)); S.selFolder = foldersToMove[0] ? foldersToMove[0].id : null; S.marked.clear(); }
-  dirtyAll(); bus.emitDoc(); }
 
 // взят ли элемент уже в выделение — тогда тащим весь набор, не сбрасывая выбор
 function inSelection(info) {
@@ -90,35 +38,6 @@ function canIntoRow(info, row) {
 
 const rowKey = (row) => (row.dataset.li != null ? 'l' + row.dataset.li
   : row.dataset.fid != null ? 'f' + row.dataset.fid : 'e' + row.dataset.fxuid);
-
-// ПКМ-удержание с протяжкой по строкам (десктоп) → множественный выбор слоёв/
-// папок. Короткое ПКМ без движения остаётся контекст-меню (его подавляем только
-// если была протяжка). Строки помечаем сразу классом, состояние пишем на отпускании.
-function rmbSweep(e, el) {
-  try { el.setPointerCapture(e.pointerId); } catch (err) {}
-  let moved = false; const layers = new Set(), folders = new Set(), effects = new Set();
-  const add = (row) => { if (!row) return;
-    if (row.dataset.li != null) { layers.add(+row.dataset.li); row.classList.add('marked'); }
-    else if (row.dataset.fid != null) { folders.add(+row.dataset.fid); row.classList.add('marked'); }
-    else if (row.__eff) { effects.add(row.__eff); row.classList.add('marked'); } }; // эффекты/настройки тоже
-  add(el);
-  const move = (ev) => { if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) > 6) moved = true;
-    const t = document.elementFromPoint(ev.clientX, ev.clientY); add(t && t.closest ? t.closest('#lay-list .lrow, #lay-list .fxrow') : null); };
-  const up = () => {
-    el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
-    if (!moved) return; // без протяжки — обычное контекст-меню
-    squelchContextMenu();
-    const li = [...layers].sort((a, b) => a - b);
-    if (li.length) S.cur = li[li.length - 1];
-    S.markedFolders = folders; S.fxSel = effects;
-    // primary (синяя строка) один: эффект → папка → слой; остальное помечается marked
-    if (effects.size) { S.fxCur = [...effects][0]; S.selFolder = null; S.marked = new Set(li); }
-    else if (folders.size) { S.selFolder = [...folders][0]; S.fxCur = null; S.marked = new Set(li); }
-    else { S.selFolder = null; S.fxCur = null; S.marked = new Set(li.slice(0, -1)); }
-    bus.emit('layers');
-  };
-  el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
-}
 
 // Единый drag всех строк панели (слой/папка/эффект/настройка): призрак на курсоре
 // + раздвигающийся зазор над/под целью; центр папки/слоя по выдержке → drop-into

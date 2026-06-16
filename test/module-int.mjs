@@ -1999,6 +1999,23 @@ t('layers-ui: плюс на активной папке создаёт акти�
 t('layers-ui: плюс на видимом слое папки создаёт слой в этой папке', () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0; S.selFolder = null;
   lops.doAddLayer(); assert.equal(S.cur, 1); assert.equal(S.layers[S.cur].fid, 1); });
+t('layers-ui: группа уносит в папку и слои, и папки, и эффекты', () => { resetWH(8, 8);
+  const mk = (name, fid = null, effects = []) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects });
+  const eff = { id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#fff' } };
+  // top-слой с эффектом, отдельный слой 'x', и папка G(1) со слоем 'in'
+  S.layers = [mk('in', 1), mk('x'), mk('top', null, [eff])];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.folderSeq = 1;
+  // смешанное выделение: слой 'x' (marked) + папка G + эффект слоя top
+  S.cur = 1; S.marked = new Set([1]); S.markedFolders = new Set([1]); S.selFolder = 1; S.fxSel = new Set([eff]); S.fxCur = eff;
+  lops.doGroup();
+  const nf = S.folders.find((f) => f.id !== 1); // новая папка
+  assert.ok(nf); assert.equal(nf.parent ?? null, null);
+  assert.equal(S.layers.find((L) => L.name === 'x').fid, nf.id); // слой 'x' внутри новой папки
+  assert.equal(S.layers.find((L) => L.name === 'top').fid, nf.id); // владелец выделенного эффекта тоже внутри
+  assert.equal(S.folders.find((f) => f.id === 1).parent, nf.id); // папка G вложена в новую
+  assert.equal(S.layers.find((L) => L.name === 'in').fid, 1); // слой папки G остался в G (которая теперь в новой)
+  S.folders = []; S.layers.forEach((L) => { L.fid = null; L.effects = []; }); S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null; S.fxSel = new Set(); S.fxCur = null;
+});
 t('i18n: новые слой/папка получают имя из текущей локали', () => { resetWH(8, 8);
   i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer')); // англ. локаль → «Layer N»
   S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));

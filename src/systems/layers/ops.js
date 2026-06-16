@@ -10,7 +10,7 @@ import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { folderChain } from '../../core/layers.js';
 import { localeValues } from '../../i18n/index.js';
-import { folderLayers, topOfFolder, commonParent, selectedIdx, nextFolderId, uniqueFolderName, nextFolderName, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
+import { folderLayers, topOfFolder, selectedIdx, nextFolderId, uniqueFolderName, nextFolderName, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function nextLayerName() {
@@ -63,13 +63,38 @@ function activeAfterDelete(idx) {
   return () => { S.cur = target && S.layers.includes(target) ? S.layers.indexOf(target) : 0; };
 }
 
-export function doGroup() { const idx = selectedIdx(); // сгруппировать всё выделенное (активный + отмеченные)
-  snapshot(); const parent = commonParent(idx.map((i) => S.layers[i])); // вложить в общую папку, если она одна
+function effectOwner(eff) {
+  for (let i = 0; i < S.layers.length; i++) if ((S.layers[i].effects || []).includes(eff)) return { layer: i };
+  for (const f of S.folders) if ((f.effects || []).includes(eff)) return { fid: f.id };
+  return null;
+}
+
+// сгруппировать ВСЁ выделенное: слои (активный + отмеченные), выделенные папки и
+// владельцев выделенных эффектов/настроек — всё уезжает в одну новую папку
+export function doGroup() {
+  const layerSet = new Set(S.marked);
+  if (S.selFolder == null && !S.fxCur) layerSet.add(S.cur); // активный слой входит, только если primary именно слой
+  const folderSet = new Set(S.markedFolders);
+  for (const eff of S.fxSel) { const o = effectOwner(eff); if (!o) continue; if (o.layer != null) layerSet.add(o.layer); else folderSet.add(o.fid); }
+  // папку, чей предок тоже выделен, не двигаем отдельно — она уедет вместе с ним
+  const folders = [...folderSet].map((id) => S.folders.find((f) => f.id === id)).filter(Boolean)
+    .filter((f) => !folderChain(f.parent ?? null).some((x) => folderSet.has(x.id)));
+  const inSelFolder = (i) => folderChain(S.layers[i].fid).some((x) => folderSet.has(x.id)); // слой внутри выделенной папки едет с ней
+  const idx = [...layerSet].filter((i) => S.layers[i] && !inSelFolder(i)).sort((a, b) => a - b);
+  if (!idx.length && !folders.length) return;
+  snapshot();
+  const parents = new Set([...idx.map((i) => S.layers[i].fid ?? null), ...folders.map((f) => f.parent ?? null)]);
+  const parent = parents.size === 1 ? [...parents][0] : null; // всё из одной папки → вложим туда
   const id = nextFolderId(); const f = { id, name: nextFolderName(), open: true, visible: true, symLock: false, parent, effects: [] };
-  S.folders.push(f); const moved = [];
+  S.folders.push(f);
+  for (const sf of folders) sf.parent = id; // выделенные папки вкладываем в новую
+  const moved = [];
   for (let j = idx.length - 1; j >= 0; j--) moved.unshift(S.layers.splice(idx[j], 1)[0]);
-  moved.forEach((L) => { L.fid = f.id; }); clearFolderEmptyPos(f.id); S.layers.splice(idx[0], 0, ...moved);
-  S.cur = idx[0] + moved.length - 1; S.marked.clear(); dirtyAll(); bus.emitDoc(); toast(t('toast.folderCreated')); }
+  moved.forEach((L) => { L.fid = id; }); clearFolderEmptyPos(id);
+  const at = idx.length ? idx[0] : S.layers.length; S.layers.splice(at, 0, ...moved);
+  S.cur = moved.length ? at + moved.length - 1 : Math.min(S.cur, S.layers.length - 1);
+  S.marked.clear(); S.markedFolders = new Set(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emitDoc(); toast(t('toast.folderCreated')); }
 
 export function duplicateLayer(L) { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
   const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
