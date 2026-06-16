@@ -39,14 +39,18 @@ export function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, cw, chh);
   const z = S.view.zoom, ox = S.view.ox, oy = S.view.oy;
+  // Tile Mode: холст рисуется 3×3 со смещениями ±W·z/±H·z (бесшовный повтор)
+  const tile = !!(S.tile && S.tile.on), tw = W * z, th = H * z, rng = tile ? [-1, 0, 1] : [0];
+  const bx0 = ox - (tile ? tw : 0), by0 = oy - (tile ? th : 0), bw = tw * (tile ? 3 : 1), bh = th * (tile ? 3 : 1);
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2; // = --win-shadow: одинаковая тень во всём приложении
-  ctx.fillStyle = C.doc; ctx.fillRect(ox, oy, W * z, H * z); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
+  ctx.fillStyle = C.doc; ctx.fillRect(bx0, by0, bw, bh); ctx.restore(); // холст — ровный серый без шахматки (как в Procreate)
   if (buf.width !== W || buf.height !== H) { buf.width = W; buf.height = H; }
   const bx = buf.getContext('2d'); bx.imageSmoothingEnabled = false; bx.clearRect(0, 0, W, H);
   paintStack(bx, true, { bg: true }); // фон + слои + эффекты слоёв/папок + живые превью move/transform/crop
-  ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W * z, H * z); ctx.clip(); // итог клипуется холстом
-  ctx.drawImage(buf, ox, oy, W * z, H * z);
+  ctx.save(); ctx.beginPath(); ctx.rect(bx0, by0, bw, bh); ctx.clip(); // итог клипуется блоком тайлов
+  for (const j of rng) for (const i of rng) ctx.drawImage(buf, ox + i * tw, oy + j * th, tw, th);
   ctx.restore();
+  if (tile) { ctx.save(); ctx.globalAlpha = .6; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.strokeRect(ox + .5, oy + .5, tw - 1, th - 1); ctx.restore(); } // рамка исходного тайла
   if (z >= 7) drawGrid(1, 1, C.grid, W, H, ox, oy, z); // обычная попиксельная сетка
   if (S.grid && (S.grid.preview || S.grid.visible)) drawGrid(S.grid.w || 16, S.grid.h || 16, gridStroke(S.grid.color, S.grid.opacity), W, H, ox, oy, z);
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)

@@ -99,7 +99,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
@@ -108,7 +108,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
@@ -2078,6 +2078,13 @@ t('opacity: ползунок правит активную строку (пап�
   assert.ok(Math.abs(eff.opacity - 0.25) < 1e-9); // изменился эффект
   S.layers[0].effects = []; S.fxCur = null; S.fxSel = new Set(); S.folders = []; S.layers[0].fid = null;
 });
+t('tile: рисование заворачивается по модулю холста (рисуй по любому тайлу)', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
+  S.tile.on = true;
+  stamp(5, 1); assert.deepEqual(S.layers[0].grid[1][1], [5, 5, 5, 255]); // x=5 → wrap → 1
+  stamp(-1, 2); assert.deepEqual(S.layers[0].grid[2][3], [5, 5, 5, 255]); // x=-1 → wrap → 3
+  S.tile.on = false; S.layers[0].grid = blank(4, 4); stamp(5, 1);
+  assert.equal(S.layers[0].grid[1][1], null); // без tile — за пределами, ничего не пишется
+});
 t('x-mirror: зажатый X флипает маску кисти, а не дублирует мазок', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
   S.xMirror = true; stamp(0, 0); // флип симметричной кисти 1×1 не виден и НЕ создаёт зеркальную копию
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);
@@ -2097,7 +2104,7 @@ t('background: undo восстанавливает цвет фона', () => { r
   history.doUndo(); assert.deepEqual(S.bg.color, [1, 1, 1]); S.bg = { color: null, visible: true };
 });
 t('background: строка фона внизу, выбор/глаз/заливка цветом', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; layList();
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; layList();
   let bgr = document.querySelector('#lay-list [data-bg]');
   assert.ok(bgr && bgr.classList.contains('bgrow')); assert.equal(document.getElementById('lay-list').lastElementChild, bgr); // в самом низу
   assert.equal(document.querySelectorAll('#lay-list .lrow[data-bg]').length, 0); // фон — не .lrow (не попадает в выборку/drag)
@@ -2107,7 +2114,7 @@ t('background: строка фона внизу, выбор/глаз/залив�
   try { assert.equal(actions.run('layer.dropColorAt', [7, 8, 9], 5, 5), true); } finally { document.elementFromPoint = prev; }
   assert.deepEqual(S.bg.color, [7, 8, 9]); // фон залит брошенным цветом
   document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false;
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
 });
 t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
   S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup(); // doGroup не должен трогать фон, primary не слой

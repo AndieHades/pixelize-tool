@@ -37,7 +37,8 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
 }
 
 export function move(e) {
-  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const over = hx >= 0 && hy >= 0 && hx < S.W && hy < S.H; // курсор кисти — только над холстом
+  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const tile = S.tile && S.tile.on; // в Tile Mode курсор виден над всем блоком 3×3
+    const over = tile ? (hx >= -S.W && hy >= -S.H && hx < 2 * S.W && hy < 2 * S.H) : (hx >= 0 && hy >= 0 && hx < S.W && hy < S.H);
     S.hoverPx = over ? [hx, hy] : null;
     // под кистью прячем нативный crosshair — наводку рисует Brush Cursor Renderer (прицел + отпечаток)
     let cur = over ? (S.eyedrop.active || CURSOR_TOOLS.includes(S.tool) ? 'none' : 'crosshair') : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)

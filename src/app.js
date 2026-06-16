@@ -16,6 +16,7 @@ import * as brushResize from './systems/brush-resize.js';
 import * as colorPicker from './systems/color-picker.js';
 import * as toolbars from './systems/toolbars.js';
 import * as grid from './systems/grid.js';
+import * as tile from './systems/tile.js';
 import * as symmetryLines from './systems/symmetry-lines.js';
 import * as layersUI from './systems/layers/index.js';
 import * as brushLibrary from './systems/brush-library/index.js';
@@ -61,7 +62,7 @@ import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 import * as xMirror from './systems/x-mirror.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {

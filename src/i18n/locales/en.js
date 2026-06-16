@@ -24,7 +24,7 @@ export const en = {
   'lasso.new': 'New', 'lasso.add': 'Add', 'lasso.subtract': 'Subtract', 'lasso.intersect': 'Intersect', 'lasso.cancel': 'Cancel contour',
   'tool.copy': 'Copy', 'tool.cut': 'Cut', 'tool.paste': 'Paste', 'tool.deleteSel': 'Delete selection', 'tool.deselect': 'Deselect',
   'side.symmetry': 'Symmetry (S / Shift+S)', 'side.symV': 'Horizontal symmetry (S)', 'side.symH': 'Vertical symmetry (Shift+S)', 'side.symD1': 'Diagonal symmetry 45°', 'side.symD2': 'Diagonal symmetry -45°', 'side.symBoth': 'Multiple symmetry axes',
-  'side.symMove': 'Move symmetry line', 'side.symReset': 'Reset symmetry line to center', 'side.grid': 'Grid',
+  'side.symMove': 'Move symmetry line', 'side.symReset': 'Reset symmetry line to center', 'side.grid': 'Grid', 'side.tile': 'Tile Mode (seamless 3×3)',
   'side.pp': 'Pixel-perfect (P)',
   'side.stab': 'Stroke stabilization (T)', 'side.outline': 'Outline (O)', 'side.flipH': 'Flip horizontally (H)',
   'side.flipV': 'Flip vertically (V)', 'side.rotate': 'Rotate canvas 90° (R)', 'side.mono': 'Monochrome (whole image)',

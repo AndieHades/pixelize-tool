@@ -48,6 +48,7 @@ export const S = {
   xMirror: false, // зажатый X — временное горизонтальное зеркало кисти во время рисования
   symLines: { x: null, y: null, d1: null, d2: null, mode: null, hover: null },
   grid: { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true },
+  tile: { on: false }, // Tile Mode: бесшовный 3×3-повтор холста с заворотом рисования (как в Aseprite)
   lineMode: 'line', shapeTool: 'rect',
   fillShape: { rect: false, ellipse: false }, // режимы общей кнопки фигур: контур/заливка
   brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)
