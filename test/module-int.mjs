@@ -761,6 +761,21 @@ t('palette: drag ПКМ переставляет цвета', () => {
     assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
   } finally { document.elementFromPoint = oldHit; }
 });
+await ta('palette: долгий тап поднимает свотч и переставляет с зазором', async () => {
+  S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
+  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
+  const pe = (type, x) => { const ev = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: 0 });
+    Object.defineProperty(ev, 'pointerType', { value: 'touch' }); Object.defineProperty(ev, 'pointerId', { value: 5 }); return ev; };
+  try {
+    document.elementFromPoint = () => sw[2];
+    sw[0].dispatchEvent(pe('pointerdown', 0));
+    await new Promise((r) => setTimeout(r, 520)); // долгий тап → свотч поднимается
+    assert.ok(sw[0].classList.contains('lifting'));
+    document.dispatchEvent(pe('pointermove', 20));
+    document.dispatchEvent(pe('pointerup', 20));
+    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]); // цвет 0 переставлен в конец, не выделил соседей
+  } finally { document.elementFromPoint = oldHit; }
+});
 t('palette: кнопка Shading выбирает ramp без залипшего выделения палитры', () => {
   shading.clear(); S.palette = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40]]; pal.buildPalette();
   document.getElementById('shade-pick').click();

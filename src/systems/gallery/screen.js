@@ -6,6 +6,7 @@ import { childrenOf, renameItem, removeItem, createFolder, moveToFolder, duplica
 import { openWork } from './doc.js';
 import { attachDrag } from './drag.js';
 import { renderGalleryGrid } from './grid.js';
+import { reorderedIds } from '../../logic/gallery-grid.js';
 
 const FOLDER_IC = '<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.5h7A2 2 0 0 1 20.5 10v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7.5z"/></svg>';
 
@@ -110,13 +111,13 @@ async function tileEl(d) {
       if (kind === 'folder') { await moveToFolder(ids.filter((x) => x !== targetId), targetId); await render(); }
       else { const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder); await render(); editName(fid); } },
     onReorder: async (ids, beforeId) => {
-      const moving = [...gridEl().querySelectorAll('.gal-tile')].map((t) => t.dataset.id).filter((x) => ids.includes(x));
-      const items = (await childrenOf(viewFolder)).filter((x) => !ids.includes(x.id)).sort((a, b) => (b.order || 0) - (a.order || 0));
-      let orders;
-      if (!beforeId || !items.some((x) => x.id === beforeId)) { const base = (items.length ? items[items.length - 1].order : Date.now()) - 1000; orders = moving.map((_, i) => base - i * 1000); }
-      else { const i = items.findIndex((x) => x.id === beforeId), lo = items[i].order, hi = i > 0 ? items[i - 1].order : lo + 2000, step = (hi - lo) / (moving.length + 1);
-        orders = moving.map((_, k) => hi - step * (k + 1)); }
-      for (let i = 0; i < moving.length; i++) await setOrder(moving[i], orders[i]); render(); } });
+      const seq = reorderedIds(await childrenOf(viewFolder), ids, beforeId);
+      if (!seq) return;
+      // переписываем order строго по новому порядку (по убыванию): сортировка
+      // воспроизводит его точно — без дробных коллизий и рассинхрона с сеткой
+      const top = Date.now();
+      for (let i = 0; i < seq.length; i++) await setOrder(seq[i], top - i * 1000);
+      render(); } });
   return tile;
 }
 

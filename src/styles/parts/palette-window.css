@@ -24,6 +24,8 @@
     .sw.pal-sel { box-shadow: inset 0 0 0 2px var(--accent); }
     .sw.pal-sel.on { box-shadow: inset 0 0 0 2px var(--marker), inset 0 0 0 4px var(--accent); }
     #pal .sw.dragging { opacity: 0; } /* переносимые цвета остаются на месте как пустые ячейки, но не дублируются визуально */
+    #pal .sw.lifting { transform: scale(1.18); z-index: 2; box-shadow: var(--win-shadow); } /* поднят долгим тапом — обратная связь до начала переноса */
+    .palette-drop-gap { align-self: stretch; } /* слот вставки на всю высоту свотча */
     .sw.shade-sel::before { content: ""; position: absolute; left: 3px; top: 3px; width: 6px; height: 6px;
       border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px rgba(0, 0, 0, .55); pointer-events: none; }
     .sw.shade-pending { outline: 2px solid var(--accent); outline-offset: -2px; }

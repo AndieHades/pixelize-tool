@@ -10,7 +10,7 @@ import { LONG_PRESS_MS } from '../config/timings.js';
 import { dropZone, makeDropGap } from '../core/drop-gap.js';
 
 const PANEL_TARGETS = []; // нативных панелей с input[type=color] больше нет — цвет везде через наш #colpop
-let swHold = null, swX = 0, swY = 0, palDrag = null, palSquelch = false, ctxIdx = -1, ctxIdxs = [];
+let swHold = null, palDrag = null, palSquelch = false, ctxIdx = -1, ctxIdxs = [];
 let palSel = new Set(), palAnchorIdx = -1, palRef = S.palette;
 let rebuild = () => {}, setActive = () => {};
 
@@ -94,10 +94,15 @@ export function wireSwatch(b, c, idx) {
   b.addEventListener('contextmenu', (e) => e.preventDefault());
   b.addEventListener('pointerdown', (e) => {
     const movingSelection = palSel.has(idx) && palSel.size && !e.ctrlKey && !e.metaKey;
-    const moveIdxs = movingSelection ? [...palSel] : [idx], gap = makeDropGap({ className: 'palette-drop-gap', enabled: false });
-    if (e.pointerType === 'touch') { swX = e.clientX; swY = e.clientY; clearTimeout(swHold); swHold = setTimeout(() => openCtx(swX, swY, idx), LONG_PRESS_MS);
+    const moveIdxs = movingSelection ? [...palSel] : [idx], gap = makeDropGap({ className: 'palette-drop-gap' });
+    // долгий тап поднимает свотч → перестановка с видимым зазором (моб.-дружелюбно,
+    // без правой кнопки). Короткий драг при этом остаётся жестом выделения диапазона
+    // для Shading; долгий тап без переноса открывает контекст-меню (на отпускании).
+    const armLift = () => { if (palDrag && !palDrag.moved) { palDrag.lifted = true; if (!palDrag.moveSel) b.classList.add('lifting'); } };
+    if (e.pointerType === 'touch') { clearTimeout(swHold); swHold = setTimeout(armLift, LONG_PRESS_MS);
       palDrag = { b, idx, touch: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap }; }
-    else if (e.button === 0) palDrag = { b, idx, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap };
+    else if (e.button === 0) { clearTimeout(swHold); swHold = setTimeout(armLift, LONG_PRESS_MS);
+      palDrag = { b, idx, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap }; }
     else if (e.button === 2) { e.preventDefault(); palDrag = { b, idx, rmb: true, x: e.clientX, y: e.clientY, moved: false, moveSel: movingSelection, moveIdxs, gap }; } });
 }
 
@@ -105,23 +110,29 @@ function palDragMove(e) { if (!palDrag) return; const pal = $('pal'), chip = $('
   if (!palDrag.moved) { if (Math.hypot(e.clientX - palDrag.x, e.clientY - palDrag.y) <= 6) return;
     palDrag.moved = true; clearTimeout(swHold); }
   const el = document.elementFromPoint(e.clientX, e.clientY), tg = el && el.closest ? el.closest('#pal .sw:not(.plus)') : null;
-  if (palDrag.moveSel) { markMoving(palDrag.moveIdxs, true); chip.classList.add('on'); if (palDrag.moveIdxs.length > 1) chip.dataset.stack = palDrag.moveIdxs.length > 2 ? '3' : '2';
-    chip.style.background = palDrag.b.style.background; chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px';
-    if (tg) palDrag.gap.show(pal, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); return; }
-  if (!palDrag.rmb && tg && tg !== palDrag.b) { palDrag.selecting = true; palDrag.b.classList.remove('dragging'); chip.classList.remove('on'); markShadeRange(+tg.dataset.i); return; }
+  // перестановка с зазором: перенос выделения, поднятый долгим тапом свотч или правая кнопка
+  if (palDrag.moveSel || palDrag.lifted || palDrag.rmb) {
+    palDrag.reordering = true;
+    if (palDrag.moveSel) markMoving(palDrag.moveIdxs, true); else { palDrag.b.classList.remove('lifting'); palDrag.b.classList.add('dragging'); }
+    chip.classList.add('on'); chip.style.background = palDrag.b.style.background;
+    chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px';
+    if (palDrag.moveIdxs.length > 1) chip.dataset.stack = palDrag.moveIdxs.length > 2 ? '3' : '2';
+    if (tg) palDrag.gap.show(pal, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); else palDrag.gap.cancel();
+    return; }
+  // короткий левый драг — выделение диапазона цветов (для Shading)
+  if (tg && tg !== palDrag.b) { palDrag.selecting = true; palDrag.b.classList.remove('dragging'); chip.classList.remove('on'); markShadeRange(+tg.dataset.i); return; }
   if (palDrag.selecting) { if (tg) markShadeRange(+tg.dataset.i); return; }
-  if (palDrag.rmb && tg && tg !== palDrag.b) { palDrag.reordering = true; chip.classList.remove('on');
-    palDrag.b.classList.add('dragging'); palDrag.gap.show(pal, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); return; }
   palDrag.b.classList.add('dragging');
   chip.style.background = palDrag.b.style.background; chip.classList.add('on');
   chip.style.left = e.clientX + 'px'; chip.style.top = e.clientY + 'px'; }
 
 function palDragEnd(e) { if (!palDrag) return; clearTimeout(swHold);
   const d = palDrag, chip = $('paldrag'); palDrag = null; markMoving(d.moveIdxs || [d.idx], false);
-  d.b.classList.remove('dragging'); chip.classList.remove('on'); delete chip.dataset.stack; clearShadePending();
+  d.b.classList.remove('dragging', 'lifting'); chip.classList.remove('on'); delete chip.dataset.stack; clearShadePending();
   const tgt = e ? document.elementFromPoint(e.clientX, e.clientY) : null;
   const targetSw = d.gap?.target || (tgt && tgt.closest ? tgt.closest('#pal .sw:not(.plus)') : null), gapAfter = !!d.gap?.after, gapActive = !!d.gap?.active;
   d.gap?.remove();
+  if (d.lifted && !d.moved) { if (e) openCtx(e.clientX, e.clientY, d.idx); return; } // подняли долгим тапом, но не потащили → контекст-меню
   if (d.moveSel && !d.moved) { if (d.rmb) openCtx(e.clientX, e.clientY, d.idx); return; }
   if (d.moveSel) { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0);
     if (targetSw) { const r = targetSw.getBoundingClientRect();

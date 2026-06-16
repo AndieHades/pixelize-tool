@@ -26,7 +26,7 @@ import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke, stampIcon } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
-import { sortGalleryItems } from '../src/logic/gallery-grid.js';
+import { sortGalleryItems, reorderedIds } from '../src/logic/gallery-grid.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
@@ -441,6 +441,21 @@ t('gallery-grid: ручной order работ важнее свежего updat
     { id: 'c', kind: 'doc', name: 'C', order: 100, updated: 50 },
   ];
   assert.deepEqual(sortGalleryItems(moved).map((x) => x.id), ['b', 'a', 'c']); // новый order держится
+});
+t('gallery-grid: reorderedIds переставляет работу перед целью и в конец', () => {
+  const items = [
+    { id: 'a', kind: 'doc', order: 300 }, { id: 'b', kind: 'doc', order: 200 }, { id: 'c', kind: 'doc', order: 100 },
+  ];
+  assert.deepEqual(reorderedIds(items, ['a'], 'c'), ['b', 'a', 'c']); // 'a' встаёт перед 'c'
+  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'c', 'a']); // без цели → в конец
+  assert.equal(reorderedIds(items, ['zzz'], 'c'), null); // нечего двигать
+});
+t('gallery-grid: reorderedIds держит папки и работы в разных секциях', () => {
+  const items = [
+    { id: 'f1', kind: 'folder', order: 50 }, { id: 'a', kind: 'doc', order: 300 }, { id: 'b', kind: 'doc', order: 200 },
+  ];
+  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'a']); // работа переставляется только среди работ, папка не трогается
+  assert.deepEqual(reorderedIds(items, ['f1'], null), ['f1']); // папка — в своей секции
 });
 
 // --- Symmetry mapper ---

@@ -15,3 +15,17 @@ export function sortGalleryItems(items) {
     return (rank(b) - rank(a)) || byName(a, b) || byId(a, b);
   });
 }
+
+// Новый порядок секции при перестановке: перетаскиваемые (ids) встают перед
+// beforeId, либо в конец своей секции (папки и работы переставляются раздельно,
+// как в сетке). Возвращает id в финальном порядке секции (или null, если нечего
+// двигать). Вызывающий записывает строго убывающий order по этому списку.
+export function reorderedIds(items, ids, beforeId) {
+  const moving = sortGalleryItems(items.filter((x) => ids.includes(x.id)));
+  if (!moving.length) return null;
+  const isFolder = moving[0].kind === 'folder';
+  const rest = sortGalleryItems(items.filter((x) => !ids.includes(x.id) && (x.kind === 'folder') === isFolder));
+  let at = beforeId ? rest.findIndex((x) => x.id === beforeId) : -1;
+  if (at < 0) at = rest.length; // нет цели или цель другой секции → в конец
+  return [...rest.slice(0, at), ...moving, ...rest.slice(at)].map((x) => x.id);
+}
