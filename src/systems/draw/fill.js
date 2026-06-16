@@ -12,10 +12,12 @@ import { $ } from '../../core/dom.js';
 import { setCell } from './cells.js';
 
 function floodFrom(x, y) {
+  const wrap = !!(S.tile && S.tile.on);
+  if (wrap) { x = ((x % S.W) + S.W) % S.W; y = ((y % S.H) + S.H) % S.H; } // Tile Mode: точка по любому тайлу → исходный
   if (x < 0 || y < 0 || x >= S.W || y >= S.H) return;
   const g = G(), ri = referenceIndexFor(S.cur), src = ri >= 0 ? S.layers[ri].grid : g, target = src[y][x], to = S.active;
   if (src === g && eqc(target, to)) return;
-  for (const [cx, cy] of floodRegion(src, x, y, inSel)) setCell(cx, cy, to);
+  for (const [cx, cy] of floodRegion(src, x, y, inSel, wrap)) setCell(cx, cy, to);
 }
 
 // заливка с учётом симметрии: регион под точкой и его зеркала (как у кисти)
