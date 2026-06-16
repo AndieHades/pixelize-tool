@@ -1074,6 +1074,33 @@ await ta('gallery: сквозной drag через рендер+стор пер
     await new Promise((r) => setTimeout(r, 460));
   }
 });
+await ta('gallery: бросок за крайнюю плитку ставит в край (не отскок)', async () => {
+  const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
+  grid.innerHTML = ''; back.style.display = 'none';
+  Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
+  const mk = (id, left) => { const el = document.createElement('div'); el.className = 'gal-tile'; el.dataset.id = id; el.dataset.kind = 'doc';
+    el.innerHTML = '<div class="gal-thumb"></div><div class="gal-cap"><b>' + id + '</b></div>';
+    Object.defineProperty(el, 'getBoundingClientRect', { configurable: true, value: () => ({ left, top: 0, right: left + 100, bottom: 160, width: 100, height: 160 }) });
+    grid.appendChild(el); return el; };
+  const a = mk('a', 0), b = mk('b', 120); mk('c', 240);
+  let drop = null; const prevPoint = document.elementFromPoint;
+  document.elementFromPoint = () => grid; // курсор в отступе/за краем — не над плиткой
+  const ctx = { gridEl: () => grid, selecting: () => false, dragIds: (id) => [id], onBack() {}, onStack() {}, onReorder: (ids, before) => { drop = { ids, before }; } };
+  try {
+    attachGalleryDrag(a, 'a', ctx); attachGalleryDrag(b, 'b', ctx);
+    b.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 130, clientY: 20, button: 0 }));
+    b.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 480, clientY: 20, button: 0 })); // далеко вправо, за последнюю (c)
+    b.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 480, clientY: 20, button: 0 }));
+    b.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 480, clientY: 20, button: 0 }));
+    assert.deepEqual(drop, { ids: ['b'], before: null }); // встал после последней, не отскочил
+    drop = null;
+    a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 320, clientY: 20, button: 0 })); // даём начаться драгу
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 5, clientY: 20, button: 0 })); // далеко влево, перед первой (b)
+    a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 5, clientY: 20, button: 0 }));
+    assert.deepEqual(drop, { ids: ['a'], before: 'b' }); // встал перед первой оставшейся (b)
+  } finally { document.elementFromPoint = prevPoint; grid.innerHTML = ''; await new Promise((r) => setTimeout(r, 50)); }
+});
 await ta('layers-ui: быстрый бросок слоя переставляет до раскрытия зазора', async () => {
   resetWH(4, 4); lops.doAddLayer(); layList(); // два слоя: index1 сверху, index0 ('a') снизу
   const rows = [...document.querySelectorAll('#lay-list .lrow')];

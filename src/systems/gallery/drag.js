@@ -25,9 +25,15 @@ function slotFromPoint(grid, dragged, x, y) {
   const items = [...grid.querySelectorAll('.gal-tile')]
     .filter((n) => !dragged.has(n) && !n.classList.contains('dragging'))
     .map((el) => ({ el, r: el.getBoundingClientRect() }));
-  const row = items.filter((it) => y >= it.r.top && y <= it.r.bottom).sort((a, b) => a.r.left - b.r.left);
-  if (!row.length) return null;
-  if (x < row[0].r.left || x > row[row.length - 1].r.right) return null;
+  if (!items.length) return null;
+  // ряд под курсором; если курсор выше/ниже всех рядов — берём ближайший по Y,
+  // чтобы край у первой/последней плитки тоже давал точку вставки
+  const mid = (r) => (r.top + r.bottom) / 2;
+  let row = items.filter((it) => y >= it.r.top && y <= it.r.bottom);
+  if (!row.length) { const near = items.reduce((b, it) => Math.abs(mid(it.r) - y) < Math.abs(mid(b.r) - y) ? it : b);
+    row = items.filter((it) => Math.abs(it.r.top - near.r.top) < 2); }
+  row = row.sort((a, b) => a.r.left - b.r.left);
+  // за левым краем первой → перед ней; за правым краем последней → после неё (без отскока)
   for (const it of row) if (x < it.r.left + it.r.width / 2) return { node: it.el, after: false };
   return { node: row[row.length - 1].el, after: true };
 }
