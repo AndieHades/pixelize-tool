@@ -49,16 +49,17 @@ function tinted(shape, fill) {
   cx.fillStyle = fill; cx.fillRect(0, 0, cv.width, cv.height); tints.set(fill, cv); return cv;
 }
 
-function blit(ctx, cv, x, y, w, h, rot) {
-  if (!rot) { ctx.drawImage(cv, x, y, w, h); return; }
-  ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.drawImage(cv, -w / 2, -h / 2, w, h); ctx.restore();
+function blit(ctx, cv, x, y, w, h, rot, flip) {
+  if (!rot && !flip) { ctx.drawImage(cv, x, y, w, h); return; }
+  ctx.save(); ctx.translate(x + w / 2, y + h / 2); if (rot) ctx.rotate(rot); if (flip) ctx.scale(-1, 1);
+  ctx.drawImage(cv, -w / 2, -h / 2, w, h); ctx.restore();
 }
 
 // форма отпечатка реальным цветом/непрозрачностью кисти — без обводки
 function drawShape(ctx, m, left, top, z, fill, op, rot) {
   const shape = silhouette(); if (!shape || !fill) return;
   ctx.imageSmoothingEnabled = false; ctx.globalAlpha = op;
-  blit(ctx, tinted(shape, fill), left, top, m.w * z, m.h * z, rot); ctx.globalAlpha = 1;
+  blit(ctx, tinted(shape, fill), left, top, m.w * z, m.h * z, rot, S.xMirror); ctx.globalAlpha = 1; // зажатый X — превью отзеркалено по горизонтали
 }
 
 function drawRing(ctx, cx, cy, r) {

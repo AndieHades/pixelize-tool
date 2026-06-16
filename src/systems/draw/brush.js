@@ -18,7 +18,10 @@ function paintSym(x, y, erase, g, paint) {
   for (const [px, py] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) if (grainAt(g, px, py)) paint(px, py, erase);
 }
 function footprint(cx, cy, erase, m, g, paint) { const ox = m.w >> 1, oy = m.h >> 1;
-  for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) if (m.data[j * m.w + i]) paintSym(cx - ox + i, cy - oy + j, erase, g, paint); }
+  for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) {
+    const si = S.xMirror ? m.w - 1 - i : i; // зажатый X — горизонтальный флип маски кисти
+    if (m.data[j * m.w + si]) paintSym(cx - ox + i, cy - oy + j, erase, g, paint);
+  } }
 
 export function brushStampWith(x, y, tool, paint, erase = false) {
   const slider = S.brushes[tool].size, sb = S.stampBrush[tool];

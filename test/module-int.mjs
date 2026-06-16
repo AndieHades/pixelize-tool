@@ -2078,11 +2078,11 @@ t('opacity: ползунок правит активную строку (пап�
   assert.ok(Math.abs(eff.opacity - 0.25) < 1e-9); // изменился эффект
   S.layers[0].effects = []; S.fxCur = null; S.fxSel = new Set(); S.folders = []; S.layers[0].fid = null;
 });
-t('x-mirror: зажатый X отражает кисть по горизонтали', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5];
-  S.xMirror = true; stamp(0, 1); // x=0 → зеркало по центру (axisX=1.5) → x=3
-  assert.deepEqual(S.layers[0].grid[1][0], [5, 5, 5, 255]); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
-  S.xMirror = false; S.layers[0].grid = blank(4, 4); stamp(0, 0); // без X — только исходная клетка
+t('x-mirror: зажатый X флипает маску кисти, а не дублирует мазок', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
+  S.xMirror = true; stamp(0, 0); // флип симметричной кисти 1×1 не виден и НЕ создаёт зеркальную копию
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);
+  S.xMirror = false; S.layers[0].grid = blank(4, 4); stamp(3, 0); // обычный мазок справа — тоже без зеркала слева
+  assert.deepEqual(S.layers[0].grid[0][3], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][0], null);
 });
 t('background: paintStack заливает фон под слоями, скрытый — нет', () => { resetWH(4, 4);
   S.bg = { color: [10, 20, 30], visible: true };
