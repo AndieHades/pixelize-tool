@@ -62,14 +62,16 @@ function wireVis(vis, obj) {
 }
 
 function folderRow(f, depth) {
-  const isSel = S.markedFolders.has(f.id);
+  const isSel = S.markedFolders.has(f.id), isOn = f.id === S.selFolder && !S.fxCur;
+  // закрытая папка, внутри которой спрятана активная строка → мягкая голубая
+  // подсветка. При раскрытии она пропадает, а если слой глубже — подсветится
+  // следующая закрытая папка (рендерится только внешняя закрытая).
+  const hasActive = !f.open && !isOn && !isSel && containsActive(f);
   const fr = document.createElement('div'); fr.dataset.fid = f.id; fr.style.marginLeft = depth * INDENT + 'px';
-  fr.className = 'lrow frow' + (f.open ? ' open' : '') + (f.id === S.selFolder && !S.fxCur ? ' on' : isSel ? ' marked' : '');
+  fr.className = 'lrow frow' + (f.open ? ' open' : '') + (isOn ? ' on' : isSel ? ' marked' : hasActive ? ' has-active' : '');
   const car = document.createElement('button'); car.className = 'caret' + (f.open ? ' open' : ''); car.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   car.addEventListener('pointerdown', (e) => e.stopPropagation());
-  car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return;
-    if (f.open && activeInside(f)) { S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; }
-    f.open = !f.open; layList(); });
+  car.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; f.open = !f.open; layList(); }); // раскрыть/свернуть — выбор не меняем
   const nm = nameSpan(f.name, () => f.id === S.selFolder && !S.fxCur, f), cnt = folderCountSpan(f);
   const vis = document.createElement('button'); vis.className = 'eye' + (f.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, f);
   fr.append(car, nm); if (cnt) fr.append(cnt);
@@ -86,10 +88,11 @@ function folderRow(f, depth) {
   menuGesture(fr, (x, y) => openLctx(x, y, 'folder', f), '.lname'); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
 }
 
-function activeInside(f) {
-  const cur = S.layers[S.cur], layerIn = cur && folderChain(cur.fid).some((x) => x.id === f.id);
-  const folderIn = S.selFolder != null && folderChain(S.selFolder).some((x) => x.id === f.id);
-  return layerIn || folderIn;
+// активная строка (слой/выбранная вложенная папка) спрятана внутри папки f
+function containsActive(f) {
+  if (S.bgSel) return false;
+  if (!S.selFolder && !S.fxCur) { const cur = S.layers[S.cur]; if (cur && folderChain(cur.fid).some((x) => x.id === f.id)) return true; }
+  return S.selFolder != null && S.selFolder !== f.id && folderChain(S.selFolder).some((x) => x.id === f.id);
 }
 
 // ЛКМ+Ctrl — поштучный тумблер слоя, не сбрасывая выбранные папки/эффекты:

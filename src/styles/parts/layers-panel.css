@@ -81,7 +81,9 @@
     .frow .lname { font-weight: var(--fw-heading); }
     /* папка — чуть светлее обычной строки (жирное имя + каретка отличают её от слоя) */
     .frow { gap: 6px; min-height: 0; height: 26px; padding-top: 0; padding-bottom: 0; } /* ровно 50% высоты обычного слоя */
-    .frow:not(.on):not(.marked):not(.drop-into) { background: color-mix(in srgb, var(--txt) 7%, var(--row)); }
+    .frow:not(.on):not(.marked):not(.drop-into):not(.has-active) { background: color-mix(in srgb, var(--txt) 7%, var(--row)); }
+    /* закрытая папка с активной строкой внутри — мягкая голубая подсветка (не яркая, как у активной) */
+    .frow.has-active { background: color-mix(in srgb, var(--accent) 30%, var(--row)); }
 
     /* drop-into — только для папок, появляется по выдержке: насыщенный синий.
        Физический gap при этом убирается, чтобы центр папки был зоной входа. */

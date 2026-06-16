@@ -2062,10 +2062,21 @@ t('layers-ui: имя новой папки берёт минимальный с�
   ];
   lops.doGroup(); assert.equal(S.folders[S.folders.length - 1].name, 'Папка 1');
 });
-t('layers-ui: закрытая папка с активным слоем становится активной строкой', () => { resetWH(8, 8);
-  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0;
+t('layers-ui: закрытая папка с активным слоем — мягкая подсветка, активным остаётся слой', () => { resetWH(8, 8);
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0; S.selFolder = null; S.bgSel = false;
   document.getElementById('lay-pop').classList.add('on'); layList(); document.querySelector('#lay-list .frow .caret').click();
-  assert.equal(S.folders[0].open, false); assert.equal(S.selFolder, 1); assert.ok(document.querySelector('#lay-list .frow').classList.contains('on')); });
+  assert.equal(S.folders[0].open, false); assert.equal(S.selFolder, null); assert.equal(S.cur, 0); // активным остаётся слой, не папка
+  const fr = document.querySelector('#lay-list .frow');
+  assert.ok(fr.classList.contains('has-active')); assert.ok(!fr.classList.contains('on')); // мягкая голубая подсветка, не яркая
+  document.querySelector('#lay-list .frow .caret').click(); // раскрыли — слой виден, подсветка ушла
+  assert.ok(!document.querySelector('#lay-list .frow').classList.contains('has-active')); });
+t('layers-ui: вложенные закрытые папки — подсвечивается внешняя, при раскрытии следующая', () => { resetWH(8, 8);
+  S.folders = [{ id: 1, name: 'A', open: false, visible: true, parent: null, effects: [] }, { id: 2, name: 'B', open: false, visible: true, parent: 1, effects: [] }];
+  S.layers[0].fid = 2; S.cur = 0; S.selFolder = null; S.bgSel = false; document.getElementById('lay-pop').classList.add('on'); layList();
+  const frA = () => document.querySelector('#lay-list .frow[data-fid="1"]'), frB = () => document.querySelector('#lay-list .frow[data-fid="2"]');
+  assert.ok(frA().classList.contains('has-active')); assert.equal(frB(), null); // B спрятана в закрытой A → подсвечена A
+  frA().querySelector('.caret').click(); // раскрыли A → видна B (закрытая), слой в ней
+  assert.ok(!frA().classList.contains('has-active')); assert.ok(frB().classList.contains('has-active')); });
 t('layers-ui: плюс на активной папке создаёт активный верхний слой вне папки', () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: false, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.selFolder = 1; S.markedFolders = new Set([1]);
   lops.doAddLayer(); assert.equal(S.cur, S.layers.length - 1); assert.equal(S.layers[S.cur].fid, null); assert.equal(S.selFolder, null); });
