@@ -100,8 +100,11 @@ async function tileEl(d) {
   else { sub.textContent = `${d.W}×${d.H} px`; tm.textContent = relTime(d.updated); } // размеры и время — на разных строках
   cap.append(nm, sub, tm); tile.append(thumb, cap);
   thumb.onclick = (e) => { if (e.ctrlKey || e.metaKey) { rangeSelect(d.id); return; }
-    if (selecting) { toggleSelect(d.id); }
-    else if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); };
+    if (selecting) { toggleSelect(d.id); return; }
+    // открываем не сразу — даём «клевку» проиграться целиком (длительность gal-press)
+    tile.classList.add('pressing');
+    setTimeout(() => { tile.classList.remove('pressing'); if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); }, 1450);
+  };
   nm.onclick = (e) => { e.stopPropagation(); if (!nm.isContentEditable) renameInline(nm, d); };
   nm.ondblclick = (e) => e.stopPropagation();
   attachDrag(tile, d.id, { gridEl, selecting: isSelecting, dragIds,
