@@ -1876,6 +1876,15 @@ t('layers-ui: бары действий слоя и команды слоя', ()
   document.getElementById('lay-lock').click(); assert.equal(S.layers[0].lock, true); assert.ok(document.getElementById('lay-lock').classList.contains('on'));
   document.getElementById('lay-dup').click(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
   document.getElementById('lay-del').click(); assert.equal(S.layers.length, 1); });
+await ta('panels: старый порядок тулбара не утаскивает эффекты/настройки из панели слоёв', async () => {
+  const panels = await import('../src/systems/panels.js');
+  localStorage.setItem('panelOrder', JSON.stringify({ 'tb-left': ['fx-btn'], 'tb-right': [], sidebar: ['img-settings', 'bc'] }));
+  panels.mount();
+  assert.ok(document.getElementById('fx-btn').closest('#lay-act-top')); // эффекты остались в баре слоёв
+  assert.ok(document.getElementById('img-settings').closest('#lay-act-top')); // настройки остались в баре слоёв
+  assert.equal(document.querySelector('#tb-left #fx-btn'), null); // не вернулись на тулбар
+  localStorage.removeItem('panelOrder');
+});
 t('layers-ui: единственный слой не удаляется', () => { resetWH(8, 8);
   lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0);
   lops.doAddLayer(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);

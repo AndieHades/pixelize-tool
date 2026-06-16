@@ -8,6 +8,9 @@ const STORE = 'panelOrder';
 const PANELS = ['tb-left', 'tb-right', 'sidebar']; // контейнеры с переставляемыми кнопками
 const DROP = PANELS.map((id) => '#' + id).join(',');
 const ID_MIGRATIONS = { bc: 'img-settings', mono: null };
+// кнопки, переехавшие в панель слоёв (#lay-act-top): старый сохранённый порядок
+// тулбара не должен утаскивать их обратно appendChild-ом
+const MOVED_OUT = new Set(['fx-btn', 'img-settings', 'bc']);
 let squelchUntil = 0;
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
@@ -17,7 +20,8 @@ function save() { const order = {};
 
 function applySaved() { let order; try { order = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) {} if (!order) return;
   for (const id of PANELS) { const c = $(id); if (!c || !order[id]) continue;
-    for (const raw of order[id]) { const bid = Object.hasOwn(ID_MIGRATIONS, raw) ? ID_MIGRATIONS[raw] : raw;
+    for (const raw of order[id]) { if (MOVED_OUT.has(raw)) continue; // не тащим назад на тулбар кнопки, ушедшие в панель слоёв
+      const bid = Object.hasOwn(ID_MIGRATIONS, raw) ? ID_MIGRATIONS[raw] : raw;
       const b = bid && document.getElementById(bid); if (b) c.appendChild(b); } } save(); }
 
 export function mount() {
