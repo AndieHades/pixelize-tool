@@ -133,7 +133,7 @@ export function dragRow(el, info) {
     const gap = makeDropGap({ axis: 'y', className: 'layer-drop-gap' });
     // тач: удержание (зажатый тап) = зажатая кнопка мыши → поднимаем строку под перенос;
     // движение до подъёма — это скролл списка/свайп строки, не drag
-    const lift = () => { if (lifted || started) return; lifted = true; el.classList.add('lifting'); pickUp(); };
+    const lift = () => { if (lifted || started || pinchActive()) return; lifted = true; el.classList.add('lifting'); pickUp(); }; // не поднимаем во время щипка-слияния
     const liftTimer = setTimeout(lift, isTouch ? LIFT_MS : 1e9);
 
     // Место вставки фиксируем синхронно (dropRow/dropBelow/dropInto) и читаем на
