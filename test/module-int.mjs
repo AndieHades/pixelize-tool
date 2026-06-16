@@ -1906,6 +1906,26 @@ t('layers-ui: Shift-клик берёт диапазон по видимому �
     .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по нижней строке
   assert.deepEqual([...S.marked].sort((a, b) => a - b), ord.filter((li) => li !== ord[0]).sort((a, b) => a - b)); // выделены все строки между верхом и низом
   S.layers[0].fid = null; S.layers[2].fid = null; S.folders = []; });
+t('layers-ui: Shift-клик берёт диапазон всех типов строк (слой/папка/эффект), кроме фона', () => { resetWH(8, 8); lops.doAddLayer();
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [{ id: 'fe', type: 'stroke', visible: true, params: { size: 1, color: '#fff' } }] }];
+  S.layers[0].fid = 1; S.layers[0].effects = [{ id: 'le', type: 'glow', visible: true, params: {} }];
+  S.cur = 0; S.marked = new Set(); S.markedFolders = new Set(); S.fxSel = new Set(); S.fxCur = null; S.selFolder = null; S.bgSel = false;
+  document.getElementById('lay-pop').classList.add('on'); layList();
+  const first = [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')][0]; // верхняя строка — сделать её активной (любого типа)
+  if (first.dataset.li != null) { S.cur = +first.dataset.li; }
+  else if (first.dataset.fid != null) { S.selFolder = +first.dataset.fid; S.fxCur = null; }
+  else { S.fxCur = first.__eff; S.fxSel = new Set([first.__eff]); }
+  layList();
+  const r2 = [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')];
+  r2[r2.length - 1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по нижней строке
+  [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')].forEach((r) => assert.ok(r.classList.contains('on') || r.classList.contains('marked'))); // все строки между верхом и низом выбраны
+  const bg = document.querySelector('#lay-list .bgrow'); assert.ok(!bg.classList.contains('on') && !bg.classList.contains('marked')); // фон не попал в выбор
+  S.layers[0].fid = null; S.layers[0].effects = []; S.folders = []; S.markedFolders = new Set(); S.fxSel = new Set(); S.fxCur = null; S.selFolder = null; });
+t('layers-ui: активный фон не объединяется с другими (shift = одиночный выбор)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  document.getElementById('lay-pop').classList.add('on'); S.bgSel = true; S.cur = 0; S.marked = new Set(); layList(); // активен фон
+  [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2)
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по слою при активном фоне
+  assert.equal(S.bgSel, false); assert.equal(S.cur, 2); assert.equal(S.marked.size, 0); }); // фон сброшен, выбран только кликнутый слой
 t('layers-ui: цвет можно бросить прямо на слой', () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
   const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 1);
   const prev = document.elementFromPoint; document.elementFromPoint = () => row;

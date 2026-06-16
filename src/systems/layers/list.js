@@ -11,6 +11,7 @@ import { makeCanvas } from '../../core/canvas.js';
 import { C } from '../../styles/canvas-colors.js';
 import { folderChain } from '../../core/layers.js';
 import { dragRow } from './drag.js';
+import { selectRange } from './range-select.js';
 import { openLctx } from './menu.js';
 import { attachLayerSwipe } from './swipe.js';
 import { toggleLock, toggleAlphaLock, toggleReference } from './ops.js';
@@ -78,6 +79,7 @@ function folderRow(f, depth) {
   fr.append(vis);
   fr.addEventListener('click', (ev) => { if (layDragSquelch) return;
     S.bgSel = false;
+    if (ev.shiftKey && selectRange(fr)) { layList(); return; } // shift-клик — диапазон от активной строки до этой папки
     if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
       else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
     S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); }); // тап — только эта папка активна
@@ -90,16 +92,10 @@ function activeInside(f) {
   return layerIn || folderIn;
 }
 
-function selectLayerRange(i) {
-  const ord = [...($('lay-list')?.querySelectorAll('.lrow[data-li]') || [])].map((r) => +r.dataset.li); let a = ord.indexOf(S.cur), b = ord.indexOf(i); if (a < 0 || b < 0) { a = S.cur; b = i; ord.length = 0; } // диапазон по видимому порядку строк (учитывает папки), не по индексам массива
-  S.marked = new Set(); for (let k = Math.min(a, b); k <= Math.max(a, b); k++) { const li = ord.length ? ord[k] : k; if (li !== S.cur && S.layers[li]) S.marked.add(li); }
-  S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; S.bgSel = false; layList();
-}
-
 // ЛКМ+Ctrl — поштучный тумблер слоя, не сбрасывая выбранные папки/эффекты:
 // общий набор может смешивать слои, папки и настройки (как в палитре)
 function toggleLayerSelect(i) {
-  S.bgSel = false;
+  if (S.bgSel) { S.bgSel = false; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxCur = null; layList(); return; } // фон вне мультивыбора — ctrl поверх активного фона = одиночный выбор
   if (S.selFolder == null && !S.fxCur) {
     if (i === S.cur) { if (S.marked.size) { const nx = [...S.marked][0]; S.marked.delete(nx); S.cur = nx; } } // снять активный → повысить другой
     else if (S.marked.has(i)) S.marked.delete(i); // убрать из набора
@@ -130,7 +126,7 @@ function layerRow(L, i, depth) {
   row.append(vis);
   row.addEventListener('click', (ev) => { if (layDragSquelch) return;
     if (ev.ctrlKey || ev.metaKey) { toggleLayerSelect(i); return; } // ctrl/cmd-клик — поштучный выбор
-    if (ev.shiftKey) { selectLayerRange(i); return; } // shift-клик — диапазон от активного слоя до кликнутого
+    if (ev.shiftKey && selectRange(row)) { layList(); return; } // shift-клик — диапазон от активной строки до кликнутой
     S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; S.bgSel = false; layList(); }); // тап — выбрать только этот слой активным
   menuGesture(row, (x, y) => { if (S.cur !== i) { S.cur = i; S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null; layList(); } openLctx(x, y, 'layer', L); }, '.lname');
   attachLayerSwipe(row, L); dragRow(row, { kind: 'layer', idx: i }); return row;

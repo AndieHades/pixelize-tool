@@ -10,6 +10,7 @@ import { t } from '../../core/dom.js';
 import { EYE, layList, layDragSquelch } from './list.js';
 import { onDoubleTap, onContext } from '../../core/long-press.js';
 import { dragRow } from './drag.js';
+import { selectRange } from './range-select.js';
 
 let fxUid = 0; // уникальный ключ строки эффекта для дедупликации цели зазора
 
@@ -38,7 +39,9 @@ function effectRow(target, eff, depth) {
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); eff.visible = eff.visible === false;
     vis.classList.toggle('off', eff.visible === false); row.classList.toggle('fxoff', eff.visible === false); bus.emit('visibility'); bus.emit('render'); });
   row.append(star, nm, vis);
-  row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); }); // тап — выбрать
+  row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return;
+    if (e.shiftKey && selectRange(row)) { layList(); return; } // shift-клик — диапазон от активной строки до этого эффекта
+    selectFx(eff, e.ctrlKey || e.metaKey); }); // тап — выбрать
   onDoubleTap(row, () => actions.run('fx.edit', target, eff)); // быстрый двойной тап/клик — правка эффекта/настройки
   onContext(row, (x, y) => { if (!S.fxSel.has(eff)) selectFx(eff, false); actions.run('fx.menu', x, y, target, eff); }); // ПКМ — меню
   dragRow(row, { kind: 'fx', eff, owner: target }); return row;
