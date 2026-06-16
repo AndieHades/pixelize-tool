@@ -21,6 +21,7 @@ const withLayer = (fn) => { const L = curLayer(); if (L) fn(L); };
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
 function targets() {
+  if (S.bgSel) return S.layers.filter(Boolean); // выбран фон → весь документ
   const f = activeFolder(); if (f) return folderLayers(f).filter((L) => S.layers.includes(L));
   return selectedIdx().map((i) => S.layers[i]).filter(Boolean);
 }

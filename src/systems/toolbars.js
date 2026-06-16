@@ -144,7 +144,7 @@ export function mount() {
   $('flip-h').onclick = (e) => showToolChoice('flip-choice', e.currentTarget);
   $('flip-h').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('flip-choice', e.currentTarget); });
   $('rot').onclick = () => actions.run('canvas.rotate');
-  $('img-settings').onclick = () => actions.run('effect.bc', null, null, { scope: 'layer' });
+  $('img-settings').onclick = () => actions.run('effect.bc', null, null, { scope: S.bgSel ? 'canvas' : 'layer' }); // фон → весь документ, слой/папка → к выбранному
   $('trim').onclick = () => actions.run('canvas.trim');
   $('center').onclick = () => actions.run('layer.center');
 

@@ -311,6 +311,31 @@ t('eyedropper: color.setActive ставит активный цвет, не ме
 t('rotate-canvas: поворачивает содержимое без изменения размера холста', () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
   rotateCanvas(); assert.equal(S.W, 4); assert.equal(S.H, 6); assert.deepEqual(S.layers[0].ext.get('4,1'), [7, 7, 7, 255]); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
+t('flip: слой → только он, фон → весь документ', () => { resetWH(4, 4); lops.doAddLayer();
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255]; cache.dirtyAll();
+  S.cur = 1; S.marked = new Set(); S.selFolder = null; S.bgSel = false;
+  flipLayer(true); // выбран слой 1 → флипается только он
+  assert.deepEqual(S.layers[1].grid[0][3], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
+  assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]); // слой 0 не тронут
+  S.bgSel = true; flipLayer(true); // выбран фон → флипается весь документ
+  assert.deepEqual(S.layers[0].grid[0][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[0][0], [2, 2, 2, 255]);
+  S.bgSel = false;
+});
+t('symmetrize (lay-symm): фон → весь документ', () => { resetWH(4, 4); layers.mount(); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on');
+  S.sym = false; S.symH = false; S.layers[0].grid[1][0] = [1, 1, 1, 255]; S.layers[1].grid[1][0] = [2, 2, 2, 255]; cache.dirtyAll();
+  S.cur = 1; S.marked = new Set(); S.selFolder = null; S.bgSel = true; layList();
+  document.getElementById('lay-symm').click();
+  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][3], [2, 2, 2, 255]); // оба слоя отзеркалены
+  S.bgSel = false;
+});
+t('settings: фон → canvas scope, слой → layer scope', () => { resetWH(4, 4); tb.mount(); bc.mount();
+  S.bgSel = true; document.getElementById('img-settings').click();
+  assert.ok(document.querySelector('#bc-scope [data-scope="canvas"]').classList.contains('on')); // фон → весь документ
+  document.getElementById('bc-cancel').click();
+  S.bgSel = false; document.getElementById('img-settings').click();
+  assert.ok(document.querySelector('#bc-scope [data-scope="layer"]').classList.contains('on')); // слой → к выбранному
+  document.getElementById('bc-cancel').click();
+});
 t('trim: обрезает до контура и сохраняет экранный размер холста', () => { resetWH(6, 6); S.view = { zoom: 8, ox: 30, oy: 40 };
   const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
   S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);

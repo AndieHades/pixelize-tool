@@ -13,3 +13,10 @@ export function selectedLayerTargets() {
   if (!fids.size || S.marked.size) if (S.layers[S.cur]) out.add(S.layers[S.cur]);
   return [...out].filter((L) => S.layers.includes(L));
 }
+
+// цели одношаговых операций (флип/симметрия): выбран фон → весь документ (все
+// слои), иначе — выбранные слой/папка/набор (эффект/настройка → активный слой).
+export function opTargets() {
+  if (S.bgSel) return S.layers.filter(Boolean);
+  return selectedLayerTargets();
+}
