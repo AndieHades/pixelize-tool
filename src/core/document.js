@@ -100,8 +100,12 @@ export function addImageLayerTop(w, h, d, name) {
 }
 
 // сдвинуть содержимое слоя на (dx,dy); ушедшее за край — в запас ext
-export function shiftLayerGrid(L, dx, dy) { const ng = blank(S.W, S.H), ne = new Map();
-  const put = (x, y, c) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); };
+// wrap — тороидальный сдвиг (Tile Mode): уехавшее за край возвращается с другой
+// стороны, ext не копится (тайл самодостаточен).
+export function shiftLayerGrid(L, dx, dy, wrap = false) { const ng = blank(S.W, S.H), ne = new Map();
+  const put = (x, y, c) => { let nx = x + dx, ny = y + dy;
+    if (wrap) { ng[((ny % S.H) + S.H) % S.H][((nx % S.W) + S.W) % S.W] = c; return; }
+    if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); };
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = L.grid[y][x]; if (c) put(x, y, c.slice()); }
   for (const [k, c] of L.ext) { const [px, py] = parseKey(k); put(px, py, c.slice()); }
   L.grid = ng; L.ext = ne; }

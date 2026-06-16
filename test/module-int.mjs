@@ -2094,6 +2094,15 @@ t('tile: заливка заворачивается через шов', () => {
   S.tile.on = false; flood(0, 0);
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5]); assert.equal(S.layers[0].grid[0][3], null); // без tile столбец 3 не залит
 });
+t('tile: перемещение сдвигает тайл по кругу (тороидально)', () => { resetWH(4, 4);
+  S.layers[0].grid[0][3] = [7, 7, 7, 255]; cache.dirtyAll();
+  doc.shiftLayerGrid(S.layers[0], 1, 0, true); // вправо на 1 с заворотом: 3 → 0
+  assert.deepEqual(S.layers[0].grid[0][0], [7, 7, 7, 255]); assert.equal(S.layers[0].grid[0][3], null);
+  assert.equal(S.layers[0].ext.size, 0); // ничего не утекло в ext
+  resetWH(4, 4); S.layers[0].grid[0][3] = [7, 7, 7, 255];
+  doc.shiftLayerGrid(S.layers[0], 1, 0, false); // без wrap — уезжает в ext
+  assert.equal(S.layers[0].grid[0][0], null); assert.ok(S.layers[0].ext.size >= 1);
+});
 t('x-mirror: зажатый X флипает маску кисти, а не дублирует мазок', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
   S.xMirror = true; stamp(0, 0); // флип симметричной кисти 1×1 не виден и НЕ создаёт зеркальную копию
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);
