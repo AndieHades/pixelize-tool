@@ -70,7 +70,7 @@ export function attachDrag(tile, id, ctx) {
     let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
-    const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
+    const grid = ctx.gridEl(), back = $('gal-back');
     const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); };
     const hold = setTimeout(lift, isTouch ? 250 : 1e9); // тач: долгий тап только приподнимает плитку
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
@@ -83,7 +83,7 @@ export function attachDrag(tile, id, ctx) {
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
     const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; clearMarks(); };
     const setDrop = (node, after) => { dropReady = true; dropBefore = after ? nextTile(node, dragged) : node; };
-    const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
+    const canStack = (tg) => !!tg; // складывать можно на любую плитку: папку на файл, файл на папку и т.д.
     const move = (ev) => {
       if (isTouch && (lifted || started) && ev.cancelable) ev.preventDefault();
       if (!started) {

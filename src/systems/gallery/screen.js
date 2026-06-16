@@ -108,10 +108,15 @@ async function tileEl(d) {
     onBack: async (ids) => { const f = viewFolder ? await getItem(viewFolder) : null; // бросок на «назад» — на уровень выше
       await moveToFolder(ids, f ? (f.folder ?? null) : null); render(); },
     onStack: async (ids, targetId, kind) => {
-      if (kind === 'folder') { await moveToFolder(ids.filter((x) => x !== targetId), targetId); await render(); }
-      else { const tgt = await getItem(targetId); // новая папка встаёт на место файла-цели, не в начало
-        const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder, tgt ? (tgt.order ?? tgt.updated ?? Date.now()) : Date.now());
-        await render(); editName(fid); } },
+      const ord = (d) => (d ? (d.order ?? d.updated ?? Date.now()) : Date.now());
+      if (kind === 'folder') { await moveToFolder(ids.filter((x) => x !== targetId), targetId); await render(); return; } // файл/папка на папку → внутрь неё
+      const dragged = await getItem(ids[0]);
+      if (dragged && dragged.kind === 'folder') { // папку на файл → файл уходит в эту папку, папка встаёт на место файла
+        const tgt = await getItem(targetId);
+        await moveToFolder([targetId], ids[0]); await setOrder(ids[0], ord(tgt)); await render(); return; }
+      const tgt = await getItem(targetId); // файл на файл → новая папка на месте файла-цели
+      const fid = await createFolder(await nextFolderName(t('gallery.folderName')), [targetId, ...ids.filter((x) => x !== targetId)], viewFolder, ord(tgt));
+      await render(); editName(fid); },
     onReorder: async (ids, beforeId) => {
       const seq = reorderedIds(await childrenOf(viewFolder), ids, beforeId);
       if (!seq) return;
