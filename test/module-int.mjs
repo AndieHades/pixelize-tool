@@ -2215,6 +2215,19 @@ t('background: строка фона внизу, выбор/глаз/залив�
   document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
 });
+t('настройки: при нескольких слоях/выбранном эффекте идут к активному слою с превью', () => { resetWH(4, 4); bc.mount(); tb.mount(); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer();
+  S.layers[1].grid[2][2] = [120, 120, 120, 255]; S.layers[1].effects = [{ id: 99, type: 'stroke', visible: true, opacity: 1, params: { size: 1, color: '#fff' } }]; cache.dirtyAll();
+  // несколько слоёв выбрано, активна строка эффекта слоя 1 (fxCur)
+  S.cur = 1; S.marked = new Set([0]); S.selFolder = null; S.fxSel = new Set([S.layers[1].effects[0]]); S.fxCur = S.layers[1].effects[0]; S.bgSel = false; layList();
+  document.getElementById('img-settings').click();
+  assert.ok(S.fxDraft, 'создан черновик настройки (превью)'); // есть превью
+  assert.equal(S.fxDraft.target, S.layers[1]); // к активному слою (владельцу эффекта), не к эффекту
+  assert.equal(S.fxDraft.eff.type, 'adjustment');
+  document.getElementById('bc-bri').value = 40; document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.fxDraft.eff.params.brightness, 40); // слайдер обновляет черновик → живое превью
+  document.getElementById('bc-cancel').click(); assert.equal(S.fxDraft, null); // отмена убирает черновик
+  S.fxSel = new Set(); S.fxCur = null; S.layers[1].effects = [];
+});
 t('background: заливка/очистка/контекст-меню на выбранном фоне', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   S.bg = { color: null, visible: true }; S.bgSel = true; S.active = [3, 4, 5]; layList();
   actions.run('edit.floodAt', 0, 0); assert.deepEqual(S.bg.color, [3, 4, 5]); // Fill-инструмент красит фон

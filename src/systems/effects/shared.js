@@ -3,8 +3,13 @@
 import { S } from '../../core/state.js';
 import { folderById } from '../../core/layers.js';
 
-// объект, к которому привязываются новые эффекты: выбранная папка или активный слой
-export const activeTarget = () => (S.selFolder != null ? folderById(S.selFolder) : S.layers[S.cur]);
+// объект, к которому привязываются новые эффекты: если активна строка эффекта/
+// настройки — её владелец (слой/папка), не сам эффект; иначе выбранная папка или
+// активный слой. Так «добавить эффект/настройку» при выбранном эффекте идёт к слою.
+export const activeTarget = () => {
+  if (S.fxCur) { const o = ownerOf(S.fxCur); if (o) return o; }
+  return S.selFolder != null ? folderById(S.selFolder) : S.layers[S.cur];
+};
 
 // цели вставки: отмеченные слои (+активный) и выбранные папки; минимум — активная цель
 export function pasteTargets() {
