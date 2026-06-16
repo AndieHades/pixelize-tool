@@ -1039,6 +1039,38 @@ await ta('gallery: touch drag стартует только после подн�
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
 });
+await ta('gallery: сквозной drag через рендер+стор переставляет плитку', async () => {
+  const galScreen = await import('../src/systems/gallery/screen.js');
+  const store = await import('../src/systems/gallery/store.js');
+  const { saveDoc, removeDoc } = await import('../src/core/storage.js');
+  const { sortGalleryItems } = await import('../src/logic/gallery-grid.js');
+  for (const d of await store.listAll()) await removeDoc(d.id); // изолируем корень
+  await saveDoc({ id: 'e1', kind: 'doc', name: 'E1', folder: null, W: 8, H: 8, order: 300, updated: 999, preview: '' });
+  await saveDoc({ id: 'e2', kind: 'doc', name: 'E2', folder: null, W: 8, H: 8, order: 200, updated: 200, preview: '' });
+  await saveDoc({ id: 'e3', kind: 'doc', name: 'E3', folder: null, W: 8, H: 8, order: 100, updated: 100, preview: '' });
+  galScreen.configure({ onOpen: () => {} }); galScreen.goBack(); await galScreen.render();
+  const grid = document.getElementById('gal-grid');
+  const tiles = [...grid.querySelectorAll('.gal-tile')];
+  assert.deepEqual(tiles.map((t) => t.dataset.id), ['e1', 'e2', 'e3']);
+  Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 200 }) });
+  tiles.forEach((t, i) => Object.defineProperty(t, 'getBoundingClientRect', { configurable: true, value: () => ({ left: i * 120, top: 0, right: i * 120 + 100, bottom: 160, width: 100, height: 160 }) }));
+  const prevPoint = document.elementFromPoint;
+  document.elementFromPoint = (x) => tiles.find((t) => { const r = t.getBoundingClientRect(); return x >= r.left && x <= r.right; }) || grid;
+  try {
+    const a = tiles[0];
+    a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
+    await new Promise((r) => setTimeout(r, 60)); // дождаться async onReorder + render
+    const order = sortGalleryItems(await store.childrenOf(null)).map((x) => x.id);
+    assert.deepEqual(order, ['e2', 'e3', 'e1']); // e1 переставлен в конец и держится в сторе
+  } finally {
+    document.elementFromPoint = prevPoint;
+    for (const id of ['e1', 'e2', 'e3']) await removeDoc(id);
+    await new Promise((r) => setTimeout(r, 460));
+  }
+});
 await ta('layers-ui: быстрый бросок слоя переставляет до раскрытия зазора', async () => {
   resetWH(4, 4); lops.doAddLayer(); layList(); // два слоя: index1 сверху, index0 ('a') снизу
   const rows = [...document.querySelectorAll('#lay-list .lrow')];
