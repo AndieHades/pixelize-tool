@@ -63,7 +63,10 @@ export function syncLayerActionButtons() {
   on('lay-ref', L && L.reference); on('lay-lock', L && L.lock);
 }
 
+let barsBound = false;
 export function mountActionBars() {
+  if (barsBound) { wireReorder(); syncLayerActionButtons(); return; } // идемпотентно: клики вешаем один раз, иначе повторный mount дублирует обработчики
+  barsBound = true;
   $('lay-add').addEventListener('click', doAddLayer);
   $('lay-group').addEventListener('click', doGroup);
   $('lay-alpha').addEventListener('click', () => withLayer(toggleAlphaLock));

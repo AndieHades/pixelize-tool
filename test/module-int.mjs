@@ -1483,6 +1483,19 @@ t('layers-ui: взятие неактивного слоя сразу делае
   assert.equal(S.cur, 0); assert.ok(row0.classList.contains('on')); // взятый ЛКМ слой стал активным
   row0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }));
 });
+t('layers-ui: ПКМ-протяжка выбирает несколько слоёв', () => {
+  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); lops.doAddLayer(); layList(); // слои 0,1,2
+  const rows = [...document.querySelectorAll('#lay-list .lrow')];
+  const r0 = rows.find((r) => r.dataset.li === '0'), r1 = rows.find((r) => r.dataset.li === '1');
+  const prevPoint = document.elementFromPoint; document.elementFromPoint = () => r1;
+  try {
+    r0.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 50 }));
+    r0.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
+    r0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
+    const sel = new Set([S.cur, ...S.marked]);
+    assert.ok(sel.has(0) && sel.has(1)); // оба слоя попали в выборку протяжкой ПКМ
+  } finally { document.elementFromPoint = prevPoint; S.marked = new Set(); }
+});
 t('layers-ui: тап по имени активного слоя — переименование, по неактивному — выбор', () => {
   resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
   const tap = (el) => { for (const type of ['pointerdown', 'pointerup', 'click']) el.dispatchEvent(new window.MouseEvent(type, { bubbles: true, button: 0, clientX: 5, clientY: 5 })); };
@@ -1501,7 +1514,7 @@ t('effects: быстрый двойной тап открывает окно п�
   row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
   row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 })); // быстрый двойной тап
   assert.ok(document.getElementById('fx-edit').classList.contains('on'));
-  document.getElementById('fx-edit').classList.remove('on'); S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null;
+  document.getElementById('fx-cancel').click(); S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null; // закрыть правку чисто, не оставляя сессию
 });
 await ta('effects: единый dragRow переставляет эффект через зазор', async () => {
   resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on');

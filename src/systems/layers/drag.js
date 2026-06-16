@@ -12,6 +12,7 @@ import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, reme
 import { setSquelch } from './list.js';
 import { pinchActive } from './pinch.js';
 import { fxDrop, fxBlock } from './fx-drag.js';
+import { squelchContextMenu } from '../../core/long-press.js';
 import { FOLDER_HOLD_MS, LIFT_MS } from '../../config/timings.js';
 
 // выделение для перетаскивания: слои S.marked+S.cur + слои из выделенных папок
@@ -90,6 +91,30 @@ function canIntoRow(info, row) {
 const rowKey = (row) => (row.dataset.li != null ? 'l' + row.dataset.li
   : row.dataset.fid != null ? 'f' + row.dataset.fid : 'e' + row.dataset.fxuid);
 
+// ПКМ-удержание с протяжкой по строкам (десктоп) → множественный выбор слоёв/
+// папок. Короткое ПКМ без движения остаётся контекст-меню (его подавляем только
+// если была протяжка). Строки помечаем сразу классом, состояние пишем на отпускании.
+function rmbSweep(e, el) {
+  try { el.setPointerCapture(e.pointerId); } catch (err) {}
+  let moved = false; const layers = new Set(), folders = new Set();
+  const add = (row) => { if (!row) return;
+    if (row.dataset.li != null) { layers.add(+row.dataset.li); row.classList.add('marked'); }
+    else if (row.dataset.fid != null) { folders.add(+row.dataset.fid); row.classList.add('marked'); } };
+  add(el);
+  const move = (ev) => { if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) > 6) moved = true;
+    const t = document.elementFromPoint(ev.clientX, ev.clientY); add(t && t.closest ? t.closest('#lay-list .lrow') : null); };
+  const up = () => {
+    el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
+    if (!moved) return; // без протяжки — обычное контекст-меню
+    squelchContextMenu();
+    const li = [...layers].sort((a, b) => a - b);
+    S.markedFolders = folders; S.selFolder = folders.size ? [...folders][0] : null;
+    if (li.length) { S.cur = li[li.length - 1]; S.marked = new Set(li.slice(0, -1)); } else S.marked = new Set();
+    S.fxSel.clear(); S.fxCur = null; bus.emit('layers');
+  };
+  el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+}
+
 // Единый drag всех строк панели (слой/папка/эффект/настройка): призрак на курсоре
 // + раздвигающийся зазор над/под целью; центр папки/слоя по выдержке → drop-into
 // (вложить слой / прикрепить эффект). Перенос данных — layDrop или fxDrop.
@@ -97,7 +122,9 @@ export function dragRow(el, info) {
   const isFx = info.kind === 'fx';
   const targetSel = isFx ? '#lay-list .fxrow:not(.dragging), #lay-list .lrow:not(.dragging)' : '#lay-list .lrow:not(.dragging)';
   el.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button')) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('button')) return;
+    if (e.button === 2) { if (!isFx) rmbSweep(e, el); return; } // ПКМ-протяжка — множественный выбор
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     const isTouch = e.pointerType === 'touch';
     const sx = e.clientX, sy = e.clientY, box = $('lay-list');
     const pickUp = () => { if (!e.ctrlKey && !e.metaKey && !inSelection(info)) selectGrabbed(el, info, box); }; // взятый = активный (синий)

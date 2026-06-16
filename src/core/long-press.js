@@ -25,9 +25,12 @@ export function onDoubleTap(el, fn, ignoreSel) {
   });
 }
 
-// Правый клик (десктоп) → fn(x, y).
+// Правый клик (десктоп) → fn(x, y). После ПКМ-свайпа (множественный выбор) меню
+// подавляется на короткое время — иначе оно выскочит по завершении протяжки.
+let ctxSquelchUntil = 0;
+export const squelchContextMenu = (ms = 400) => { ctxSquelchUntil = Date.now() + ms; };
 export function onContext(el, fn) {
-  el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); fn(e.clientX, e.clientY); });
+  el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); if (Date.now() < ctxSquelchUntil) return; fn(e.clientX, e.clientY); });
 }
 
 // Контекст-меню: ПКМ или быстрый двойной тап (для строк без отдельного «edit» —
