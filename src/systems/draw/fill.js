@@ -21,7 +21,9 @@ function floodFrom(x, y) {
 }
 
 // заливка с учётом симметрии: регион под точкой и его зеркала (как у кисти)
-export function flood(x, y) { for (const [mx, my] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) floodFrom(mx, my); }
+export function flood(x, y) {
+  if (S.bgSel) { S.bg.color = [S.active[0], S.active[1], S.active[2]]; S.bg.visible = true; return; } // выбран фон → заливаем его (снимок/перерисовку делает вызывающий)
+  for (const [mx, my] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) floodFrom(mx, my); }
 
 // заливка как самостоятельное действие (снимок + перерисовка) — для drop-to-fill
 export function floodAt(x, y) { snapshot(); flood(x, y); actions.run('color.used', S.active); bus.emit('render'); bus.emit('layers'); }
@@ -33,6 +35,7 @@ actions.register('edit.floodAt', floodAt);
 export function dropColorAt(color, clientX, clientY) {
   const cv = $('cv'); if (document.elementFromPoint(clientX, clientY) !== cv) return;
   S.active = color.slice(); bus.emit('palette'); bus.emit('color-sync');
+  if (S.bgSel) { floodAt(0, 0); return; } // выбран фон → бросок цвета на холст красит фон
   if (S.sel) { actions.run('selection.fill'); return; }
   const r = cv.getBoundingClientRect();
   const gx = Math.floor((clientX - r.left - S.view.ox) / S.view.zoom), gy = Math.floor((clientY - r.top - S.view.oy) / S.view.zoom);

@@ -52,3 +52,8 @@ export function dropColorAtLayer(color, clientX, clientY) {
 }
 
 actions.register('layer.dropColorAt', dropColorAtLayer);
+
+// фон-слой Background: залить активным/заданным цветом или очистить (прозрачный)
+actions.register('bg.fill', (color) => { const c = color || S.active; if (!Array.isArray(c) || c.length < 3) return;
+  snapshot(); S.bg.color = [c[0], c[1], c[2]]; S.bg.visible = true; actions.run('color.used', c); bus.emitDoc(); });
+actions.register('bg.clear', () => { snapshot(); S.bg.color = null; S.bg.visible = true; bus.emitDoc(); });

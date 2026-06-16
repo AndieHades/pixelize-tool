@@ -65,7 +65,7 @@ export const en = {
   'btn.fromImage': 'Palette from image…', 'btn.export': 'Export',
   'adj.dodge': 'Dodge', 'adj.burn': 'Burn', 'adj.colorize': 'To active color',
   'menu.rename': 'Rename…', 'menu.dupLayer': 'Duplicate layer', 'menu.newLayer': 'New layer (Ctrl+N)', 'menu.group': 'Group into folder', 'menu.mergeLayers': 'Merge checked layers (Ctrl+E)', 'menu.deselect': 'Deselect', 'menu.selectAll': 'Select all on layer',
-  'menu.invert': 'Invert selection', 'menu.fill': 'Fill with active color', 'menu.clear': 'Clear layer',
+  'menu.invert': 'Invert selection', 'menu.fill': 'Fill with active color', 'menu.clear': 'Clear layer', 'menu.bgClear': 'Clear (transparent)',
   'menu.symm': 'Symmetrize layer', 'menu.transform': 'Transform…', 'menu.shadow': 'Drop shadow…',
   'menu.glow': 'Glow…', 'menu.mono': 'To monochrome', 'menu.bc': 'Brightness/contrast…', 'menu.clip': 'Clipping mask',
   'menu.pngFull': 'Save PNG (whole canvas)', 'menu.pngTight': 'Save PNG (cropped)', 'menu.edit': 'Edit',

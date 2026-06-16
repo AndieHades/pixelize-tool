@@ -72,7 +72,7 @@ export function mountActionBars() {
   $('lay-alpha').addEventListener('click', () => withLayer(toggleAlphaLock));
   $('lay-clip').addEventListener('click', () => withLayer(toggleClip));
   $('lay-ref').addEventListener('click', () => withLayer(toggleReference));
-  $('lay-clean').addEventListener('click', () => withLayer(clearLayerRef));
+  $('lay-clean').addEventListener('click', () => { if (S.bgSel) { actions.run('bg.clear'); return; } withLayer(clearLayerRef); }); // фон выбран → очистить фон (прозрачный)
   $('lay-dup').addEventListener('click', duplicateActive);
   $('lay-symm').addEventListener('click', symmetrizeActive);
   $('lay-merge').addEventListener('click', doMerge);

@@ -1,9 +1,11 @@
 // Строка фон-слоя Background внизу списка: свотч цвета, имя, глаз. Не
-// перетаскивается, без контекст-меню, без эффектов; выбирается только в одиночку.
+// перетаскивается, без эффектов; выбирается только в одиночку. Своё контекст-меню
+// (#bgctx): Залить активным цветом / Очистить (прозрачный).
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
-import { t } from '../../core/dom.js';
+import { $, t, showMenuAt } from '../../core/dom.js';
+import { menuGesture } from '../../core/long-press.js';
 import { rgb } from '../../logic/color.js';
 import { EYE } from './list.js';
 
@@ -21,5 +23,6 @@ export function bgRow() {
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); S.bg.visible = !S.bg.visible; vis.classList.toggle('off', !S.bg.visible); bus.emit('render'); });
   row.append(sw, nm, vis);
   row.addEventListener('click', selectBackground);
+  menuGesture(row, (x, y) => { selectBackground(); showMenuAt($('bgctx'), x, y, true); }, '.eye'); // ПКМ/долгий тап → меню фона
   return row;
 }

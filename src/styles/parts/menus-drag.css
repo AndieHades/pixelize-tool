@@ -1,7 +1,7 @@
 /* Контекстные меню, tool-choice попапы и общие drag ghost состояния. */
     /* ---- контекстные меню ---- */
     .tool-hidden { display: none !important; }
-    #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx, #brush-plus { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
+    #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx, #brush-plus, #bgctx { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 6px;
       box-shadow: var(--win-shadow); }
     .tool-choice { position: fixed; z-index: 70; display: none; gap: 4px; padding: 5px;
@@ -13,11 +13,11 @@
     .tool-choice button svg { width: var(--ico); height: var(--ico); }
     #rowctx, #setmenu { z-index: 140; } /* над галереей (100) и «Новым холстом» (130) */
     #rowctx { min-width: 170px; }
-    #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on { display: flex; }
-    #ctx button, #lctx button, #cctx button, #sctx button, #trctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button, #brush-plus button { width: 100%; height: 42px; border-radius: var(--r-md); display: flex;
+    #ctx.on, #lctx.on, #cctx.on, #sctx.on, #trctx.on, #fxctx.on, #impmenu.on, #setmenu.on, #tctx.on, #rowctx.on, #brush-plus.on, #bgctx.on { display: flex; }
+    #ctx button, #lctx button, #cctx button, #sctx button, #trctx button, #fxctx button, #impmenu button, #setmenu button, #tctx button, #rowctx button, #brush-plus button, #bgctx button { width: 100%; height: 42px; border-radius: var(--r-md); display: flex;
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: var(--type-body); }
     /* подсветка пункта меню при наведении (десктоп) */
-    #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover, #brush-plus button:hover { background: var(--accent-soft); }
+    #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover, #brush-plus button:hover, #bgctx button:hover { background: var(--accent-soft); }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }

@@ -2150,6 +2150,19 @@ t('background: строка фона внизу, выбор/глаз/залив�
   document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
 });
+t('background: заливка/очистка/контекст-меню на выбранном фоне', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  S.bg = { color: null, visible: true }; S.bgSel = true; S.active = [3, 4, 5]; layList();
+  actions.run('edit.floodAt', 0, 0); assert.deepEqual(S.bg.color, [3, 4, 5]); // Fill-инструмент красит фон
+  document.getElementById('lay-clean').click(); assert.equal(S.bg.color, null); // кнопка очистить → прозрачный
+  const cv = document.getElementById('cv'); const prev = document.elementFromPoint; document.elementFromPoint = () => cv;
+  try { actions.run('edit.dropColorAt', [2, 2, 2], 5, 5); } finally { document.elementFromPoint = prev; }
+  assert.deepEqual(S.bg.color, [2, 2, 2]); // бросок цвета на холст красит фон
+  S.active = [9, 9, 9]; document.querySelector('#bgctx [data-act="fill"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.deepEqual(S.bg.color, [9, 9, 9]); // меню фона: Залить
+  document.querySelector('#bgctx [data-act="clear"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.equal(S.bg.color, null); // меню фона: Очистить
+  S.bgSel = false; S.bg = { color: null, visible: true };
+});
 t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
   S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup(); // doGroup не должен трогать фон, primary не слой
   assert.equal(S.bgSel, true); // фон остаётся фоном (не в S.layers, не группируется)
