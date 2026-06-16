@@ -14,14 +14,17 @@ export function longPress(el, fn) {
 // Быстрый двойной тап/клик по элементу → fn(x, y). Зона ignoreSel (например имя,
 // у которого свой жест переименования) пропускается. Отличается от «второго тапа
 // по активному» (rename) тем, что это именно быстрый двойной тап.
+// Состояние двойного тапа — модульное, не в замыкании строки: первый тап часто
+// перерисовывает список (выделение), строка пересоздаётся, и счётчик в замыкании
+// сбросился бы — второй тап не распознавался бы как двойной.
+let dtLast = 0, dtX = 0, dtY = 0;
 export function onDoubleTap(el, fn, ignoreSel) {
-  let last = 0, lx = 0, ly = 0;
   el.addEventListener('pointerup', (e) => {
     if (e.button && e.button !== 0) return; // ПКМ — отдельно (onContext)
     if (ignoreSel && e.target.closest && e.target.closest(ignoreSel)) return;
     const now = Date.now();
-    if (now - last < 320 && Math.hypot(e.clientX - lx, e.clientY - ly) < 24) { last = 0; fn(e.clientX, e.clientY); }
-    else { last = now; lx = e.clientX; ly = e.clientY; }
+    if (now - dtLast < 320 && Math.hypot(e.clientX - dtX, e.clientY - dtY) < 24) { dtLast = 0; fn(e.clientX, e.clientY); }
+    else { dtLast = now; dtX = e.clientX; dtY = e.clientY; }
   });
 }
 

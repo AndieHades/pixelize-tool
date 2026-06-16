@@ -169,9 +169,10 @@ export function dragRow(el, info) {
       if (isTouch && (lifted || started) && ev.cancelable) ev.preventDefault();
       const ddx = ev.clientX - sx, ddy = ev.clientY - sy;
       if (!started) {
-        const moved = Math.hypot(ddx, ddy) > 7 && Math.abs(ddy) >= Math.abs(ddx);
-        if (moved && (!isTouch || lifted)) { clearTimeout(liftTimer); begin(ev.clientX, ev.clientY); }
-        else if (isTouch && !lifted && Math.hypot(ddx, ddy) > 7) { clearTimeout(liftTimer); return; } // двинул до подъёма → скролл/свайп
+        const far = Math.hypot(ddx, ddy) > 7;
+        if (lifted) { if (!far) return; clearTimeout(liftTimer); begin(ev.clientX, ev.clientY); } // поднято — тащим в любую сторону
+        else if (isTouch) { if (far) clearTimeout(liftTimer); return; } // тач без подъёма — это скролл/свайп, не drag
+        else if (far && Math.abs(ddy) >= Math.abs(ddx)) begin(ev.clientX, ev.clientY); // мышь — вертикальный порог
         else return;
       }
       // призрак не выносим за пределы окна слоёв — иначе он «зависает»
