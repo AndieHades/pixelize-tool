@@ -52,7 +52,7 @@ function galleryGhost(tile, grid) {
   const thumb = tile.querySelector('.gal-thumb');
   const base = parseFloat(cs.getPropertyValue('--gal-tile')) || (thumb ? thumb.getBoundingClientRect().width : 96);
   const g = document.createElement('div'); g.className = 'gal-drag-ghost';
-  g.style.setProperty('--gal-tile', Math.round(base) + 12 + 'px');
+  g.style.setProperty('--gal-tile', Math.round(base * 1.1) + 'px'); // размер выросшей картинки (+10%)
   g.style.setProperty('--gal-preview-inset', cs.getPropertyValue('--gal-preview-inset') || '0px');
   if (thumb) { const c = thumb.cloneNode(true); c.querySelector('.gal-check')?.remove(); g.appendChild(c); }
   document.body.appendChild(g);
@@ -68,11 +68,14 @@ export function attachDrag(tile, id, ctx) {
     if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
     if (isTouch) { tile.classList.add('pressing'); setTimeout(() => tile.classList.remove('pressing'), 1500); } // тач-тап: вся плитка медленно сжимается и возвращается (у мыши это hover)
     const sx = e.clientX, sy = e.clientY;
-    let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
+    let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false, liftBeginT = null;
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back');
-    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); }; // растим только картинку (готовим к переносу)
+    // растим картинку и, как только рост закончился (~450мс), сразу делаем готовый
+    // призрак — таскать можно немедленно, не дожидаясь движения пальца
+    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting');
+      liftBeginT = setTimeout(() => { if (lifted && !started) begin(sx, sy); }, 450); };
     const hold = setTimeout(lift, isTouch ? 1450 : 1e9); // тач: рост картинки после того, как отыграл «клевок» (800мс ужатие + 650мс возврат)
     if (!isTouch) lift(); // мышь: клик сразу растит картинку (hover уже сыграл клевок)
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
@@ -111,7 +114,7 @@ export function attachDrag(tile, id, ctx) {
         resetHover('empty:' + pos.node.dataset.id + ':' + (pos.after ? 'after' : 'before')); setDrop(pos.node, pos.after);
       } else resetHover('');
     };
-    const up = () => { clearTimeout(hold); clearTimeout(dwell);
+    const up = () => { clearTimeout(hold); clearTimeout(dwell); clearTimeout(liftBeginT);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);
       if (tile.hasPointerCapture && tile.hasPointerCapture(e.pointerId)) try { tile.releasePointerCapture(e.pointerId); } catch (err) {}
       if (ghost) ghost.remove(); dragEls.forEach((el) => el.classList.remove('dragging', 'lifting')); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
