@@ -71,7 +71,12 @@ export function floatingWindow(el, opts = {}) {
     if (t.closest(NODRAG)) return false;
     if (grip !== el && grip.contains(t)) return true;  // шапка тащит всегда
     if (rootScrolls) return false;                     // тело прокручиваемого окна не тащим — для него есть грип
-    for (let n = t; n && n !== el; n = n.parentElement) if (scrolls(n) && n.scrollHeight > n.clientHeight + 1) return false;
+    // Прокручиваемая зона (список слоёв, палитра) сама обрабатывает drag своего
+    // содержимого (перестановка строк/цветов). Окно за неё не тащим — иначе drag
+    // окна перехватывает pointer capture и строка «повисает». Проверяем сам факт
+    // overflow:auto/scroll, а не текущее переполнение: при коротком списке зона
+    // ещё не переполнена, но это всё равно её территория.
+    for (let n = t; n && n !== el; n = n.parentElement) if (scrolls(n)) return false;
     return true;
   };
   let d = null;

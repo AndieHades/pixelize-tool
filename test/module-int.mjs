@@ -931,6 +931,22 @@ await ta('floating-window: новое окно и активное окно по
     assert.ok(+toolbar.style.zIndex > +root.style.zIndex);
   } finally { root.remove(); ovl.remove(); toolbar.remove(); }
 });
+await ta('floating-window: drag из прокручиваемого тела не таскает окно, грип — таскает', async () => {
+  const win = document.createElement('div'), head = document.createElement('div'), body = document.createElement('div'), row = document.createElement('div');
+  body.style.overflowY = 'auto'; body.appendChild(row); win.append(head, body); document.body.appendChild(win);
+  try {
+    floatingWindow(win, { grip: head, avoidOverlap: false });
+    win.style.left = '200px';
+    row.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }));
+    win.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 150, clientY: 130 }));
+    win.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 150, clientY: 130 }));
+    assert.equal(win.style.left, '200px'); // окно не уехало — drag достался строке списка, а не окну
+    head.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }));
+    win.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 150, clientY: 130 }));
+    win.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 150, clientY: 130 }));
+    assert.equal(win.style.left, '50px'); // за грип (шапку) окно по-прежнему переносится
+  } finally { win.remove(); }
+});
 t('gallery: режим галереи сохраняет открытые окна редактора', () => {
   const ids = ['lay-pop', 'brush-pop', 'adjpop', 'prevwin'];
   ids.forEach((id) => document.getElementById(id).classList.add('on'));
