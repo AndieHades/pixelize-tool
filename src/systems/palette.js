@@ -24,6 +24,16 @@ function usedColorKeys() { const keys = new Set();
   return keys;
 }
 
+// «использованные» в реальном времени: при включённом showUsed обновляем только
+// классы .used на готовых свотчах (без пересборки DOM каждый кадр рисования)
+function refreshUsed() {
+  if (!showUsed) return;
+  const used = usedColorKeys();
+  for (const b of $('pal').querySelectorAll('.sw:not(.plus)')) {
+    const c = S.palette[+b.dataset.i]; b.classList.toggle('used', !!(c && used.has(colorKey(c))));
+  }
+}
+
 function addRgbColor(c, notify = false) {
   if (!c) return false;
   if (S.palette.some((p) => eqc(p, c))) { if (notify) toast(t('toast.colorExists')); return false; }
@@ -73,7 +83,7 @@ export function mount() {
   initPaletteSelect({ rebuild: buildPalette, setActive: setActiveColor });
   $('pal-used').addEventListener('click', () => { showUsed = !showUsed; $('pal-used').classList.toggle('on', showUsed); buildPalette(); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
-  bus.on('render', () => { if (showUsed) buildPalette(); });
+  bus.on('render', refreshUsed); // живое обновление «использованных» цветов прямо во время рисования
   bus.on('tool', (id) => { if (id !== 'pencil') clearPaletteSelection(); });
   bus.on('locale', buildPalette);
   refreshActive(); buildPalette();

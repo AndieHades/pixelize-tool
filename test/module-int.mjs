@@ -664,6 +664,14 @@ t('palette: кнопка used отмечает использованные цв
   document.getElementById('pal-used').click();
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
 });
+t('palette: used обновляется в реальном времени по render', () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [8, 8, 8];
+  S.layers[0].grid = blank(4, 4); cache.dirtyAll(); pal.buildPalette();
+  document.getElementById('pal-used').click(); // включить showUsed
+  assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
+  S.layers[0].grid[0][0] = [8, 8, 8, 255]; bus.emit('render'); // «нарисовали» цвет — без пересборки палитры
+  assert.equal(document.querySelectorAll('#pal .sw.used').length, 1); // отметился сразу по render
+  document.getElementById('pal-used').click();
+});
 t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
 await ta('palette: ЛКМ-протяжка переставляет цвет без выделения (без gap)', async () => {
   shading.mount(); shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
