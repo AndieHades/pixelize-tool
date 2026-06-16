@@ -982,7 +982,7 @@ t('gallery: плюс открывает диалог нового холста',
   assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
 });
-await ta('gallery: drag открывает слот и отдаёт точку вставки', async () => {
+await ta('gallery: drag без gap — исходник затемнён, призрак без подписей, точка вставки', async () => {
   const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
   grid.innerHTML = ''; back.style.display = 'none';
   Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
@@ -998,10 +998,13 @@ await ta('gallery: drag открывает слот и отдаёт точку �
     a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 20, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
-    assert.ok(a.classList.contains('dragging'));
+    assert.ok(a.classList.contains('dragging')); // исходник остаётся в сетке (затемнён), не схлопывается
+    const gh = document.querySelector('.gal-drag-ghost');
+    assert.ok(gh && !gh.querySelector('.gal-cap')); // призрак — только превью, без подписей
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     assert.deepEqual(drop, { ids: ['a'], before: 'c' });
-    assert.equal(grid.querySelector('.drop-gap'), null);
+    assert.equal(grid.querySelector('.drop-gap'), null); // gap не создаётся вовсе
+    assert.equal(document.querySelector('.gal-drag-ghost'), null); // призрак убран на отпускании
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';
     await new Promise((resolve) => setTimeout(resolve, 460));

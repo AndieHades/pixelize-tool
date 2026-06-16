@@ -1,10 +1,10 @@
-// Перетаскивание плиток: видимый объект один — на курсоре. Gap открывается
-// только после удержания над конкретной стороной цели, чтобы сетка не дрожала.
+// Перетаскивание плиток: исходник остаётся на месте затемнённым, по курсору едет
+// лёгкий призрак — только увеличенная картинка превью без подписей. Сетка во время
+// драга не перекомпоновывается (никакого gap) — точку вставки считаем по курсору и
+// применяем одним ре-рендером на отпускании, чтобы большие галереи не дёргались.
 import { DRAG_THRESHOLD, FOLDER_HOLD_MS } from '../../config/timings.js';
-import { DROP_GAP_HOLD_MS } from '../../config/drag-drop.js';
 import { $ } from '../../core/dom.js';
-import { dragGhost } from '../../core/drag-ghost.js';
-import { dropZone, makeDropGap } from '../../core/drop-gap.js';
+import { dropZone } from '../../core/drop-gap.js';
 
 let clickGuard = false, clickGuardUntil = 0;
 
@@ -19,10 +19,6 @@ function ensureClickGuard() {
 function pointIn(el, x, y) {
   const r = el.getBoundingClientRect();
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-}
-
-function pointInRect(r, x, y, pad = 0) {
-  return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
 }
 
 function slotFromPoint(grid, dragged, x, y) {
@@ -42,6 +38,16 @@ function nextTile(node, ignored) {
   return n;
 }
 
+// призрак = только превью плитки (без подписей), слегка увеличенное; реальная
+// плитка-исходник остаётся в сетке затемнённой
+function galleryGhost(tile) {
+  const g = document.createElement('div'); g.className = 'gal-drag-ghost';
+  const thumb = tile.querySelector('.gal-thumb');
+  if (thumb) { const c = thumb.cloneNode(true); c.querySelector('.gal-check')?.remove(); g.appendChild(c); }
+  document.body.appendChild(g);
+  return { move: (x, y) => { g.style.left = x + 'px'; g.style.top = y + 'px'; }, remove: () => g.remove() };
+}
+
 export function attachDrag(tile, id, ctx) {
   ensureClickGuard();
   tile.addEventListener('pointerdown', (e) => {
@@ -49,29 +55,22 @@ export function attachDrag(tile, id, ctx) {
     if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
     const isTouch = e.pointerType === 'touch';
     if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
-    const sx = e.clientX, sy = e.clientY, originRect = tile.getBoundingClientRect();
-    let lifted = false, started = false, sourceOpen = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
+    const sx = e.clientX, sy = e.clientY;
+    let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back'), dragKind = tile.dataset.kind;
-    const gap = makeDropGap({ className: 'gal-drop-gap' });
     const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); };
     const hold = setTimeout(lift, isTouch ? 250 : 1e9); // тач: долгий тап только приподнимает плитку
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
       dragged = new Set(dragEls);
-      const ghostW = originRect.width;
-      ghost = dragGhost(tile, ghostW, dragIds.length); ghost.move(x, y);
-      dragEls.forEach((el) => {
-        el.style.setProperty('--gal-source-gap', Math.round(el.getBoundingClientRect().width * 0.5) + 'px');
-        el.classList.add('dragging', 'source-gap');
-      });
-      sourceOpen = true;
+      ghost = galleryGhost(tile); ghost.move(x, y);
+      dragEls.forEach((el) => el.classList.add('dragging')); // исходник остаётся на месте, лишь затемняется
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
     const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; clearMarks(); };
-    const closeSource = () => { if (!sourceOpen) return; sourceOpen = false; dragEls.forEach((el) => el.classList.remove('source-gap')); };
     const setDrop = (node, after) => { dropReady = true; dropBefore = after ? nextTile(node, dragged) : node; };
     const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
     const move = (ev) => {
@@ -81,40 +80,33 @@ export function attachDrag(tile, id, ctx) {
         if (moved && (!isTouch || lifted)) { clearTimeout(hold); begin(ev.clientX, ev.clientY); } else return;
       }
       ghost.move(ev.clientX, ev.clientY);
-      if (sourceOpen && pointInRect(originRect, ev.clientX, ev.clientY, 10)) { gap.cancel(); resetHover('source'); return; }
-      closeSource();
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const overBack = back.style.display !== 'none' && el && el.closest && el.closest('#gal-back'); // бросок на «назад» — на уровень выше
-      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; dropReady = false; dropBefore = null; gap.cancel(); clearMarks(); back.classList.add('over'); } return; }
+      if (overBack) { if (!onBack) { resetHover(''); onBack = true; back.classList.add('over'); } return; }
       onBack = false;
       const raw = el && el.closest ? el.closest('.gal-tile') : null;
       const tg = raw && !dragged.has(raw) ? raw : null;
-      const tid = tg ? tg.dataset.id : null;
       const zone = tg ? dropZone(tg, ev.clientX, ev.clientY, 'x') : null, into = tg && zone.zone === 'center' && canStack(tg);
-      const key = tg ? tid + ':' + (into ? 'center' : (zone.after ? 'after' : 'before')) : '';
+      const key = tg ? tg.dataset.id + ':' + (into ? 'center' : (zone.after ? 'after' : 'before')) : '';
       if (key !== overKey) { resetHover(key); if (into) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
       if (stackTo) return;
-      if (tg && !into) { setDrop(tg, zone.after); gap.request(grid, tg, zone.after, tg, key, DROP_GAP_HOLD_MS); }
-      else if (into) { setDrop(tg, zone.after); gap.cancel(); }
+      if (tg) setDrop(tg, zone.after); // и для center (папка): пока не сработала выдержка — обычная перестановка рядом
       else if (pointIn(grid, ev.clientX, ev.clientY)) {
         const pos = slotFromPoint(grid, dragged, ev.clientX, ev.clientY);
-        if (!pos) { resetHover(''); gap.cancel(); return; }
-        const gkey = 'empty:' + pos.node.dataset.id + ':' + (pos.after ? 'after' : 'before');
-        resetHover(gkey); setDrop(pos.node, pos.after); gap.request(grid, pos.node, pos.after, pos.node, gkey, DROP_GAP_HOLD_MS);
-      } else { resetHover(''); gap.cancel(); }
+        if (!pos) { resetHover(''); return; }
+        resetHover('empty:' + pos.node.dataset.id + ':' + (pos.after ? 'after' : 'before')); setDrop(pos.node, pos.after);
+      } else resetHover('');
     };
     const up = () => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);
       if (tile.hasPointerCapture && tile.hasPointerCapture(e.pointerId)) try { tile.releasePointerCapture(e.pointerId); } catch (err) {}
-      if (ghost) ghost.remove(); dragEls.forEach((el) => { el.classList.remove('dragging', 'source-gap', 'lifting'); el.style.removeProperty('--gal-source-gap'); }); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
-      const target = stackTo, toBack = onBack; clearMarks();
-      const before = dropReady ? dropBefore : (gap.active ? gap.next('.gal-tile', dragged) : null);
-      const canReorder = dropReady || gap.active; gap.remove();
+      if (ghost) ghost.remove(); dragEls.forEach((el) => el.classList.remove('dragging', 'lifting')); tile.classList.remove('lifting'); back.classList.remove('lift', 'over');
+      const target = stackTo, toBack = onBack, before = dropReady ? dropBefore : null; clearMarks();
       if (!started) { if (lifted) clickGuardUntil = Date.now() + 350; return; }
       clickGuardUntil = Date.now() + 450;
       if (toBack) ctx.onBack(dragIds);
       else if (target) ctx.onStack(dragIds, target.dataset.id, target.dataset.kind);
-      else if (canReorder) ctx.onReorder(dragIds, before ? before.dataset.id : null);
+      else if (dropReady) ctx.onReorder(dragIds, before ? before.dataset.id : null);
     };
     tile.addEventListener('pointermove', move); tile.addEventListener('pointerup', up); tile.addEventListener('pointercancel', up); tile.addEventListener('lostpointercapture', up);
   });
