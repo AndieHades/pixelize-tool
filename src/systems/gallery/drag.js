@@ -72,8 +72,8 @@ export function attachDrag(tile, id, ctx) {
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back');
-    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); }; // удержание → увеличиваем картинку (готовим к переносу)
-    const hold = setTimeout(lift, 250); // и тач, и мышь: после короткого удержания картинка увеличивается
+    const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); }; // тач: удержание растит картинку; мышь — рост по hover (CSS)
+    const hold = setTimeout(lift, isTouch ? 250 : 1e9);
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
