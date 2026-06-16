@@ -12,7 +12,9 @@ const inRect = (el, x, y) => { const r = el.getBoundingClientRect(); return x >=
 
 // холст: итоговый видимый цвет (слои+порядок+прозрачность+эффекты+zoom/pan)
 function fromCanvas(x, y) { const cv = $('cv'); if (!inRect(cv, x, y)) return undefined;
-  const [gx, gy] = gridAt(x, y); if (gx < 0 || gy < 0 || gx >= S.W || gy >= S.H) return undefined;
+  let [gx, gy] = gridAt(x, y);
+  if (S.tile && S.tile.on) { gx = ((gx % S.W) + S.W) % S.W; gy = ((gy % S.H) + S.H) % S.H; } // Tile Mode: пипетка по любому тайлу
+  if (gx < 0 || gy < 0 || gx >= S.W || gy >= S.H) return undefined;
   return compositeAt(gx, gy) || null; }
 
 // референс: читаем реально отрисованные пиксели #refcv — zoom/pan/поворот учтены сами

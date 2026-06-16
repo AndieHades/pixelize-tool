@@ -2103,6 +2103,13 @@ t('tile: перемещение сдвигает тайл по кругу (то�
   doc.shiftLayerGrid(S.layers[0], 1, 0, false); // без wrap — уезжает в ext
   assert.equal(S.layers[0].grid[0][0], null); assert.ok(S.layers[0].ext.size >= 1);
 });
+t('tile: выделение рамкой заворачивается через шов', () => { resetWH(4, 4); S.tile.on = true; S.sel = null; S.selMask = null;
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[0].grid[0][3] = [2, 2, 2, 255]; cache.dirtyAll();
+  const h = toolHandler('select');
+  h.down({ gx: 3, gy: 0 }); h.move({ gx: 4, gy: 0 }); h.up({}); // тянем со столбца 3 на соседний тайл (=столбец 0)
+  assert.ok(S.selMask && S.selMask.has('3,0') && S.selMask.has('0,0')); // оба края попали в выделение через шов
+  S.sel = null; S.selMask = null; S.tile.on = false;
+});
 t('x-mirror: зажатый X флипает маску кисти, а не дублирует мазок', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
   S.xMirror = true; stamp(0, 0); // флип симметричной кисти 1×1 не виден и НЕ создаёт зеркальную копию
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);

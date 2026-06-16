@@ -6,10 +6,17 @@ import { snapshot } from '../../core/history.js';
 import { registerTool } from '../../core/canvas-handlers.js';
 import { selHit } from '../../core/selection.js';
 import { $, toast, t } from '../../core/dom.js';
-import { normSel, symmetrizeSelection, selHasPixels, deselect } from './model.js';
+import { normSel, symmetrizeSelection, selHasPixels, deselect, maskFromCells } from './model.js';
 import { liftSelection, liftSelectionSym, commitFloat, symFloatBounds } from './float.js';
 
 let selDrag = null, hinted = false;
+
+// Tile Mode: рамка, вышедшая за край, заворачивается в маску (выделение через шов).
+const tileRectWraps = (ax, ay, bx, by) => Math.min(ax, bx) < 0 || Math.min(ay, by) < 0 || Math.max(ax, bx) >= S.W || Math.max(ay, by) >= S.H;
+function setWrappedRect(ax, ay, bx, by) { const x0 = Math.min(ax, bx), y0 = Math.min(ay, by), x1 = Math.max(ax, bx), y1 = Math.max(ay, by), set = new Set();
+  for (let dy = 0; dy <= y1 - y0 && dy < S.H; dy++) for (let dx = 0; dx <= x1 - x0 && dx < S.W; dx++)
+    set.add((((x0 + dx) % S.W) + S.W) % S.W + ',' + ((((y0 + dy) % S.H) + S.H) % S.H));
+  maskFromCells(set); }
 
 function selZone(e) { if (!S.sel) return null;
   const r = $('cv').getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, z = S.view.zoom;
@@ -60,7 +67,9 @@ function scaleMove(gx, gy) { const d = selDrag; let nw = d.sw, nh = d.sh, nx0 = 
 function move({ gx, gy }) { if (!selDrag) return;
   if (selDrag.mode !== 'new' && selDrag.lifted && !S.selFloat) { selDrag = null; return; } // фрагмент осел извне (undo) — жест обрывается
   if (selDrag.mode === 'scale') { scaleMove(gx, gy); return; }
-  if (selDrag.mode === 'new') { if (gx !== selDrag.sx || gy !== selDrag.sy) selDrag.moved = true; S.sel = normSel(selDrag.sx, selDrag.sy, gx, gy); }
+  if (selDrag.mode === 'new') { if (gx !== selDrag.sx || gy !== selDrag.sy) selDrag.moved = true;
+    if (S.tile && S.tile.on && tileRectWraps(selDrag.sx, selDrag.sy, gx, gy)) setWrappedRect(selDrag.sx, selDrag.sy, gx, gy);
+    else { S.selMask = null; S.sel = normSel(selDrag.sx, selDrag.sy, gx, gy); } }
   else { if (!selDrag.lifted) { if (gx === selDrag.sx && gy === selDrag.sy) return; snapshot();
       if (selDrag.sym) liftSelectionSym(selDrag.sx, selDrag.sy); else liftSelection(); selDrag.lifted = true; }
     if (S.selFloat.symItems) { S.selFloat.dx = (selDrag.bdx || 0) + gx - selDrag.sx; S.selFloat.dy = (selDrag.bdy || 0) + gy - selDrag.sy; symFloatBounds(); }
