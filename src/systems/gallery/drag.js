@@ -38,11 +38,16 @@ function nextTile(node, ignored) {
   return n;
 }
 
-// призрак = только превью плитки (без подписей), слегка увеличенное; реальная
-// плитка-исходник остаётся в сетке затемнённой
-function galleryGhost(tile) {
-  const g = document.createElement('div'); g.className = 'gal-drag-ghost';
+// призрак = только превью плитки (без подписей), фикс-размер = размер плитки +12px
+// (квадрат, постоянный — не зависит от позиции). Призрак висит на body, поэтому
+// токены размера переносим явно (на #gal-grid они есть, на body — нет).
+function galleryGhost(tile, grid) {
+  const cs = window.getComputedStyle(grid);
   const thumb = tile.querySelector('.gal-thumb');
+  const base = parseFloat(cs.getPropertyValue('--gal-tile')) || (thumb ? thumb.getBoundingClientRect().width : 96);
+  const g = document.createElement('div'); g.className = 'gal-drag-ghost';
+  g.style.setProperty('--gal-tile', Math.round(base) + 12 + 'px');
+  g.style.setProperty('--gal-preview-inset', cs.getPropertyValue('--gal-preview-inset') || '0px');
   if (thumb) { const c = thumb.cloneNode(true); c.querySelector('.gal-check')?.remove(); g.appendChild(c); }
   document.body.appendChild(g);
   return { move: (x, y) => { g.style.left = x + 'px'; g.style.top = y + 'px'; }, remove: () => g.remove() };
@@ -66,7 +71,7 @@ export function attachDrag(tile, id, ctx) {
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];
       dragEls = dragIds.map((did) => grid.querySelector(`.gal-tile[data-id="${did}"]`)).filter(Boolean);
       dragged = new Set(dragEls);
-      ghost = galleryGhost(tile); ghost.move(x, y);
+      ghost = galleryGhost(tile, grid); ghost.move(x, y);
       dragEls.forEach((el) => el.classList.add('dragging')); // исходник остаётся на месте, лишь затемняется
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };

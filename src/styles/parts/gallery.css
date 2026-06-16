@@ -38,8 +38,7 @@
 .gal-thumb img { --gal-preview-box: calc(100% - var(--gal-preview-inset) - var(--gal-preview-inset));
   display: block; width: var(--gal-preview-box); height: var(--gal-preview-box); object-fit: contain; object-position: center; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { padding: var(--gal-thumb-pad); }
-.gal-tile:hover .gal-thumb { border-color: var(--accent); }
-.gal-tile.sel .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset, var(--win-shadow); }
+.gal-tile.sel .gal-thumb { box-shadow: var(--win-shadow); } /* выбор показывает чек-кружок (.gal-check.on), без синей рамки */
 /* чек-кружок в углу плитки (виден только в режиме выбора) */
 .gal-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; z-index: 2;
   border: 2px solid var(--marker); background: rgba(0,0,0,.4); box-shadow: var(--win-shadow);
@@ -65,8 +64,8 @@
 /* исходник остаётся на месте затемнённым (без схлопывания/реколонки сетки) */
 .gal-tile.dragging { opacity: .35; pointer-events: none; }
 /* лёгкий призрак на курсоре — только увеличенная картинка превью, без подписей */
-.gal-drag-ghost { position: fixed; z-index: 200; pointer-events: none; transform: translate(-50%, -50%) scale(1.1); }
+.gal-drag-ghost { position: fixed; z-index: 200; pointer-events: none; transform: translate(-50%, -50%); }
 .gal-drag-ghost .gal-thumb { width: var(--gal-tile); height: var(--gal-tile); box-shadow: var(--win-shadow); }
 /* цель, в которую кладут — увеличивается и держится, пока над ней висит объект */
-.gal-tile.drop-into .gal-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); transform: scale(1.12); }
+.gal-tile.drop-into .gal-thumb { transform: scale(1.12); box-shadow: var(--win-shadow); } /* цель складывания в папку — увеличением, без синей рамки */
 
