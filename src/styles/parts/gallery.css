@@ -34,7 +34,7 @@
 .gal-thumb { position: relative; width: var(--gal-tile); height: var(--gal-tile); display: grid; place-items: center;
   padding: 0; background: var(--panel-solid); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden;
-  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform 220ms var(--ease-out); }
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform 300ms var(--ease-out); }
 .gal-thumb img { --gal-preview-box: calc(100% - var(--gal-preview-inset) - var(--gal-preview-inset));
   display: block; width: var(--gal-preview-box); height: var(--gal-preview-box); object-fit: contain; object-position: center; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { padding: var(--gal-thumb-pad); }
