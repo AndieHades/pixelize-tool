@@ -37,7 +37,7 @@
 /* медленный «клевок» всей плитки ВМЕСТЕ с подписью: уменьшение ~800мс (до 55%) на
    10%, возврат ~650мс. Увеличивается потом только картинка (.lifting) — подпись нет. */
 @keyframes gal-press { 0% { transform: scale(1); } 55% { transform: scale(.9); } 100% { transform: scale(1); } }
-.gal-tile.pressing { animation: gal-press 1600ms ease-in-out; }
+.gal-tile.pressing .gal-thumb { animation: gal-press 1800ms ease-in-out; }
 
 /* Десктоп: при наведении вся плитка (с подписями) чуть сжимается и сразу
    возвращается — тот же «клевок», что при нажатии. */
