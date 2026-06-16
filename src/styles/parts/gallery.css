@@ -66,7 +66,7 @@
 /* исходник остаётся на месте затемнённым (без схлопывания/реколонки сетки) */
 .gal-tile.dragging { opacity: .35; pointer-events: none; }
 /* лёгкий призрак на курсоре — только увеличенная картинка превью, без подписей */
-.gal-drag-ghost { position: fixed; z-index: 200; pointer-events: none; transform: translate(-50%, -50%); }
+.gal-drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: .85; transform: translate(-50%, -50%); } /* призрак — лёгкая прозрачность */
 .gal-drag-ghost .gal-thumb { width: var(--gal-tile); height: var(--gal-tile); box-shadow: var(--win-shadow); }
 /* цель, в которую кладут — увеличивается и держится, пока над ней висит объект */
 .gal-tile.drop-into .gal-thumb { transform: scale(1.12); box-shadow: var(--win-shadow); } /* цель складывания в папку — увеличением, без синей рамки */
