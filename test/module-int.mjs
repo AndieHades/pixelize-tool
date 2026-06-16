@@ -1029,7 +1029,7 @@ await ta('gallery: touch drag стартует только после подн�
     a.dispatchEvent(pe('pointerdown', 10, 10));
     a.dispatchEvent(pe('pointermove', 30, 10));
     assert.ok(!a.classList.contains('dragging'));
-    await new Promise((resolve) => setTimeout(resolve, 500)); // подъём после «клевка» (~450мс)
+    await new Promise((resolve) => setTimeout(resolve, 1500)); // подъём (рост картинки) после «клевка» (~1450мс)
     assert.ok(a.classList.contains('lifting'));
     a.dispatchEvent(pe('pointermove', 42, 10));
     assert.ok(a.classList.contains('dragging'));

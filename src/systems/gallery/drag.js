@@ -66,14 +66,14 @@ export function attachDrag(tile, id, ctx) {
     if (e.target.closest && e.target.closest('.gal-cap')) return; // имя/подпись — не драг, чтобы двойной клик переименовывал
     const isTouch = e.pointerType === 'touch';
     if (isTouch) try { tile.setPointerCapture(e.pointerId); } catch (err) {}
-    if (isTouch) { tile.classList.add('pressing'); setTimeout(() => tile.classList.remove('pressing'), 470); } // тач-тап: вся плитка медленно сжимается и возвращается (у мыши это hover)
+    if (isTouch) { tile.classList.add('pressing'); setTimeout(() => tile.classList.remove('pressing'), 1500); } // тач-тап: вся плитка медленно сжимается и возвращается (у мыши это hover)
     const sx = e.clientX, sy = e.clientY;
     let lifted = false, started = false, ghost = null, dwell = null, overKey = '', stackTo = null, onBack = false;
     let dropReady = false, dropBefore = null;
     let dragIds = [id], dragEls = [tile], dragged = new Set(dragEls);
     const grid = ctx.gridEl(), back = $('gal-back');
     const lift = () => { if (lifted || started) return; lifted = true; tile.classList.add('lifting'); }; // растим только картинку (готовим к переносу)
-    const hold = setTimeout(lift, isTouch ? 450 : 1e9); // тач: рост картинки после того, как отыграл «клевок»
+    const hold = setTimeout(lift, isTouch ? 1450 : 1e9); // тач: рост картинки после того, как отыграл «клевок» (800мс ужатие + 650мс возврат)
     if (!isTouch) lift(); // мышь: клик сразу растит картинку (hover уже сыграл клевок)
     function begin(x, y) { if (started) return; started = true; try { tile.setPointerCapture(e.pointerId); } catch (err) {}
       dragIds = ctx.dragIds ? ctx.dragIds(id) : [id];

@@ -34,8 +34,9 @@
 
 /* Отклик плитки на нажатие: вся плитка (с подписями) чуть сжимается и сразу
    возвращается; затем по удержанию увеличивается только картинка (.lifting). */
-@keyframes gal-press { 0% { transform: scale(1); } 50% { transform: scale(.95); } 100% { transform: scale(1); } }
-.gal-tile.pressing { animation: gal-press 450ms ease-in-out; }
+/* медленный «клевок»: уменьшение ~800мс (до 55%), возврат ~650мс */
+@keyframes gal-press { 0% { transform: scale(1); } 55% { transform: scale(.95); } 100% { transform: scale(1); } }
+.gal-tile.pressing { animation: gal-press 1450ms ease-in-out; }
 
 /* Десктоп: при наведении вся плитка (с подписями) чуть сжимается и сразу
    возвращается — тот же «клевок», что при нажатии. */

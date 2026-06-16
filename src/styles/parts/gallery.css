@@ -34,7 +34,7 @@
 .gal-thumb { position: relative; width: var(--gal-tile); height: var(--gal-tile); display: grid; place-items: center;
   padding: 0; background: var(--panel-solid); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--win-shadow); overflow: hidden;
-  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform 300ms var(--ease-out); }
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), transform 450ms var(--ease-out); }
 .gal-thumb img { --gal-preview-box: calc(100% - var(--gal-preview-inset) - var(--gal-preview-inset));
   display: block; width: var(--gal-preview-box); height: var(--gal-preview-box); object-fit: contain; object-position: center; image-rendering: pixelated; }
 .gal-tile.folder .gal-thumb { padding: var(--gal-thumb-pad); }
@@ -60,9 +60,9 @@
 /* иконка папки, когда внутри нет превью */
 .gal-folder-ic { grid-column: 1 / -1; place-self: center; width: 48%; color: var(--txt2); }
 .gal-folder-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; }
-/* удержание: увеличиваем только картинку (растём от низа вверх — нижняя граница у
-   подписи зафиксирована, подпись остаётся ровно на своём месте) */
-.gal-tile.lifting .gal-thumb { transform: scale(1.08); transform-origin: center bottom; }
+/* удержание: картинка (отдельный элемент) медленно растёт на 5% вниз и ложится
+   ПОВЕРХ подписи (z-index), не сдвигая её; верх зафиксирован — растёт вниз */
+.gal-tile.lifting .gal-thumb { transform: scale(1.05); transform-origin: center top; z-index: 3; }
 /* исходник остаётся на месте затемнённым (без схлопывания/реколонки сетки) */
 .gal-tile.dragging { opacity: .35; pointer-events: none; }
 /* лёгкий призрак на курсоре — только увеличенная картинка превью, без подписей */
