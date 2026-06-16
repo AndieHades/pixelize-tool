@@ -1443,6 +1443,36 @@ t('effects: drag — перенос на слой и переупорядочи�
   fxdrag.fxDrop([A], bRow, false); // тащим A над B (верх стека) — назад в слой 0
   assert.deepEqual(S.layers[0].effects, [B, A]); assert.equal(S.layers[1].effects.length, 0);
   S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null; });
+t('layers-ui: взятие неактивного слоя сразу делает его активным (синим)', () => {
+  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
+  const row0 = [...document.querySelectorAll('#lay-list .lrow')].find((r) => r.dataset.li === '0');
+  assert.equal(S.cur, 1);
+  row0.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
+  assert.equal(S.cur, 0); assert.ok(row0.classList.contains('on')); // взятый ЛКМ слой стал активным
+  row0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }));
+});
+await ta('effects: единый dragRow переставляет эффект через зазор', async () => {
+  resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  const A = { id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } };
+  const B = { id: 32, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } };
+  S.layers[0].effects = [A, B]; S.fxSel = new Set(); S.fxCur = null; layList();
+  const fxrows = [...document.querySelectorAll('#lay-list .fxrow')];
+  const rowB = fxrows.find((r) => r.__eff === B), rowA = fxrows.find((r) => r.__eff === A);
+  const pop = document.getElementById('lay-pop'), prevPoint = document.elementFromPoint;
+  Object.defineProperty(pop, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 200, bottom: 400 }) });
+  Object.defineProperty(rowB, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 200, bottom: 30, width: 200, height: 30 }) });
+  document.elementFromPoint = () => rowB;
+  try {
+    rowA.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 60 }));
+    rowA.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 8 })); // вертикальный драг A над B
+    rowA.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 50, clientY: 8 }));
+    assert.deepEqual(S.layers[0].effects, [B, A]); // A переставлен наверх стека тем же механизмом, что и слои
+  } finally {
+    document.elementFromPoint = prevPoint; delete pop.getBoundingClientRect;
+    S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null;
+    await new Promise((r) => setTimeout(r, 320));
+  }
+});
 
 t('effects: удаление при выбранном эффекте бьёт по эффекту, а не по слою', () => { resetWH(8, 8);
   S.layers[0].effects = [{ id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }];

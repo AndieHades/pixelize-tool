@@ -8,7 +8,9 @@ import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { t } from '../../core/dom.js';
 import { longPress, EYE, layList, layDragSquelch } from './list.js';
-import { fxDrag } from './fx-drag.js';
+import { dragRow } from './drag.js';
+
+let fxUid = 0; // уникальный ключ строки эффекта для дедупликации цели зазора
 
 // ромбовидная «искра» — та же иконка, что на кнопке вызова меню эффектов (#fx-btn)
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z"/></svg>';
@@ -26,7 +28,7 @@ function effectRow(target, eff, depth) {
   const sel = S.fxSel.has(eff);
   const row = document.createElement('div');
   row.className = 'fxrow' + (eff === S.fxCur ? ' on' : sel ? ' marked' : '') + (eff.visible === false ? ' fxoff' : '');
-  row.style.marginLeft = depth * INDENT + 'px'; row.__eff = eff; row.__owner = target;
+  row.style.marginLeft = depth * INDENT + 'px'; row.__eff = eff; row.__owner = target; row.dataset.fxuid = ++fxUid;
   const star = document.createElement('i'); star.className = 'fxstar'; star.innerHTML = eff.type === 'adjustment' ? ADJUST : STAR;
   const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = t('fx.' + eff.type);
   const vis = document.createElement('button'); vis.className = 'eye' + (eff.visible === false ? ' off' : ''); vis.innerHTML = EYE;
@@ -37,7 +39,7 @@ function effectRow(target, eff, depth) {
   row.addEventListener('click', (e) => { e.stopPropagation(); if (layDragSquelch) return; selectFx(eff, e.ctrlKey || e.metaKey); });
   row.addEventListener('dblclick', (e) => { e.stopPropagation(); actions.run('fx.edit', target, eff); });
   longPress(row, (x, y) => { if (!S.fxSel.has(eff)) selectFx(eff, false); actions.run('fx.menu', x, y, target, eff); });
-  fxDrag(row); return row;
+  dragRow(row, { kind: 'fx', eff, owner: target }); return row;
 }
 
 // строки эффектов цели (слой/папка), сверху = последний в .effects (поверх в стеке)
