@@ -91,9 +91,11 @@
     @keyframes into-pop { from { background: color-mix(in srgb, var(--accent) 30%, transparent); } to { background: var(--accent); } }
     /* Перетаскиваемые строки «висят» на курсоре, а их слот в списке схлопывается —
        место, откуда унесли слой, закрывается сразу (как у строк эффектов выше),
-       а не зияет дырой. Плавно — через transition max-height/padding на .lrow. */
+       а не зияет дырой. Высота едет плавно (transition), opacity — мгновенно
+       (вне transition), иначе оригинал секунду виден рядом с призраком-клоном. */
     .lrow.dragging { opacity: 0; max-height: 0; height: 0; padding-top: 0; padding-bottom: 0;
-      margin-top: 0; margin-bottom: 0; pointer-events: none; }
+      margin-top: 0; margin-bottom: 0; pointer-events: none;
+      transition: max-height 180ms ease, padding 180ms ease, margin 180ms ease; }
     /* Приземление: строка «садится» на место */
     .lrow.dropped { animation: lrow-drop-in var(--anim-pop) var(--ease-pop); transform-origin: top center; }
     @keyframes lrow-drop-in { 0% { transform: scaleY(.2); opacity: 0; } 65% { transform: scaleY(1.04); } 100% { transform: scaleY(1); opacity: 1; } }

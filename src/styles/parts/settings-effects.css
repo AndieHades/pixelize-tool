@@ -34,5 +34,7 @@
 .fxrow .fxstar { display: grid; place-items: center; width: 22px; height: 22px; color: var(--txt); flex: none; }
 .fxrow .fxstar svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 .fxrow .lname { flex: 1; font-size: var(--type-label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fxrow.dragging { opacity: 0; max-height: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; pointer-events: none; }
+/* opacity вне transition — оригинал гаснет мгновенно, без двойника-призрака рядом */
+.fxrow.dragging { opacity: 0; max-height: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; pointer-events: none;
+  transition: max-height 180ms ease, padding 180ms ease, margin 180ms ease; }
 
