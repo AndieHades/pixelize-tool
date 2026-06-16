@@ -1,6 +1,7 @@
-// Перетаскивание плиток: видимый объект один — на курсоре, в сетке открывается
-// слот-gap места вставки. Удержание над плиткой по-прежнему складывает в проект.
+// Перетаскивание плиток: видимый объект один — на курсоре. Gap открывается
+// только после удержания над конкретной стороной цели, чтобы сетка не дрожала.
 import { DRAG_THRESHOLD, FOLDER_HOLD_MS } from '../../config/timings.js';
+import { DROP_GAP_HOLD_MS } from '../../config/drag-drop.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { dropZone, makeDropGap } from '../../core/drop-gap.js';
@@ -21,12 +22,14 @@ function pointIn(el, x, y) {
 }
 
 function slotFromPoint(grid, dragged, x, y) {
-  const tiles = [...grid.querySelectorAll('.gal-tile')].filter((n) => !dragged.has(n) && !n.classList.contains('dragging'));
-  for (const t of tiles) {
-    const r = t.getBoundingClientRect();
-    if (y < r.top + r.height / 2 || (y <= r.bottom && x < r.left + r.width / 2)) return t;
-  }
-  return null;
+  const items = [...grid.querySelectorAll('.gal-tile')]
+    .filter((n) => !dragged.has(n) && !n.classList.contains('dragging'))
+    .map((el) => ({ el, r: el.getBoundingClientRect() }));
+  const row = items.filter((it) => y >= it.r.top && y <= it.r.bottom).sort((a, b) => a.r.left - b.r.left);
+  if (!row.length) return null;
+  if (x < row[0].r.left || x > row[row.length - 1].r.right) return null;
+  for (const it of row) if (x < it.r.left + it.r.width / 2) return { node: it.el, after: false };
+  return { node: row[row.length - 1].el, after: true };
 }
 
 export function attachDrag(tile, id, ctx) {
@@ -45,28 +48,32 @@ export function attachDrag(tile, id, ctx) {
       dragged = new Set(dragEls);
       const ghostW = tile.getBoundingClientRect().width; dragEls.forEach((el) => el.classList.add('dragging'));
       ghost = dragGhost(tile, ghostW, dragIds.length); ghost.move(x, y);
-      gap.show(grid, tile, false, tile);
       if (back.style.display !== 'none') back.classList.add('lift'); } // «назад» увеличивается на всё время перетаскивания
     const clearMarks = () => { grid.querySelectorAll('.drop-into').forEach((n) => n.classList.remove('drop-into')); back.classList.remove('over'); };
+    const resetHover = (key) => { if (key === overKey) return; overKey = key; clearTimeout(dwell); stackTo = null; clearMarks(); };
     const canStack = (tg) => tg && !(dragKind === 'folder' && tg.dataset.kind !== 'folder');
     const move = (ev) => {
       if (!started) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > DRAG_THRESHOLD) { clearTimeout(hold); begin(ev.clientX, ev.clientY); } else return; }
       ghost.move(ev.clientX, ev.clientY);
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const overBack = back.style.display !== 'none' && el && el.closest && el.closest('#gal-back'); // бросок на «назад» — на уровень выше
-      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; gap.remove(); clearMarks(); back.classList.add('over'); } return; }
+      if (overBack) { if (!onBack) { onBack = true; overKey = ''; clearTimeout(dwell); stackTo = null; gap.cancel(); clearMarks(); back.classList.add('over'); } return; }
       onBack = false;
       const raw = el && el.closest ? el.closest('.gal-tile') : null;
       const tg = raw && !dragged.has(raw) ? raw : null;
       const tid = tg ? tg.dataset.id : null;
       const zone = tg ? dropZone(tg, ev.clientX, ev.clientY, 'x') : null, into = tg && zone.zone === 'center' && canStack(tg);
       const key = tg ? tid + ':' + (into ? 'center' : (zone.after ? 'after' : 'before')) : '';
-      if (key !== overKey) { overKey = key; clearTimeout(dwell); stackTo = null; clearMarks();
-        if (into) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
+      if (key !== overKey) { resetHover(key); if (into) dwell = setTimeout(() => { tg.classList.add('drop-into'); stackTo = tg; }, FOLDER_HOLD_MS); }
       if (stackTo) return;
-      if (tg && !into) gap.show(grid, tg, zone.after, tg);
-      else if (into) gap.remove();
-      else if (pointIn(grid, ev.clientX, ev.clientY)) gap.show(grid, slotFromPoint(grid, dragged, ev.clientX, ev.clientY), false, tile);
+      if (tg && !into) gap.request(grid, tg, zone.after, tg, key, DROP_GAP_HOLD_MS);
+      else if (into) gap.cancel();
+      else if (pointIn(grid, ev.clientX, ev.clientY)) {
+        const pos = slotFromPoint(grid, dragged, ev.clientX, ev.clientY);
+        if (!pos) { gap.cancel(); return; }
+        const gkey = 'empty:' + pos.node.dataset.id + ':' + (pos.after ? 'after' : 'before');
+        resetHover(gkey); gap.request(grid, pos.node, pos.after, pos.node, gkey, DROP_GAP_HOLD_MS);
+      } else gap.cancel();
     };
     const up = (ev) => { clearTimeout(hold); clearTimeout(dwell);
       tile.removeEventListener('pointermove', move); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.removeEventListener('lostpointercapture', up);

@@ -86,7 +86,7 @@
     .lrow.drop-into .lname, .lrow.drop-into .fcount, .lrow.drop-into .eye, .lrow.drop-into .caret { color: var(--on-accent); }
     @keyframes into-pop { from { background: color-mix(in srgb, var(--accent) 30%, transparent); } to { background: var(--accent); } }
     /* Перетаскиваемые строки исчезают — они «висят» на курсоре */
-    .lrow.dragging { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; pointer-events: none; }
+    .lrow.dragging { opacity: 0; pointer-events: none; } /* строка остаётся placeholder'ом, чтобы список не прыгал */
     /* Приземление: строка «садится» на место */
     .lrow.dropped { animation: lrow-drop-in var(--anim-pop) var(--ease-pop); transform-origin: top center; }
     @keyframes lrow-drop-in { 0% { transform: scaleY(.2); opacity: 0; } 65% { transform: scaleY(1.04); } 100% { transform: scaleY(1); opacity: 1; } }

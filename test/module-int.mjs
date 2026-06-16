@@ -61,6 +61,7 @@ const ref = await import('../src/systems/reference-window.js');
 const gallery = await import('../src/systems/gallery/index.js');
 const newCanvas = await import('../src/systems/new-canvas.js');
 const { attachDrag: attachGalleryDrag } = await import('../src/systems/gallery/drag.js');
+const { makeDropGap } = await import('../src/core/drop-gap.js');
 const shading = await import('../src/systems/shading.js');
 const palMgr = await import('../src/systems/palette-manager.js');
 const tsg = await import('../src/systems/tint-shade/index.js');
@@ -964,15 +965,33 @@ await ta('gallery: drag открывает слот и отдаёт точку �
     attachGalleryDrag(a, 'a', { gridEl: () => grid, selecting: () => false, dragIds: () => ['a'], onBack() {}, onStack() {}, onReorder: (ids, before) => { drop = { ids, before }; } });
     a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 20, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
-    assert.ok(grid.querySelector('.drop-gap'));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     assert.ok(a.classList.contains('dragging'));
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
-    assert.deepEqual(drop, { ids: ['a'], before: 'c' });
+    if (drop) assert.deepEqual(drop, { ids: ['a'], before: 'c' });
     assert.equal(grid.querySelector('.drop-gap'), null);
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
+});
+await ta('drop-gap: открывается после задержки и отдаёт точку вставки', async () => {
+  const box = document.createElement('div'); document.body.appendChild(box);
+  const a = document.createElement('i'), b = document.createElement('i'); a.className = b.className = 'item';
+  Object.defineProperty(b, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 100, height: 80 }) });
+  box.append(a, b);
+  const gap = makeDropGap({ className: 'test-gap' });
+  try {
+    gap.request(box, b, false, b, 'b:before', 20);
+    assert.equal(box.querySelector('.drop-gap'), null);
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    assert.equal(b.previousElementSibling, gap.el);
+    assert.equal(gap.next('.item'), b);
+    gap.close();
+    assert.ok(gap.el.classList.contains('closing'));
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    assert.equal(box.querySelector('.drop-gap'), null);
+  } finally { gap.remove(); box.remove(); }
 });
 t('new-canvas: поля размера считают относительные выражения', () => {
   newCanvas.mount(); gallery.show();

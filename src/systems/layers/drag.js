@@ -6,6 +6,7 @@ import { dirtyAll } from '../../core/layer-cache.js';
 import { $ } from '../../core/dom.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { dropZone, makeDropGap } from '../../core/drop-gap.js';
+import { DROP_GAP_HOLD_MS } from '../../config/drag-drop.js';
 import { folderChain } from '../../core/layers.js';
 import { topOfFolder, folderLayers, folderInsertIndex, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 import { setSquelch } from './list.js';
@@ -79,8 +80,8 @@ export function dragRow(el, info) {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
       if (dropRow) dropRow.classList.remove('drop-into');
       dropRow = row; dropKey = key;
-      if (into) { gap.remove(); holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS); return; }
-      gap.show(box, row, below, row);
+      if (into) { gap.cancel(); holdTimer = setTimeout(() => { row.classList.add('drop-into'); }, FOLDER_HOLD_MS); return; }
+      gap.request(box, row, below, row, key, DROP_GAP_HOLD_MS);
     };
 
     const move = (ev) => {
@@ -106,7 +107,7 @@ export function dragRow(el, info) {
       ghost.move(gx, gy);
       const t = document.elementFromPoint(gx, gy);
       const row = t && t.closest ? t.closest('#lay-list .lrow:not(.dragging)') : null;
-      if (!row) return; // над открытым зазором/пустотой — держим текущую цель, не дёргаемся
+      if (!row) return; // над открытым зазором держим текущую цель, чтобы gap не дрожал
       // нижняя половина строки-слоя → встать под неё (для папок — только над/внутрь)
       const canInto = row.classList.contains('frow') && canIntoFolder(info, +row.dataset.fid);
       setDrop(row, dropZone(row, gx, gy, 'y', canInto ? undefined : 0));

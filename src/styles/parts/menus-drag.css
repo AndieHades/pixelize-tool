@@ -36,9 +36,12 @@
     /* Общий drop-gap: косметический пустой слот, который физически раздвигает
        соседей. Ничего не рисуем — место видно только по смещению элементов. */
     .drop-gap { pointer-events: none; flex: 0 0 var(--drop-gap-size, 1px); width: var(--drop-gap-size, 1px);
-      height: 1px; min-width: var(--drop-gap-size, 1px); min-height: 1px; }
+      height: 1px; min-width: var(--drop-gap-size, 1px); min-height: 1px;
+      transition: flex-basis 160ms var(--ease-out), width 160ms var(--ease-out), height 160ms var(--ease-out),
+        min-width 160ms var(--ease-out), min-height 160ms var(--ease-out); }
     .drop-gap-y { display: block; flex: none; width: 100%; height: var(--drop-gap-size, 1px);
       min-height: var(--drop-gap-size, 1px); }
+    .drop-gap.closing { flex-basis: 0; width: 0; min-width: 0; height: 0; min-height: 0; }
     /* Единый ghost: клон перетаскиваемого объекта под курсором. */
     .drag-ghost { position: fixed; z-index: 200; pointer-events: none; opacity: 1;
       transform: translate(-50%, -50%) scale(1.06); box-shadow: var(--win-shadow); border-radius: var(--r-xl); }
