@@ -101,9 +101,11 @@ async function tileEl(d) {
   cap.append(nm, sub, tm); tile.append(thumb, cap);
   thumb.onclick = (e) => { if (e.ctrlKey || e.metaKey) { rangeSelect(d.id); return; }
     if (selecting) { toggleSelect(d.id); return; }
-    // открываем не сразу — даём «клевку» проиграться целиком (длительность gal-press)
-    tile.classList.add('pressing');
-    setTimeout(() => { tile.classList.remove('pressing'); if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); }, 1450);
+    const open = () => { if (d.kind === 'folder') { viewFolder = d.id; render(); } else openItem(d.id); };
+    // десктоп: «клевок» уже отыграл на hover — открываем сразу; тач: даём клевку
+    // проиграться целиком (1450мс = длительность gal-press), потом открываем
+    if (window.matchMedia('(hover: hover)').matches) { open(); return; }
+    tile.classList.add('pressing'); setTimeout(() => { tile.classList.remove('pressing'); open(); }, 1450);
   };
   nm.onclick = (e) => { e.stopPropagation(); if (!nm.isContentEditable) renameInline(nm, d); };
   nm.ondblclick = (e) => e.stopPropagation();
