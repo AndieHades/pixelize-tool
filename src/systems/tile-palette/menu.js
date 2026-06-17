@@ -20,7 +20,6 @@ function build() {
 export function openTileMenu(x, y, tileId) {
   build(); menu.innerHTML = '';
   menu.append(
-    item(t('tile.edit'), () => actions.run('tile.edit')),
     item(t('tile.dup'), () => dupTile(tileId)),
     item(t('tile.rename'), () => startTileRename(tileId)),
     item(t('tile.variant'), () => actions.run('tile.variant')),

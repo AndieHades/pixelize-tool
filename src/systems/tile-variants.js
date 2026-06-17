@@ -21,8 +21,8 @@ function createVariant() {
   let gid = tile.groupId;
   if (gid == null) { gid = createGroup(ts, tile.name || t('tile.name'), tile.id).id; tile.groupId = gid; }
   const nv = addTile(ts, tile.grid, { name: tile.name, groupId: gid, weight: tile.weight, index: tileIndex(ts, tile.id) + 1 });
-  S.activeTile = { tilesetId: ts.id, tileId: nv.id };
-  bus.emit('tileset-changed'); actions.run('tile.edit');
+  S.activeTile = { tilesetId: ts.id, tileId: nv.id }; // вариант редактируется на холсте (Tile Layer), отдельного окна нет
+  bus.emit('tileset-changed'); bus.emit('render');
 }
 
 // клетки региона: выделение (если есть на активном слое) или весь слой

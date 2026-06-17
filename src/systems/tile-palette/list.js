@@ -2,7 +2,6 @@
 // 48×48 — без масштабирования), индекс, имя, метка группы, состояния
 // active/marked. Выбор/перестановка/паттерн — select.js, меню — menu.js.
 import { S } from '../../core/state.js';
-import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { makeCanvas } from '../../core/canvas.js';
 import { inlineRename } from '../../core/inline-rename.js';
@@ -34,7 +33,6 @@ function tileCell(ts, tile, index) {
   const cap = document.createElement('span'); cap.className = 'tile-idx'; cap.textContent = index; cell.appendChild(cap);
   const nm = document.createElement('span'); nm.className = 'tile-nm'; nm.textContent = tile.name || ''; cell.appendChild(nm);
   if (tile.groupId != null) cell.classList.add('grouped');
-  cell.addEventListener('dblclick', () => { S.activeTile = { tilesetId: ts.id, tileId: tile.id }; actions.run('tile.edit'); });
   wireTile(cell, ts, tile.id); // выбор/перестановка/меню — те же механики, что у свотчей
   return cell;
 }

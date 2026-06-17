@@ -55,7 +55,7 @@ export const S = {
   // Tileset/Tilemap: библиотека тайлов, активный тайл/группа для Tile Brush,
   // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
   tilesets: [], tilesetSeq: 0,
-  tileset: { on: false }, // Tileset Mode: рисование тайлами по сетке (тумблер рядом с grid)
+  tileset: { on: false, open: false }, // Tileset Mode (тумблер) + признак открытой палитры тайлов (harvest-режим ПКМ)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
   tileMarks: new Set(), // мульти-выбор тайлов в палитре (как свотчи)
   tilePattern: null, // паттерн из нескольких выбранных тайлов (Godot-стиль): { w, h, ids }

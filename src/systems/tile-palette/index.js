@@ -21,7 +21,7 @@ function build() {
   const acts = document.createElement('span'); acts.className = 'pop-acts';
   const x = document.createElement('button'); x.className = 'win-x'; x.title = t('btn.close');
   x.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-  x.onclick = () => panel.classList.add('closed'); acts.appendChild(x);
+  x.onclick = () => { panel.classList.add('closed'); S.tileset.open = false; }; acts.appendChild(x);
   head.append(title, acts);
   const list = document.createElement('div'); list.id = 'tile-list';
   const rsz = document.createElement('div'); rsz.id = 'tilersz'; rsz.title = t('ui.resizeWindow');
@@ -37,17 +37,17 @@ function refresh() { if (!panel || panel.classList.contains('closed')) return;
   renderTiles(); syncToolbar(); }
 
 export function toggle() { build();
-  const closed = panel.classList.toggle('closed');
+  const closed = panel.classList.toggle('closed'); S.tileset.open = !closed;
   if (!closed) refresh();
 }
 
-export function openPanel() { build(); panel.classList.remove('closed'); refresh(); }
+export function openPanel() { build(); panel.classList.remove('closed'); S.tileset.open = true; refresh(); }
 
 export function mount() {
   build();
   actions.register('tile.palette.toggle', toggle);
   actions.register('tile.palette.open', openPanel);
-  actions.register('tile.palette.close', () => { build(); panel.classList.add('closed'); });
+  actions.register('tile.palette.close', () => { build(); panel.classList.add('closed'); S.tileset.open = false; });
   actions.register('tile.new', newTile);
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
@@ -55,7 +55,7 @@ export function mount() {
   // тянется со всех сторон, размер независим от содержимого (как окно слоёв):
   // панель задаёт w/h, список скроллится внутри
   floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', minW: 160, minH: 140, clampBottom: 50, resizeEdges: true,
-    onClose: () => panel.classList.add('closed'),
+    onClose: () => { panel.classList.add('closed'); S.tileset.open = false; },
     onResize: (w, h) => { panel.style.width = Math.max(160, Math.min(window.innerWidth - 12, w)) + 'px';
       panel.style.height = Math.max(140, Math.min(window.innerHeight - 12, h)) + 'px'; } });
   bus.on('tileset-changed', refresh);

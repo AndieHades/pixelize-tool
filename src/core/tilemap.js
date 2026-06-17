@@ -60,18 +60,27 @@ export function tileLayerIdxs() {
   return [...set].filter((i) => isTilemap(S.layers[i])).sort((a, b) => a - b);
 }
 
-// собрать содержимое клетки (cx,cy) по нескольким Tile-слоям в один битмап
-// tileW×tileH (с трансформами экземпляров и наложением снизу вверх) — для
-// «Add to tileset»: всё нарисованное в квадрате, даже послойно
-export function composeCell(idxs, cx, cy) {
-  let ts0 = null; for (const i of idxs) { const ts = getTileset(S.layers[i].tilemap.tilesetId); if (ts) { ts0 = ts; break; } }
-  if (!ts0) return null;
-  const w = ts0.tileW, h = ts0.tileH, out = blank(w, h);
-  for (const i of idxs) { const L = S.layers[i], ts = getTileset(L.tilemap.tilesetId); if (!ts) continue;
-    const cell = getCell(L.tilemap, cx, cy); if (!cell || cell.tileId == null) continue;
-    const tile = getTile(ts, cell.tileId); if (!tile) continue;
-    const g = transformTile(tile.grid, cellFlags(cell));
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = g[y] && g[y][x]; if (c) out[y][x] = blendOver(c, out[y][x], 1); } }
+// выбранные слои (активный + отмеченные), любого типа, снизу вверх
+export function selectedLayerIdxs() {
+  const set = new Set([S.cur, ...S.marked]);
+  return [...set].filter((i) => S.layers[i]).sort((a, b) => a - b);
+}
+
+// собрать содержимое клетки (cx,cy) по нескольким слоям в битмап w×h, наложением
+// снизу вверх. Tile-слой → трансформированный тайл; обычный слой → блок пикселей
+// клетки. Для «Add to Tileset»: всё нарисованное в квадрате, даже послойно.
+export function composeCell(idxs, cx, cy, w, h) {
+  const out = blank(w, h);
+  for (const i of idxs) { const L = S.layers[i]; if (!L) continue;
+    if (isTilemap(L)) { const ts = getTileset(L.tilemap.tilesetId); if (!ts) continue;
+      const cell = getCell(L.tilemap, cx, cy); if (!cell || cell.tileId == null) continue;
+      const tile = getTile(ts, cell.tileId); if (!tile) continue;
+      const g = transformTile(tile.grid, cellFlags(cell));
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = g[y] && g[y][x]; if (c) out[y][x] = blendOver(c, out[y][x], 1); }
+    } else { const g = L.grid; // обычный слой: пиксельный блок клетки
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const sy = cy * h + y, sx = cx * w + x;
+        const c = (sy < S.H && sx < S.W && sy >= 0 && sx >= 0) ? g[sy][sx] : null; if (c) out[y][x] = blendOver(c, out[y][x], 1); } }
+  }
   return out;
 }
 

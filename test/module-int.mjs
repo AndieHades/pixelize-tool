@@ -2425,4 +2425,13 @@ t('tilemap: Add to tileset собирает клетку по слоям и не
   tmode.addToSet(); assert.equal(ts.tiles.length, before + 1); // дубль не добавляется
   S.marked = new Set(); });
 
+t('tilemap: Add to tileset из обычного слоя берёт пиксели клетки', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4; // активен обычный пиксельный слой
+  S.layers[0].grid[1][1] = [7, 8, 9, 255]; // пиксель в клетке (0,0)
+  S.cur = 0; S.marked = new Set(); S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
+  tmode.addToSet();
+  const ts = S.tilesets[0]; assert.ok(ts); assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 1);
+  assert.deepEqual(ts.tiles[0].grid[1][1], [7, 8, 9, 255]); // клетка обычного слоя стала тайлом
+});
+
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

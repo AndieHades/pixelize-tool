@@ -39,8 +39,8 @@ export function mount() {
   mountPinch();
   bus.on('layers', layList);
   bus.on('locale', layList);
-  bus.on('canvas-menu', (e) => { const L = S.layers[S.cur]; // на Tile-слое ПКМ всегда → меню клетки (tileset-mode), не выбор слоя
-    if (L && L.kind === 'tilemap') return;
+  bus.on('canvas-menu', (e) => { const L = S.layers[S.cur]; // Tile-слой или открытая палитра тайлов → меню клетки (tileset-mode), не выбор слоя
+    if ((L && L.kind === 'tilemap') || (S.tileset && (S.tileset.on || S.tileset.open))) return;
     openLayerMenu(e.clientX, e.clientY); });
   actions.register('ui.layers', () => $('layers').click());
 }
