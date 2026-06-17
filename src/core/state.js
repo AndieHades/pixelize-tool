@@ -55,6 +55,7 @@ export const S = {
   // Tileset/Tilemap: библиотека тайлов, активный тайл/группа для Tile Brush,
   // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
   tilesets: [], tilesetSeq: 0,
+  tileset: { on: false }, // Tileset Mode: рисование тайлами по сетке (тумблер рядом с grid)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
   tileMode: 'paint', // режим Tile Brush: paint | erase | pick
   tileFlags: { ...TILE_FLAGS_DEFAULT },

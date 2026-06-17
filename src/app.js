@@ -48,6 +48,8 @@ import * as tilePalette from './systems/tile-palette/index.js';
 import * as tilemapCreate from './systems/tilemap-create.js';
 import * as tilemapOverlay from './systems/tilemap-overlay.js';
 import * as tileEditor from './systems/tile-editor/index.js';
+import * as tilesetMode from './systems/tileset-mode.js';
+import * as tileFromLayer from './systems/tile-from-layer.js';
 
 // системы-эффекты без mount: импорт регистрирует инструменты/действия/тулы
 import './systems/draw/tools.js';
@@ -72,7 +74,7 @@ import './systems/tile-selection/index.js';
 import './systems/tile-variants.js';
 import './systems/tilemap-export.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapCreate, tilemapOverlay, tileEditor];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapCreate, tilemapOverlay, tileEditor, tilesetMode, tileFromLayer];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {

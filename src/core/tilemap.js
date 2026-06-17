@@ -3,11 +3,17 @@
 // обновление всех экземпляров tileId при правке source tile (§6 задачи).
 import { S, blank } from './state.js';
 import { markDirty } from './layer-cache.js';
-import { getTileset, tileGrid } from './tileset.js';
+import { getTileset, tileGrid, createTileset } from './tileset.js';
+import { t } from './dom.js';
 import { rasterTilemap } from '../logic/tilemap-raster.js';
 import { cloneCell } from '../logic/tilemap-data.js';
 
 export const isTilemap = (L) => !!(L && L.kind === 'tilemap' && L.tilemap);
+
+// размер тайла = ячейка текущей сетки (S.grid) — тайлы привязаны к видимой сетке
+export const gridTileSize = () => ({ w: Math.max(1, Math.round(S.grid.w) || 16), h: Math.max(1, Math.round(S.grid.h) || 16) });
+// тайлсет нужного размера тайла: переиспользуем существующий или создаём
+export const tilesetForSize = (w, h) => S.tilesets.find((x) => x.tileW === w && x.tileH === h) || createTileset(t('tile.palette') + ' ' + w + '×' + h, w, h);
 
 // создать tilemap-слой документа размера S.W×S.H; tilemap привязан к тайлсету
 export function makeTilemapLayer(name, tilesetId, mapW, mapH) {

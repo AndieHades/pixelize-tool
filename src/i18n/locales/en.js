@@ -219,7 +219,9 @@ export const en = {
   'toast.exported': 'Exported files: {n}', 'toast.exportEmpty': 'Nothing to export',
   'menu.copyHex': 'Copy HEX', 'menu.shading': 'Shading', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
   // Tileset / Tilemap
-  'side.tilemap': 'Tiles (tile palette)', 'tool.tilebrush': 'Tile brush (paints on a tilemap layer)',
+  'side.tilemap': 'Tileset mode (tiles on grid)', 'tool.tilebrush': 'Tile brush (paints on a tilemap layer)',
+  'tile.copy': 'Copy', 'tile.cut': 'Cut (move)', 'tile.paste': 'Paste',
+  'tile.fromLayer': 'Create tile from layer',
   'tile.palette': 'Tiles', 'tile.newLayer': 'New tilemap layer', 'tile.tilemapLayer': 'Tilemap layer',
   'tile.name': 'Tile', 'tile.untitled': 'Tile {n}',
   'tile.new': 'New tile', 'tile.dup': 'Duplicate tile', 'tile.delete': 'Delete tile', 'tile.rename': 'Rename tile…',
@@ -236,4 +238,5 @@ export const en = {
   'toast.needTilemapLayer': 'Select a Tilemap Layer first', 'toast.tilemapCreated': 'Tilemap layer created',
   'toast.tileMadeUnique': 'Unique tile created', 'toast.tilesBaked': 'Tilemap baked to pixels',
   'toast.noTiles': 'Create a tile first', 'toast.tilesReplaced': 'Cells replaced: {n}', 'toast.noTilemap': 'No tilemap layers',
+  'toast.needPixelLayer': 'Need a regular pixel layer', 'toast.tilesFromLayer': 'Tiles added: {n}',
 };

@@ -11,6 +11,8 @@ import { getTileset } from '../../core/tileset.js';
 import { isTilemap, inMap } from '../../core/tilemap.js';
 import { makeUnique, deleteSel, copySel, pasteSel } from './ops.js';
 
+function cutSel() { copySel(); deleteSel(); }
+
 function toCell(gx, gy) { const L = S.layers[S.cur]; if (!isTilemap(L)) return null;
   const ts = getTileset(L.tilemap.tilesetId); if (!ts) return null;
   const cx = Math.floor(gx / ts.tileW), cy = Math.floor(gy / ts.tileH);
@@ -30,5 +32,6 @@ actions.register('tool.tileselect', () => setTool('tileselect'));
 actions.register('tile.makeUnique', makeUnique);
 actions.register('tile.sel.delete', deleteSel);
 actions.register('tile.sel.copy', copySel);
+actions.register('tile.sel.cut', cutSel);
 actions.register('tile.sel.paste', pasteSel);
 actions.register('tile.sel.clear', () => { S.tileSel = null; bus.emit('render'); });

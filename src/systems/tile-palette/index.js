@@ -34,13 +34,16 @@ export function toggle() { build();
   if (!closed) refresh();
 }
 
+export function openPanel() { build(); panel.classList.remove('closed'); refresh(); }
+
 export function mount() {
   build();
   actions.register('tile.palette.toggle', toggle);
+  actions.register('tile.palette.open', openPanel);
+  actions.register('tile.palette.close', () => { build(); panel.classList.add('closed'); });
   actions.register('tile.new', newTile);
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
-  const btn = $('tilemap-btn'); if (btn) btn.onclick = toggle;
   floatingWindow(panel, { grip: $('tilegrip'), storeKey: 'tilewin', clampBottom: 50,
     onClose: () => panel.classList.add('closed') });
   bus.on('tileset-changed', refresh);

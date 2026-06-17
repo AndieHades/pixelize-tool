@@ -97,6 +97,8 @@ const tmap = await import('../src/core/tilemap.js');
 await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
+const tfl = await import('../src/systems/tile-from-layer.js');
+const tmode = await import('../src/systems/tileset-mode.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -1932,9 +1934,9 @@ t('layers-ui: папка показывает количество слоёв, �
 t('layers-ui: бары действий слоя и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
   const top = [...document.querySelectorAll('#lay-act-top > button')], bot = [...document.querySelectorAll('#lay-act-bottom > button')];
   assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-tmap', 'fx-btn', 'img-settings', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']); // эффекты и настройки переехали сюда из тулбара
-  assert.deepEqual(bot.map((b) => b.id), ['lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
+  assert.deepEqual(bot.map((b) => b.id), ['lay-create-tile', 'lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
   assert.equal(document.querySelector('#lay-head #lay-add'), null);
-  assert.equal(document.querySelectorAll('.lay-action-btn').length, 15);
+  assert.equal(document.querySelectorAll('.lay-action-btn').length, 16);
   S.layers[0].grid[0][0] = [9, 9, 9, 255]; document.getElementById('lay-symm').click(); assert.deepEqual(S.layers[0].grid[0][7], [9, 9, 9, 255]);
   document.getElementById('lay-alpha').click(); document.getElementById('lay-clip').click(); document.getElementById('lay-ref').click(); layList();
   assert.ok(document.getElementById('lay-alpha').classList.contains('on')); assert.ok(document.getElementById('lay-clip').classList.contains('on')); assert.ok(document.getElementById('lay-ref').classList.contains('on'));
@@ -2329,6 +2331,20 @@ t('tilemap: Make Unique отделяет клетку, старые экземп
   assert.equal(ts.tiles.length, before + 1); // создан новый tileId
   const c0 = L.tilemap.cells[0], c1 = L.tilemap.cells[1];
   assert.notEqual(c0.tileId, tile.id); assert.equal(c1.tileId, tile.id); // соседний экземпляр не тронут
+});
+
+t('tilemap: create tile from layer режет слой по сетке', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4; S.cur = 0;
+  S.layers[0].grid[0][0] = [7, 7, 7, 255]; S.layers[0].grid[5][5] = [8, 8, 8, 255]; // блоки (0,0) и (1,1)
+  tfl.fromLayer();
+  const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
+});
+t('tilemap: Tileset Mode тумблер выбирает кисть и тайл-размер из сетки', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 8; S.grid.h = 8;
+  const ts = tsmgr.createTileset('t', 8, 8); tsmgr.addTile(ts);
+  const L = tmap.makeTilemapLayer('tm', ts.id, 1, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmode.setMode(true); assert.equal(S.tileset.on, true); assert.equal(S.tool, 'tilebrush');
+  tmode.setMode(false); assert.equal(S.tileset.on, false); assert.notEqual(S.tool, 'tilebrush');
 });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

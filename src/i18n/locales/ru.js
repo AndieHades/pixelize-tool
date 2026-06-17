@@ -220,7 +220,9 @@ export const ru = {
   'toast.recoloredN': 'Перекрашено: {n} пикс.', 'toast.exported': 'Экспортировано файлов: {n}', 'toast.exportEmpty': 'Нечего экспортировать',
   'menu.copyHex': 'Копировать HEX', 'menu.shading': 'Shading', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
   // Tileset / Tilemap
-  'side.tilemap': 'Тайлы (палитра тайлов)', 'tool.tilebrush': 'Кисть тайлов (рисует по tilemap-слою)',
+  'side.tilemap': 'Tileset-режим (тайлы по сетке)', 'tool.tilebrush': 'Кисть тайлов (рисует по tilemap-слою)',
+  'tile.copy': 'Копировать', 'tile.cut': 'Вырезать (перенести)', 'tile.paste': 'Вставить',
+  'tile.fromLayer': 'Создать тайл из слоя',
   'tile.palette': 'Тайлы', 'tile.newLayer': 'Новый tilemap-слой', 'tile.tilemapLayer': 'Tilemap-слой',
   'tile.name': 'Тайл', 'tile.untitled': 'Тайл {n}',
   'tile.new': 'Новый тайл', 'tile.dup': 'Дублировать тайл', 'tile.delete': 'Удалить тайл', 'tile.rename': 'Переименовать тайл…',
@@ -237,4 +239,5 @@ export const ru = {
   'toast.needTilemapLayer': 'Сначала выберите tilemap-слой', 'toast.tilemapCreated': 'Tilemap-слой создан',
   'toast.tileMadeUnique': 'Создан уникальный тайл', 'toast.tilesBaked': 'Tilemap запечён в пиксели',
   'toast.noTiles': 'Сначала создайте тайл', 'toast.tilesReplaced': 'Заменено клеток: {n}', 'toast.noTilemap': 'Нет tilemap-слоёв',
+  'toast.needPixelLayer': 'Нужен обычный пиксельный слой', 'toast.tilesFromLayer': 'Добавлено тайлов: {n}',
 };
