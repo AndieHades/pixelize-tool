@@ -52,7 +52,7 @@ export function applySelectionOp(addition, op) { commitFloat();
 export function symmetrizeSelection() { if (!S.sel || !anySym()) return;
   maskFromCells(expandMask(selAsSet(), S.W, S.H, false, false, symmetryConfig())); }
 
-export function selectColorPixels(col) { commitFloat(); const colors = (Array.isArray(col && col[0]) ? col : [col]).filter(Boolean);
+export function selectColorPixels(col) { if (!S.layers[S.cur]) return; commitFloat(); const colors = (Array.isArray(col && col[0]) ? col : [col]).filter(Boolean);
   const g = G(), mask = new Set(); let nn = 0, x0 = S.W, y0 = S.H, x1 = -1, y1 = -1;
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = g[y][x];
     if (c && colors.some((target) => eqc(c, target))) { mask.add(x + ',' + y); nn++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
@@ -72,7 +72,7 @@ export function invertSelection() { commitFloat();
   if (!mask.size) { deselect(); toast(t('toast.invertAll')); return; }
   maskFromCells(mask); toast(t('toast.selInverted')); }
 
-export function fragFromSel() { commitFloat(); const g = G(), f = [];
+export function fragFromSel() { if (!S.layers[S.cur]) return []; commitFloat(); const g = G(), f = [];
   for (let y = S.sel.y0; y <= S.sel.y1; y++) { const row = []; for (let x = S.sel.x0; x <= S.sel.x1; x++) { const c = inMask(x, y) ? g[y][x] : null; row.push(c ? c.slice() : null); } f.push(row); }
   return f; }
 
@@ -85,7 +85,7 @@ export function deleteSelContent() { commitFloat(); const targets = selectedLaye
   }
   bus.emit('render'); bus.emit('layers'); return true; }
 
-export function fillSelection() { if (!S.sel) return; commitFloat(); snapshot(); const g = G(); let nn = 0;
+export function fillSelection() { if (!S.sel || !S.layers[S.cur]) return; commitFloat(); snapshot(); const g = G(); let nn = 0;
   for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) { if (!inMask(x, y)) continue; g[y][x] = [S.active[0], S.active[1], S.active[2], 255]; nn++; }
   if (nn) actions.run('color.used', S.active);
   markDirty(S.cur); bus.emit('render'); bus.emit('layers'); toast(t('toast.filledN', { n: nn })); }

@@ -10,6 +10,7 @@ import { sortPalette } from '../logic/palette-sort.js';
 import { setTool } from '../core/tools.js';
 import { effVis } from '../core/layers.js';
 import { initPaletteSelect, wireSwatch, clearPaletteSelection, validSel } from './palette-select.js';
+import { attachReorder } from '../core/reorder-drag.js';
 
 let showUsed = false;
 
@@ -86,5 +87,16 @@ export function mount() {
   bus.on('render', refreshUsed); // живое обновление «использованных» цветов прямо во время рисования
   bus.on('tool', (id) => { if (id !== 'pencil') clearPaletteSelection(); });
   bus.on('locale', buildPalette);
+  wirePalActReorder();
   refreshActive(); buildPalette();
+}
+
+// перенос иконок тулбара палитры зажатым ПКМ/долгим тапом (как в тулбаре тайлов)
+function wirePalActReorder() {
+  const bar = $('pal-act'); if (!bar) return; let sq = 0;
+  const squelch = () => { sq = performance.now() + 350; };
+  const save = () => { try { localStorage.setItem('palActOrder', JSON.stringify([...bar.children].map((b) => b.id))); } catch (e) {} };
+  try { const o = JSON.parse(localStorage.getItem('palActOrder')); if (Array.isArray(o)) for (const id of o) { const b = $(id); if (b) bar.appendChild(b); } } catch (e) {}
+  bar.addEventListener('click', (e) => { if (performance.now() < sq) { e.stopPropagation(); e.preventDefault(); } }, true);
+  for (const b of [...bar.children]) if (b.tagName === 'BUTTON') { b.addEventListener('contextmenu', (e) => e.preventDefault()); attachReorder(b, { dropSel: '#pal-act', itemSel: '#pal-act button', save, squelch }); }
 }

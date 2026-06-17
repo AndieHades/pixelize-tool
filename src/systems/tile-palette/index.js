@@ -27,7 +27,9 @@ function build() {
   x.onclick = () => panel.classList.add('closed'); acts.appendChild(x);
   head.append(title, acts);
   const list = document.createElement('div'); list.id = 'tile-list';
-  panel.append(head, list, buildToolbar());
+  const rsz = document.createElement('div'); rsz.id = 'tilersz'; rsz.title = t('ui.resizeWindow');
+  rsz.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg>';
+  panel.append(head, list, buildToolbar(), rsz);
   document.body.appendChild(panel);
   return panel;
 }
@@ -50,8 +52,10 @@ export function mount() {
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
   initSelect(refresh); mountSelect();
-  floatingWindow(panel, { grip: $('tilegrip'), storeKey: 'tilewin', clampBottom: 50,
-    onClose: () => panel.classList.add('closed') });
+  floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', clampBottom: 50,
+    onClose: () => panel.classList.add('closed'),
+    onResize: (w, h) => { panel.style.width = Math.max(160, Math.min(window.innerWidth - 12, w)) + 'px';
+      $('tile-list').style.height = Math.max(56, Math.min(window.innerHeight * 0.7, h)) + 'px'; } });
   bus.on('tileset-changed', refresh);
   bus.on('tool', refresh);
   bus.on('layers', refresh);

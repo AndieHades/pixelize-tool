@@ -26,7 +26,7 @@ export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toa
   const nl = newLayer(nextLayerName(), S.W, S.H); nl.fid = inOpenFolder ? cur.fid : null;
   const at = inOpenFolder ? S.cur + 1 : S.layers.length;
   S.layers.splice(at, 0, nl); clearFolderEmptyPos(nl.fid);
-  S.cur = at; S.selFolder = null; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
+  S.cur = at; S.selFolder = null; S.bgSel = false; S.marked.clear(); S.markedFolders.clear(); S.fxSel.clear(); S.fxCur = null;
   dirtyAll(); bus.emitDoc(); }
 
 function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
@@ -61,7 +61,8 @@ function activeAfterDelete(idx) {
   const gone = new Set(idx), curObj = S.layers[S.cur]; let target = gone.has(S.cur) ? null : curObj;
   if (!target) { for (let i = S.cur + 1; i < S.layers.length; i++) if (!gone.has(i)) { target = S.layers[i]; break; } // слой НАД удаляемым (выше в списке)
     if (!target) for (let i = S.cur - 1; i >= 0; i--) if (!gone.has(i)) { target = S.layers[i]; break; } } // иначе под ним
-  return () => { S.cur = target && S.layers.includes(target) ? S.layers.indexOf(target) : 0; };
+  return () => { if (!S.layers.length) { S.cur = 0; S.bgSel = true; return; } // удалили всё → активным становится фон
+    S.cur = target && S.layers.includes(target) ? S.layers.indexOf(target) : 0; };
 }
 
 function effectOwner(eff) {
@@ -117,7 +118,7 @@ export function toggleReference(L) { if (!L) return; snapshot(); const on = !L.r
 export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
   L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); bus.emitDoc(); toast(t('toast.layerCleared')); }
 
-export function deleteLayerRef(L) { if (S.layers.length < 2) { toast(t('toast.onlyLayer')); return; }
+export function deleteLayerRef(L) { // фон неудаляем; пиксельных слоёв может остаться ноль
   const idx = S.layers.indexOf(L); if (idx < 0) return; const restoreActive = activeAfterDelete([idx]);
   const restoreEmptyFolders = rememberEmptyFolderPositions([idx]);
   snapshot(); S.layers.splice(idx, 1); restoreEmptyFolders(); restoreActive(); S.marked.clear(); dirtyAll(); bus.emitDoc(); }
@@ -134,12 +135,11 @@ export function duplicateFolder(f) { const kids = folderLayers(f); if (!kids.len
 
 // удалить папку и всё её содержимое (слои + вложенные папки)
 export function deleteFolder(f) {
-  const kids = folderLayers(f);
-  if (S.layers.length - kids.length < 1) { toast(t('toast.onlyLayer')); return; }
   snapshot();
   for (let i = S.layers.length - 1; i >= 0; i--) if (folderChain(S.layers[i].fid).some((x) => x.id === f.id)) S.layers.splice(i, 1);
   S.folders = S.folders.filter((sf) => sf !== f && !folderChain(sf.id).some((x) => x.id === f.id));
-  S.cur = Math.min(S.cur, S.layers.length - 1); S.marked.clear(); S.markedFolders.clear(); S.selFolder = null;
+  if (!S.layers.length) { S.cur = 0; S.bgSel = true; } else S.cur = Math.min(S.cur, S.layers.length - 1); // всё удалено → фон активен
+  S.marked.clear(); S.markedFolders.clear(); S.selFolder = null;
   dirtyAll(); bus.emitDoc(); }
 
 export function deleteLayer() {
@@ -151,7 +151,7 @@ export function deleteLayer() {
   for (const fid of markedFids) { const f = S.folders.find((x) => x.id === fid); if (!f) continue;
     for (const L of folderLayers(f)) { const i = S.layers.indexOf(L); if (i >= 0) allIdx.add(i); } }
   const idx = [...allIdx].filter((i) => S.layers[i]).sort((a, b) => a - b);
-  if (S.layers.length - idx.length < 1) { toast(t('toast.onlyLayer')); return; }
+  if (!idx.length) return; // нечего удалять (фон обрабатывается отдельной командой)
   const restoreActive = activeAfterDelete(idx);
   const removedFids = new Set(S.folders.filter((sf) => markedFids.includes(sf.id) || folderChain(sf.id).some((x) => markedFids.includes(x.id))).map((sf) => sf.id));
   const restoreEmptyFolders = rememberEmptyFolderPositions(idx, removedFids); snapshot();

@@ -6,7 +6,7 @@ import { parseKey } from '../../logic/raster.js';
 import { symA, symHA } from '../../core/layers.js';
 import { markDirty } from '../../core/layer-cache.js';
 
-export function liftSelection() { const L = S.layers[S.cur], g = L.grid, w = S.sel.x1 - S.sel.x0 + 1, h = S.sel.y1 - S.sel.y0 + 1;
+export function liftSelection() { const L = S.layers[S.cur]; if (!L) return; const g = L.grid, w = S.sel.x1 - S.sel.x0 + 1, h = S.sel.y1 - S.sel.y0 + 1;
   const cells = new Map();
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (S.selMask && !S.selMask.has((S.sel.x0 + x) + ',' + (S.sel.y0 + y))) continue;
@@ -19,7 +19,7 @@ export function liftSelection() { const L = S.layers[S.cur], g = L.grid, w = S.s
     if (grab) { cells.set((ax - S.sel.x0) + ',' + (ay - S.sel.y0), c); L.ext.delete(k); } }
   S.selMask = null; S.selFloat = { cells, w, h, x: S.sel.x0, y: S.sel.y0, ox: S.sel.x0, oy: S.sel.y0, li: S.cur }; markDirty(S.cur); }
 
-export function liftSelectionSym(grabX, grabY) { const L = S.layers[S.cur], g = L.grid, gL = grabX * 2 <= S.W - 1, gT = grabY * 2 <= S.H - 1, items = [];
+export function liftSelectionSym(grabX, grabY) { const L = S.layers[S.cur]; if (!L) return; const g = L.grid, gL = grabX * 2 <= S.W - 1, gT = grabY * 2 <= S.H - 1, items = [];
   for (const k of S.selMask) { const [x, y] = parseKey(k); const c = g[y] && g[y][x]; if (!c) continue; g[y][x] = null;
     const sgnx = symA() ? (x === S.W - 1 - x ? 0 : ((x * 2 <= S.W - 1) === gL ? 1 : -1)) : 1;
     const sgny = symHA() ? (y === S.H - 1 - y ? 0 : ((y * 2 <= S.H - 1) === gT ? 1 : -1)) : 1;

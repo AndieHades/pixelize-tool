@@ -1,7 +1,7 @@
 /* Tile Palette: плавающая панель тайлов, свотчи реального размера, тулбар, редактор. */
 
     #tilebar { position: fixed; right: 64px; top: 80px; z-index: 12; width: 240px;
-      display: flex; flex-direction: column; max-height: 70vh;
+      display: flex; flex-direction: column;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
       border: 1px solid var(--line); border-radius: var(--win-radius); padding: 0 8px 8px;
       box-shadow: var(--win-shadow); }
@@ -43,3 +43,11 @@
     .lrow .ltile { color: var(--accent); }
 
     .confirm-msg { margin: 4px 2px 12px; line-height: 1.4; }
+
+    /* ручка изменения размера палитры тайлов (как у палитры свотчей) */
+    #tilersz { position: absolute; right: 1px; bottom: 1px; width: 20px; height: 20px;
+      cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
+    #tilersz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+
+    /* перенос иконок тулбара зажатым ПКМ */
+    .tile-act button.reordering { opacity: .4; }

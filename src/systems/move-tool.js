@@ -10,7 +10,7 @@ import { markDirty } from '../core/layer-cache.js';
 export function moveTargets() { const sel = new Set(S.marked); sel.add(S.cur); return [...sel].filter((i) => i >= 0 && i < S.layers.length).sort((a, b) => a - b); }
 
 const move = {
-  down({ gx, gy }) { if (S.layers[S.cur].lock) return; S.moveDrag = { sx: gx, sy: gy, dx: 0, dy: 0, idxs: moveTargets() }; },
+  down({ gx, gy }) { const L = S.layers[S.cur]; if (!L || L.lock) return; S.moveDrag = { sx: gx, sy: gy, dx: 0, dy: 0, idxs: moveTargets() }; },
   move({ gx, gy }) { if (S.moveDrag) { S.moveDrag.dx = gx - S.moveDrag.sx; S.moveDrag.dy = gy - S.moveDrag.sy; bus.emit('render'); } },
   up() { if (!S.moveDrag) return; const { dx, dy, idxs } = S.moveDrag; S.moveDrag = null;
     if (!dx && !dy) { bus.emit('render'); return; }

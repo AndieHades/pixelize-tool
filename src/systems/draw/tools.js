@@ -5,6 +5,7 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { registerTool } from '../../core/canvas-handlers.js';
 import { snapshot } from '../../core/history.js';
+import { ensureLayer } from '../../core/document.js';
 import { toast, t } from '../../core/dom.js';
 import { SHAPE_SNAP_MS } from '../../config/timings.js';
 import { stamp } from './stamp.js';
@@ -39,7 +40,7 @@ function armSnap(gx, gy) { clearTimeout(snapTimer);
 function endSnap() { clearTimeout(snapTimer); snapTimer = null; snapCell = null; snapped = false; }
 
 const brush = {
-  down({ gx, gy }) { beginStroke(); qsBegin(gx, gy); stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
+  down({ gx, gy }) { ensureLayer(); beginStroke(); qsBegin(gx, gy); stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
   move({ gx, gy }) { if (qsMove(gx, gy)) { bus.emit('render'); return; } // QuickShape выровнял форму — raw больше не рисуем
     if (last) line(last[0], last[1], gx, gy); else stamp(gx, gy); last = [gx, gy]; bus.emit('render'); },
   up() { qsRelease(); S.stroke = false; last = null;
@@ -48,7 +49,7 @@ const brush = {
 };
 
 const shape = {
-  down({ gx, gy }) { if (lineContour()) { const x = clampX(gx), y = clampY(gy);
+  down({ gx, gy }) { ensureLayer(); if (lineContour()) { const x = clampX(gx), y = clampY(gy);
     beginStroke(); S.linePath = { pts: [[x, y]] }; contourDab(x, y); bus.emit('render'); return; }
     S.lineStart = [gx, gy]; S.linePrev = [gx, gy, gx, gy];
     snapCell = [gx, gy]; snapped = false; armSnap(gx, gy); bus.emit('render'); },
@@ -62,7 +63,7 @@ const shape = {
   up() { endSnap(); if (lineContour()) { commitContour(); return; } if (S.linePrev) commitLine(); },
 };
 
-const fill = { down({ gx, gy }) { snapshot(); stamp(gx, gy); actions.run('color.used', S.active); bus.emit('render'); afterStroke(); } };
+const fill = { down({ gx, gy }) { ensureLayer(); snapshot(); stamp(gx, gy); actions.run('color.used', S.active); bus.emit('render'); afterStroke(); } };
 
 for (const t of ['pencil', 'eraser', 'adjust']) registerTool(t, brush);
 for (const t of ['line', 'rect', 'ellipse']) registerTool(t, shape);

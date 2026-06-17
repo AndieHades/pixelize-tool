@@ -74,7 +74,7 @@ function drawReticle(ctx, cx, cy) {
 }
 
 export function drawBrushCursor(ctx, ox, oy, z) {
-  if (!S.hoverPx || S.cropMode || S.selFloat) return;
+  if (!S.hoverPx || S.cropMode || S.selFloat || !S.layers[S.cur]) return; // нет активного слоя (остался только фон) — курсора кисти нет
   const cx = ox + (S.hoverPx[0] + 0.5) * z, cy = oy + (S.hoverPx[1] + 0.5) * z;
   if (S.eyedrop.active) { ctx.save(); drawReticle(ctx, cx, cy); ctx.restore(); return; }
   const inp = inputs(); if (!inp) return;

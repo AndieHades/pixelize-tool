@@ -112,7 +112,17 @@ export function shiftLayerGrid(L, dx, dy, wrap = false) { const ng = blank(S.W, 
 
 // очистить текущий слой; false — если уже пуст
 export function clearLayer() {
-  const L = S.layers[S.cur]; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
+  const L = S.layers[S.cur]; if (!L) return false; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
   snapshot(); L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.cur);
   bus.emit('render'); bus.emit('layers'); return true;
+}
+
+// гарантировать активный пиксельный слой. Когда удалены все слои (остаётся только
+// фон), первое рисование авто-создаёт слой. Возвращает активный слой.
+export function ensureLayer() {
+  if (S.layers.length) { if (!S.layers[S.cur]) S.cur = 0;
+    if (S.bgSel) { S.bgSel = false; bus.emit('layers'); } // на фоне не рисуем → активным становится слой, на котором рисуешь
+    return S.layers[S.cur]; }
+  const nl = newLayer(t('layer.name') + ' 1', S.W, S.H);
+  S.layers.push(nl); S.cur = 0; S.bgSel = false; S.marked.clear(); dirtyAll(); bus.emit('layers'); return nl;
 }

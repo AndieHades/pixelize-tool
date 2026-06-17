@@ -23,8 +23,8 @@ function captureSym() { commitFloat(); if (!S.selMask || (!symA() && !symHA())) 
     if (!pieces.has(key)) pieces.set(key, new Map()); pieces.get(key).set(k, c.slice()); }
   const out = [...pieces.values()].filter((m) => m.size); return out.length > 1 ? out : null; }
 
-export function doCopy() { const p = captureSym(); clip = p ? { pieces: p } : { frag: S.sel ? fragFromSel() : cloneGrid(G()) }; toast(S.sel ? t('toast.selCopied') : t('toast.layerCopied')); }
-export function doCut() { const p = captureSym(); clip = p ? { pieces: p } : { frag: S.sel ? fragFromSel() : cloneGrid(G()) }; toast((S.sel ? deleteSelContent() : clearLayer()) ? t('toast.cut') : t('toast.hereEmpty')); }
+export function doCopy() { if (!S.layers[S.cur]) return; const p = captureSym(); clip = p ? { pieces: p } : { frag: S.sel ? fragFromSel() : cloneGrid(G()) }; toast(S.sel ? t('toast.selCopied') : t('toast.layerCopied')); }
+export function doCut() { if (!S.layers[S.cur]) return; const p = captureSym(); clip = p ? { pieces: p } : { frag: S.sel ? fragFromSel() : cloneGrid(G()) }; toast((S.sel ? deleteSelContent() : clearLayer()) ? t('toast.cut') : t('toast.hereEmpty')); }
 export function copySelectionLayer() { if (!S.sel) return; doCopy(); doPaste(); }
 
 // каждую симметричную сторону — отдельным новым слоем, на исходное место

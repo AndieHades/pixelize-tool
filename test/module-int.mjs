@@ -1955,10 +1955,10 @@ await ta('panels: старый порядок тулбара не утаскив
   assert.equal(document.querySelector('#tb-left #fx-btn'), null); // не вернулись на тулбар
   localStorage.removeItem('panelOrder');
 });
-t('layers-ui: единственный слой не удаляется', () => { resetWH(8, 8);
-  lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0);
-  lops.doAddLayer(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
-  lops.deleteLayerRef(S.layers[1]); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); });
+t('layers-ui: можно удалить все слои — остаётся фон и становится активным', () => { resetWH(8, 8);
+  lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 0); assert.equal(S.bgSel, true); // удалили последний → активен фон
+  lops.doAddLayer(); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(S.bgSel, false); // новый слой снимает выбор фона
+  S.bgSel = true; doc.ensureLayer(); assert.equal(S.bgSel, false); }); // рисование (ensureLayer) делает активным слой, а не фон
 t('layers-ui: reference-кнопка синяя на выбранном reference-слое', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].reference = true; layList();
   assert.ok(document.getElementById('lay-ref').classList.contains('on')); assert.equal(document.querySelectorAll('#lay-list .lref').length, 1);
