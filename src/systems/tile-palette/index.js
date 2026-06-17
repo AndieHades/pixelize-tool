@@ -52,10 +52,12 @@ export function mount() {
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
   initSelect(refresh); mountSelect();
-  floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', clampBottom: 50,
+  // тянется со всех сторон, размер независим от содержимого (как окно слоёв):
+  // панель задаёт w/h, список скроллится внутри
+  floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', minW: 160, minH: 140, clampBottom: 50, resizeEdges: true,
     onClose: () => panel.classList.add('closed'),
     onResize: (w, h) => { panel.style.width = Math.max(160, Math.min(window.innerWidth - 12, w)) + 'px';
-      $('tile-list').style.height = Math.max(56, Math.min(window.innerHeight * 0.7, h)) + 'px'; } });
+      panel.style.height = Math.max(140, Math.min(window.innerHeight - 12, h)) + 'px'; } });
   bus.on('tileset-changed', refresh);
   bus.on('tool', refresh);
   bus.on('layers', refresh);

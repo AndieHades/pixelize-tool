@@ -15,9 +15,10 @@
     #tile-list::-webkit-scrollbar { display: none; }
     .tile-cell { position: relative; cursor: pointer; border: 1px solid var(--line);
       border-radius: var(--r-sm, 4px); background: var(--panel2, var(--panel)); line-height: 0; }
-    .tile-cell.on { box-shadow: inset 0 0 0 2px var(--marker); border-color: transparent; }
-    .tile-cell.marked { box-shadow: inset 0 0 0 2px var(--accent); }
-    .tile-cell.on.marked { box-shadow: inset 0 0 0 2px var(--marker), inset 0 0 0 4px var(--accent); }
+    /* подсветка выбора — outline (рисуется ПОВЕРХ превью-canvas; inset-shadow его перекрыл бы) */
+    .tile-cell.on { outline: 2px solid var(--marker); outline-offset: -2px; border-color: transparent; }
+    .tile-cell.marked { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .tile-cell.on.marked { outline: 2px solid var(--marker); outline-offset: -2px; }
     .tile-cell.grouped { border-color: var(--accent); }
     .tile-cell.dragging { opacity: .5; }
     .tile-th { display: block; image-rendering: pixelated; }

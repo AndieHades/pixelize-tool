@@ -7,12 +7,12 @@ import { setTool } from '../../core/tools.js';
 import { t } from '../../core/dom.js';
 import { attachReorder } from '../../core/reorder-drag.js';
 
-const STORE = 'tileToolbarOrder';
+const STORE = 'tileToolbarOrder2';
 let squelchUntil = 0;
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
 const IC = {
-  stamp: '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none"/></svg>',
+  draw: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/><path d="M14 14l5.5-5.5a1.6 1.6 0 0 1 2.3 2.3L16.3 16.3l-3 .7.7-3z"/></svg>',
   pick: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>',
   rnd: '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="3"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>',
   add: '<svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg>',
@@ -21,15 +21,15 @@ const IC = {
 
 // id → { html|letter, title, onclick, mark }
 const DEFS = {
+  draw: { html: IC.draw, title: () => t('tile.draw'), run: () => { S.tileMode = 'paint'; setTool('tilebrush'); }, mark: 'draw' },
   manual: { letter: 'M', title: () => t('tile.manual'), run: () => actions.run('tile.manual'), mark: 'manual' },
   auto: { letter: 'A', title: () => t('tile.auto'), run: () => actions.run('tile.auto'), mark: 'auto' },
-  stamp: { html: IC.stamp, title: () => t('tool.tilebrush'), run: () => { S.tileMode = 'paint'; setTool('tilebrush'); }, mark: 'stamp' },
   pick: { html: IC.pick, title: () => t('tile.pickTile'), run: () => { S.tileMode = 'pick'; setTool('tilebrush'); }, mark: 'pick' },
   rnd: { html: IC.rnd, title: () => t('tile.random'), run: () => actions.run('tile.random'), mark: 'rnd' },
   new: { html: IC.add, title: () => t('tile.new'), run: () => actions.run('tile.new') },
   del: { html: IC.del, title: () => t('tile.delete'), run: () => actions.run('tile.delActive') },
 };
-const DEFAULT_ORDER = ['manual', 'auto', 'stamp', 'pick', 'rnd', 'new', 'del'];
+const DEFAULT_ORDER = ['draw', 'manual', 'auto', 'pick', 'rnd', 'new', 'del'];
 const savedOrder = () => { try { const a = JSON.parse(localStorage.getItem(STORE)); return Array.isArray(a) ? a : null; } catch (e) { return null; } };
 function saveOrder() { const bar = document.getElementById('tile-act'); if (!bar) return;
   try { localStorage.setItem(STORE, JSON.stringify([...bar.children].map((b) => b.dataset.tb))); } catch (e) {} }
@@ -57,7 +57,7 @@ export function syncToolbar() {
   const pixel = S.tool === 'pencil' || S.tool === 'eraser';
   set('manual', pixel && S.tileAutoMode === 'manual');
   set('auto', pixel && S.tileAutoMode === 'auto');
-  set('stamp', S.tool === 'tilebrush' && S.tileMode === 'paint');
+  set('draw', S.tool === 'tilebrush' && S.tileMode === 'paint');
   set('pick', S.tool === 'tilebrush' && S.tileMode === 'pick');
   set('rnd', S.tileRandom);
 }

@@ -228,6 +228,7 @@ export const ru = {
   'tile.saveSet': 'Сохранить тайлсет', 'tile.loadSet': 'Тайлсеты', 'tile.setName': 'Имя тайлсета', 'tile.noSets': 'Сохранённых тайлсетов нет',
   'toast.tilesetLoaded': 'Тайлсет загружен: {name}',
   'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: случайные тайлы из выбранных',
+  'tile.draw': 'Рисовать тайлами (штамп)',
   'tile.palette': 'Тайлы', 'tile.newLayer': 'Новый tilemap-слой', 'tile.tilemapLayer': 'Tilemap-слой',
   'tile.name': 'Тайл', 'tile.untitled': 'Тайл {n}',
   'tile.new': 'Новый тайл', 'tile.dup': 'Дублировать тайл', 'tile.delete': 'Удалить тайл', 'tile.rename': 'Переименовать тайл…',

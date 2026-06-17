@@ -227,6 +227,7 @@ export const en = {
   'tile.saveSet': 'Save tileset', 'tile.loadSet': 'Tilesets', 'tile.setName': 'Tileset name', 'tile.noSets': 'No saved tilesets',
   'toast.tilesetLoaded': 'Tileset loaded: {name}',
   'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: random tiles from selected',
+  'tile.draw': 'Draw with tiles (stamp)',
   'tile.palette': 'Tiles', 'tile.newLayer': 'New tilemap layer', 'tile.tilemapLayer': 'Tilemap layer',
   'tile.name': 'Tile', 'tile.untitled': 'Tile {n}',
   'tile.new': 'New tile', 'tile.dup': 'Duplicate tile', 'tile.delete': 'Delete tile', 'tile.rename': 'Rename tile…',
