@@ -1,6 +1,5 @@
-// Контекст-меню тайла: команды edit/dup/rename/variant/make-unique/delete.
-// Команды-«хозяева» (edit/variant/make-unique) дёргаются по имени через actions —
-// панель не импортирует системы-редакторы напрямую.
+// Контекст-меню тайла в палитре: dup/rename/variant/delete.
+// Variant дёргается по имени через actions — без прямого импорта систем.
 import * as actions from '../../core/actions.js';
 import { $, showMenuAt, t } from '../../core/dom.js';
 import { dupTile, delTile } from './ops.js';
@@ -23,7 +22,6 @@ export function openTileMenu(x, y, tileId) {
     item(t('tile.dup'), () => dupTile(tileId)),
     item(t('tile.rename'), () => startTileRename(tileId)),
     item(t('tile.variant'), () => actions.run('tile.variant')),
-    item(t('tile.makeUnique'), () => actions.run('tile.makeUnique')),
     item(t('tile.delete'), () => delTile(tileId)),
   );
   showMenuAt(menu, x, y);
