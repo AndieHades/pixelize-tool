@@ -17,11 +17,8 @@ function build() {
   if (panel) return panel;
   panel = document.createElement('aside'); panel.id = 'tilebar'; panel.className = 'closed';
   const head = document.createElement('div'); head.id = 'tilegrip'; head.className = 'pop-head';
-  const title = document.createElement('span'); title.className = 'pop-title'; title.textContent = t('tile.palette');
+  const title = document.createElement('span'); title.className = 'pop-title'; title.id = 'tile-title'; title.textContent = t('tile.tileset');
   const acts = document.createElement('span'); acts.className = 'pop-acts';
-  const lib = document.createElement('button'); lib.id = 'tset-lib'; lib.title = t('tile.loadSet');
-  lib.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 4.5h12l2 2v13H5z"/><path d="M8 4.5v6h8v-6"/><path d="M8 16.5h8"/></svg>';
-  acts.appendChild(lib);
   const x = document.createElement('button'); x.className = 'win-x'; x.title = t('btn.close');
   x.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   x.onclick = () => panel.classList.add('closed'); acts.appendChild(x);
@@ -34,7 +31,10 @@ function build() {
   return panel;
 }
 
-function refresh() { if (!panel || panel.classList.contains('closed')) return; renderTiles(); syncToolbar(); }
+function refresh() { if (!panel || panel.classList.contains('closed')) return;
+  const ts = activeTileset(), tt = $('tile-title'); // в шапке — Tileset, имя и размер тайла
+  if (tt) tt.textContent = ts ? t('tile.tileset') + ' · ' + (ts.name || '') + '  ' + ts.tileW + '×' + ts.tileH : t('tile.tileset');
+  renderTiles(); syncToolbar(); }
 
 export function toggle() { build();
   const closed = panel.classList.toggle('closed');

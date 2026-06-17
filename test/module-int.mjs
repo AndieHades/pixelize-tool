@@ -2409,4 +2409,20 @@ t('tilemap: заливка работает на одну клетку, не н�
   assert.deepEqual(tsmgr.getTile(ts, L.tilemap.cells[0].tileId).grid[0][0], [3, 4, 5, 255]);
   S.tool = 'pencil'; S.tileset = { on: false }; });
 
+t('tilemap: Add to tileset собирает клетку по слоям и не дублирует', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  const ts = tsmgr.createTileset('t', 4, 4);
+  const ta = tsmgr.addTile(ts); ta.grid[0][0] = [1, 1, 1, 255];
+  const tb = tsmgr.addTile(ts); tb.grid[3][3] = [2, 2, 2, 255];
+  const L1 = tmap.makeTilemapLayer('a', ts.id, 1, 1), L2 = tmap.makeTilemapLayer('b', ts.id, 1, 1);
+  S.layers.push(L1, L2); const i1 = S.layers.indexOf(L1), i2 = S.layers.indexOf(L2);
+  tmap.setCell(i1, 0, 0, { tileId: ta.id }); tmap.setCell(i2, 0, 0, { tileId: tb.id });
+  S.cur = i2; S.marked = new Set([i1]); S.tileSel = { li: i2, x0: 0, y0: 0, x1: 0, y1: 0 };
+  const before = ts.tiles.length; tmode.addToSet();
+  assert.equal(ts.tiles.length, before + 1); // композит обоих слоёв добавлен
+  const added = ts.tiles[ts.tiles.length - 1];
+  assert.deepEqual(added.grid[0][0], [1, 1, 1, 255]); assert.deepEqual(added.grid[3][3], [2, 2, 2, 255]);
+  tmode.addToSet(); assert.equal(ts.tiles.length, before + 1); // дубль не добавляется
+  S.marked = new Set(); });
+
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

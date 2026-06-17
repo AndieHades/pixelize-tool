@@ -3,10 +3,12 @@
 // обновление всех экземпляров tileId при правке source tile (§6 задачи).
 import { S, blank } from './state.js';
 import { markDirty } from './layer-cache.js';
-import { getTileset, tileGrid, createTileset } from './tileset.js';
+import { getTileset, tileGrid, getTile, createTileset } from './tileset.js';
 import { t } from './dom.js';
 import { rasterTilemap } from '../logic/tilemap-raster.js';
 import { cloneCell } from '../logic/tilemap-data.js';
+import { transformTile, cellFlags } from '../logic/tile-transform.js';
+import { blendOver } from '../logic/raster.js';
 
 export const isTilemap = (L) => !!(L && L.kind === 'tilemap' && L.tilemap);
 
@@ -49,6 +51,28 @@ export function layersUsingTile(tilesetId, tileId) {
 // правка source tile → пересобрать все слои с этим tileId (все экземпляры разом)
 export function refreshTile(tilesetId, tileId) {
   for (const i of layersUsingTile(tilesetId, tileId)) rasterLayer(i);
+}
+
+// выбранные Tile-слои: активный + отмеченные (ctrl), отфильтрованы по типу,
+// снизу вверх — основа покадровых операций над клеткой независимо от числа слоёв
+export function tileLayerIdxs() {
+  const set = new Set([S.cur, ...S.marked]);
+  return [...set].filter((i) => isTilemap(S.layers[i])).sort((a, b) => a - b);
+}
+
+// собрать содержимое клетки (cx,cy) по нескольким Tile-слоям в один битмап
+// tileW×tileH (с трансформами экземпляров и наложением снизу вверх) — для
+// «Add to tileset»: всё нарисованное в квадрате, даже послойно
+export function composeCell(idxs, cx, cy) {
+  let ts0 = null; for (const i of idxs) { const ts = getTileset(S.layers[i].tilemap.tilesetId); if (ts) { ts0 = ts; break; } }
+  if (!ts0) return null;
+  const w = ts0.tileW, h = ts0.tileH, out = blank(w, h);
+  for (const i of idxs) { const L = S.layers[i], ts = getTileset(L.tilemap.tilesetId); if (!ts) continue;
+    const cell = getCell(L.tilemap, cx, cy); if (!cell || cell.tileId == null) continue;
+    const tile = getTile(ts, cell.tileId); if (!tile) continue;
+    const g = transformTile(tile.grid, cellFlags(cell));
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = g[y] && g[y][x]; if (c) out[y][x] = blendOver(c, out[y][x], 1); } }
+  return out;
 }
 
 // поставить/стереть клетку и пересобрать слой (стирание — cell=null)

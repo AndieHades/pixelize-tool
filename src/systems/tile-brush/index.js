@@ -43,10 +43,11 @@ function paintAt(cx, cy, ts) {
 }
 
 function pickAt(cx, cy) {
-  const L = S.layers[S.cur], cell = getCell(L.tilemap, cx, cy);
-  if (!cell || cell.tileId == null) return;
-  S.activeTile = { tilesetId: L.tilemap.tilesetId, tileId: cell.tileId };
-  S.tileFlags = cellFlags(cell); bus.emit('tileset-changed');
+  const L = S.layers[S.cur];
+  S.tileSel = { li: S.cur, x0: cx, y0: cy, x1: cx, y1: cy }; // выбор клетки (draw выключен)
+  const cell = getCell(L.tilemap, cx, cy);
+  if (cell && cell.tileId != null) { S.activeTile = { tilesetId: L.tilemap.tilesetId, tileId: cell.tileId }; S.tileFlags = cellFlags(cell); }
+  bus.emit('tileset-changed'); bus.emit('render');
 }
 
 function act(cx, cy, ts) {

@@ -9,17 +9,16 @@
     #tilegrip { flex: none; -webkit-user-select: none; user-select: none; }
     #tilegrip:active { cursor: grabbing; }
 
-    /* свотчи в реальном пиксельном размере тайла (16×16, 48×48 — без масштабирования) */
-    #tile-list { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
-      padding: 4px 2px; overflow: auto; flex: 1; min-height: 56px; scrollbar-width: none; }
+    /* свотчи реального размера, ВПЛОТНУЮ как в палитре цветов; «своя сетка» — 1px
+       линии (фон контейнера просвечивает через gap), без рамок/скруглений/отступов */
+    #tile-list { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 1px;
+      padding: 1px; background: var(--line); overflow: auto; flex: 1; min-height: 56px; scrollbar-width: none; }
     #tile-list::-webkit-scrollbar { display: none; }
-    .tile-cell { position: relative; cursor: pointer; border: 1px solid var(--line);
-      border-radius: var(--r-sm, 4px); background: var(--panel2, var(--panel)); line-height: 0; }
-    /* подсветка выбора — outline (рисуется ПОВЕРХ превью-canvas; inset-shadow его перекрыл бы) */
-    .tile-cell.on { outline: 2px solid var(--marker); outline-offset: -2px; border-color: transparent; }
-    .tile-cell.marked { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .tile-cell { position: relative; cursor: pointer; background: var(--panel); line-height: 0; }
+    /* обводка выбора — как у свотчей, квадратная (outline поверх превью-canvas) */
+    .tile-cell.on { outline: 2px solid var(--marker); outline-offset: -2px; z-index: 1; }
+    .tile-cell.marked { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 1; }
     .tile-cell.on.marked { outline: 2px solid var(--marker); outline-offset: -2px; }
-    .tile-cell.grouped { border-color: var(--accent); }
     .tile-cell.dragging { opacity: .5; }
     .tile-th { display: block; image-rendering: pixelated; }
     .tile-idx { position: absolute; left: 1px; top: 0; font-size: 9px; line-height: 1.1; color: var(--txt2);
