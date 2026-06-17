@@ -2,6 +2,9 @@
 // без DOM и без глобального состояния.
 export const parseKey = (k) => { const ci = k.indexOf(','); return [+k.slice(0, ci), +k.slice(ci + 1)]; };
 
+// пустая сетка W×H (все клетки null) — общий конструктор для слоёв и tilemap
+export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
+
 // глубокая копия сетки: клетка = [r,g,b,a] или null
 export const cloneGrid = (g) => g.map((r) => r.map((c) => (c ? c.slice() : null)));
 

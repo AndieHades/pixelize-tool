@@ -11,18 +11,21 @@ import { BRUSH_RESIZE } from '../config/brush-resize.js';
 import { EYEDROPPER } from '../config/eyedropper.js';
 import { CURSOR } from '../config/cursor.js';
 import { loadBrushPrefs } from './brush-prefs.js';
-import { cloneGrid } from '../logic/raster.js';
+import { cloneGrid, blank } from '../logic/raster.js';
+import { cloneTilemap } from '../logic/tilemap-data.js';
+import { TILE_FLAGS_DEFAULT } from '../config/tileset.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
+export { blank };
 
-export const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill(null));
-export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, reference: false, ext: new Map(), effects: [] });
+export const newLayer = (name, w, h) => ({ name, grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false, reference: false, ext: new Map(), effects: [], kind: 'pixel' });
 // глубокая копия слоя (история/галерея/дубликат); overrides перекрывают поля
 // (напр. дубликат: reference:false и новое имя). Все поля слоя — в одном месте.
 export const cloneLayer = (L, overrides = {}) => ({
   name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid,
   clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock,
-  ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects), ...overrides,
+  ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects),
+  kind: L.kind || 'pixel', tilemap: L.tilemap ? cloneTilemap(L.tilemap) : undefined, ...overrides,
 });
 
 // фабрика эффекта слоя/папки: уникальный id, видимость, копия дефолтных параметров
@@ -49,6 +52,13 @@ export const S = {
   symLines: { x: null, y: null, d1: null, d2: null, mode: null, hover: null },
   grid: { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true },
   tile: { on: false }, // Tile Mode: бесшовный 3×3-повтор холста с заворотом рисования (как в Aseprite)
+  // Tileset/Tilemap: библиотека тайлов, активный тайл/группа для Tile Brush,
+  // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
+  tilesets: [], tilesetSeq: 0,
+  activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
+  tileFlags: { ...TILE_FLAGS_DEFAULT },
+  tileSel: null, // { li, x0, y0, x1, y1 } — прямоугольное выделение клеток
+  tileEdit: null, // состояние открытого редактора source tile
   lineMode: 'line', shapeTool: 'rect',
   fillShape: { rect: false, ellipse: false }, // режимы общей кнопки фигур: контур/заливка
   brushes: brushPrefs.brushes, stampBrush: { pencil: null, eraser: null }, // активная кисть-штамп по инструменту (null = квадрат)

@@ -35,6 +35,11 @@ import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
 import { FLAGS_DEFAULT } from '../src/config/defaults.js';
+import { transformTile } from '../src/logic/tile-transform.js';
+import { rasterTilemap } from '../src/logic/tilemap-raster.js';
+import { cloneTilemap } from '../src/logic/tilemap-data.js';
+import { cloneTileset } from '../src/logic/tileset-data.js';
+import { addTile, duplicateTile, deleteTile, getTile } from '../src/core/tileset.js';
 import { t as tr } from '../src/i18n/index.js';
 import { ru } from '../src/i18n/locales/ru.js';
 import { en } from '../src/i18n/locales/en.js';
@@ -487,4 +492,48 @@ t('config: S берёт дефолты из config', () => { assert.equal(S.pale
 
 t('i18n: t() даёт строку ru по умолчанию', () => { assert.equal(tr('tool.pencil'), ru['tool.pencil']); assert.equal(tr('нет.такого'), 'нет.такого'); });
 t('i18n: ключи ru и en совпадают', () => { assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort()); });
+
+// --- Tileset / Tilemap ---
+const RED = [255, 0, 0, 255], GRN = [0, 255, 0, 255];
+// тайл 2×2: верхний-левый красный, верхний-правый зелёный (для проверки трансформаций)
+const sampleTile = () => [[RED.slice(), GRN.slice()], [null, null]];
+t('tile-transform: flipX зеркалит по горизонтали', () => {
+  const g = transformTile(sampleTile(), { flipX: true });
+  assert.deepEqual(g[0][0], GRN); assert.deepEqual(g[0][1], RED); });
+t('tile-transform: flipY зеркалит по вертикали', () => {
+  const g = transformTile(sampleTile(), { flipY: true });
+  assert.deepEqual(g[1][0], RED); assert.deepEqual(g[1][1], GRN); });
+t('tile-transform: rotate 90 двигает верх-лево вправо-верх', () => {
+  const g = transformTile(sampleTile(), { rotation: 90 });
+  assert.deepEqual(g[0][1], RED); });
+t('tile-transform: diagonalFlip = транспонирование', () => {
+  const g = transformTile(sampleTile(), { diagonalFlip: true });
+  assert.deepEqual(g[0][0], RED); assert.deepEqual(g[1][0], GRN); });
+t('tile-transform: не мутирует источник', () => {
+  const src = sampleTile(); transformTile(src, { flipX: true, rotation: 180 });
+  assert.deepEqual(src[0][0], RED); });
+t('tilemap-raster: клетки укладываются по пиксельным смещениям', () => {
+  const tile = [[RED.slice()]]; // 1×1
+  const tm = { mapW: 2, mapH: 1, cells: [{ tileId: 1 }, null] };
+  const grid = rasterTilemap(tm, 1, 1, (id) => (id === 1 ? tile : null));
+  assert.deepEqual(grid[0][0], RED); assert.equal(grid[0][1], null); });
+t('tileset: tileId стабилен при удалении соседа', () => {
+  const ts = { id: 1, tileW: 2, tileH: 2, tiles: [], groups: [], tileSeq: 0 };
+  const a = addTile(ts), b = addTile(ts), c = addTile(ts);
+  deleteTile(ts, b.id);
+  assert.equal(getTile(ts, a.id).id, a.id); assert.equal(getTile(ts, c.id).id, c.id);
+  assert.equal(getTile(ts, b.id), null); });
+t('tileset: duplicate даёт новый id рядом', () => {
+  const ts = { id: 1, tileW: 2, tileH: 2, tiles: [], groups: [], tileSeq: 0 };
+  const a = addTile(ts), d = duplicateTile(ts, a.id);
+  assert.notEqual(d.id, a.id); assert.equal(ts.tiles.indexOf(d), ts.tiles.indexOf(a) + 1); });
+t('tilemap-data: cloneTilemap не делит ссылки на клетки', () => {
+  const tm = { tilesetId: 1, mapW: 1, mapH: 1, cells: [{ tileId: 5, flipX: true }] };
+  const c = cloneTilemap(tm); c.cells[0].tileId = 9;
+  assert.equal(tm.cells[0].tileId, 5); assert.equal(tm.cells[0].flipX, true); });
+t('tileset-data: cloneTileset копирует сетки тайлов', () => {
+  const ts = { id: 1, name: 'a', tileW: 1, tileH: 1, tileSeq: 1, tiles: [{ id: 1, name: '', weight: 10, grid: [[RED.slice()]] }], groups: [] };
+  const cl = cloneTileset(ts); cl.tiles[0].grid[0][0][0] = 0;
+  assert.equal(ts.tiles[0].grid[0][0][0], 255); });
+
 console.log(`\nВсе ${n} юнит-тестов прошли ✓`);
