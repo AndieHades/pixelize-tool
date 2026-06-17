@@ -1625,6 +1625,22 @@ t('effects: удаление при выбранном эффекте бьёт �
   actions.run('edit.delete'); // клавиатурный Delete при выбранном эффекте
   assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0);
   S.fxSel.clear(); S.fxCur = null; });
+t('delete: после удаления эффекта активным становится эффект над ним', () => { resetWH(8, 8); effects.mount();
+  const a = newEffect('stroke', {}), b = newEffect('glow', {}), c = newEffect('stroke', {});
+  S.layers[0].effects = [a, b, c]; S.cur = 0; S.fxSel = new Set([b]); S.fxCur = b; // выбран средний (верх стека = c)
+  actions.run('fx.delete'); assert.equal(S.fxCur, c); // активным стал эффект над удалённым
+  S.layers[0].effects = []; S.fxSel = new Set(); S.fxCur = null; });
+t('delete: Delete удаляет активный слой из списка (не чистит), фон не удаляет', () => { resetWH(8, 8); lops.doAddLayer();
+  S.cur = 1; S.marked = new Set(); S.selFolder = null; S.fxCur = null; S.fxSel = new Set(); S.sel = S.selMask = null; S.bgSel = false;
+  const before = S.layers.length; actions.run('edit.delete'); // Delete без выделения → удалить активный слой
+  assert.equal(S.layers.length, before - 1); // слой удалён из списка, а не очищен
+  S.bgSel = true; const keep = S.layers.length; actions.run('edit.delete'); // фон активен → ничего не удаляется
+  assert.equal(S.layers.length, keep); S.bgSel = false; });
+t('delete: Delete с выделением пикселей стирает выделение, слой остаётся', () => { resetWH(8, 8); lops.doAddLayer();
+  S.cur = 1; S.layers[1].grid[2][2] = [5, 5, 5, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.bgSel = false; cache.dirtyAll();
+  const before = S.layers.length; actions.run('edit.delete');
+  assert.equal(S.layers.length, before); assert.equal(S.layers[1].grid[2][2], null); // слой цел, пиксель в выделении стёрт
+  S.sel = null; });
 
 t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });
@@ -2042,8 +2058,9 @@ t('layers-ui: pinch-merge сливает диапазон и оставляет 
   lops.mergeRange(1, 3);
   assert.equal(S.layers.length, 3); assert.equal(S.cur, 1); assert.deepEqual(S.layers.map((L) => L.name), ['below', 'top', 'above']);
   assert.deepEqual(S.layers[1].grid[0][0], [10, 0, 0, 255]); assert.deepEqual(S.layers[1].grid[2][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][1], [0, 0, 10, 255]); });
-t('layers-ui: после удаления активного слоя выбирается слой ниже', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
-  S.cur = 1; lops.deleteLayerRef(S.layers[1]); assert.equal(S.cur, 0); });
+t('layers-ui: после удаления активным становится слой над ним (иначе под ним)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.cur = 1; const above = S.layers[2]; lops.deleteLayerRef(S.layers[1]); assert.equal(S.layers[S.cur], above); // выбрался слой над удалённым
+  const below = S.layers[0]; S.cur = S.layers.length - 1; lops.deleteLayerRef(S.layers[S.cur]); assert.equal(S.layers[S.cur], below); }); // верхний удалён — выбрался тот, что под ним
 t('layers-ui: удаление неактивного слоя сохраняет активный слой', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   const active = S.layers[2]; S.cur = 2; lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers[S.cur], active); });
 t('layers-ui: пустая папка остаётся на месте после удаления последнего слоя', () => { resetWH(4, 4);

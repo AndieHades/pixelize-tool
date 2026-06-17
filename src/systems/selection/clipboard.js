@@ -49,8 +49,9 @@ export function doPaste() { if (!clip) { toast(t('toast.bufferEmpty')); return; 
   S.sel = null; S.selMask = null;
   markDirty(S.cur); bus.emit('selection'); bus.emitDoc(); toast(asNew ? t('toast.pastedNew') : t('toast.pasted')); }
 
-export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удалить эффект, а не чистить слой
-  if (S.sel ? deleteSelContent() : clearLayer()) toast(S.sel ? t('toast.selDeleted') : t('toast.layerCleared')); }
+export function doDelete() { if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект/настройка → удалить его
+  if (S.sel) { if (deleteSelContent()) toast(t('toast.selDeleted')); return; } // есть выделение пикселей → стереть его
+  actions.run('layer.delete'); } // иначе удалить активную строку из списка (слой/папка); фон не трогаем
 
 actions.register('edit.copy', doCopy); actions.register('edit.cut', doCut);
 actions.register('edit.paste', doPaste); actions.register('edit.delete', doDelete);

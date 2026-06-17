@@ -13,8 +13,13 @@ let ref = null; // { target, eff } — по какой строке открыт
 const refresh = () => { bus.emitDoc(); };
 
 export function deleteFx() { const list = selectedEffects(); if (!list.length) return; snapshot();
+  const top = list[list.length - 1], o0 = ownerOf(top); // что выбрать после: эффект НАД верхним удаляемым
+  const above = o0 ? o0.effects[o0.effects.indexOf(top) + 1] : null;
   for (const e of list) { const o = ownerOf(e); if (o) { const i = o.effects.indexOf(e); if (i >= 0) o.effects.splice(i, 1); } }
-  S.fxSel.clear(); S.fxCur = null; refresh(); }
+  if (above && ownerOf(above)) { S.fxSel = new Set([above]); S.fxCur = above; } // эффект над удалённым становится активным
+  else { S.fxSel.clear(); S.fxCur = null; const oi = o0 ? S.layers.indexOf(o0) : -1; // нет эффекта выше → активным становится владелец (слой/папка)
+    if (oi >= 0) { S.cur = oi; S.selFolder = null; } else if (o0) S.selFolder = o0.id; }
+  refresh(); }
 
 export function duplicateFx() { const list = selectedEffects(); if (!list.length) return; snapshot(); const made = new Set();
   for (const e of list) { const o = ownerOf(e); if (!o) continue; const i = o.effects.indexOf(e); const c = cloneFx([e])[0];

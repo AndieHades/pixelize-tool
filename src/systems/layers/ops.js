@@ -59,7 +59,8 @@ export function mergeRange(a, b) { const idx = []; for (let i = Math.min(a, b); 
 
 function activeAfterDelete(idx) {
   const gone = new Set(idx), curObj = S.layers[S.cur]; let target = gone.has(S.cur) ? null : curObj;
-  if (!target) for (let i = S.cur - 1; i >= 0; i--) if (!gone.has(i)) { target = S.layers[i]; break; }
+  if (!target) { for (let i = S.cur + 1; i < S.layers.length; i++) if (!gone.has(i)) { target = S.layers[i]; break; } // слой НАД удаляемым (выше в списке)
+    if (!target) for (let i = S.cur - 1; i >= 0; i--) if (!gone.has(i)) { target = S.layers[i]; break; } } // иначе под ним
   return () => { S.cur = target && S.layers.includes(target) ? S.layers.indexOf(target) : 0; };
 }
 
@@ -142,6 +143,7 @@ export function deleteFolder(f) {
   dirtyAll(); bus.emitDoc(); }
 
 export function deleteLayer() {
+  if (S.bgSel) return; // фон не удаляется
   if (S.fxCur || S.fxSel.size) { actions.run('fx.delete'); return; } // выбран эффект → удаляем эффект, а не слой
   // удалить всё выделенное: слои S.marked+S.cur и содержимое выделенных папок
   const allIdx = new Set(selectedIdx());
@@ -161,3 +163,4 @@ export function deleteLayer() {
 actions.register('layer.add', doAddLayer);
 actions.register('layer.merge', doMerge);
 actions.register('layer.group', doGroup);
+actions.register('layer.delete', deleteLayer); // удалить активную строку (слой/папка/эффект/настройка) — корзина и Delete
