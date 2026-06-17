@@ -99,6 +99,8 @@ await import('../src/systems/tile-selection/index.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
 const tfl = await import('../src/systems/tile-from-layer.js');
 const tmode = await import('../src/systems/tileset-mode.js');
+await import('../src/systems/tilemap-paint/index.js');
+const tops = await import('../src/systems/tile-palette/ops.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -2345,6 +2347,57 @@ t('tilemap: Tileset Mode тумблер выбирает кисть и тайл-
   const L = tmap.makeTilemapLayer('tm', ts.id, 1, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   tmode.setMode(true); assert.equal(S.tileset.on, true); assert.equal(S.tool, 'tilebrush');
   tmode.setMode(false); assert.equal(S.tileset.on, false); assert.notEqual(S.tool, 'tilebrush');
+});
+
+function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
+function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;
+  const ts = tsmgr.createTileset('t', tw, tw), tile = tsmgr.addTile(ts);
+  const L = tmap.makeTilemapLayer('tm', ts.id, Math.floor(8 / tw), 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
+  S.tileset = { on: true }; S.tilePattern = null; S.tileRandom = false; return { ts, tile, L }; }
+
+t('tilemap: Manual пишет в source — обновляются все экземпляры', () => {
+  const { tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [10, 20, 30];
+  assert.ok(tilePaint(0, 0));
+  assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
+  assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
+});
+t('tilemap: Auto создаёт новый tileId для клетки, source цел', () => {
+  const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
+  const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
+  assert.equal(ts.tiles.length, before + 1); assert.notEqual(L.tilemap.cells[0].tileId, tile.id);
+  assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.equal(tile.grid[0][0], null); // соседняя и source целы
+});
+t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
+  tilePaint(0, 0); assert.equal(ts.tiles.length, 1); // в пустой клетке создан тайл
+  S.tool = 'eraser'; tilePaint(4, 0); assert.equal(ts.tiles.length, 1); // стёртая пустая клетка нового тайла не дала
+});
+t('tilemap: трансформ клетки меняет экземпляр, не source', () => {
+  const { tile, L } = tmSetup(4); S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
+  tmode.cellFlipH();
+  assert.equal(L.tilemap.cells[0].flipX, true); assert.ok(!L.tilemap.cells[1].flipX); // только эта клетка
+  assert.ok(tile.grid.every((r) => r.every((c) => !c))); // source не тронут
+});
+t('tilemap: Delete Tile очищает все экземпляры', () => {
+  const { ts, tile, L } = tmSetup(4); tops.removeTile(ts, tile.id);
+  assert.equal(ts.tiles.length, 0); assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null);
+});
+t('tileset: addTileUnique не дублирует одинаковые тайлы', () => {
+  const ts = tsmgr.createTileset('t', 1, 1); const g = [[[1, 2, 3, 255]]];
+  const a = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
+  const b = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
+  assert.equal(a.added, true); assert.equal(b.added, false); assert.equal(b.tile, a.tile);
+});
+t('tile-brush: паттерн штампует выровненно по сетке', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 1, 1); const t1 = tsmgr.addTile(ts), t2 = tsmgr.addTile(ts);
+  const L = tmap.makeTilemapLayer('tm', ts.id, 4, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.tilePattern = { w: 2, h: 1, ids: [t1.id, t2.id] }; S.activeTile = { tilesetId: ts.id, tileId: t1.id }; S.tileMode = 'paint'; S.tileRandom = false;
+  const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.move({ gx: 1, gy: 0 }); h.up({});
+  assert.equal(L.tilemap.cells[0].tileId, t1.id); assert.equal(L.tilemap.cells[1].tileId, t2.id); S.tilePattern = null;
 });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

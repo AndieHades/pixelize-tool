@@ -57,7 +57,11 @@ export const S = {
   tilesets: [], tilesetSeq: 0,
   tileset: { on: false }, // Tileset Mode: рисование тайлами по сетке (тумблер рядом с grid)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
+  tileMarks: new Set(), // мульти-выбор тайлов в палитре (как свотчи)
+  tilePattern: null, // паттерн из нескольких выбранных тайлов (Godot-стиль): { w, h, ids }
+  tileRandom: false, // Random: рисовать случайными тайлами из выбранных (кубик)
   tileMode: 'paint', // режим Tile Brush: paint | erase | pick
+  tileAutoMode: 'manual', // M/A: правка source tile (manual) | новый тайл из клетки (auto)
   tileFlags: { ...TILE_FLAGS_DEFAULT },
   tileSel: null, // { li, x0, y0, x1, y1 } — прямоугольное выделение клеток
   tileEdit: null, // состояние открытого редактора source tile

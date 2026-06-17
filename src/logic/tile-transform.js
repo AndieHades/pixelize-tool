@@ -38,3 +38,16 @@ export const cellFlags = (c) => ({
   flipX: !!(c && c.flipX), flipY: !!(c && c.flipY),
   diagonalFlip: !!(c && c.diagonalFlip), rotation: (c && c.rotation) || 0,
 });
+
+// обратное отображение: пиксель отображаемого (трансформированного) тайла (dx,dy)
+// → координата в source-сетке. Нужно для пиксельной правки клетки с флагами
+// (рисуем по тому, что видим, пишем в исходник). Тайл считаем квадратным n×n.
+export function invTransformCoord(dx, dy, n, flags = {}) {
+  let x = dx, y = dy;
+  let r = (((flags.rotation || 0) % 360) + 360) % 360;
+  for (let k = 0; k < r / 90; k++) { const nx = y, ny = n - 1 - x; x = nx; y = ny; } // обратный поворот (CCW)
+  if (flags.flipY) y = n - 1 - y;
+  if (flags.flipX) x = n - 1 - x;
+  if (flags.diagonalFlip) { const tmp = x; x = y; y = tmp; }
+  return [x, y];
+}

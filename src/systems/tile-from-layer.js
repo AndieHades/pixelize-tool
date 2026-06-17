@@ -5,8 +5,9 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { $, toast, t } from '../core/dom.js';
-import { addTile } from '../core/tileset.js';
-import { isTilemap, gridTileSize, tilesetForSize } from '../core/tilemap.js';
+import { addTileUnique } from '../core/tileset.js';
+import { isTilemap, gridTileSize, tilesetForSize, rasterLayer } from '../core/tilemap.js';
+import { dirtyAll } from '../core/layer-cache.js';
 import { blank } from '../logic/raster.js';
 
 // вырезать блок tw×th из сетки слоя по клетке (cx,cy); null — если блок пуст
@@ -27,15 +28,39 @@ export function fromLayer() {
   snapshot(); let added = 0, lastId = null;
   for (let cy = 0; cy * th < S.H; cy++) for (let cx = 0; cx * tw < S.W; cx++) {
     const g = block(L.grid, cx, cy, tw, th); if (!g) continue;
-    lastId = addTile(ts, g).id; added++;
+    const r = addTileUnique(ts, g); lastId = r.tile.id; if (r.added) added++; // одинаковые тайлы не дублируются
   }
-  if (!added) { toast(t('toast.layerEmpty')); return; }
+  if (lastId == null) { toast(t('toast.layerEmpty')); return; }
   S.activeTile = { tilesetId: ts.id, tileId: lastId };
   actions.run('tile.palette.open'); bus.emit('tileset-changed'); bus.emit('render');
   toast(t('toast.tilesFromLayer', { n: added }));
 }
 
+// Convert to Tile: превратить активный пиксельный слой в Tilemap-слой. Режем по
+// сетке с дедупликацией (одинаковые блоки → один tileId), клетки ссылаются на
+// тайлы. Слой меняет тип на 'tilemap' и получает иконку в списке.
+export function convertToTile() {
+  const L = S.layers[S.cur];
+  if (!L || isTilemap(L)) { toast(t('toast.needPixelLayer')); return; }
+  const { w: tw, h: th } = gridTileSize();
+  const ts = tilesetForSize(tw, th);
+  snapshot();
+  const mapW = Math.ceil(S.W / tw), mapH = Math.ceil(S.H / th), cells = new Array(mapW * mapH).fill(null);
+  for (let cy = 0; cy < mapH; cy++) for (let cx = 0; cx < mapW; cx++) {
+    const g = block(L.grid, cx, cy, tw, th); if (!g) continue;
+    const id = addTileUnique(ts, g).tile.id; // дедуп: одинаковые блоки → один tileId
+    cells[cy * mapW + cx] = { tileId: id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
+  }
+  L.kind = 'tilemap'; L.tilemap = { tilesetId: ts.id, mapW, mapH, cells };
+  S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
+  S.grid.w = tw; S.grid.h = th; S.grid.visible = true;
+  rasterLayer(S.cur); dirtyAll();
+  actions.run('tile.palette.open'); bus.emit('tileset-changed'); bus.emitDoc();
+  toast(t('toast.tilesFromLayer', { n: ts.tiles.length }));
+}
+
 export function mount() {
   actions.register('tile.fromLayer', fromLayer);
+  actions.register('tile.convertLayer', convertToTile);
   const btn = $('lay-create-tile'); if (btn) btn.onclick = fromLayer;
 }

@@ -8,6 +8,7 @@ import { $, t } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { newTile, dupTile, delTile, activeTileset } from './ops.js';
 import { renderTiles } from './list.js';
+import { initSelect, mountSelect } from './select.js';
 import { buildToolbar, syncToolbar } from './toolbar.js';
 
 let panel = null;
@@ -18,7 +19,11 @@ function build() {
   const head = document.createElement('div'); head.id = 'tilegrip'; head.className = 'pop-head';
   const title = document.createElement('span'); title.className = 'pop-title'; title.textContent = t('tile.palette');
   const acts = document.createElement('span'); acts.className = 'pop-acts';
-  const x = document.createElement('button'); x.className = 'win-x'; x.title = t('btn.close'); x.textContent = '×';
+  const lib = document.createElement('button'); lib.id = 'tset-lib'; lib.title = t('tile.loadSet');
+  lib.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 4.5h12l2 2v13H5z"/><path d="M8 4.5v6h8v-6"/><path d="M8 16.5h8"/></svg>';
+  acts.appendChild(lib);
+  const x = document.createElement('button'); x.className = 'win-x'; x.title = t('btn.close');
+  x.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   x.onclick = () => panel.classList.add('closed'); acts.appendChild(x);
   head.append(title, acts);
   const list = document.createElement('div'); list.id = 'tile-list';
@@ -44,9 +49,11 @@ export function mount() {
   actions.register('tile.new', newTile);
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
+  initSelect(refresh); mountSelect();
   floatingWindow(panel, { grip: $('tilegrip'), storeKey: 'tilewin', clampBottom: 50,
     onClose: () => panel.classList.add('closed') });
   bus.on('tileset-changed', refresh);
+  bus.on('tool', refresh);
   bus.on('layers', refresh);
 }
 

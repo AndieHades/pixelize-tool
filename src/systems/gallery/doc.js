@@ -2,6 +2,8 @@
 // работа (в т.ч. из картинки), автосохранение.
 import { S, newLayer, cloneFx, cloneLayer } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import { cloneTileset } from '../../logic/tileset-data.js';
+import { isTilemap, rasterLayer } from '../../core/tilemap.js';
 import { compositeLayers, dirtyAll } from '../../core/layer-cache.js';
 import { makeCanvas } from '../../core/canvas.js';
 import { dedupePal } from '../../logic/quantize.js';
@@ -17,6 +19,7 @@ function record() {
   const c = makeCanvas(S.W, S.H); compositeLayers(c.getContext('2d'));
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
+    tilesetSeq: S.tilesetSeq, tilesets: S.tilesets.map(cloneTileset), // тайлсеты: id/индекс/bitmap/имя/порядок/группы
     layers: S.layers.map((L) => cloneLayer(L)),
     bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
     folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })), palette: S.palette.map((p) => p.slice()), active: S.active.slice(), colorMode: S.colorMode || 'rgba',
@@ -29,7 +32,9 @@ export const autosave = () => { clearTimeout(saveT); saveT = setTimeout(saveCurr
 
 function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 1;
   S.layers = rec.layers; S.folders = rec.folders || [];
-  S.layers.forEach((L) => { if (!L.effects) L.effects = []; L.reference = !!L.reference; }); S.folders.forEach((f) => { if (!f.effects) f.effects = []; }); // старые проекты без эффектов/reference
+  S.layers.forEach((L) => { if (!L.effects) L.effects = []; L.reference = !!L.reference; if (!L.kind) L.kind = 'pixel'; }); S.folders.forEach((f) => { if (!f.effects) f.effects = []; }); // старые проекты без эффектов/reference/kind
+  S.tilesets = rec.tilesets || []; S.tilesetSeq = rec.tilesetSeq || 0; S.activeTile = null; S.tileMarks = new Set(); S.tileSel = null; S.tileset = { on: false };
+  S.layers.forEach((L, i) => { if (isTilemap(L)) rasterLayer(i); }); // восстановить пиксельный кеш из cells + тайлсетов
   // folderSeq всегда впереди реальных id — иначе новые папки могут получить чужой id (старые проекты)
   S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
   S.bg = rec.bg ? { color: rec.bg.color ? rec.bg.color.slice() : null, visible: rec.bg.visible !== false } : { color: null, visible: true }; S.bgSel = false;
@@ -40,6 +45,7 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
 
 function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder = null;
   S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer(t('layer.name') + ' 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
+  S.tilesets = []; S.tilesetSeq = 0; S.activeTile = null; S.tileMarks = new Set(); S.tileSel = null; S.tileset = { on: false };
   S.colorMode = colorMode; S.palette = colorMode === 'grayscale' ? grayscalePalette() : defaultPalette();
   S.active = colorMode === 'grayscale' ? S.palette[S.palette.length - 1].slice() : S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
   S.shading = { colors: [], on: false, open: false, picking: false };

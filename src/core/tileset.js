@@ -3,6 +3,7 @@
 // запросы «сетка тайла по id» и делает CRUD тайлов. Группы вариантов — отдельно.
 import { S } from './state.js';
 import { blank, cloneGrid } from '../logic/raster.js';
+import { tileGridKey } from '../logic/tileset-data.js';
 import { TILE_WEIGHT_DEFAULT } from '../config/tileset.js';
 
 export const getTileset = (id) => S.tilesets.find((ts) => ts.id === id) || null;
@@ -25,6 +26,18 @@ export function addTile(ts, grid, opts = {}) {
   const tile = { id: ++ts.tileSeq, name: opts.name || '', groupId: opts.groupId ?? null, weight: opts.weight ?? TILE_WEIGHT_DEFAULT, grid: g };
   if (opts.index != null) ts.tiles.splice(opts.index, 0, tile); else ts.tiles.push(tile);
   return tile;
+}
+
+// найти тайл с таким же битмапом (дедуп: одинаковые тайлы не добавляются)
+export function findTileByGrid(ts, grid) { const k = tileGridKey(grid);
+  return ts.tiles.find((tl) => tileGridKey(tl.grid) === k) || null; }
+
+// добавить тайл, но если идентичный уже есть — вернуть существующий (как палитра
+// цветов: одинаковые не дублируются). Возвращает { tile, added }.
+export function addTileUnique(ts, grid, opts = {}) {
+  const ex = grid ? findTileByGrid(ts, grid) : (ts.tiles.find((tl) => tl.grid.every((r) => r.every((c) => !c))) || null);
+  if (ex) return { tile: ex, added: false };
+  return { tile: addTile(ts, grid, opts), added: true };
 }
 
 // дублировать тайл (новый стабильный id, рядом в палитре)

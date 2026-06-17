@@ -26,7 +26,18 @@ function resolveTileId(ts) {
   return a.tileId;
 }
 
+// Godot-стиль: при выбранном паттерне (несколько тайлов) штампуем его с
+// выравниванием по сетке карты — так рисуются замкнутые участки/острова.
+function patternId(cx, cy) { const p = S.tilePattern;
+  return p.ids[(((cy % p.h) + p.h) % p.h) * p.w + (((cx % p.w) + p.w) % p.w)]; }
+
+// случайный тайл из выбранных в палитре (режим «кубик»)
+function randomMarkId() { const ids = [...S.tileMarks]; if (!ids.length) return S.activeTile && S.activeTile.tileId;
+  return ids[Math.floor(Math.random() * ids.length)]; }
+
 function paintAt(cx, cy, ts) {
+  if (S.tileRandom && S.tileMarks.size) { const id = randomMarkId(); if (id != null && getTile(ts, id)) setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags }); return; }
+  if (S.tilePattern) { const id = patternId(cx, cy); if (id != null && getTile(ts, id)) setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags }); return; }
   const id = resolveTileId(ts); if (id == null || !getTile(ts, id)) { toast(t('toast.noTiles')); return; }
   setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags });
 }
@@ -60,6 +71,7 @@ actions.register('tool.tilebrush', () => setTool('tilebrush'));
 actions.register('tile.mode.paint', () => { S.tileMode = 'paint'; bus.emit('tileset-changed'); });
 actions.register('tile.mode.erase', () => { S.tileMode = 'erase'; bus.emit('tileset-changed'); });
 actions.register('tile.mode.pick', () => { S.tileMode = 'pick'; bus.emit('tileset-changed'); });
+actions.register('tile.random', () => { S.tileRandom = !S.tileRandom; bus.emit('tileset-changed'); });
 
 // transform-флаги новых экземпляров (кнопки Flip/Rotate/Diagonal)
 const ef = () => bus.emit('tileset-changed');

@@ -35,7 +35,7 @@ import { ZOOM_MIN, ZOOM_MAX, historyCap } from '../src/config/limits.js';
 import { SIZE_PRESETS, DEFAULT_DOC } from '../src/config/presets.js';
 import { defaultPalette, DEFAULT_PALETTE_HEX, DEFAULT_ACTIVE } from '../src/config/palette.js';
 import { FLAGS_DEFAULT } from '../src/config/defaults.js';
-import { transformTile } from '../src/logic/tile-transform.js';
+import { transformTile, invTransformCoord } from '../src/logic/tile-transform.js';
 import { rasterTilemap } from '../src/logic/tilemap-raster.js';
 import { cloneTilemap } from '../src/logic/tilemap-data.js';
 import { cloneTileset } from '../src/logic/tileset-data.js';
@@ -512,6 +512,16 @@ t('tile-transform: diagonalFlip = транспонирование', () => {
 t('tile-transform: не мутирует источник', () => {
   const src = sampleTile(); transformTile(src, { flipX: true, rotation: 180 });
   assert.deepEqual(src[0][0], RED); });
+t('tile-transform: invTransformCoord обратен transformTile', () => {
+  const src = [[[0, 0, 0, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], [3, 3, 3, 255]]]; // 2×2 уникальные метки
+  for (const flags of [{ flipX: true }, { flipY: true }, { rotation: 90 }, { rotation: 270 }, { diagonalFlip: true }, { flipX: true, rotation: 90 }]) {
+    const disp = transformTile(src, flags);
+    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      const [sx, sy] = invTransformCoord(dx, dy, 2, flags);
+      assert.deepEqual(disp[dy][dx], src[sy][sx]); // отображаемый пиксель = источник по обратной координате
+    }
+  }
+});
 t('tilemap-raster: клетки укладываются по пиксельным смещениям', () => {
   const tile = [[RED.slice()]]; // 1×1
   const tm = { mapW: 2, mapH: 1, cells: [{ tileId: 1 }, null] };

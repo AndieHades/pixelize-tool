@@ -1,6 +1,6 @@
-/* Tile Palette: плавающая панель тайлов, превью-сетка, тулбар, редактор тайла. */
+/* Tile Palette: плавающая панель тайлов, свотчи реального размера, тулбар, редактор. */
 
-    #tilebar { position: fixed; right: 64px; top: 80px; z-index: 12; width: 220px;
+    #tilebar { position: fixed; right: 64px; top: 80px; z-index: 12; width: 240px;
       display: flex; flex-direction: column; max-height: 70vh;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
       border: 1px solid var(--line); border-radius: var(--win-radius); padding: 0 8px 8px;
@@ -9,30 +9,37 @@
     #tilegrip { flex: none; -webkit-user-select: none; user-select: none; }
     #tilegrip:active { cursor: grabbing; }
 
-    #tile-list { display: grid; grid-template-columns: repeat(auto-fill, 48px); gap: 4px;
-      padding: 4px 2px; overflow-y: auto; align-content: flex-start; min-height: 56px; scrollbar-width: none; }
+    /* свотчи в реальном пиксельном размере тайла (16×16, 48×48 — без масштабирования) */
+    #tile-list { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+      padding: 4px 2px; overflow: auto; flex: 1; min-height: 56px; scrollbar-width: none; }
     #tile-list::-webkit-scrollbar { display: none; }
-    .tile-cell { position: relative; width: 48px; height: 48px; border-radius: var(--r-md);
-      overflow: hidden; cursor: pointer; border: 1px solid var(--line); background: var(--panel2, var(--panel)); }
-    .tile-cell.on { box-shadow: inset 0 0 0 2px var(--accent); border-color: transparent; }
+    .tile-cell { position: relative; cursor: pointer; border: 1px solid var(--line);
+      border-radius: var(--r-sm, 4px); background: var(--panel2, var(--panel)); line-height: 0; }
+    .tile-cell.on { box-shadow: inset 0 0 0 2px var(--marker); border-color: transparent; }
+    .tile-cell.marked { box-shadow: inset 0 0 0 2px var(--accent); }
+    .tile-cell.on.marked { box-shadow: inset 0 0 0 2px var(--marker), inset 0 0 0 4px var(--accent); }
     .tile-cell.grouped { border-color: var(--accent); }
-    .tile-th { width: 40px; height: 40px; display: block; margin: 3px auto 0; image-rendering: pixelated; }
-    .tile-idx { position: absolute; left: 2px; top: 1px; font-size: 9px; color: var(--txt2);
-      background: rgba(0, 0, 0, .45); border-radius: 3px; padding: 0 2px; pointer-events: none; }
-    .tile-nm { position: absolute; left: 0; right: 0; bottom: 0; font-size: 9px; color: var(--txt);
-      text-align: center; background: rgba(0, 0, 0, .45); padding: 0 2px; white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; }
-    .tile-nm.editing { background: var(--panel); color: var(--txt); outline: 1px solid var(--accent); }
+    .tile-cell.dragging { opacity: .5; }
+    .tile-th { display: block; image-rendering: pixelated; }
+    .tile-idx { position: absolute; left: 1px; top: 0; font-size: 9px; line-height: 1.1; color: var(--txt2);
+      background: rgba(0, 0, 0, .5); border-radius: 0 0 3px 0; padding: 0 2px; pointer-events: none; }
+    .tile-nm { position: absolute; left: 0; right: 0; bottom: 0; font-size: 9px; line-height: 1.2; color: var(--txt);
+      text-align: center; background: rgba(0, 0, 0, .5); padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tile-nm.editing { background: var(--panel); color: var(--txt); outline: 1px solid var(--accent); line-height: 1.3; }
 
-    .tile-act { display: flex; flex-wrap: wrap; gap: 2px; margin: 6px -8px -8px; padding: 6px 8px;
+    /* тулбар закреплён снизу окна */
+    .tile-act { flex: none; display: flex; flex-wrap: wrap; gap: 2px; margin: 6px -8px -8px; padding: 6px 8px;
       border-radius: 0 0 var(--win-radius) var(--win-radius); }
-    .tile-act button { min-width: 26px; height: 28px; padding: 0 4px; font-size: 13px; }
-    .tile-act button.on { background: var(--accent); color: #fff; }
+    .tile-act button { min-width: 30px; height: 30px; padding: 0 4px; display: grid; place-items: center; }
+    .tile-act button svg { width: 18px; height: 18px; }
+    .tile-act button.tile-modebtn { font-size: 14px; font-weight: 700; }
+    .tile-act button.on { background: var(--accent); color: var(--on-accent, #fff); }
 
     /* редактор тайла */
     .tile-edit-cv { display: block; margin: 8px auto; image-rendering: pixelated; touch-action: none;
       border: 1px solid var(--line); background: var(--doc, #2a2a2a); cursor: crosshair; }
 
-    /* диалог создания tilemap-слоя */
-    #tmap-ovl .tmap-sizes { display: flex; gap: 4px; }
-    #tmap-ovl .tmap-sizes button.on { background: var(--accent); color: #fff; }
+    /* метка Tile Layer в строке слоя (рядом с глазом) */
+    .lrow .ltile { color: var(--accent); }
+
+    .confirm-msg { margin: 4px 2px 12px; line-height: 1.4; }
