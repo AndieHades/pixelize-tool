@@ -388,6 +388,16 @@ t('layer-effects: effectLayerPixels(stroke) — кольцо и координа
 t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
+t('effects-render: эффект папки перерисовывается при добавлении эффекта слою внутри', () => { resetWH(8, 8);
+  const mk = (name, fid) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid, clip: false, lock: false, alphaLock: false, ext: new Map(), effects: [] });
+  S.layers = [mk('a', 1), mk('b', 1)]; S.layers[0].grid[3][3] = [9, 9, 9, 255]; S.layers[1].grid[4][4] = [8, 8, 8, 255];
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [newEffect('stroke', { size: 1, color: '#ffffff' })] }];
+  S.cur = 0; S.marked = new Set(); cache.dirtyAll();
+  const c1 = fxr.folderFx(S.folders[0], 'below'); assert.ok(c1);
+  S.layers[1].effects = [newEffect('stroke', { size: 2, color: '#000000' })]; // добавили эффект слою внутри папки
+  const c2 = fxr.folderFx(S.folders[0], 'below');
+  assert.notEqual(c1, c2); // эффект папки пересчитался по новому силуэту (а не отдал устаревший из кеша)
+  S.folders = []; S.layers = [mk('a', null)]; S.cur = 0; });
 t('effects-render: fx-канвас едет с поднятым фрагментом выделения (обводка не пропадает/не застывает)', () => {
   resetWH(8, 8); S.layers[0].grid[4][4] = [9, 9, 9, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];

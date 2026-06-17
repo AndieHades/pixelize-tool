@@ -136,7 +136,13 @@ function groupCanvas(fid) { const c = cv(S.W, S.H), x = c.getContext('2d'); x.im
     const cb = L.clip ? null : layerSrcCanvas(i); if (!cb) continue; x.globalAlpha = L.opacity; x.drawImage(cb, 0, 0); }
   x.globalAlpha = 1; return c; }
 
-function memberSig(fid) { let s = ''; for (let i = 0; i < S.layers.length; i++) if (folderChain(S.layers[i].fid).some((f) => f.id === fid)) s += i + ':' + layerRev(i) + ';'; return s; }
+// подпись состава группы для кеша её эффектов: контент И эффекты каждого слоя
+// поддерева (incl. черновик) — чтобы добавление/правка эффекта слою внутри сразу
+// перерисовывала эффект папки вокруг обновлённого силуэта
+function memberSig(fid) { let s = '';
+  for (let i = 0; i < S.layers.length; i++) { if (!folderChain(S.layers[i].fid).some((f) => f.id === fid)) continue;
+    s += i + ':' + layerRev(i) + ':' + JSON.stringify(layerRenderEffects(i)) + ';'; }
+  return s; }
 
 const fcache = new Map(); // fid+'|'+which → { sig, canvas }
 // canvas эффектов папки: which='below' (под группой) | 'above' (поверх, по силуэту группы)
