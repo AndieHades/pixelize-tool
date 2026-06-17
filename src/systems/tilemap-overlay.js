@@ -6,7 +6,16 @@ import * as bus from '../core/bus.js';
 import { getTileset, getTile } from '../core/tileset.js';
 import { isTilemap, inMap, stampTileId, rollRandomTile } from '../core/tilemap.js';
 import { transformTile } from '../logic/tile-transform.js';
+import { hexToRgb, rgbToHex, farthestColor } from '../logic/color.js';
 import { C } from '../styles/canvas-colors.js';
+
+// цвет сетки Tileset Grid, гарантированно отличный от обычной сетки (когда та
+// видна) — чтобы не перепутать; иначе берём свой тёплый токен
+function tilesetGridColor() {
+  if (!(S.grid && (S.grid.visible || S.grid.preview))) return C.tileGrid;
+  const ref = hexToRgb(S.grid.color || '#4aa3ff');
+  return rgbToHex(farthestColor(ref, [hexToRgb(C.tileGrid), [255, 255, 255]]));
+}
 
 function draw({ ctx, ox, oy, z }) {
   if (!(S.tileset && S.tileset.on)) return; // Tileset Grid и его оверлеи — только в Tileset mode
@@ -23,7 +32,7 @@ function cellSize(L) { if (isTilemap(L)) { const ts = getTileset(L.tilemap.tiles
 
 // сетка квадратов Tileset Grid по всему холсту
 function drawTilesetGrid(ctx, ox, oy, z) { const L = S.layers[S.cur]; if (!L) return; const [cw, ch] = cellSize(L);
-  ctx.save(); ctx.globalAlpha = 0.4; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
+  ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = tilesetGridColor(); ctx.lineWidth = 1; ctx.beginPath();
   const xs = new Set([S.W]); for (let x = 0; x <= S.W; x += cw) xs.add(x);
   const ys = new Set([S.H]); for (let y = 0; y <= S.H; y += ch) ys.add(y);
   for (const x of xs) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + S.H * z); }

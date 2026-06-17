@@ -106,6 +106,8 @@ function syncToolButtons() {
   $('cv').style.cursor = S.tool === 'move' ? 'move' : ''; // пипетка (bb-pick «on», body.picking) — на Eyedropper System
 }
 
+// кнопки флагов кисти (Pixel Perfect / стабилизация) — синхрон с состоянием
+function syncBrushFlags() { $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn); }
 function toggle(flag, btnId, onKey, offKey, save = false) { S[flag] = !S[flag]; if (save) saveBrushPrefs(S);
   $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 function toggleSym(flag) { const m = SYM_MODES.find((x) => x.flag === flag); if (!m) return;
@@ -152,8 +154,9 @@ export function mount() {
   $('zout').onclick = () => actions.run('zoom.out');
   $('fit').onclick = () => actions.run('view.fit');
 
-  $('pp').classList.toggle('on', S.ppOn); $('stab').classList.toggle('on', S.stabOn); syncModeButtons();
-  bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); bus.on('shading', syncToolButtons); syncToolButtons();
+  syncBrushFlags(); syncModeButtons();
+  bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); bus.on('shading', syncToolButtons);
+  bus.on('brush-flags', syncBrushFlags); syncToolButtons();
 }
 
 actions.register('toggle.symV', () => toggleSym('sym'));

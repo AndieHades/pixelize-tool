@@ -13,13 +13,17 @@ import { isTilemap, inMap, getCell } from '../../core/tilemap.js';
 import { cellFlags } from '../../logic/tile-transform.js';
 import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellClear, cellFill, cellSelect } from './cell-ops.js';
 
-const DRAW_TOOLS = ['pencil', 'eraser', 'fill', 'line', 'rect', 'ellipse', 'adjust'];
 const syncBtn = () => { const b = $('tilemap-btn'); if (b) b.classList.toggle('on', !!(S.tileset && S.tileset.on)); };
+
+// в Tileset Mode обычная кисть и стабилизация выключаются (работаем с клетками),
+// при выходе — восстанавливаются как были
+function suspendBrush() { if (S.tilesetPrev) return; S.tilesetPrev = { stab: S.stabOn }; S.stabOn = false; bus.emit('brush-flags'); }
+function restoreBrush() { if (!S.tilesetPrev) return; S.stabOn = S.tilesetPrev.stab; S.tilesetPrev = null; bus.emit('brush-flags'); }
 
 export function setMode(on) {
   S.tileset.on = on; syncBtn(); // Tileset Grid — собственный оверлей (виден когда режим включён), обычную сетку Grid не трогаем
-  if (on) { actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
-  else { actions.run('tile.palette.close'); S.tileSel = null; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
+  if (on) { suspendBrush(); actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
+  else { restoreBrush(); actions.run('tile.palette.close'); S.tileSel = null; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
   bus.emit('render');
 }
 export const toggle = () => setMode(!(S.tileset && S.tileset.on));
@@ -55,7 +59,9 @@ const cellActive = () => !!(S.tileset && S.tileset.on) && !(S.tool === 'tilebrus
 let pend = null;
 const cellHandler = {
   down({ gx, gy, e }) { if (!cellActive()) return false; const c = cellFromGrid(gx, gy); if (!c) return false;
-    if (cellEmptyAt(c.cx, c.cy)) { if (DRAW_TOOLS.includes(S.tool)) { setMode(false); return false; } return true; } // ЛКМ по пустой — без сообщения (оно на ПКМ)
+    // пустая клетка: на обычном слое кисть выключена — клик «съедается» (меню/сообщение на ПКМ);
+    // на Tile-слое отдаём пиксельную правку (Manual/Auto) обработчику tilemap-paint
+    if (cellEmptyAt(c.cx, c.cy)) return !isTilemap(S.layers[S.cur]);
     pend = { cx: c.cx, cy: c.cy, x: e.clientX, y: e.clientY }; return true; },
   up() { if (!pend) return; const p = pend; pend = null; selectCell(p.cx, p.cy); openCellMenu(p.x, p.y); },
 };

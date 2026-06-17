@@ -59,6 +59,7 @@ export const S = {
   // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
   tilesets: [], tilesetSeq: 0,
   tileset: { on: false, open: false }, // Tileset Mode (тумблер) + признак открытой палитры тайлов (harvest-режим ПКМ)
+  tilesetPrev: null, // сохранённое состояние кисти/стабилизации на время Tileset Mode (восстанавливается при выходе)
   tileGrid: { size: loadTileGrid() }, // размер квадрата Tileset Grid (отдельно от обычной сетки Grid)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
   tileMarks: new Set(), // мульти-выбор тайлов в палитре (как свотчи)

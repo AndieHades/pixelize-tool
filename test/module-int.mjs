@@ -2357,6 +2357,11 @@ t('tilemap: Tileset Mode тумблер включает и выключает �
   tmode.setMode(true); assert.equal(S.tileset.on, true);
   tmode.setMode(false); assert.equal(S.tileset.on, false);
 });
+t('tilemap: Tileset Mode выключает стабилизацию и возвращает её при выходе', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.stabOn = true; S.tilesetPrev = null;
+  tmode.setMode(true); assert.equal(S.stabOn, false); // в режиме стабилизация выключена
+  tmode.setMode(false); assert.equal(S.stabOn, true); // вышли — вернулась как была
+});
 
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
 function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;

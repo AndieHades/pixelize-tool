@@ -58,7 +58,8 @@ export function move(e) {
 
 export function up(e) {
   if (e && e.pointerId != null) { try { cv().releasePointerCapture(e.pointerId); } catch (er) {} }
-  if (rdrag) { if (e && !rdrag.moved && rdrag.btn === 2) bus.emit(S.sel && !S.selFloat ? 'selection-menu' : 'canvas-menu', e); rdrag = null; return; }
+  if (rdrag) { if (e && !rdrag.moved && rdrag.btn === 2) // в Tileset Mode ПКМ всегда вызывает меню клетки (не перехватывается выделением)
+    bus.emit(!(S.tileset && S.tileset.on) && S.sel && !S.selFloat ? 'selection-menu' : 'canvas-menu', e); rdrag = null; return; }
   if (activeGlobal) { if (activeGlobal.up) activeGlobal.up({ e }); activeGlobal = null; drawing = false; return; }
   stabPt = null;
   const m = activeMode(); if (m) { if (drawing && m.up) m.up({ e }); drawing = false; return; }
