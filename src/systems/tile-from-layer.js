@@ -4,7 +4,7 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
-import { $, toast, t } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 import { addTileUnique } from '../core/tileset.js';
 import { isTilemap, gridTileSize, tilesetForSize, rasterLayer } from '../core/tilemap.js';
 import { dirtyAll } from '../core/layer-cache.js';
@@ -60,7 +60,6 @@ export function convertToTile() {
 }
 
 export function mount() {
-  actions.register('tile.fromLayer', fromLayer);
+  actions.register('tile.fromLayer', fromLayer); // действие осталось (вызов из кода), кнопка убрана — есть «Convert to Tile» в меню слоя
   actions.register('tile.convertLayer', convertToTile);
-  const btn = $('lay-create-tile'); if (btn) btn.onclick = fromLayer;
 }
