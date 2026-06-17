@@ -56,6 +56,7 @@ export const S = {
   // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
   tilesets: [], tilesetSeq: 0,
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
+  tileMode: 'paint', // режим Tile Brush: paint | erase | pick
   tileFlags: { ...TILE_FLAGS_DEFAULT },
   tileSel: null, // { li, x0, y0, x1, y1 } — прямоугольное выделение клеток
   tileEdit: null, // состояние открытого редактора source tile

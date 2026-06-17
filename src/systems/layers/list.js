@@ -111,7 +111,7 @@ function layerRow(L, i, depth) {
   // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
   // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
   const isCurPrim = i === S.cur && !S.selFolder && !S.fxCur && !S.bgSel;
-  const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '');
+  const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '') + (L.kind === 'tilemap' ? ' tmap' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
   const nm = nameSpan(L.name, () => i === S.cur && !S.selFolder && !S.fxCur && !S.bgSel, L);
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость

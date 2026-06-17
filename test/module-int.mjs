@@ -92,6 +92,11 @@ const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
 const { showMenuAt, showMenuForAnchor } = await import('../src/core/dom.js');
+const tsmgr = await import('../src/core/tileset.js');
+const tmap = await import('../src/core/tilemap.js');
+await import('../src/systems/tile-brush/index.js');
+await import('../src/systems/tile-selection/index.js');
+const tsel = await import('../src/systems/tile-selection/ops.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -1926,10 +1931,10 @@ t('layers-ui: папка показывает количество слоёв, �
 });
 t('layers-ui: бары действий слоя и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
   const top = [...document.querySelectorAll('#lay-act-top > button')], bot = [...document.querySelectorAll('#lay-act-bottom > button')];
-  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'fx-btn', 'img-settings', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']); // эффекты и настройки переехали сюда из тулбара
+  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-tmap', 'fx-btn', 'img-settings', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']); // эффекты и настройки переехали сюда из тулбара
   assert.deepEqual(bot.map((b) => b.id), ['lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
   assert.equal(document.querySelector('#lay-head #lay-add'), null);
-  assert.equal(document.querySelectorAll('.lay-action-btn').length, 14);
+  assert.equal(document.querySelectorAll('.lay-action-btn').length, 15);
   S.layers[0].grid[0][0] = [9, 9, 9, 255]; document.getElementById('lay-symm').click(); assert.deepEqual(S.layers[0].grid[0][7], [9, 9, 9, 255]);
   document.getElementById('lay-alpha').click(); document.getElementById('lay-clip').click(); document.getElementById('lay-ref').click(); layList();
   assert.ok(document.getElementById('lay-alpha').classList.contains('on')); assert.ok(document.getElementById('lay-clip').classList.contains('on')); assert.ok(document.getElementById('lay-ref').classList.contains('on'));
@@ -2292,5 +2297,38 @@ t('layers: вложенные группы (группа в группе)', asyn
   const inner = S.layers.map((L, i) => [L, i]).filter(([L]) => L.fid === A.id).map(([, i]) => i); S.marked = new Set(inner); lops.doGroup();
   const B = S.folders.find((f) => f !== A); assert.equal(B.parent, A.id); // B вложена в A
   assert.deepEqual(folderChain(S.layers.find((L) => L.fid === B.id).fid).map((f) => f.id), [B.id, A.id]); });
+
+t('tilemap: рисование тайлом, правка source обновляет все экземпляры', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.activeTile = { tilesetId: ts.id, tileId: tile.id }; S.tileMode = 'paint'; tmap.rasterLayer(S.cur);
+  const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.up({});
+  assert.deepEqual(S.layers[S.cur].grid[0][0], [1, 2, 3, 255]); // тайл лёг в клетку (0,0)
+  tile.grid[1][1] = [9, 9, 9, 255]; tmap.refreshTile(ts.id, tile.id);
+  assert.deepEqual(S.layers[S.cur].grid[1][1], [9, 9, 9, 255]); // правка source отразилась на экземпляре
+});
+t('tilemap: erase и pick через Tile Brush', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [5, 6, 7, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.activeTile = { tilesetId: ts.id, tileId: tile.id }; S.tileMode = 'paint'; tmap.rasterLayer(S.cur);
+  const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.up({});
+  S.activeTile = { tilesetId: ts.id, tileId: null }; S.tileFlags = { flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
+  S.tileMode = 'pick'; h.down({ gx: 0, gy: 0 }); assert.equal(S.activeTile.tileId, tile.id); // pick вернул tileId
+  S.tileMode = 'erase'; h.down({ gx: 0, gy: 0 }); h.up({});
+  assert.equal(S.layers[S.cur].tilemap.cells[0], null); assert.equal(S.layers[S.cur].grid[0][0], null);
+});
+t('tilemap: Make Unique отделяет клетку, старые экземпляры целы', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 1, 1, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
+  S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
+  const before = ts.tiles.length; tsel.makeUnique();
+  assert.equal(ts.tiles.length, before + 1); // создан новый tileId
+  const c0 = L.tilemap.cells[0], c1 = L.tilemap.cells[1];
+  assert.notEqual(c0.tileId, tile.id); assert.equal(c1.tileId, tile.id); // соседний экземпляр не тронут
+});
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
