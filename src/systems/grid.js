@@ -81,6 +81,7 @@ function applyGrid() {
 
 export function mount() {
   sync();
+  bus.on('grid', sync); // внешняя смена видимости сетки (напр. Tileset mode) — обновить кнопку
   $('grid-btn').onclick = openGridPop;
   $('grid-pop').querySelector('.win-x').onclick = () => closeGridPop(true);
   $('grid-cancel').onclick = () => closeGridPop(true);

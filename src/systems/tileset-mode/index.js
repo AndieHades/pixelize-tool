@@ -16,11 +16,12 @@ import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellClear, ce
 const DRAW_TOOLS = ['pencil', 'eraser', 'fill', 'line', 'rect', 'ellipse', 'adjust'];
 const syncBtn = () => { const b = $('tilemap-btn'); if (b) b.classList.toggle('on', !!(S.tileset && S.tileset.on)); };
 
+let gridWas = false; // состояние сетки до входа в режим — восстанавливаем при выходе
 export function setMode(on) {
   S.tileset.on = on; syncBtn();
-  if (on) { S.grid.visible = true; actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
-  else { actions.run('tile.palette.close'); S.tileSel = null; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
-  bus.emit('render');
+  if (on) { gridWas = !!S.grid.visible; S.grid.visible = true; actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
+  else { actions.run('tile.palette.close'); S.tileSel = null; S.grid.visible = gridWas; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
+  bus.emit('grid'); bus.emit('render');
 }
 export const toggle = () => setMode(!(S.tileset && S.tileset.on));
 
