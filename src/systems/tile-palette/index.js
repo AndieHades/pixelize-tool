@@ -10,6 +10,7 @@ import { newTile, dupTile, delTile, activeTileset } from './ops.js';
 import { renderTiles } from './list.js';
 import { initSelect, mountSelect } from './select.js';
 import { buildToolbar, syncToolbar } from './toolbar.js';
+import { mountGridPop, toggleGridPop } from './grid-pop.js';
 
 let panel = null;
 
@@ -51,7 +52,8 @@ export function mount() {
   actions.register('tile.new', newTile);
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
-  initSelect(refresh); mountSelect();
+  initSelect(refresh); mountSelect(); mountGridPop();
+  actions.register('tileset.gridPop', toggleGridPop);
   // тянется со всех сторон, размер независим от содержимого (как окно слоёв):
   // панель задаёт w/h, список скроллится внутри
   floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', minW: 160, minH: 140, clampBottom: 50, resizeEdges: true,

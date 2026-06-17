@@ -12,8 +12,8 @@ import { blendOver } from '../logic/raster.js';
 
 export const isTilemap = (L) => !!(L && L.kind === 'tilemap' && L.tilemap);
 
-// размер тайла = ячейка текущей сетки (S.grid) — тайлы привязаны к видимой сетке
-export const gridTileSize = () => ({ w: Math.max(1, Math.round(S.grid.w) || 16), h: Math.max(1, Math.round(S.grid.h) || 16) });
+// размер тайла = квадрат Tileset Grid (отдельно от обычной сетки Grid)
+export const gridTileSize = () => ({ w: S.tileGrid.size, h: S.tileGrid.size });
 // тайлсет нужного размера тайла: переиспользуем существующий или создаём
 export const tilesetForSize = (w, h) => S.tilesets.find((x) => x.tileW === w && x.tileH === h) || createTileset(t('tile.palette') + ' ' + w + '×' + h, w, h);
 

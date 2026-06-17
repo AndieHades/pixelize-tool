@@ -8,7 +8,7 @@ import { setTool } from '../../core/tools.js';
 import { t } from '../../core/dom.js';
 import { attachReorder } from '../../core/reorder-drag.js';
 
-const STORE = 'tileToolbarOrder3';
+const STORE = 'tileToolbarOrder4';
 let squelchUntil = 0;
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
@@ -27,6 +27,7 @@ function toggleDraw() { if (S.tool === 'tilebrush' && S.tileMode === 'paint') S.
 // id → { html|letter, title, run, mark }
 const DEFS = {
   draw: { html: IC.draw, title: () => t('tile.draw'), run: toggleDraw, mark: 'draw' },
+  gridsize: { title: () => t('tile.gridSize'), run: () => actions.run('tileset.gridPop'), mark: 'gridsize', size: true },
   manual: { letter: 'M', title: () => t('tile.manual'), run: () => actions.run('tile.manual'), mark: 'manual' },
   auto: { letter: 'A', title: () => t('tile.auto'), run: () => actions.run('tile.auto'), mark: 'auto' },
   rnd: { html: IC.rnd, title: () => t('tile.random'), run: () => actions.run('tile.random'), mark: 'rnd' },
@@ -34,13 +35,14 @@ const DEFS = {
   save: { html: IC.save, title: () => t('tile.loadSet'), run: () => actions.run('tileset.manager') },
   del: { html: IC.del, title: () => t('tile.delete'), run: () => actions.run('tile.delActive') },
 };
-const DEFAULT_ORDER = ['draw', 'manual', 'auto', 'rnd', 'new', 'save', 'del'];
+const DEFAULT_ORDER = ['draw', 'gridsize', 'manual', 'auto', 'rnd', 'new', 'save', 'del'];
 const savedOrder = () => { try { const a = JSON.parse(localStorage.getItem(STORE)); return Array.isArray(a) ? a : null; } catch (e) { return null; } };
 function saveOrder() { const bar = document.getElementById('tile-act'); if (!bar) return;
   try { localStorage.setItem(STORE, JSON.stringify([...bar.children].map((b) => b.dataset.tb))); } catch (e) {} }
 
 function makeBtn(id) { const d = DEFS[id]; const b = document.createElement('button'); b.dataset.tb = id; b.title = d.title();
-  if (d.html) b.innerHTML = d.html; else { b.textContent = d.letter; b.classList.add('tile-modebtn'); }
+  if (d.size) { b.textContent = S.tileGrid.size; b.classList.add('tile-modebtn'); }
+  else if (d.html) b.innerHTML = d.html; else { b.textContent = d.letter; b.classList.add('tile-modebtn'); }
   if (d.mark) b.dataset.mark = d.mark;
   b.addEventListener('click', (e) => { if (performance.now() < squelchUntil) { e.preventDefault(); return; } d.run(); });
   b.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -64,4 +66,5 @@ export function syncToolbar() {
   set('auto', pixel && S.tileAutoMode === 'auto');
   set('draw', S.tool === 'tilebrush' && S.tileMode === 'paint');
   set('rnd', S.tileRandom);
+  const gs = bar.querySelector('[data-tb="gridsize"]'); if (gs) gs.textContent = S.tileGrid.size; // текущий размер Tileset Grid
 }

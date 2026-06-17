@@ -5,6 +5,11 @@
 export const TILE_SIZE_PRESETS = [8, 16, 32];
 export const TILE_SIZE_DEFAULT = 16;
 
+// Tileset Grid: размер квадратов, с которыми работает тайлсет (всегда квадрат).
+// Отдельно от обычной сетки (Grid). Только эти значения, при любом размере холста.
+export const TILE_GRID_SIZES = [16, 32, 48, 96, 128];
+export const TILE_GRID_DEFAULT = 16;
+
 // размеры новой tilemap-карты в клетках
 export const MAP_CELLS_DEFAULT = { w: 16, h: 16 };
 export const MAP_CELLS_MAX = 512;

@@ -229,7 +229,7 @@ export const en = {
   'toast.tilesetLoaded': 'Tileset loaded: {name}',
   'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: random tiles from selected',
   'tile.draw': 'Draw with tiles (on/off)', 'tile.tileset': 'Tileset', 'tile.addToSet': 'Add tile',
-  'tile.select': 'Select cell', 'tile.fill': 'Fill cell',
+  'tile.select': 'Select cell', 'tile.fill': 'Fill cell', 'tile.gridSize': 'Tileset cell size',
   'tile.palette': 'Tiles', 'tile.newLayer': 'New tile layer', 'tile.tilemapLayer': 'Tile layer',
   'tile.name': 'Tile', 'tile.untitled': 'Tile {n}',
   'tile.new': 'New tile', 'tile.dup': 'Duplicate tile', 'tile.delete': 'Delete tile', 'tile.rename': 'Rename tile…',

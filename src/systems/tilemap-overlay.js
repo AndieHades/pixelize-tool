@@ -9,20 +9,26 @@ import { transformTile } from '../logic/tile-transform.js';
 import { C } from '../styles/canvas-colors.js';
 
 function draw({ ctx, ox, oy, z }) {
-  drawSelCell(ctx, ox, oy, z); // выбранная клетка — белая обводка, на любом слое
+  if (!(S.tileset && S.tileset.on)) return; // Tileset Grid и его оверлеи — только в Tileset mode
+  drawTilesetGrid(ctx, ox, oy, z); // квадраты Tileset Grid поверх всего холста (любой слой)
+  drawSelCell(ctx, ox, oy, z); // выбранная клетка — белая обводка
   const L = S.layers[S.cur]; if (!isTilemap(L)) return;
   const ts = getTileset(L.tilemap.tilesetId); if (!ts) return;
-  const { mapW, mapH } = L.tilemap, pw = mapW * ts.tileW * z, ph = mapH * ts.tileH * z;
-  ctx.save(); ctx.globalAlpha = 0.4; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
-  for (let cx = 0; cx <= mapW; cx++) { const x = ox + cx * ts.tileW * z; ctx.moveTo(x, oy); ctx.lineTo(x, oy + ph); }
-  for (let cy = 0; cy <= mapH; cy++) { const y = oy + cy * ts.tileH * z; ctx.moveTo(ox, y); ctx.lineTo(ox + pw, y); }
-  ctx.stroke(); ctx.restore();
   drawBrushPreview(ctx, ox, oy, z, ts, L);
 }
 
-// размер клетки в контексте активного слоя (тайл Tile-слоя или ячейка сетки)
+// размер квадрата в контексте: тайл активного Tile-слоя или Tileset Grid (квадрат)
 function cellSize(L) { if (isTilemap(L)) { const ts = getTileset(L.tilemap.tilesetId); if (ts) return [ts.tileW, ts.tileH]; }
-  return [Math.max(1, Math.round(S.grid.w) || 16), Math.max(1, Math.round(S.grid.h) || 16)]; }
+  return [S.tileGrid.size, S.tileGrid.size]; }
+
+// сетка квадратов Tileset Grid по всему холсту
+function drawTilesetGrid(ctx, ox, oy, z) { const L = S.layers[S.cur]; if (!L) return; const [cw, ch] = cellSize(L);
+  ctx.save(); ctx.globalAlpha = 0.4; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
+  const xs = new Set([S.W]); for (let x = 0; x <= S.W; x += cw) xs.add(x);
+  const ys = new Set([S.H]); for (let y = 0; y <= S.H; y += ch) ys.add(y);
+  for (const x of xs) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + S.H * z); }
+  for (const y of ys) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + S.W * z, oy + y * z); }
+  ctx.stroke(); ctx.restore(); }
 
 // чёткая белая обводка выбранной клетки (с тёмной подложкой для контраста)
 function drawSelCell(ctx, ox, oy, z) {

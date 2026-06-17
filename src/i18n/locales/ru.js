@@ -230,7 +230,7 @@ export const ru = {
   'toast.tilesetLoaded': 'Тайлсет загружен: {name}',
   'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: случайные тайлы из выбранных',
   'tile.draw': 'Рисовать тайлами (вкл/выкл)', 'tile.tileset': 'Tileset', 'tile.addToSet': 'Add tile',
-  'tile.select': 'Выделить клетку', 'tile.fill': 'Залить клетку',
+  'tile.select': 'Выделить клетку', 'tile.fill': 'Залить клетку', 'tile.gridSize': 'Размер клетки Tileset',
   'tile.palette': 'Тайлы', 'tile.newLayer': 'Новый Tile-слой', 'tile.tilemapLayer': 'Tile-слой',
   'tile.name': 'Тайл', 'tile.untitled': 'Тайл {n}',
   'tile.new': 'Новый тайл', 'tile.dup': 'Дублировать тайл', 'tile.delete': 'Удалить тайл', 'tile.rename': 'Переименовать тайл…',

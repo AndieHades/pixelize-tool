@@ -2345,16 +2345,16 @@ t('tilemap: Make Unique отделяет клетку, старые экземп
 });
 
 t('tilemap: create tile from layer режет слой по сетке', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4; S.cur = 0;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.cur = 0;
   S.layers[0].grid[0][0] = [7, 7, 7, 255]; S.layers[0].grid[5][5] = [8, 8, 8, 255]; // блоки (0,0) и (1,1)
   tfl.fromLayer();
   const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
 });
-t('tilemap: Tileset Mode тумблер включает режим и сетку', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 8; S.grid.h = 8; S.grid.visible = false;
+t('tilemap: Tileset Mode тумблер включает и выключает режим', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16;
   const ts = tsmgr.createTileset('t', 8, 8); tsmgr.addTile(ts);
   const L = tmap.makeTilemapLayer('tm', ts.id, 1, 1); S.layers.push(L); S.cur = S.layers.length - 1;
-  tmode.setMode(true); assert.equal(S.tileset.on, true); assert.equal(S.grid.visible, true);
+  tmode.setMode(true); assert.equal(S.tileset.on, true);
   tmode.setMode(false); assert.equal(S.tileset.on, false);
 });
 
@@ -2378,7 +2378,7 @@ t('tilemap: Auto создаёт новый tileId для клетки, source ц
   assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.equal(tile.grid[0][0], null); // соседняя и source целы
 });
 t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
   tilePaint(0, 0); assert.equal(ts.tiles.length, 1); // в пустой клетке создан тайл
@@ -2410,7 +2410,7 @@ t('tile-brush: паттерн штампует выровненно по сет�
 });
 
 t('tilemap: заливка работает на одну клетку, не на весь слой', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'fill'; S.tileAutoMode = 'manual'; S.active = [3, 4, 5];
   for (const gh of globalHandlers()) if (gh.down && gh.down({ gx: 0, gy: 0, e: {} })) { gh.up({ e: {} }); break; }
@@ -2419,7 +2419,7 @@ t('tilemap: заливка работает на одну клетку, не н�
   S.tool = 'pencil'; S.tileset = { on: false }; });
 
 t('tilemap: Add to tileset собирает клетку по слоям и не дублирует', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4);
   const ta = tsmgr.addTile(ts); ta.grid[0][0] = [1, 1, 1, 255];
   const tb = tsmgr.addTile(ts); tb.grid[3][3] = [2, 2, 2, 255];
@@ -2435,7 +2435,7 @@ t('tilemap: Add to tileset собирает клетку по слоям и не
   S.marked = new Set(); });
 
 t('tilemap: Add to tileset из обычного слоя берёт пиксели клетки', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4; // активен обычный пиксельный слой
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; // активен обычный пиксельный слой
   S.layers[0].grid[1][1] = [7, 8, 9, 255]; // пиксель в клетке (0,0)
   S.cur = 0; S.marked = new Set(); S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.addToSet();
@@ -2463,7 +2463,7 @@ t('tilemap: tile.flipH/flipV флипают флаги кисти (для пре
 });
 
 t('tilemap: удаление Tile-слоя НЕ удаляет тайлы из палитры', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const tsA = tsmgr.createTileset('A', 8, 8), tsB = tsmgr.createTileset('B', 4, 4); // несколько тайлсетов
   const tile = tsmgr.addTile(tsB);
   const L = tmap.makeTilemapLayer('tm', tsB.id, 2, 2); S.layers.push(L); S.cur = S.layers.indexOf(L);
@@ -2475,7 +2475,7 @@ t('tilemap: удаление Tile-слоя НЕ удаляет тайлы из �
 });
 
 t('tilemap: Add tile после изменения слоёв даёт новый тайл (дедуп по контенту)', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.cur = 0; S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.addToSet(); const ts = S.tilesets[0]; assert.equal(ts.tiles.length, 1);
   tmode.addToSet(); assert.equal(ts.tiles.length, 1); // тот же контент → дубль не добавляется
