@@ -10,12 +10,29 @@ import { registerMode } from '../core/canvas-handlers.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { clampRound } from '../logic/math.js';
 
-let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1;
+let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1, cropCells = false;
 
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
-function syncCropInputs() { if (!S.cropMode) return;
-  const s = cropSize(); setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
+const cellW = () => Math.max(1, Math.round(S.grid.w) || 16); // размер клетки = ячейка сетки (Grid)
+const cellH = () => Math.max(1, Math.round(S.grid.h) || 16);
+function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();
+  if (cropCells) { setNumericField($('crop-w'), Math.max(1, Math.round(s.w / cellW()))); setNumericField($('crop-h'), Math.max(1, Math.round(s.h / cellH()))); }
+  else { setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
+  const px = $('crop-px'); if (px) px.textContent = s.w + '×' + s.h + ' px'; } // всегда показываем размер холста в пикселях
+
+// режим единиц: пиксели ↔ клетки (X×Y по текущей сетке Grid)
+function setCropUnits(on) { cropCells = on; $('crop-units').classList.toggle('on', on);
+  $('crop-wl').textContent = on ? 'X' : t('label.width'); $('crop-hl').textContent = on ? 'Y' : t('label.height');
+  if (on && S.cropMode) snapCells(S.cropMode); syncCropInputs(); bus.emit('render'); }
+// привязать рамку к границам клеток (с сохранением целого числа клеток)
+function snapCells(c) { const cw = cellW(), ch = cellH();
+  c.x0 = Math.round(c.x0 / cw) * cw; c.y0 = Math.round(c.y0 / ch) * ch;
+  c.x1 = c.x0 + clampDim(Math.max(1, Math.round((c.x1 - c.x0 + 1) / cw)) * cw) - 1;
+  c.y1 = c.y0 + clampDim(Math.max(1, Math.round((c.y1 - c.y0 + 1) / ch)) * ch) - 1; }
+function placeCells(wc, hc) { const c = S.cropMode, cw = cellW(), ch = cellH();
+  c.x0 = Math.round(c.x0 / cw) * cw; c.y0 = Math.round(c.y0 / ch) * ch;
+  c.x1 = c.x0 + clampDim(wc * cw) - 1; c.y1 = c.y0 + clampDim(hc * ch) - 1; syncCropInputs(); bus.emit('render'); }
 function setCropLink(on) { cropLink = on; $('crop-link').classList.toggle('on', on);
   if (on && S.cropMode) { const s = cropSize(); cropRatio = s.w > 0 && s.h > 0 ? s.w / s.h : 1; } }
 function placeCrop(w, h, cx = (S.cropMode.x0 + S.cropMode.x1) / 2, cy = (S.cropMode.y0 + S.cropMode.y1) / 2) {
@@ -75,11 +92,21 @@ function cropMovePt({ e }) { if (!cropDrag || !S.cropMode) return; const r = $('
     if (cropDrag.b) { c.y1 = Math.max(c.y0, Math.round(fy) - 1); if (symm) c.y0 = Math.round(2 * cropDrag.cy - c.y1); }
     if (cropLink) lockRatio(c, cropDrag, symm);
     if (c.x1 - c.x0 + 1 > MAX_SIZE) { if (cropDrag.l) c.x0 = c.x1 - MAX_SIZE + 1; else c.x1 = c.x0 + MAX_SIZE - 1; }
-    if (c.y1 - c.y0 + 1 > MAX_SIZE) { if (cropDrag.t) c.y0 = c.y1 - MAX_SIZE + 1; else c.y1 = c.y0 + MAX_SIZE - 1; } }
+    if (c.y1 - c.y0 + 1 > MAX_SIZE) { if (cropDrag.t) c.y0 = c.y1 - MAX_SIZE + 1; else c.y1 = c.y0 + MAX_SIZE - 1; }
+    if (cropCells) { const cw = cellW(), ch = cellH(); // тянем ровно по клеткам
+      if (cropDrag.l) c.x0 = Math.round(c.x0 / cw) * cw; if (cropDrag.r) c.x1 = Math.round((c.x1 + 1) / cw) * cw - 1;
+      if (cropDrag.t) c.y0 = Math.round(c.y0 / ch) * ch; if (cropDrag.b) c.y1 = Math.round((c.y1 + 1) / ch) * ch - 1;
+      if (c.x1 < c.x0) c.x1 = c.x0 + cw - 1; if (c.y1 < c.y0) c.y1 = c.y0 + ch - 1; } }
   syncCropInputs(); bus.emit('render'); }
 
 function cropInput(which, commit = false) { if (!S.cropMode) return;
-  if (commit) commitNumericField($(which === 'w' ? 'crop-w' : 'crop-h'), { min: 1, max: MAX_SIZE, integer: true, relativeMinus: true });
+  const id = which === 'w' ? 'crop-w' : 'crop-h';
+  if (cropCells) { const maxC = Math.floor(MAX_SIZE / (which === 'w' ? cellW() : cellH()));
+    if (commit) commitNumericField($(id), { min: 1, max: maxC, integer: true, relativeMinus: true });
+    if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return;
+    const wc = numericFieldValue($('crop-w'), 1), hc = numericFieldValue($('crop-h'), 1); if (!wc || !hc) return;
+    placeCells(wc, hc); return; }
+  if (commit) commitNumericField($(id), { min: 1, max: MAX_SIZE, integer: true, relativeMinus: true });
   if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return;
   let w = numericFieldValue($('crop-w'), cropSize().w), h = numericFieldValue($('crop-h'), cropSize().h);
   if (!w || !h) return; if (cropLink) { const r = ratioDims(w, h, which === 'w'); w = r.w; h = r.h; }
@@ -89,6 +116,7 @@ export function mount() {
   $('crop').onclick = toggleCrop; $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
   $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   $('crop-link').onclick = () => setCropLink(!cropLink);
+  $('crop-units').onclick = () => setCropUnits(!cropCells);
   for (const id of ['crop-w', 'crop-h']) { const which = id === 'crop-w' ? 'w' : 'h';
     $(id).addEventListener('input', () => cropInput(which));
     $(id).addEventListener('blur', () => cropInput(which, true));

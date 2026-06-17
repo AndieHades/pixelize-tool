@@ -104,6 +104,7 @@ export const ru = {
   'shade.title': 'Shading', 'shade.pickColors': 'Выбрать цвета', 'tool.brushShading': 'Shading-кисть',
   'menu.pickLayer': 'Слой:',
   'crop.center': 'От центра (или зажми Shift)', 'crop.apply': 'Применить кроп (Enter)', 'crop.cancel': 'Отмена (Esc)',
+  'crop.units': 'Единицы: пиксели ⇄ клетки (по сетке Grid)',
   'transform.apply': 'Применить трансформацию (Enter или ПКМ)', 'transform.cancel': 'Отменить трансформацию (Esc)',
   'edit.undo': 'Отменить (Ctrl+Z)', 'edit.redo': 'Вернуть (Ctrl+Y)',
   'preview.actualSize': 'Реальный размер 1:1',

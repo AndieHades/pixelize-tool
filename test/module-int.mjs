@@ -1694,6 +1694,15 @@ t('crop: поля размера и скрепка меняют рамку', () 
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 3); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 6);
   crop.cancelCrop(); });
 
+t('crop: режим клеток задаёт размер ровно по сетке (X×Y)', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; crop.toggleCrop();
+  document.getElementById('crop-units').click(); // переключить в клетки
+  const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h');
+  cw.value = '5'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
+  ch.value = '7'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25); // 5 клеток × 5 px
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49); // 7 клеток × 7 px
+  document.getElementById('crop-units').click(); crop.cancelCrop(); });
+
 t('crop: поля размера считают выражения от текущего значения', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
   if (link.classList.contains('on')) link.click();
