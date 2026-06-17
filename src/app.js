@@ -47,7 +47,7 @@ import * as toolpops from './systems/toolpops.js';
 import * as tilePalette from './systems/tile-palette/index.js';
 import * as tilemapCreate from './systems/tilemap-create.js';
 import * as tilemapOverlay from './systems/tilemap-overlay.js';
-import * as tilesetMode from './systems/tileset-mode.js';
+import * as tilesetMode from './systems/tileset-mode/index.js';
 import * as tileFromLayer from './systems/tile-from-layer.js';
 import * as tilesetManager from './systems/tileset-manager.js';
 

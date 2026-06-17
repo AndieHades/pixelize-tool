@@ -98,7 +98,7 @@ await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
 const tfl = await import('../src/systems/tile-from-layer.js');
-const tmode = await import('../src/systems/tileset-mode.js');
+const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
@@ -2350,12 +2350,12 @@ t('tilemap: create tile from layer режет слой по сетке', () => {
   tfl.fromLayer();
   const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
 });
-t('tilemap: Tileset Mode тумблер выбирает кисть и тайл-размер из сетки', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 8; S.grid.h = 8;
+t('tilemap: Tileset Mode тумблер включает режим и сетку', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 8; S.grid.h = 8; S.grid.visible = false;
   const ts = tsmgr.createTileset('t', 8, 8); tsmgr.addTile(ts);
   const L = tmap.makeTilemapLayer('tm', ts.id, 1, 1); S.layers.push(L); S.cur = S.layers.length - 1;
-  tmode.setMode(true); assert.equal(S.tileset.on, true); assert.equal(S.tool, 'tilebrush');
-  tmode.setMode(false); assert.equal(S.tileset.on, false); assert.notEqual(S.tool, 'tilebrush');
+  tmode.setMode(true); assert.equal(S.tileset.on, true); assert.equal(S.grid.visible, true);
+  tmode.setMode(false); assert.equal(S.tileset.on, false);
 });
 
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
@@ -2472,6 +2472,15 @@ t('tilemap: удаление Tile-слоя НЕ удаляет тайлы из �
   assert.ok(S.tilesets.includes(tsB)); assert.equal(tsB.tiles.length, 1); // тайлсет и тайл целы
   assert.equal(tops.activeTileset(), tsB); // палитра по-прежнему показывает тайлсет активного тайла, не tsA
   assert.notEqual(tops.activeTileset(), tsA);
+});
+
+t('tilemap: Add tile после изменения слоёв даёт новый тайл (дедуп по контенту)', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.cur = 0; S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
+  tmode.addToSet(); const ts = S.tilesets[0]; assert.equal(ts.tiles.length, 1);
+  tmode.addToSet(); assert.equal(ts.tiles.length, 1); // тот же контент → дубль не добавляется
+  S.layers[0].grid[1][1] = [2, 2, 2, 255]; // перерисовали клетку
+  tmode.addToSet(); assert.equal(ts.tiles.length, 2); // новый контент → новый тайл
 });
 
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
