@@ -1,7 +1,7 @@
-// Tileset Mode: тумблер (рядом с grid) — палитра тайлов + сетка. Ключевая
-// механика: ЛКМ по клетке выбирает её; непустая → контекст-меню (Add tile/Flip
-// X/Flip Y/Select/Fill/Clear), пустая → сообщение. Рисование обычной кистью по
-// пустой клетке выключает режим и рисует на обычном слое. Операции — cell-ops.
+// Tileset Mode: тумблер (рядом с grid) — палитра тайлов + сетка. Работает на
+// любом слое (Tile Layer не нужен): ПКМ по клетке с пикселями открывает
+// контекст-меню (Add tile/Flip X/Flip Y/Select/Fill/Clear), где Add tile берёт
+// слитое содержимое клетки со всех видимых слоёв; по пустой — тост «клетка пустая».
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
@@ -9,7 +9,7 @@ import { $, showMenuAt, toast, t } from '../../core/dom.js';
 import { setTool } from '../../core/tools.js';
 import { gridAt } from '../../core/viewport.js';
 import { registerGlobal } from '../../core/canvas-handlers.js';
-import { isTilemap, inMap, getCell } from '../../core/tilemap.js';
+import { isTilemap, getCell } from '../../core/tilemap.js';
 import { cellFlags } from '../../logic/tile-transform.js';
 import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellClear, cellFill, cellSelect } from './cell-ops.js';
 
@@ -28,10 +28,11 @@ export function setMode(on) {
 }
 export const toggle = () => setMode(!(S.tileset && S.tileset.on));
 
-function cellFromGrid(gx, gy) { const L = S.layers[S.cur]; if (!L) return null; const { w, h } = ctxTileSize();
-  const cx = Math.floor(gx / w), cy = Math.floor(gy / h);
-  if (isTilemap(L)) return inMap(L.tilemap, cx, cy) ? { cx, cy } : null;
-  return (gx >= 0 && gy >= 0 && gx < S.W && gy < S.H) ? { cx, cy } : null; }
+// клетка под точкой — только по Tileset Grid и границам холста, без привязки к
+// типу слоя (Tile Layer не нужен; ПКМ-меню работает на любом слое)
+function cellFromGrid(gx, gy) { if (!S.layers[S.cur]) return null; const { w, h } = ctxTileSize();
+  if (gx < 0 || gy < 0 || gx >= S.W || gy >= S.H) return null;
+  return { cx: Math.floor(gx / w), cy: Math.floor(gy / h) }; }
 
 // выбрать клетку (+ снять тайл активным, если Tile-слой)
 function selectCell(cx, cy) { S.tileSel = { li: S.cur, x0: cx, y0: cy, x1: cx, y1: cy };
@@ -49,7 +50,7 @@ function openCellMenu(px, py) {
   showMenuAt(menu, px, py);
 }
 
-// клик по клетке: непустая → выбрать + меню; пустая → сообщение
+// ПКМ по клетке (любой слой): есть пиксели → выбрать + меню; пусто → тост «клетка пустая»
 function interactCell(cx, cy, px, py) { if (cellEmptyAt(cx, cy)) { toast(t('toast.cellEmpty')); return; }
   selectCell(cx, cy); openCellMenu(px, py); }
 

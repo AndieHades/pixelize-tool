@@ -2362,6 +2362,21 @@ t('tilemap: Tileset Mode выключает стабилизацию и возв
   tmode.setMode(true); assert.equal(S.stabOn, false); // в режиме стабилизация выключена
   tmode.setMode(false); assert.equal(S.stabOn, true); // вышли — вернулась как была
 });
+t('tilemap: ПКМ в Tileset Mode — клетка с пикселями даёт меню, пустая нет (без Tile Layer)', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.cur = 0; S.marked = new Set();
+  S.tileset = { on: true, open: false }; S.tilesetPrev = null; S.selFloat = null;
+  S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null; // активное выделение не перехватывает ПКМ
+  tmode.mount(); const undo = overCv(10);
+  const rmb = () => { const m0 = document.getElementById('tile-cctx'); if (m0) m0.classList.remove('on');
+    input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
+    input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
+    const m = document.getElementById('tile-cctx'); return !!(m && m.classList.contains('on')); };
+  assert.equal(rmb(), false); // обычный слой, клетка пуста → меню не открывается (тост «клетка пустая»)
+  S.layers[0].grid[1][1] = [200, 100, 50, 255]; // нарисовали пиксель в клетке (0,0)
+  assert.equal(rmb(), true); // теперь меню открывается без всякого Tile Layer
+  assert.ok(S.tileSel && S.tileSel.x0 === 0 && S.tileSel.y0 === 0);
+  undo(); S.tileset = { on: false, open: false };
+});
 
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
 function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;
