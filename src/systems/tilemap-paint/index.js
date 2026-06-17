@@ -13,10 +13,13 @@ import { snapshot } from '../../core/history.js';
 import { getTileset, getTile, addTile, deleteTile, findTileByGrid } from '../../core/tileset.js';
 import { isTilemap, inMap, getCell, refreshTile, rasterLayer, layersUsingTile } from '../../core/tilemap.js';
 import { invTransformCoord, cellFlags } from '../../logic/tile-transform.js';
+import { floodRegion } from '../../logic/flood.js';
 import { afterStroke } from '../draw/stroke.js';
 
 const active = () => S.layers[S.cur];
-const applicable = () => !!(S.tileset && S.tileset.on) && isTilemap(active()) && (S.tool === 'pencil' || S.tool === 'eraser');
+// пиксельные инструменты на tilemap-слое всегда идут сюда (иначе писали бы в кеш
+// grid и затирались при пересборке). Режим правки — S.tileAutoMode (M/A).
+const applicable = () => isTilemap(active()) && (S.tool === 'pencil' || S.tool === 'eraser' || S.tool === 'fill');
 
 let st = null; // { ts, li, uniqued:Set, created:Set, touched:Set, last:[gx,gy] }
 
@@ -50,17 +53,33 @@ function line(x0, y0, x1, y1, erase) {
   for (;;) { paintPx(x, y, erase); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
 }
 
+// заливка ОДНОЙ клетки (тайла) — связная область внутри одного тайла, не по всему
+// слою (на обычном слое заливка остаётся обычной — этот обработчик не сработает)
+function fillCell(gx, gy) { const ts = st.ts, cx = Math.floor(gx / ts.tileW), cy = Math.floor(gy / ts.tileH);
+  if (!inMap(active().tilemap, cx, cy)) return;
+  const tile = targetTile(cx, cy); if (!tile) return;
+  const flags = cellFlags(getCell(active().tilemap, cx, cy));
+  const [sx, sy] = ts.tileW === ts.tileH ? invTransformCoord(gx - cx * ts.tileW, gy - cy * ts.tileH, ts.tileW, flags) : [gx - cx * ts.tileW, gy - cy * ts.tileH];
+  if (sx < 0 || sy < 0 || sx >= ts.tileW || sy >= ts.tileH) return;
+  const col = [S.active[0], S.active[1], S.active[2], 255];
+  for (const [px, py] of floodRegion(tile.grid, sx, sy)) tile.grid[py][px] = col;
+  st.touched.add(tile.id); }
+
+function finishStroke() {
+  for (const id of st.created) { const tl = getTile(st.ts, id); if (tl && tl.grid.every((r) => r.every((c) => !c))) clearTile(id); } // пустой созданный тайл → удалить
+  for (const id of st.created) dedupe(id); // одинаковые тайлы не плодим
+  flush(); bus.emit('tileset-changed'); afterStroke(); st = null;
+}
+
 const handler = {
   down({ gx, gy, e }) { if (!applicable()) return false;
     const ts = getTileset(active().tilemap.tilesetId); if (!ts) return false;
     snapshot(); st = { ts, li: S.cur, uniqued: new Set(), created: new Set(), touched: new Set(), last: [gx, gy] };
+    if (S.tool === 'fill') { fillCell(gx, gy); finishStroke(); return true; } // заливка — на одну клетку, разово
     paintPx(gx, gy, S.tool === 'eraser' || (e && e.button === 2)); flush(); return true; },
   move({ gx, gy, e }) { if (!st) return; const erase = S.tool === 'eraser' || (e && e.buttons === 2);
     line(st.last[0], st.last[1], gx, gy, erase); st.last = [gx, gy]; flush(); },
-  up() { if (!st) return;
-    for (const id of st.created) { const tl = getTile(st.ts, id); if (tl && tl.grid.every((r) => r.every((c) => !c))) clearTile(id); } // пустой созданный тайл → удалить
-    for (const id of st.created) dedupe(id); // одинаковые тайлы не плодим: созданный = существующему → переиспользовать
-    flush(); bus.emit('tileset-changed'); afterStroke(); st = null; },
+  up() { if (st) finishStroke(); },
 };
 
 function clearTile(id) { deleteTile(st.ts, id); const tm = active().tilemap;

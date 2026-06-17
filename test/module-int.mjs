@@ -2400,4 +2400,13 @@ t('tile-brush: паттерн штампует выровненно по сет�
   assert.equal(L.tilemap.cells[0].tileId, t1.id); assert.equal(L.tilemap.cells[1].tileId, t2.id); S.tilePattern = null;
 });
 
+t('tilemap: заливка работает на одну клетку, не на весь слой', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.tileset = { on: true }; S.tool = 'fill'; S.tileAutoMode = 'manual'; S.active = [3, 4, 5];
+  for (const gh of globalHandlers()) if (gh.down && gh.down({ gx: 0, gy: 0, e: {} })) { gh.up({ e: {} }); break; }
+  assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null); // залита только клетка 0
+  assert.deepEqual(tsmgr.getTile(ts, L.tilemap.cells[0].tileId).grid[0][0], [3, 4, 5, 255]);
+  S.tool = 'pencil'; S.tileset = { on: false }; });
+
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

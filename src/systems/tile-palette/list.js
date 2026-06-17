@@ -5,14 +5,12 @@ import { S } from '../../core/state.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
 import { makeCanvas } from '../../core/canvas.js';
-import { menuGesture } from '../../core/long-press.js';
 import { inlineRename } from '../../core/inline-rename.js';
 import { snapshot } from '../../core/history.js';
 import { C } from '../../styles/canvas-colors.js';
 import { activeTileset } from './ops.js';
 import { renameTile } from '../../core/tileset.js';
-import { openTileMenu } from './menu.js';
-import { selectTile, startDrag, dragMoved } from './select.js';
+import { wireTile } from './select.js';
 
 // превью тайла в его реальном пиксельном размере (1:1), с шахматкой под альфой
 function tilePreview(ts, tile) {
@@ -36,10 +34,8 @@ function tileCell(ts, tile, index) {
   const cap = document.createElement('span'); cap.className = 'tile-idx'; cap.textContent = index; cell.appendChild(cap);
   const nm = document.createElement('span'); nm.className = 'tile-nm'; nm.textContent = tile.name || ''; cell.appendChild(nm);
   if (tile.groupId != null) cell.classList.add('grouped');
-  cell.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') startDrag(ts, tile.id, e); });
-  cell.addEventListener('click', (e) => { if (dragMoved()) return; selectTile(ts, tile.id, e); });
   cell.addEventListener('dblclick', () => { S.activeTile = { tilesetId: ts.id, tileId: tile.id }; actions.run('tile.edit'); });
-  menuGesture(cell, (x, y) => { selectTile(ts, tile.id); openTileMenu(x, y, tile.id); });
+  wireTile(cell, ts, tile.id); // выбор/перестановка/меню — те же механики, что у свотчей
   return cell;
 }
 

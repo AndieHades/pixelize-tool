@@ -1,15 +1,22 @@
-// Выбор тайлов как свотчей палитры: клик = active, Shift = диапазон, Ctrl =
-// тумблер мультивыбора, зажатая ЛКМ = перестановка. Несколько выбранных тайлов
-// образуют ПАТТЕРН (как в Godot): сохраняют взаимное расположение и штампуются
-// с выравниванием по сетке — так рисуют замкнутые участки/острова.
+// Выбор и перестановка тайлов — те же механики, что у свотчей палитры цветов:
+// клик = active, Ctrl = тумблер, Shift = диапазон, ЛКМ-перетаскивание =
+// перестановка (призрак + место вставки), ПКМ/долгий тап = контекст-меню.
+// Несколько выбранных = ПАТТЕРН (Godot) для штампа. Логика общая, без дублей:
+// призрак — core/drag-ghost, место вставки — core/drop-gap.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import { dragGhost } from '../../core/drag-ghost.js';
+import { makeDropGap, dropZone } from '../../core/drop-gap.js';
+import { LONG_PRESS_MS, DRAG_THRESHOLD } from '../../config/timings.js';
 import { activeTileset } from './ops.js';
+import { openTileMenu } from './menu.js';
 
-let anchor = null, drag = null, rebuild = () => {};
+let anchor = null, drag = null, clickSquelch = false, rebuild = () => {};
 export const initSelect = (rb) => { rebuild = rb; };
-
+const squelch = () => { clickSquelch = true; setTimeout(() => { clickSquelch = false; }, 0); }; // погасить click после жеста
 const ids = (ts) => ts.tiles.map((t) => t.id);
+const cellAt = (e) => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.closest ? el.closest('#tile-list .tile-cell') : null; };
+
 function rangeIds(ts, a, b) { const arr = ids(ts), i = arr.indexOf(a), j = arr.indexOf(b); if (i < 0 || j < 0) return [b];
   const [lo, hi] = i <= j ? [i, j] : [j, i]; return arr.slice(lo, hi + 1); }
 
@@ -30,21 +37,52 @@ export function buildPattern() {
   const rows = [...new Set(rects.map((x) => Math.round(x.r.top)))].sort((a, b) => a - b);
   const cols = [...new Set(rects.map((x) => Math.round(x.r.left)))].sort((a, b) => a - b);
   const grid = new Array(rows.length * cols.length).fill(null);
-  for (const x of rects) { const r = rows.indexOf(Math.round(x.r.top)), c = cols.indexOf(Math.round(x.r.left)); grid[r * cols.length + c] = x.id; }
+  for (const x of rects) grid[rows.indexOf(Math.round(x.r.top)) * cols.length + cols.indexOf(Math.round(x.r.left))] = x.id;
   S.tilePattern = { w: cols.length, h: rows.length, ids: grid };
 }
 
-// --- перестановка зажатой ЛКМ ---
-export function startDrag(ts, tileId, e) { if (e.button !== 0) return; drag = { ts, tileId, x: e.clientX, y: e.clientY, moved: false }; }
-function onMove(e) { if (!drag) return; if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.moved = true; }
-function onUp(e) { if (!drag) return; const d = drag; drag = null; if (!d.moved) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY); const tgt = el && el.closest ? el.closest('#tile-list .tile-cell') : null;
-  if (!tgt) return; const ts = d.ts, arr = ts.tiles, from = arr.findIndex((t) => t.id === d.tileId), to = arr.findIndex((t) => t.id === +tgt.dataset.tid);
-  if (from < 0 || to < 0 || from === to) return;
-  const r = tgt.getBoundingClientRect(), after = e.clientX >= r.left + r.width / 2;
-  const [moved] = arr.splice(from, 1); let ins = arr.findIndex((t) => t.id === +tgt.dataset.tid); if (after) ins++;
-  arr.splice(ins, 0, moved); rebuild(); bus.emit('tileset-changed'); }
+// перестановка ts.tiles: переносимые id (в текущем порядке) → перед/после target
+function reorder(ts, movingIds, targetId, after) { const moveSet = new Set(movingIds);
+  if (moveSet.has(targetId)) return false;
+  const moving = ts.tiles.filter((t) => moveSet.has(t.id)); if (!moving.length) return false;
+  const rest = ts.tiles.filter((t) => !moveSet.has(t.id));
+  let ins = rest.findIndex((t) => t.id === targetId); if (ins < 0) return false; if (after) ins++;
+  ts.tiles = [...rest.slice(0, ins), ...moving, ...rest.slice(ins)]; return true;
+}
 
-export function mountSelect() { document.addEventListener('pointermove', onMove); document.addEventListener('pointerup', onUp); }
-export const dragMoved = () => !!(drag && drag.moved);
+// навесить жесты на ячейку тайла (вызывается из list.js при рендере)
+export function wireTile(cell, ts, tileId) {
+  cell.addEventListener('contextmenu', (e) => e.preventDefault());
+  cell.addEventListener('click', (e) => { if (clickSquelch || e.detail > 1) return; selectTile(ts, tileId, e); });
+  cell.addEventListener('pointerdown', (e) => {
+    const moveSel = S.tileMarks.has(tileId) && S.tileMarks.size > 1;
+    const moveIds = moveSel ? [...S.tileMarks] : [tileId];
+    const base = { cell, ts, tileId, moveIds, x: e.clientX, y: e.clientY, moved: false, gap: makeDropGap({ className: 'tile-drop-gap', enabled: false }) };
+    if (e.pointerType === 'touch') { drag = { ...base, touch: true, hold: setTimeout(() => { if (drag) drag.armed = true; }, LONG_PRESS_MS) }; return; }
+    if (e.button === 2) { drag = { ...base, rmb: true }; return; }
+    if (e.button === 0) drag = { ...base, armed: true };
+  });
+}
+
+function dragMove(e) { if (!drag) return;
+  if (!drag.moved) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) <= DRAG_THRESHOLD) return; drag.moved = true; }
+  if (drag.touch && !drag.armed) { drag = null; return; } // тач: двинул до удержания — это скролл, не драг
+  if (drag.rmb) return; // ПКМ-протяжка пока без marquee
+  if (!drag.ghostObj) { drag.cell.classList.add('dragging'); drag.ghostObj = dragGhost(drag.cell, null, drag.moveIds.length); }
+  drag.ghostObj.move(e.clientX, e.clientY);
+  const tg = cellAt(e), box = document.getElementById('tile-list');
+  if (tg && tg !== drag.cell) drag.gap.show(box, tg, dropZone(tg, e.clientX, e.clientY, 'x', 0).after, tg); else drag.gap.cancel();
+}
+
+function dragEnd(e) { if (!drag) return; clearTimeout(drag.hold);
+  const d = drag; drag = null; if (d.ghostObj) d.ghostObj.remove(); d.cell.classList.remove('dragging');
+  const after = !!d.gap.after, tgt = d.gap.target; d.gap.remove();
+  if (d.rmb && !d.moved) { squelch(); openTileMenu(e.clientX, e.clientY, d.tileId); return; } // ПКМ без протяжки → меню
+  if (d.touch && d.armed && !d.moved) { squelch(); openTileMenu(e.clientX, e.clientY, d.tileId); return; } // долгий тап → меню
+  if (!d.moved) return;
+  if (tgt && reorder(d.ts, d.moveIds, +tgt.dataset.tid, after)) { squelch(); rebuild(); bus.emit('tileset-changed'); }
+}
+
+export function mountSelect() { document.addEventListener('pointermove', dragMove);
+  document.addEventListener('pointerup', dragEnd); document.addEventListener('pointercancel', dragEnd); }
 export { activeTileset };
