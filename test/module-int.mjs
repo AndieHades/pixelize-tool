@@ -2462,4 +2462,16 @@ t('tilemap: tile.flipH/flipV флипают флаги кисти (для пре
   actions.run('tile.flipH'); assert.equal(S.tileFlags.flipX, false);
 });
 
+t('tilemap: удаление Tile-слоя НЕ удаляет тайлы из палитры', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  const tsA = tsmgr.createTileset('A', 8, 8), tsB = tsmgr.createTileset('B', 4, 4); // несколько тайлсетов
+  const tile = tsmgr.addTile(tsB);
+  const L = tmap.makeTilemapLayer('tm', tsB.id, 2, 2); S.layers.push(L); S.cur = S.layers.indexOf(L);
+  S.activeTile = { tilesetId: tsB.id, tileId: tile.id };
+  lops.deleteLayerRef(L);
+  assert.ok(S.tilesets.includes(tsB)); assert.equal(tsB.tiles.length, 1); // тайлсет и тайл целы
+  assert.equal(tops.activeTileset(), tsB); // палитра по-прежнему показывает тайлсет активного тайла, не tsA
+  assert.notEqual(tops.activeTileset(), tsA);
+});
+
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

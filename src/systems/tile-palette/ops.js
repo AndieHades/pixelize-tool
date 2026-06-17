@@ -8,10 +8,13 @@ import { addTileUnique, duplicateTile, deleteTile, renameTile, tileIndex } from 
 import { isTilemap, rasterLayer, layersUsingTile } from '../../core/tilemap.js';
 import { confirmDialog } from '../../core/confirm.js';
 
-// активный тайлсет: тайлсет активного tilemap-слоя, иначе первый в библиотеке
+// активный тайлсет для палитры. Палитра — как набор кистей, НЕ зависит от слоёв:
+// активный Tile-слой → его тайлсет; иначе тайлсет активного тайла (не теряем
+// палитру при удалении/смене слоя); иначе первый в библиотеке.
 export function activeTileset() {
   const L = S.layers[S.cur];
-  if (isTilemap(L)) { const id = L.tilemap.tilesetId; const ts = S.tilesets.find((x) => x.id === id); if (ts) return ts; }
+  if (isTilemap(L)) { const ts = S.tilesets.find((x) => x.id === L.tilemap.tilesetId); if (ts) return ts; }
+  if (S.activeTile) { const ts = S.tilesets.find((x) => x.id === S.activeTile.tilesetId); if (ts) return ts; }
   return S.tilesets[0] || null;
 }
 
