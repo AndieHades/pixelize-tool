@@ -19,7 +19,7 @@ const syncBtn = () => { const b = $('tilemap-btn'); if (b) b.classList.toggle('o
 export function setMode(on) {
   S.tileset.on = on; syncBtn();
   if (on) { S.grid.visible = true; actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
-  else { actions.run('tile.palette.close'); if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
+  else { actions.run('tile.palette.close'); S.tileSel = null; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }
   bus.emit('render');
 }
 export const toggle = () => setMode(!(S.tileset && S.tileset.on));

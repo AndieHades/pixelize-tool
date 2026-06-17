@@ -9,19 +9,29 @@ import { transformTile } from '../logic/tile-transform.js';
 import { C } from '../styles/canvas-colors.js';
 
 function draw({ ctx, ox, oy, z }) {
+  drawSelCell(ctx, ox, oy, z); // выбранная клетка — белая обводка, на любом слое
   const L = S.layers[S.cur]; if (!isTilemap(L)) return;
   const ts = getTileset(L.tilemap.tilesetId); if (!ts) return;
   const { mapW, mapH } = L.tilemap, pw = mapW * ts.tileW * z, ph = mapH * ts.tileH * z;
   ctx.save(); ctx.globalAlpha = 0.4; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
   for (let cx = 0; cx <= mapW; cx++) { const x = ox + cx * ts.tileW * z; ctx.moveTo(x, oy); ctx.lineTo(x, oy + ph); }
   for (let cy = 0; cy <= mapH; cy++) { const y = oy + cy * ts.tileH * z; ctx.moveTo(ox, y); ctx.lineTo(ox + pw, y); }
-  ctx.stroke();
-  const sel = S.tileSel; // выделение клеток — отдельная рамка
-  if (sel && sel.li === S.cur) { ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
-    const x0 = Math.min(sel.x0, sel.x1), y0 = Math.min(sel.y0, sel.y1), x1 = Math.max(sel.x0, sel.x1), y1 = Math.max(sel.y0, sel.y1);
-    ctx.strokeRect(ox + x0 * ts.tileW * z, oy + y0 * ts.tileH * z, (x1 - x0 + 1) * ts.tileW * z, (y1 - y0 + 1) * ts.tileH * z); }
-  ctx.restore();
+  ctx.stroke(); ctx.restore();
   drawBrushPreview(ctx, ox, oy, z, ts, L);
+}
+
+// размер клетки в контексте активного слоя (тайл Tile-слоя или ячейка сетки)
+function cellSize(L) { if (isTilemap(L)) { const ts = getTileset(L.tilemap.tilesetId); if (ts) return [ts.tileW, ts.tileH]; }
+  return [Math.max(1, Math.round(S.grid.w) || 16), Math.max(1, Math.round(S.grid.h) || 16)]; }
+
+// чёткая белая обводка выбранной клетки (с тёмной подложкой для контраста)
+function drawSelCell(ctx, ox, oy, z) {
+  const sel = S.tileSel, L = S.layers[S.cur]; if (!sel || sel.li !== S.cur || !L || !(S.tileset && S.tileset.on)) return;
+  const [cw, ch] = cellSize(L);
+  const x0 = Math.min(sel.x0, sel.x1), y0 = Math.min(sel.y0, sel.y1), x1 = Math.max(sel.x0, sel.x1), y1 = Math.max(sel.y0, sel.y1);
+  const px = ox + x0 * cw * z, py = oy + y0 * ch * z, w = (x1 - x0 + 1) * cw * z, h = (y1 - y0 + 1) * ch * z;
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeRect(px, py, w, h);
+  ctx.lineWidth = 1.5; ctx.strokeStyle = C.fg; ctx.strokeRect(px, py, w, h); ctx.restore();
 }
 
 // превью тайла на кисти: показывает, ЧЕМ заполняешь (с учётом флипов/паттерна/
