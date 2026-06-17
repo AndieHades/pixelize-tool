@@ -1633,6 +1633,16 @@ t('effects: цвет эффекта — наш #colpop, не системный 
   assert.notEqual(eff.params.color, before); // цвет эффекта обновился через наш пикер
   assert.deepEqual(S.active, active0); // активный цвет не тронут
   document.getElementById('fx-cancel').click(); });
+t('эффект+палитра: клик по цвету палитры при открытом пикере эффекта красит и эффект, и активный, и круг', () => { cp.mount(); effects.mount(); pal.mount();
+  resetWH(8, 8); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [10, 20, 30]; pal.buildPalette();
+  document.querySelector('#fx-types button[data-fx="stroke"]').click(); const eff = S.fxDraft.eff;
+  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on')); // пикер эффекта открыт
+  const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // клик по [200,100,50] в палитре
+  assert.deepEqual(S.active, [200, 100, 50]); // стал активным
+  assert.equal(eff.params.color.toLowerCase(), '#c86432'); // покрасил эффект
+  assert.equal(+document.getElementById('col-h').value, 20); // круг сместился на тон активного цвета
+  document.getElementById('fx-cancel').click(); });
 
 t('crop: toggle из выделения + apply кадрирует без fit-to-screen', () => { resetWH(8, 8); S.view = { zoom: 5, ox: 11, oy: 13 };
   const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;

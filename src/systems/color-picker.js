@@ -149,7 +149,9 @@ export function mount() {
     if (onPick) { onPick = null; syncModeActions(); $('colpop').classList.remove('on'); return; } // «Готово» — закрыть пикер эффекта
     if (replaceFrom) { const from = replaceFrom; replaceFrom = null; syncModeActions(); $('colpop').classList.remove('on'); actions.run('recolor.all', from, c); } };
   $('col-hist-clear').onclick = clearColorHistory;
-  bus.on('color-sync', () => { if (onPick) return; if ($('colpop').classList.contains('on')) { prevColor = currentColor(); syncColFromActive(true); } }); // в режиме цели не сбрасываем на активный
+  bus.on('color-sync', () => { if (!$('colpop').classList.contains('on')) return; // пикер закрыт — нечего синхронизировать
+    prevColor = currentColor(); syncColFromActive(true); // активный цвет двигает круг
+    if (onPick) onPick(rgbToHex(S.active)); }); // и в режиме цели (эффект/настройка) применяет выбранный цвет к ней
   $('colpop').querySelector('.win-x').onclick = () => { onPick = null; $('colpop').classList.remove('on'); syncModeActions(); };
 }
 
