@@ -53,7 +53,6 @@ export function convertToTile() {
   }
   L.kind = 'tilemap'; L.tilemap = { tilesetId: ts.id, mapW, mapH, cells };
   S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
-  S.grid.w = tw; S.grid.h = th; S.grid.visible = true;
   rasterLayer(S.cur); dirtyAll();
   actions.run('tile.palette.open'); bus.emit('tileset-changed'); bus.emitDoc();
   toast(t('toast.tilesFromLayer', { n: ts.tiles.length }));
