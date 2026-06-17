@@ -2434,4 +2434,23 @@ t('tilemap: Add to tileset из обычного слоя берёт пиксе�
   assert.deepEqual(ts.tiles[0].grid[1][1], [7, 8, 9, 255]); // клетка обычного слоя стала тайлом
 });
 
+t('tilemap: stampTileId — одиночный/паттерн/зафиксированный random', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 1, 1); const a = tsmgr.addTile(ts), b = tsmgr.addTile(ts);
+  S.tilePattern = null; S.tileRandom = false; S.activeTile = { tilesetId: ts.id, tileId: a.id };
+  assert.equal(tmap.stampTileId(0, 0), a.id); // одиночный
+  S.tilePattern = { w: 2, h: 1, ids: [a.id, b.id] };
+  assert.equal(tmap.stampTileId(0, 0), a.id); assert.equal(tmap.stampTileId(1, 0), b.id); // паттерн по сетке
+  S.tilePattern = null; S.tileRandom = true; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = null;
+  const r1 = tmap.stampTileId(0, 0); assert.ok(r1 === a.id || r1 === b.id);
+  assert.equal(tmap.stampTileId(0, 0), r1); // random зафиксирован → превью == штамп
+  S.tileRandom = false; S.tileMarks = new Set();
+});
+t('tilemap: tile.flipH/flipV флипают флаги кисти (для превью)', () => {
+  S.tileFlags = { flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
+  actions.run('tile.flipH'); assert.equal(S.tileFlags.flipX, true);
+  actions.run('tile.flipV'); assert.equal(S.tileFlags.flipY, true);
+  actions.run('tile.flipH'); assert.equal(S.tileFlags.flipX, false);
+});
+
 console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);

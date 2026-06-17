@@ -7,8 +7,9 @@ import { keyName } from '../../logic/key-code.js';
 
 const STORE = 'keymap';
 
+let spaceHeld = false; // Space как зажатый модификатор: Space+X / Space+Y — флип тайла на кисти
 export function comboOf(e) { const k = keyName(e.code); if (!k) return null;
-  return (e.ctrlKey || e.metaKey ? 'mod+' : '') + (e.shiftKey ? 'shift+' : '') + (e.altKey ? 'alt+' : '') + k; }
+  return (e.ctrlKey || e.metaKey ? 'mod+' : '') + (e.shiftKey ? 'shift+' : '') + (e.altKey ? 'alt+' : '') + (spaceHeld && k !== 'space' ? 'space+' : '') + k; }
 
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) {}
@@ -24,6 +25,7 @@ const typing = (t) => !!((t && t.matches && t.matches('input, textarea')) || (t 
 
 export function handle(e) {
   const combo = comboOf(e); if (!combo) return false;
+  if (e.repeat && combo.startsWith('space+')) return false; // удержание Space+X не должно мигать флипом
   const action = keymap[combo];
   if (!action || !actions.has(action)) return false;
   const undoRedo = action === 'edit.undo' || action === 'edit.redo';
@@ -34,4 +36,8 @@ export function handle(e) {
   e.preventDefault(); actions.run(action); return true;
 }
 
-export function mount() { window.addEventListener('keydown', handle); }
+export function mount() {
+  window.addEventListener('keydown', (e) => { if (e.code === 'Space') spaceHeld = true; handle(e); });
+  window.addEventListener('keyup', (e) => { if (e.code === 'Space') spaceHeld = false; });
+  window.addEventListener('blur', () => { spaceHeld = false; });
+}

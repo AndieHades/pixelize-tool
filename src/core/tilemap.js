@@ -84,6 +84,16 @@ export function composeCell(idxs, cx, cy, w, h) {
   return out;
 }
 
+// какой tileId ляжет в клетку (cx,cy) текущей кистью — ЕДИНЫЙ источник для
+// штампа и превью на кисти (WYSIWYG): паттерн / зафиксированный random / активный
+const patternAt = (p, cx, cy) => p.ids[(((cy % p.h) + p.h) % p.h) * p.w + (((cx % p.w) + p.w) % p.w)];
+export function rollRandomTile() { const ids = [...S.tileMarks]; if (ids.length) S.tileRandomNext = ids[Math.floor(Math.random() * ids.length)]; }
+export function stampTileId(cx, cy) {
+  if (S.tilePattern) return patternAt(S.tilePattern, cx, cy);
+  if (S.tileRandom && S.tileMarks.size) { if (S.tileRandomNext == null) rollRandomTile(); return S.tileRandomNext; }
+  return S.activeTile ? S.activeTile.tileId : null;
+}
+
 // поставить/стереть клетку и пересобрать слой (стирание — cell=null)
 export function setCell(li, cx, cy, cell) {
   const L = S.layers[li]; if (!isTilemap(L) || !inMap(L.tilemap, cx, cy)) return;

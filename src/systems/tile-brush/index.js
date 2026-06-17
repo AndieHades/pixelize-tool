@@ -9,7 +9,7 @@ import { setTool } from '../../core/tools.js';
 import { snapshot } from '../../core/history.js';
 import { toast, t } from '../../core/dom.js';
 import { getTileset, getTile } from '../../core/tileset.js';
-import { isTilemap, getCell, setCell, inMap } from '../../core/tilemap.js';
+import { isTilemap, getCell, setCell, inMap, stampTileId, rollRandomTile } from '../../core/tilemap.js';
 import { pickVariant } from '../../core/variant-groups.js';
 import { cellFlags } from '../../logic/tile-transform.js';
 
@@ -19,27 +19,13 @@ function toCell(gx, gy) { const L = S.layers[S.cur]; if (!isTilemap(L)) return n
   const cx = Math.floor(gx / ts.tileW), cy = Math.floor(gy / ts.tileH);
   return inMap(L.tilemap, cx, cy) ? { cx, cy, ts } : null; }
 
-// какой tileId положить: из активного тайла или случайный вариант группы
-function resolveTileId(ts) {
-  const a = S.activeTile; if (!a) return null;
-  if (a.groupId != null) return pickVariant(ts, a.groupId, Math.random);
-  return a.tileId;
-}
-
-// Godot-стиль: при выбранном паттерне (несколько тайлов) штампуем его с
-// выравниванием по сетке карты — так рисуются замкнутые участки/острова.
-function patternId(cx, cy) { const p = S.tilePattern;
-  return p.ids[(((cy % p.h) + p.h) % p.h) * p.w + (((cx % p.w) + p.w) % p.w)]; }
-
-// случайный тайл из выбранных в палитре (режим «кубик»)
-function randomMarkId() { const ids = [...S.tileMarks]; if (!ids.length) return S.activeTile && S.activeTile.tileId;
-  return ids[Math.floor(Math.random() * ids.length)]; }
-
 function paintAt(cx, cy, ts) {
-  if (S.tileRandom && S.tileMarks.size) { const id = randomMarkId(); if (id != null && getTile(ts, id)) setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags }); return; }
-  if (S.tilePattern) { const id = patternId(cx, cy); if (id != null && getTile(ts, id)) setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags }); return; }
-  const id = resolveTileId(ts); if (id == null || !getTile(ts, id)) { toast(t('toast.noTiles')); return; }
+  // активная variant-группа без паттерна/рандома — случайный вариант группы
+  let id = (S.activeTile && S.activeTile.groupId != null && !S.tilePattern && !S.tileRandom)
+    ? pickVariant(ts, S.activeTile.groupId, Math.random) : stampTileId(cx, cy);
+  if (id == null || !getTile(ts, id)) { if (!S.tilePattern) toast(t('toast.noTiles')); return; }
   setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags });
+  if (S.tileRandom && S.tileMarks.size) rollRandomTile(); // следующий штамп — новый случайный (и превью обновится)
 }
 
 function pickAt(cx, cy) {
@@ -74,8 +60,8 @@ actions.register('tile.mode.erase', () => { S.tileMode = 'erase'; bus.emit('tile
 actions.register('tile.mode.pick', () => { S.tileMode = 'pick'; bus.emit('tileset-changed'); });
 actions.register('tile.random', () => { S.tileRandom = !S.tileRandom; bus.emit('tileset-changed'); });
 
-// transform-флаги новых экземпляров (кнопки Flip/Rotate/Diagonal)
-const ef = () => bus.emit('tileset-changed');
+// transform-флаги новых экземпляров — сразу видно на превью кисти (render)
+const ef = () => { bus.emit('tileset-changed'); bus.emit('render'); };
 actions.register('tile.flipH', () => { S.tileFlags.flipX = !S.tileFlags.flipX; ef(); });
 actions.register('tile.flipV', () => { S.tileFlags.flipY = !S.tileFlags.flipY; ef(); });
 actions.register('tile.diagonal', () => { S.tileFlags.diagonalFlip = !S.tileFlags.diagonalFlip; ef(); });
