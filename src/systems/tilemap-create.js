@@ -5,7 +5,7 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
-import { $, toast, t } from '../core/dom.js';
+import { toast, t } from '../core/dom.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { createTileset } from '../core/tileset.js';
 import { canvasSizeForTiles, expandCanvas } from '../core/document.js';
@@ -50,6 +50,5 @@ export function open() {
 export function mount() {
   actions.register('tilemap.newLayer', open);
   actions.register('tilemap.syncGrid', syncGridToTilemap);
-  const btn = $('lay-tmap'); if (btn) btn.onclick = open;
   bus.on('layers', syncGridToTilemap); // выбор Tile-слоя подстраивает Tileset Grid
 }

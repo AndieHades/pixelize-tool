@@ -42,7 +42,7 @@ export const ru = {
   'new.savePreset': 'Save preset', 'new.savedEmpty': 'Пока пусто', 'new.colorMode': 'Color mode',
   'new.background': 'Фон холста', 'new.bgTransparent': 'Transparent', 'new.bgWhite': 'White', 'new.bgBlack': 'Black',
   'tilemap.tileset': 'Tileset', 'tilemap.newTileset': 'New Tileset', 'tilemap.saved': 'Presets',
-  'tilemap.savedEmpty': 'No saved presets', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
+  'tilemap.savedEmpty': 'No saved presets', 'tilemap.settings': 'Tilemap settings', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
   'tilemap.gridW': 'Grid Width', 'tilemap.gridH': 'Grid Height', 'tilemap.savePreset': 'Save preset', 'tilemap.resizeCanvas': 'Resize canvas',
   'label.name': 'Имя',
   'dialog.done': 'Готово', 'dialog.rename': 'Переименовать', 'dialog.panels': 'Кнопки панелей', 'grid.title': 'Сетка',

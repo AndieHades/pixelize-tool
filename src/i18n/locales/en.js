@@ -43,7 +43,7 @@ export const en = {
   'new.savePreset': 'Save preset', 'new.savedEmpty': 'It is empty', 'new.colorMode': 'Color mode',
   'new.background': 'Canvas background', 'new.bgTransparent': 'Transparent', 'new.bgWhite': 'White', 'new.bgBlack': 'Black',
   'tilemap.tileset': 'Tileset', 'tilemap.newTileset': 'New Tileset', 'tilemap.saved': 'Presets',
-  'tilemap.savedEmpty': 'No saved presets', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
+  'tilemap.savedEmpty': 'No saved presets', 'tilemap.settings': 'Tilemap settings', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
   'tilemap.gridW': 'Grid Width', 'tilemap.gridH': 'Grid Height', 'tilemap.savePreset': 'Save preset', 'tilemap.resizeCanvas': 'Resize canvas',
   'label.name': 'Name',
   'dialog.done': 'Done', 'dialog.rename': 'Rename', 'dialog.panels': 'Panel buttons', 'grid.title': 'Grid',

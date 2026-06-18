@@ -28,7 +28,8 @@ export const cloneLayer = (L, overrides = {}) => ({
   name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid,
   clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock,
   ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects),
-  kind: L.kind || 'pixel', tilemap: L.tilemap ? cloneTilemap(L.tilemap) : undefined, ...overrides,
+  kind: L.kind || 'pixel', tilemap: L.tilemap ? cloneTilemap(L.tilemap) : undefined,
+  tilemapSettings: L.tilemapSettings ? { ...L.tilemapSettings } : undefined, ...overrides,
 });
 
 // фабрика эффекта слоя/папки: уникальный id, видимость, копия дефолтных параметров

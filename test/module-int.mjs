@@ -2093,7 +2093,7 @@ t('layers-ui: меню слоя не дублирует кнопки панел�
   row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
   const hidden = ['lctx-ren', 'lctx-dup', 'lctx-select', 'lctx-fill', 'lctx-clear', 'lctx-symm', 'lctx-rotate', 'lctx-clip', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-del', 'lctx-mono', 'lctx-bc'];
   for (const id of hidden) assert.equal(document.getElementById(id).style.display, 'none', id);
-  assert.notEqual(document.getElementById('lctx-tile').style.display, 'none');
+  assert.equal(document.getElementById('lctx-tile').style.display, 'none');
   assert.equal(document.getElementById('lctx-invert').disabled, true);
   assert.equal(document.getElementById('lctx-copy-fx').disabled, true);
   assert.equal(document.getElementById('lctx-paste-fx').disabled, true);
@@ -2102,11 +2102,10 @@ t('layers-ui: меню слоя не дублирует кнопки панел�
   assert.equal(document.getElementById('lctx-invert').disabled, false);
   assert.equal(document.getElementById('lctx-copy-fx').disabled, false);
   assert.equal(document.getElementById('lctx-paste-fx').disabled, false);
-  assert.equal(i18n.t('menu.convertTile'), 'Convert to Tilemap');
   fxShared.setFxClip([]);
 });
-t('layers-ui: Tilemap в ПКМ-меню конвертируется обратно в обычный слой', () => {
-  resetWH(8, 8); layers.mount(); S.tilesets = []; S.tilesetSeq = 0;
+t('layers-ui: Tilemap settings есть только в ПКМ-меню Tilemap-слоя', () => {
+  resetWH(8, 8); layers.mount(); tfl.mount(); tmDialog.mount(); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers = [L]; S.cur = 0; tmap.setCell(0, 0, 0, { tileId: tile.id });
   document.getElementById('lay-pop').classList.add('on'); layList();
@@ -2114,12 +2113,12 @@ t('layers-ui: Tilemap в ПКМ-меню конвертируется обрат
   row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
   const btn = document.getElementById('lctx-tile');
   assert.notEqual(btn.style.display, 'none');
-  assert.equal(btn.textContent, i18n.t('menu.convertLayer'));
+  assert.equal(btn.textContent, i18n.t('tilemap.settings'));
   btn.click();
-  assert.equal(S.layers[0].kind, 'pixel');
-  assert.equal(S.layers[0].tilemap, undefined);
-  assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3, 255]);
-  assert.equal(S.tilesets[0].tiles.length, 1);
+  assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  assert.equal(document.getElementById('tm-grid-w').value, '4');
+  assert.equal(document.getElementById('tm-grid-h').value, '4');
+  document.getElementById('tm-cancel').click();
 });
 t('layers-ui: иконка Tilemap в строке конвертирует этот слой обратно', () => {
   resetWH(8, 8); layers.mount(); S.tilesets = []; S.tilesetSeq = 0;
@@ -2132,8 +2131,41 @@ t('layers-ui: иконка Tilemap в строке конвертирует эт
   assert.equal(S.cur, 0);
   assert.equal(S.layers[1].kind, 'pixel');
   assert.equal(S.layers[1].tilemap, undefined);
+  assert.equal(S.layers[1].tilemapSettings.tileW, 4);
+  assert.equal(S.layers[1].tilemapSettings.tileH, 4);
   assert.deepEqual(S.layers[1].grid[0][0], [4, 5, 6, 255]);
   assert.equal(S.tilesets[0].tiles.length, 1);
+});
+t('layers-ui: кнопка Tilemap первый раз открывает настройки, потом переключает по сохранённым', () => {
+  resetWH(8, 8); layers.mount(); tmDialog.mount(); tmcreate.mount(); tfl.mount(); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  S.layers[0].grid[0][0] = [7, 8, 9, 255]; document.getElementById('lay-pop').classList.add('on'); layList();
+  const btn = document.getElementById('lay-tmap');
+  btn.click(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  document.getElementById('tm-apply').click();
+  assert.equal(S.layers[0].kind, 'tilemap'); assert.equal(S.layers[0].tilemapSettings.tileW, 4);
+  layList(); assert.ok(btn.classList.contains('on')); assert.equal(btn.title, i18n.t('menu.convertLayer'));
+  btn.click();
+  assert.equal(S.layers[0].kind, 'pixel'); assert.equal(S.layers[0].tilemap, undefined);
+  assert.equal(S.layers[0].tilemapSettings.tileW, 4);
+  assert.ok(!document.getElementById('tilemap-ovl').classList.contains('on'));
+  layList(); assert.ok(!btn.classList.contains('on')); assert.equal(btn.title, i18n.t('menu.convertTile'));
+  btn.click();
+  assert.equal(S.layers[0].kind, 'tilemap');
+  assert.equal(S.layers[0].tilemap.mapW, 2); assert.equal(S.layers[0].tilemap.mapH, 2);
+  assert.ok(!document.getElementById('tilemap-ovl').classList.contains('on'));
+});
+t('layers-ui: Tilemap settings меняет размер сетки и запоминает его', () => {
+  resetWH(8, 8); layers.mount(); tmDialog.mount(); tfl.mount(); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers = [L]; S.cur = 0; tmap.setCell(0, 0, 0, { tileId: tile.id });
+  tfl.openTilemapSettings(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  document.getElementById('tm-grid-w').value = '8'; document.getElementById('tm-grid-h').value = '8';
+  document.getElementById('tm-apply').click();
+  const nts = tsmgr.getTileset(S.layers[0].tilemap.tilesetId);
+  assert.equal(S.layers[0].kind, 'tilemap');
+  assert.equal(nts.tileW, 8); assert.equal(nts.tileH, 8);
+  assert.equal(S.layers[0].tilemap.mapW, 1); assert.equal(S.layers[0].tilemap.mapH, 1);
+  assert.equal(S.layers[0].tilemapSettings.tileW, 8); assert.equal(S.layers[0].tilemapSettings.tileH, 8);
 });
 t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');

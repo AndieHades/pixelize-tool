@@ -21,6 +21,8 @@ function bakeDuplicate() { const L = activeTm(); if (!L) { toast(t('toast.needTi
 
 // преобразовать tilemap-слой в обычный пиксельный (связь с тайлами теряется)
 export function convertTilemapLayer(index = S.cur) { const L = S.layers[index]; if (!isTilemap(L)) { toast(t('toast.needTilemapLayer')); return false; }
+  const ts = getTileset(L.tilemap.tilesetId);
+  if (ts) L.tilemapSettings = { ...(L.tilemapSettings || {}), name: ts.name, tileW: ts.tileW, tileH: ts.tileH, tilesetId: ts.id };
   snapshot(); delete L.tilemap; L.kind = 'pixel'; markDirty(index); bus.emitDoc(); toast(t('toast.tilesBaked')); return true; }
 
 // PNG картинки tilemap-слоя (его пиксельная область)

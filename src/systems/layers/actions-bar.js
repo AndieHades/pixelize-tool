@@ -2,8 +2,9 @@
 // кнопок ПКМ/долгим тапом между верхней и нижней строкой.
 import { S } from '../../core/state.js';
 import * as actions from '../../core/actions.js';
-import { $ } from '../../core/dom.js';
+import { $, t } from '../../core/dom.js';
 import { attachReorder } from '../../core/reorder-drag.js';
+import { isTilemap } from '../../core/tilemap.js';
 import { folderLayers, selectedIdx } from './helpers.js';
 import {
   clearLayerRef, deleteLayer, doAddLayer, doGroup, doMerge, duplicateFolder, duplicateLayer,
@@ -62,6 +63,9 @@ export function syncLayerActionButtons() {
   const L = curLayer(), on = (id, v) => { const b = $(id); if (b) b.classList.toggle('on', !!v); };
   on('lay-alpha', L && L.alphaLock); on('lay-clip', L && L.clip);
   on('lay-ref', L && L.reference); on('lay-lock', L && L.lock);
+  const primaryLayer = !S.bgSel && S.selFolder == null && !S.fxCur ? L : null;
+  const tmap = $('lay-tmap'), isTm = isTilemap(primaryLayer);
+  if (tmap) { tmap.classList.toggle('on', isTm); tmap.dataset.i18nTitle = isTm ? 'menu.convertLayer' : 'menu.convertTile'; tmap.title = t(tmap.dataset.i18nTitle); }
 }
 
 let barsBound = false;
