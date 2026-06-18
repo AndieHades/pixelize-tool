@@ -102,6 +102,7 @@ const tfl = await import('../src/systems/tile-from-layer.js');
 const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
+const tgridPop = await import('../src/systems/tile-palette/grid-pop.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -967,6 +968,22 @@ t('menus: tool-choice открывается снаружи панели тул�
     assert.ok(lineMenu.querySelector('.menu-arrow').classList.contains('up'));
     lineMenu.classList.remove('on');
   } finally { undo.forEach((fn) => fn()); }
+});
+t('menus: размер Tileset Grid использует общий bubble и указывает на кнопку', () => {
+  const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
+  const tilebar = document.createElement('div'), act = document.createElement('div'), btn = document.createElement('button');
+  tilebar.id = 'tilebar'; act.id = 'tile-act'; btn.dataset.tb = 'gridsize'; btn.textContent = '32'; act.appendChild(btn); tilebar.appendChild(act); document.body.appendChild(tilebar);
+  tgridPop.mountGridPop(); const pop = document.getElementById('tilegrid-pop');
+  const undo = [mockRect(tilebar, rect(100, 100, 240, 130)), mockRect(btn, rect(132, 214, 34, 30)), mockRect(pop, rect(0, 0, 230, 46))];
+  try {
+    tgridPop.toggleGridPop();
+    const arrow = pop.querySelector('.menu-arrow');
+    assert.ok(pop.classList.contains('tool-choice')); assert.ok(pop.classList.contains('on'));
+    assert.ok(arrow.classList.contains('up'));
+    const arrowCenter = parseFloat(pop.style.left) + parseFloat(arrow.style.left) + 6;
+    assert.equal(arrowCenter, 149);
+  } finally { pop.classList.remove('on'); undo.forEach((fn) => fn()); tilebar.remove(); }
 });
 await ta('floating-window: новое окно и активное окно поднимаются, toolbar выше всех', async () => {
   const root = document.createElement('div'), rootGrip = document.createElement('div');

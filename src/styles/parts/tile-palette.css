@@ -52,9 +52,5 @@
     /* перенос иконок тулбара зажатым ПКМ */
     .tile-act button.reordering { opacity: .4; }
 
-    /* попап размера Tileset Grid (только числа, передвигаемый) */
-    .tilegrid-pop { position: fixed; z-index: 40; display: none; gap: 4px; padding: 6px; touch-action: none;
-      background: var(--panel); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); cursor: grab; }
-    .tilegrid-pop.on { display: flex; }
-    .tilegrid-pop button { min-width: 34px; height: 32px; font-weight: 700; }
-    .tilegrid-pop button.on { background: var(--accent); color: var(--on-accent, #fff); }
+    /* попап размера Tileset Grid — тот же menu-bubble, что у кнопок тулбаров */
+    .tilegrid-pop button { width: auto; min-width: var(--btn-sm); padding: 0 8px; font-weight: var(--fw-display); }
