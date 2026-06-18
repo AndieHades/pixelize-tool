@@ -1751,14 +1751,30 @@ t('crop: режим клеток задаёт размер ровно по Grid 
   ch.value = '7'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25); // 5 клеток × 5 px
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49); // 7 клеток × 7 px
-  document.getElementById('crop-units').click(); S.tileset.on = false; crop.cancelCrop(); });
+  document.getElementById('crop-units').click();
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 40); // отключение Cells убирает cell-preview
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 40);
+  S.tileset.on = false; crop.cancelCrop(); });
 
 t('crop: Trim в Canvas size только выставляет рамку до Apply', () => { crop.mount(); resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; crop.toggleCrop();
   const units = document.getElementById('crop-units'); if (units.classList.contains('on')) units.click();
   document.getElementById('crop-trim').click();
+  assert.equal(document.getElementById('crop-trim').classList.contains('on'), true);
   assert.equal(S.W, 6); assert.equal(S.H, 6); assert.deepEqual({ x0: S.cropMode.x0, y0: S.cropMode.y0, x1: S.cropMode.x1, y1: S.cropMode.y1 }, { x0: 3, y0: 2, x1: 3, y1: 2 });
   crop.applyCrop(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
 });
+
+t('crop: Grid задаёт размер одной ячейки и Trim не снапится к Cells', () => { crop.mount(); resetWH(20, 20); S.grid.w = 5; S.grid.h = 5; S.grid.visible = false; crop.toggleCrop();
+  document.getElementById('crop-grid').click();
+  assert.equal(document.getElementById('crop-grid-size-row').classList.contains('on'), true);
+  const gs = document.getElementById('crop-grid-size'); gs.value = '4'; gs.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 4);
+  document.getElementById('crop-units').click(); document.getElementById('crop-w').value = '3'; document.getElementById('crop-w').dispatchEvent(new window.Event('input', { bubbles: true }));
+  S.layers[0].grid[7][11] = [1, 2, 3, 255];
+  document.getElementById('crop-trim').click();
+  assert.equal(document.getElementById('crop-units').classList.contains('on'), false);
+  assert.deepEqual({ x0: S.cropMode.x0, y0: S.cropMode.y0, x1: S.cropMode.x1, y1: S.cropMode.y1 }, { x0: 11, y0: 7, x1: 11, y1: 7 });
+  crop.cancelCrop(); });
 
 t('crop: поля размера считают выражения от текущего значения', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');

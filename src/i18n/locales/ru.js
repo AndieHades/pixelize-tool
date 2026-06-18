@@ -109,7 +109,7 @@ export const ru = {
   'shade.title': 'Shading', 'shade.pickColors': 'Выбрать цвета', 'tool.brushShading': 'Shading-кисть',
   'menu.pickLayer': 'Слой:',
   'crop.canvasSize': 'Canvas size', 'crop.custom': 'Custom', 'crop.center': 'От центра (Shift)', 'crop.apply': 'Применить кроп (Enter)', 'crop.cancel': 'Отмена (Esc)',
-  'crop.units': 'Pixels / cells', 'crop.grid': 'Grid',
+  'crop.units': 'Cells', 'crop.grid': 'Grid', 'crop.gridSize': 'Cell size',
   'transform.apply': 'Применить трансформацию (Enter)', 'transform.cancel': 'Отменить трансформацию (Esc)',
   'edit.undo': 'Отменить (Ctrl+Z)', 'edit.redo': 'Вернуть (Ctrl+Y)',
   'preview.actualSize': 'Реальный размер 1:1',

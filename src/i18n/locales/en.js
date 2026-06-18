@@ -106,7 +106,7 @@ export const en = {
   'shade.title': 'Shading', 'shade.pickColors': 'Pick colors', 'tool.brushShading': 'Shading brush',
   'menu.pickLayer': 'Layer:',
   'crop.canvasSize': 'Canvas size', 'crop.custom': 'Custom', 'crop.center': 'From center (Shift)', 'crop.apply': 'Apply crop (Enter)', 'crop.cancel': 'Cancel (Esc)',
-  'crop.units': 'Pixels / cells', 'crop.grid': 'Grid',
+  'crop.units': 'Cells', 'crop.grid': 'Grid', 'crop.gridSize': 'Cell size',
   'transform.apply': 'Apply transform (Enter)', 'transform.cancel': 'Cancel transform (Esc)',
   'edit.undo': 'Undo (Ctrl+Z)', 'edit.redo': 'Redo (Ctrl+Y)',
   'preview.actualSize': 'Actual size 1:1',

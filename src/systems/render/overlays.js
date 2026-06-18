@@ -2,10 +2,11 @@
 // выделение, рамка/маска выделения, подсветка перекраски, рамка кропа, контур
 // кисти. Всё выражается из общего S.
 import { S } from '../../core/state.js';
-import { rgb, eqc } from '../../logic/color.js';
+import { rgb, eqc, hexToRgb } from '../../logic/color.js';
 import { bres, rectEdges, rectFill, ellipseEdges, ellipseFill } from '../../logic/raster.js';
 import { symmetryConfig, effVis } from '../../core/layers.js';
 import { mirrorPoints } from '../../logic/symmetry.js';
+import { clamp01 } from '../../logic/math.js';
 import { C } from '../../styles/canvas-colors.js';
 
 function diagSegment(W, H, kind, val) {
@@ -45,6 +46,22 @@ function drawSymmetryGuides(ctx, ox, oy, z) {
   ctx.restore();
 }
 
+const gridOpacity = (v) => clamp01((+v || 70) / 100);
+function gridStroke(hex, opacity) {
+  const c = hexToRgb(hex || '#4aa3ff');
+  return c.some((v) => !Number.isFinite(v)) ? C.grid : `rgba(${c[0]},${c[1]},${c[2]},${gridOpacity(opacity)})`;
+}
+function drawCropGrid(ctx, ox, oy, z, W, H) {
+  if (!(S.grid && (S.grid.preview || S.grid.visible))) return;
+  const gw = Math.max(1, Math.round(S.grid.w) || 16), gh = Math.max(1, Math.round(S.grid.h) || 16);
+  ctx.save(); ctx.strokeStyle = gridStroke(S.grid.color, S.grid.opacity); ctx.lineWidth = 1; ctx.beginPath();
+  const vx = new Set([W]); for (let x = 0; x <= W; x += gw) vx.add(x);
+  const hy = new Set([H]); for (let y = 0; y <= H; y += gh) hy.add(y);
+  for (const x of vx) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + H * z); }
+  for (const y of hy) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + W * z, oy + y * z); }
+  ctx.stroke(); ctx.restore();
+}
+
 export function drawOverlays(ctx, ox, oy, z) {
   const W = S.W, H = S.H;
   drawSymmetryGuides(ctx, ox, oy, z);
@@ -75,6 +92,7 @@ export function drawOverlays(ctx, ox, oy, z) {
     ctx.fillStyle = 'rgba(0,0,0,.45)';
     ctx.fillRect(ox, oy, W * z, y - oy); ctx.fillRect(ox, y + h, W * z, oy + H * z - y - h);
     ctx.fillRect(ox, y, x - ox, h); ctx.fillRect(x + w, y, ox + W * z - x - w, h);
+    drawCropGrid(ctx, ox, oy, z, W, H);
     ctx.strokeStyle = C.fg; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.fillStyle = C.fg;
     const hs = Math.min(18, h - 4), ws = Math.min(18, w - 4), hw = 5, cs = 10;
     ctx.fillRect(x - hw / 2, y + h / 2 - hs / 2, hw, hs); ctx.fillRect(x + w - hw / 2, y + h / 2 - hs / 2, hw, hs);

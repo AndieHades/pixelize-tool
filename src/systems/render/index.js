@@ -52,7 +52,7 @@ export function render() {
   ctx.restore();
   if (tile) { ctx.save(); ctx.globalAlpha = .6; ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.strokeRect(ox + .5, oy + .5, tw - 1, th - 1); ctx.restore(); } // рамка исходного тайла
   if (z >= 7) drawGrid(1, 1, C.grid, W, H, ox, oy, z); // обычная попиксельная сетка
-  if (S.grid && (S.grid.preview || S.grid.visible)) drawGrid(S.grid.w || 16, S.grid.h || 16, gridStroke(S.grid.color, S.grid.opacity), W, H, ox, oy, z);
+  if (!S.cropMode && S.grid && (S.grid.preview || S.grid.visible)) drawGrid(S.grid.w || 16, S.grid.h || 16, gridStroke(S.grid.color, S.grid.opacity), W, H, ox, oy, z);
   bus.emit('overlay', { ctx, ox, oy, z }); // системные оверлеи (напр. рамка трансформации)
   drawOverlays(ctx, ox, oy, z);
   drawBrushCursor(ctx, ox, oy, z); // курсор-предпросмотр отпечатка кисти — поверх всего
