@@ -85,7 +85,6 @@ export function openConvertDialog() {
   const { w, h } = gridTileSize();
   openTilemapDialog({
     title: t('menu.convertTile'),
-    name: fallbackName(),
     tileW: w,
     tileH: h,
     onSubmit: (entry) => convertToTile({ ...entry, newTileset: true }),

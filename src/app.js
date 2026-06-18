@@ -135,7 +135,7 @@ export function start() {
     if (e.target.id === id && Date.now() - openedAt > 500) el.classList.remove('on');
   }); // рабочие модальные окна не закрываем по фону — только крестиком/явной кнопкой
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'line-choice', 'shape-choice', 'sym-choice', 'flip-choice']) {
+    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'shape-choice', 'sym-choice', 'flip-choice']) {
       const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on');
     } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');

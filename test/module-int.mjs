@@ -969,20 +969,20 @@ t('menus: tool-choice открывается снаружи панели тул�
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
   const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
   const sidebar = document.getElementById('sidebar'), sym = document.getElementById('sym'), symMenu = document.getElementById('sym-choice');
-  const topbar = document.getElementById('topbar'), line = document.getElementById('t-line'), lineMenu = document.getElementById('line-choice');
+  const topbar = document.getElementById('topbar'), shape = document.getElementById('t-shape'), shapeMenu = document.getElementById('shape-choice');
   const undo = [
     mockRect(sidebar, rect(96, 120, 54, 320)), mockRect(sym, rect(104, 260, 38, 38)), mockRect(symMenu, rect(0, 0, 220, 46)),
-    mockRect(topbar, rect(0, 0, 640, 58)), mockRect(line, rect(330, 10, 38, 38)), mockRect(lineMenu, rect(0, 0, 82, 46)),
+    mockRect(topbar, rect(0, 0, 640, 58)), mockRect(shape, rect(330, 10, 38, 38)), mockRect(shapeMenu, rect(0, 0, 160, 46)),
   ];
   try {
     showMenuForAnchor(symMenu, sym);
     assert.equal(symMenu.style.left, '160px');
     assert.ok(symMenu.querySelector('.menu-arrow').classList.contains('left'));
     symMenu.classList.remove('on');
-    showMenuForAnchor(lineMenu, line);
-    assert.equal(lineMenu.style.top, '68px');
-    assert.ok(lineMenu.querySelector('.menu-arrow').classList.contains('up'));
-    lineMenu.classList.remove('on');
+    showMenuForAnchor(shapeMenu, shape);
+    assert.equal(shapeMenu.style.top, '68px');
+    assert.ok(shapeMenu.querySelector('.menu-arrow').classList.contains('up'));
+    shapeMenu.classList.remove('on');
   } finally { undo.forEach((fn) => fn()); }
 });
 t('tile-toolbar: Add tile не появляется даже из старого сохранённого порядка', () => {
@@ -1418,10 +1418,13 @@ t('tint-shade: без активного цвета в палитре — окн
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
 t('toolbars: линия и фигуры выбираются одной кнопкой с режимами', () => { tb.mount(); resetWH(8, 8);
-  document.getElementById('t-line').click();
-  assert.ok(document.getElementById('line-choice').classList.contains('on'));
-  document.querySelector('#line-choice [data-line-mode="contour"]').click();
-  assert.equal(S.tool, 'line'); assert.equal(S.lineMode, 'contour'); assert.ok(document.getElementById('t-line').classList.contains('on'));
+  assert.equal(document.getElementById('t-line'), null); assert.equal(document.getElementById('line-choice'), null);
+  document.getElementById('t-shape').click();
+  assert.ok(document.getElementById('shape-choice').classList.contains('on'));
+  const modes = [...document.querySelectorAll('#shape-choice button')].map((b) => b.dataset.lineMode || b.dataset.shapeTool);
+  assert.deepEqual(modes.slice(0, 4), ['line', 'contour', 'rect', 'rect']);
+  document.querySelector('#shape-choice [data-line-mode="contour"]').click();
+  assert.equal(S.tool, 'line'); assert.equal(S.lineMode, 'contour'); assert.ok(document.getElementById('t-shape').classList.contains('on'));
   document.getElementById('t-shape').click();
   assert.ok(document.getElementById('shape-choice').classList.contains('on'));
   document.querySelector('#shape-choice [data-shape-tool="ellipse"][data-fill="1"]').click();
@@ -1462,8 +1465,15 @@ t('toolbars: симметрия и флип свернуты в кнопки с 
   document.querySelector('#sym-choice [data-sym-tool="move"]').click(); assert.equal(S.symLines.mode, 'move');
   S.layers[0].grid[1][0] = [5, 5, 5, 255]; document.getElementById('flip-h').click();
   assert.ok(document.getElementById('flip-choice').classList.contains('on'));
+  assert.equal(document.getElementById('flip-h').title, 'Transform Canvas');
+  assert.equal(document.getElementById('rot'), null);
+  assert.equal(document.querySelectorAll('#flip-choice [data-flip-mode]').length, 3);
   document.querySelector('#flip-choice [data-flip-mode="h"]').click();
+  assert.ok(document.getElementById('flip-choice').classList.contains('on'));
   assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
+  document.querySelector('#flip-choice [data-flip-mode="r"]').click();
+  assert.ok(document.getElementById('flip-choice').classList.contains('on'));
+  assert.deepEqual(S.layers[0].grid[3][2], [5, 5, 5, 255]);
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
   S.sym = false; S.symH = false; S.symD1 = false; S.symLines.mode = null;
 });
@@ -2446,7 +2456,14 @@ t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () =
     localStorage.removeItem('tilemapPresets'); tmDialog.mount();
     resetWH(64, 64); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16;
     tmcreate.open(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+    assert.equal(document.getElementById('tm-name').value, '16 x 16');
+    assert.deepEqual([...document.querySelectorAll('#tm-saved .saved b')].map((n) => n.textContent), ['32 x 32', '48 x 48', '96 x 96']);
+    if (document.getElementById('tm-link').classList.contains('on')) document.getElementById('tm-link').click();
+    document.getElementById('tm-grid-w').value = '24';
+    document.getElementById('tm-grid-w').dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(document.getElementById('tm-name').value, '24 x 16');
     document.getElementById('tm-name').value = 'Cave';
+    document.getElementById('tm-name').dispatchEvent(new window.Event('input', { bubbles: true }));
     document.getElementById('tm-grid-w').value = '24';
     document.getElementById('tm-grid-h').value = '12';
     document.getElementById('tm-save').checked = true;
@@ -2477,8 +2494,10 @@ t('tilemap-dialog: Convert to Tilemap использует размер из д�
   resetWH(32, 16); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   S.layers[0].grid[0][0] = [1, 2, 3, 255];
   tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  assert.equal(document.getElementById('tm-name').value, '16 x 16');
   if (document.getElementById('tm-link').classList.contains('on')) document.getElementById('tm-link').click();
   document.getElementById('tm-name').value = 'Dungeon';
+  document.getElementById('tm-name').dispatchEvent(new window.Event('input', { bubbles: true }));
   document.getElementById('tm-grid-w').value = '8';
   document.getElementById('tm-grid-h').value = '16';
   document.getElementById('tm-apply').click();

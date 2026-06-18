@@ -9,6 +9,7 @@ export const TILE_SIZE_DEFAULT = 16;
 // Отдельно от обычной сетки (Grid). Только эти значения, при любом размере холста.
 export const TILE_GRID_SIZES = [16, 32, 48, 96, 128];
 export const TILE_GRID_DEFAULT = 16;
+export const TILEMAP_PRESET_SIZES = [32, 48, 96];
 
 // размеры новой tilemap-карты в клетках
 export const MAP_CELLS_DEFAULT = { w: 16, h: 16 };

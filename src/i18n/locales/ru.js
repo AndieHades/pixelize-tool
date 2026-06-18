@@ -29,7 +29,8 @@ export const ru = {
   'side.symmetry': 'Симметрия (S)', 'side.symV': 'Симметрия лево-право (S)', 'side.symH': 'Симметрия верх-низ (Shift+S)', 'side.symD1': 'Диагональная симметрия 45°', 'side.symD2': 'Диагональная симметрия -45°', 'side.symBoth': 'Несколько осей симметрии',
   'side.symMove': 'Переместить линию симметрии', 'side.symReset': 'Сбросить линию симметрии', 'side.grid': 'Сетка', 'side.tile': 'Режим тайла (Z)',
   'side.pp': 'Пиксель-перфект (P)',
-  'side.stab': 'Стабилизация штриха (T)', 'side.outline': 'Обводка контуром (O)', 'side.flipH': 'Отразить по горизонтали (H)',
+  'side.stab': 'Стабилизация штриха (T)', 'side.outline': 'Обводка контуром (O)', 'side.transformCanvas': 'Transform Canvas',
+  'side.flipH': 'Отразить по горизонтали (H)',
   'side.flipV': 'Отразить по вертикали (V)', 'side.rotate': 'Повернуть 90° (R)', 'side.mono': 'Монохром',
   'side.bc': 'Яркость/контраст', 'side.imageSettings': 'Настройки', 'side.crop': 'Canvas size (C)', 'side.trim': 'Trim', 'side.center': 'Центрировать',
   // заголовки диалогов и попапов
@@ -40,7 +41,7 @@ export const ru = {
   'new.sprites': 'Sprites', 'new.gameFrames': 'Frames', 'new.saved': 'Saved', 'new.custom': 'Custom',
   'new.savePreset': 'Save preset', 'new.savedEmpty': 'Пока пусто', 'new.colorMode': 'Color mode',
   'new.background': 'Фон холста', 'new.bgTransparent': 'Transparent', 'new.bgWhite': 'White', 'new.bgBlack': 'Black',
-  'tilemap.tileset': 'Tileset', 'tilemap.newTileset': 'New Tileset', 'tilemap.saved': 'Saved',
+  'tilemap.tileset': 'Tileset', 'tilemap.newTileset': 'New Tileset', 'tilemap.saved': 'Presets',
   'tilemap.savedEmpty': 'No saved presets', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
   'tilemap.gridW': 'Grid Width', 'tilemap.gridH': 'Grid Height', 'tilemap.savePreset': 'Save preset',
   'label.name': 'Имя',

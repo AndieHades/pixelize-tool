@@ -2,18 +2,21 @@ import { S } from '../core/state.js';
 import { $, t } from '../core/dom.js';
 import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import { MAX_SIZE } from '../config/limits.js';
-import { TILE_GRID_DEFAULT } from '../config/tileset.js';
+import { TILE_GRID_DEFAULT, TILEMAP_PRESET_SIZES } from '../config/tileset.js';
 
 const STORE = 'tilemapPresets';
-let submit = null, mounted = false, suppressOutsideClick = false, linked = false, ratio = 1;
+let submit = null, mounted = false, suppressOutsideClick = false, linked = false, ratio = 1, nameCustom = false;
 
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
 const dim = (p) => `${p.tileW} x ${p.tileH}`;
+const presets = () => [...custom(), ...TILEMAP_PRESET_SIZES.map((n) => ({ name: dim({ tileW: n, tileH: n }), tileW: n, tileH: n }))];
 const fallbackSize = () => Math.max(1, Math.round(S.tileGrid?.size || TILE_GRID_DEFAULT));
 const panel = () => $('tilemap-ovl')?.querySelector('.tilemap-panel');
 const isOpen = () => $('tilemap-ovl')?.classList.contains('on');
 const dimValue = (id) => numericFieldValue($(id), fallbackSize());
+const currentDimName = () => dim({ tileW: dimValue('tm-grid-w'), tileH: dimValue('tm-grid-h') });
+const syncName = (force = false) => { if (force || !nameCustom) $('tm-name').value = currentDimName(); };
 
 function ensure() {
   if ($('tilemap-ovl')) return;
@@ -71,28 +74,19 @@ function commitDim(which) {
   const id = which === 'w' ? 'tm-grid-w' : 'tm-grid-h';
   const v = commitNumericField($(id), { min: 1, max: MAX_SIZE, integer: true, fallback: fallbackSize() });
   if (v == null) return false;
-  syncRatio(which); return true;
+  syncRatio(which); syncName(); return true;
 }
-function commitDims() {
-  const first = document.activeElement === $('tm-grid-h') ? 'h' : 'w';
-  commitDim(first); commitDim(first === 'w' ? 'h' : 'w');
-}
+function commitDims() { const first = document.activeElement === $('tm-grid-h') ? 'h' : 'w'; commitDim(first); commitDim(first === 'w' ? 'h' : 'w'); }
 
 function readEntry() {
-  commitDims();
-  const tileW = dimValue('tm-grid-w'), tileH = dimValue('tm-grid-h');
-  if (!tileW || !tileH) return null;
-  const name = ($('tm-name').value.trim() || t('tilemap.newTileset')).slice(0, 32);
-  return { name, tileW, tileH };
+  commitDims(); const tileW = dimValue('tm-grid-w'), tileH = dimValue('tm-grid-h');
+  return tileW && tileH ? { name: ($('tm-name').value.trim() || currentDimName()).slice(0, 32), tileW, tileH } : null;
 }
 
 function renderSaved() {
   const host = $('tm-saved'); if (!host) return;
   host.innerHTML = '';
-  const list = custom();
-  if (!list.length) {
-    const p = document.createElement('p'); p.className = 'tilemap-empty'; p.textContent = t('tilemap.savedEmpty'); host.appendChild(p); return;
-  }
+  const list = presets();
   for (const p of list) {
     const row = document.createElement('button'); row.type = 'button'; row.className = 'tilemap-row saved';
     row.innerHTML = '<b></b><em></em>';
@@ -113,9 +107,10 @@ function persistPreset(entry) {
 }
 
 function applyPreset(p) {
-  $('tm-name').value = p.name || t('tilemap.newTileset');
   setDim('tm-grid-w', p.tileW); setDim('tm-grid-h', p.tileH);
+  nameCustom = !!(p.name && p.name !== dim(p)); $('tm-name').value = p.name || dim(p);
   if (linked) setLinked(true);
+  syncName();
 }
 
 function closeDlg() { const ovl = $('tilemap-ovl'); if (ovl) ovl.classList.remove('on'); submit = null; }
@@ -140,10 +135,11 @@ function bind() {
   $('tm-cancel').onclick = closeDlg;
   $('tm-link').onclick = () => setLinked(!linked);
   for (const [id, which] of [['tm-grid-w', 'w'], ['tm-grid-h', 'h']]) {
-    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) syncRatio(which); });
+    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) { syncRatio(which); syncName(); } });
     $(id).addEventListener('blur', () => commitDim(which));
     $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
   }
+  $('tm-name').addEventListener('input', () => { nameCustom = $('tm-name').value.trim() !== ''; if (!nameCustom) syncName(true); });
   $('tm-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) closeDlg(); }, true);
   document.addEventListener('pointerdown', closeOutside, true);
@@ -157,9 +153,9 @@ export function openTilemapDialog(opts = {}) {
   ensure(); bind(); applyTranslations();
   $('tm-title').textContent = opts.title || t('tile.newLayer');
   $('tm-kind-name').textContent = t('tilemap.newTileset');
-  $('tm-name').value = opts.name || t('tilemap.newTileset');
   setDim('tm-grid-w', opts.tileW || fallbackSize());
   setDim('tm-grid-h', opts.tileH || opts.tileW || fallbackSize());
+  nameCustom = !!opts.name; $('tm-name').value = opts.name || currentDimName();
   setLinked(linked);
   $('tm-save').checked = false;
   submit = opts.onSubmit || null;

@@ -21,7 +21,7 @@ export function syncGridToTilemap() {
 }
 
 const fallbackSize = () => Math.max(1, Math.round(S.tileGrid.size || 16));
-const dialogDefaults = () => ({ tileW: fallbackSize(), tileH: fallbackSize(), name: t('tilemap.newTileset') });
+const dialogDefaults = () => ({ tileW: fallbackSize(), tileH: fallbackSize() });
 
 export function createTilemap(opts = {}) {
   snapshot();
