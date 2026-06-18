@@ -5,7 +5,7 @@ import { MAX_SIZE } from '../config/limits.js';
 import { TILE_GRID_DEFAULT } from '../config/tileset.js';
 
 const STORE = 'tilemapPresets';
-let submit = null, mounted = false, suppressOutsideClick = false;
+let submit = null, mounted = false, suppressOutsideClick = false, linked = false, ratio = 1;
 
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
@@ -13,6 +13,7 @@ const dim = (p) => `${p.tileW} x ${p.tileH}`;
 const fallbackSize = () => Math.max(1, Math.round(S.tileGrid?.size || TILE_GRID_DEFAULT));
 const panel = () => $('tilemap-ovl')?.querySelector('.tilemap-panel');
 const isOpen = () => $('tilemap-ovl')?.classList.contains('on');
+const dimValue = (id) => numericFieldValue($(id), fallbackSize());
 
 function ensure() {
   if ($('tilemap-ovl')) return;
@@ -37,12 +38,13 @@ function ensure() {
         <label class="tilemap-name-field"><span data-i18n="tilemap.name"></span><input id="tm-name" type="text" autocomplete="off"></label>
         <div class="tilemap-grid-fields">
           <label><span data-i18n="tilemap.gridW"></span><input id="tm-grid-w" inputmode="numeric"></label>
+          <button id="tm-link" class="new-link tilemap-link" type="button" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
           <label><span data-i18n="tilemap.gridH"></span><input id="tm-grid-h" inputmode="numeric"></label>
         </div>
         <label class="tilemap-save"><input id="tm-save" type="checkbox"><span></span><b data-i18n="tilemap.savePreset"></b></label>
-        <div class="tilemap-actions">
-          <button id="tm-ok" type="button" class="primary" data-i18n="btn.ok"></button>
-          <button id="tm-cancel" type="button" data-i18n="btn.cancel"></button>
+        <div class="tilemap-actions iact">
+          <button id="tm-cancel" type="button" class="txtbtn" data-i18n="btn.cancel"></button>
+          <button id="tm-apply" type="button" class="txtbtn primary" data-i18n="btn.apply"></button>
         </div>
       </section>
     </div>`;
@@ -52,15 +54,33 @@ function ensure() {
 function applyTranslations() {
   const root = $('tilemap-ovl'); if (!root) return;
   for (const el of root.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of root.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
 }
 
 function setDim(id, v) { setNumericField($(id), Math.max(1, Math.min(MAX_SIZE, Math.round(v || fallbackSize())))); }
-function readDim(id) {
-  return commitNumericField($(id), { min: 1, max: MAX_SIZE, integer: true, fallback: fallbackSize() });
+function setLinked(on) {
+  linked = on; $('tm-link')?.classList.toggle('on', linked);
+  if (linked) { const w = dimValue('tm-grid-w'), h = dimValue('tm-grid-h'); ratio = (w > 0 && h > 0) ? w / h : 1; }
+}
+function syncRatio(which) {
+  if (!linked) return;
+  if (which === 'w') { const w = dimValue('tm-grid-w'); if (w > 0) setDim('tm-grid-h', w / ratio); }
+  else { const h = dimValue('tm-grid-h'); if (h > 0) setDim('tm-grid-w', h * ratio); }
+}
+function commitDim(which) {
+  const id = which === 'w' ? 'tm-grid-w' : 'tm-grid-h';
+  const v = commitNumericField($(id), { min: 1, max: MAX_SIZE, integer: true, fallback: fallbackSize() });
+  if (v == null) return false;
+  syncRatio(which); return true;
+}
+function commitDims() {
+  const first = document.activeElement === $('tm-grid-h') ? 'h' : 'w';
+  commitDim(first); commitDim(first === 'w' ? 'h' : 'w');
 }
 
 function readEntry() {
-  const tileW = readDim('tm-grid-w'), tileH = readDim('tm-grid-h');
+  commitDims();
+  const tileW = dimValue('tm-grid-w'), tileH = dimValue('tm-grid-h');
   if (!tileW || !tileH) return null;
   const name = ($('tm-name').value.trim() || t('tilemap.newTileset')).slice(0, 32);
   return { name, tileW, tileH };
@@ -95,6 +115,7 @@ function persistPreset(entry) {
 function applyPreset(p) {
   $('tm-name').value = p.name || t('tilemap.newTileset');
   setDim('tm-grid-w', p.tileW); setDim('tm-grid-h', p.tileH);
+  if (linked) setLinked(true);
 }
 
 function closeDlg() { const ovl = $('tilemap-ovl'); if (ovl) ovl.classList.remove('on'); submit = null; }
@@ -115,11 +136,12 @@ function closeOutside(e) {
 
 function bind() {
   if (mounted) return; mounted = true;
-  $('tm-ok').onclick = confirmDlg;
+  $('tm-apply').onclick = confirmDlg;
   $('tm-cancel').onclick = closeDlg;
-  for (const id of ['tm-grid-w', 'tm-grid-h']) {
-    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) setNumericField($(id), numericFieldValue($(id), fallbackSize())); });
-    $(id).addEventListener('blur', () => readDim(id));
+  $('tm-link').onclick = () => setLinked(!linked);
+  for (const [id, which] of [['tm-grid-w', 'w'], ['tm-grid-h', 'h']]) {
+    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) syncRatio(which); });
+    $(id).addEventListener('blur', () => commitDim(which));
     $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
   }
   $('tm-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
@@ -138,6 +160,7 @@ export function openTilemapDialog(opts = {}) {
   $('tm-name').value = opts.name || t('tilemap.newTileset');
   setDim('tm-grid-w', opts.tileW || fallbackSize());
   setDim('tm-grid-h', opts.tileH || opts.tileW || fallbackSize());
+  setLinked(linked);
   $('tm-save').checked = false;
   submit = opts.onSubmit || null;
   renderSaved();
