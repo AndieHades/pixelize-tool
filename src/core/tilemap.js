@@ -29,15 +29,35 @@ export function makeTilemapLayer(name, tilesetId, mapW, mapH) {
 export const cellIndex = (tm, cx, cy) => cy * tm.mapW + cx;
 export const inMap = (tm, cx, cy) => cx >= 0 && cy >= 0 && cx < tm.mapW && cy < tm.mapH;
 export const getCell = (tm, cx, cy) => (inMap(tm, cx, cy) ? tm.cells[cellIndex(tm, cx, cy)] : null);
+const tileHasPixels = (tile) => !!(tile && tile.grid.some((r) => r.some((c) => c && (c[3] ?? 255) > 0)));
+const liveCell = (tm, cell) => {
+  if (!cell || cell.tileId == null) return null;
+  return tileHasPixels(getTile(getTileset(tm.tilesetId), cell.tileId)) ? cloneCell(cell) : null;
+};
+const cleanCells = (tm) => { tm.cells = tm.cells.map((c) => liveCell(tm, c)); };
+
+// Холст изменился: новый (0,0) соответствует старому (x0,y0). Переносим cells
+// по целым tile-клеткам и расширяем карту до нового размера холста.
+export function remapToCanvas(L, x0, y0, newW, newH) {
+  const ts = getTileset(L.tilemap.tilesetId); if (!ts) return;
+  const old = L.tilemap, mapW = Math.max(1, Math.ceil(newW / ts.tileW)), mapH = Math.max(1, Math.ceil(newH / ts.tileH));
+  const dx = Math.round(x0 / ts.tileW), dy = Math.round(y0 / ts.tileH), cells = new Array(mapW * mapH).fill(null);
+  for (let cy = 0; cy < old.mapH; cy++) for (let cx = 0; cx < old.mapW; cx++) {
+    const cell = liveCell(old, old.cells[cy * old.mapW + cx]); if (!cell) continue;
+    const nx = cx - dx, ny = cy - dy; if (nx >= 0 && ny >= 0 && nx < mapW && ny < mapH) cells[ny * mapW + nx] = cell;
+  }
+  L.tilemap = { ...old, mapW, mapH, cells };
+}
 
 // пересобрать пиксельный кеш слоя из его cells и тайлсета; пометить грязным
 export function rasterLayer(li) {
   const L = S.layers[li]; if (!isTilemap(L)) return;
   const ts = getTileset(L.tilemap.tilesetId); if (!ts) return;
+  cleanCells(L.tilemap);
   const map = rasterTilemap(L.tilemap, ts.tileW, ts.tileH, (id) => tileGrid(ts.id, id));
   const grid = blank(S.W, S.H); // tilemap кладётся в левый-верхний угол холста, обрезается по краю
   for (let y = 0; y < map.length && y < S.H; y++) for (let x = 0; x < map[0].length && x < S.W; x++) grid[y][x] = map[y][x];
-  L.grid = grid; markDirty(li);
+  L.grid = grid; L.ext = new Map(); markDirty(li);
 }
 
 // все индексы tilemap-слоёв, где встречается tileId данного тайлсета
@@ -50,7 +70,11 @@ export function layersUsingTile(tilesetId, tileId) {
 
 // правка source tile → пересобрать все слои с этим tileId (все экземпляры разом)
 export function refreshTile(tilesetId, tileId) {
-  for (const i of layersUsingTile(tilesetId, tileId)) rasterLayer(i);
+  const ts = getTileset(tilesetId), empty = !tileHasPixels(getTile(ts, tileId));
+  for (const i of layersUsingTile(tilesetId, tileId)) {
+    if (empty) S.layers[i].tilemap.cells = S.layers[i].tilemap.cells.map((c) => (c && c.tileId === tileId ? null : c));
+    rasterLayer(i);
+  }
 }
 
 // выбранные Tile-слои: активный + отмеченные (ctrl), отфильтрованы по типу,
@@ -97,6 +121,6 @@ export function stampTileId(cx, cy) {
 // поставить/стереть клетку и пересобрать слой (стирание — cell=null)
 export function setCell(li, cx, cy, cell) {
   const L = S.layers[li]; if (!isTilemap(L) || !inMap(L.tilemap, cx, cy)) return;
-  L.tilemap.cells[cellIndex(L.tilemap, cx, cy)] = cell ? cloneCell(cell) : null;
+  L.tilemap.cells[cellIndex(L.tilemap, cx, cy)] = liveCell(L.tilemap, cell);
   rasterLayer(li);
 }

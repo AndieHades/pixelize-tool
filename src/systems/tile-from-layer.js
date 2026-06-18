@@ -9,6 +9,13 @@ import { addTileUnique } from '../core/tileset.js';
 import { isTilemap, gridTileSize, tilesetForSize, rasterLayer } from '../core/tilemap.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { blank } from '../logic/raster.js';
+import { localeValues } from '../i18n/index.js';
+
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function isDefaultLayerName(name) {
+  const bases = localeValues('layer.name').map(escRe), re = new RegExp('^(?:' + bases.join('|') + ')\\s+\\d+$');
+  return re.test((name || '').trim());
+}
 
 // вырезать блок tw×th из сетки слоя по клетке (cx,cy); null — если блок пуст
 function block(grid, cx, cy, tw, th) {
@@ -51,6 +58,7 @@ export function convertToTile() {
     const id = addTileUnique(ts, g).tile.id; // дедуп: одинаковые блоки → один tileId
     cells[cy * mapW + cx] = { tileId: id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
   }
+  if (isDefaultLayerName(L.name)) L.name = t('tile.tilemapLayer');
   L.kind = 'tilemap'; L.tilemap = { tilesetId: ts.id, mapW, mapH, cells };
   S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
   rasterLayer(S.cur); dirtyAll();

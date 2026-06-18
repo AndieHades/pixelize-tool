@@ -96,6 +96,7 @@ const { showMenuAt, showMenuForAnchor } = await import('../src/core/dom.js');
 const tsmgr = await import('../src/core/tileset.js');
 const tsetMgr = await import('../src/systems/tileset-manager.js');
 const tmap = await import('../src/core/tilemap.js');
+const tmcreate = await import('../src/systems/tilemap-create.js');
 await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
@@ -177,6 +178,17 @@ t('document: expandCanvas растит холст и сдвигает пиксе
   doc.expandCanvas(1, 1, 0, 0); // +1 слева, +1 сверху
   assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
+});
+t('document: crop-расширение обновляет клетки Tilemap', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('Tilemap', ts.id, 2, 2); S.layers = [L]; S.cur = 0;
+  tmap.setCell(0, 0, 0, { tileId: tile.id }); doc.applyCropRect(-4, -4, 11, 11);
+  assert.equal(S.W, 16); assert.equal(S.H, 16); assert.equal(L.tilemap.mapW, 4); assert.equal(L.tilemap.mapH, 4);
+  assert.equal(L.tilemap.cells[1 * 4 + 1].tileId, tile.id);
+  S.activeTile = { tilesetId: ts.id, tileId: tile.id }; S.tileMode = 'paint'; S.tilePattern = null; S.tileRandom = false;
+  const h = toolHandler('tilebrush'); h.down({ gx: 12, gy: 12 }); h.up({});
+  assert.equal(L.tilemap.cells[3 * 4 + 3].tileId, tile.id);
 });
 t('document: expandForEffects раздвигает холст под обводку у края', () => { reset4();
   S.layers[0].grid[0][0] = [9, 9, 9, 255]; // пиксель в углу — обводке size 2 не хватает места
@@ -2376,6 +2388,17 @@ t('tilemap: erase и pick через Tile Brush', () => {
   S.tileMode = 'erase'; h.down({ gx: 0, gy: 0 }); h.up({});
   assert.equal(S.layers[S.cur].tilemap.cells[0], null); assert.equal(S.layers[S.cur].grid[0][0], null);
 });
+t('tilemap: пустой tileId не остаётся в cells', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4), empty = tsmgr.addTile(ts);
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.activeTile = { tilesetId: ts.id, tileId: empty.id }; S.tileMode = 'paint'; S.tilePattern = null; S.tileRandom = false;
+  const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.up({});
+  assert.equal(L.tilemap.cells[0], null);
+  const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 1, 1, 255];
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tile.grid[0][0] = null; tmap.refreshTile(ts.id, tile.id);
+  assert.equal(L.tilemap.cells[0], null);
+});
 t('tilemap: Make Unique отделяет клетку, старые экземпляры целы', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 1, 1, 255];
@@ -2393,6 +2416,16 @@ t('tilemap: create tile from layer режет слой по сетке', () => {
   S.layers[0].grid[0][0] = [7, 7, 7, 255]; S.layers[0].grid[5][5] = [8, 8, 8, 255]; // блоки (0,0) и (1,1)
   tfl.fromLayer();
   const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
+});
+t('tilemap: новые и конвертированные default-слои называются Tilemap', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; tmcreate.open();
+  assert.equal(S.layers[S.cur].name, 'Tilemap'); assert.equal(i18n.t('tile.newLayer'), 'New Tilemap');
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  S.layers[0].name = i18n.t('layer.name') + ' 1'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
+  tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Tilemap');
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  S.layers[0].name = 'Custom'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
+  tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Custom');
 });
 t('tilemap: Tileset Mode тумблер включает и выключает режим (обычный слой)', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; S.cur = 0; // обычный слой
@@ -2465,6 +2498,7 @@ t('tilemap: контекст-меню на Tile-слое без Add tile', () =>
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
 function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;
   const ts = tsmgr.createTileset('t', tw, tw), tile = tsmgr.addTile(ts);
+  tile.grid[0][0] = [1, 1, 1, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, Math.floor(8 / tw), 1); S.layers.push(L); S.cur = S.layers.length - 1;
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
   S.tileset = { on: true }; S.tilePattern = null; S.tileRandom = false; return { ts, tile, L }; }
@@ -2481,6 +2515,14 @@ t('tilemap: Auto редактирует tileId занятой клетки бе�
   assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
   assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.deepEqual(tile.grid[0][0], [9, 9, 9, 255]);
 });
+t('tilemap: Auto на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
+  S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
+  S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [8, 7, 6];
+  assert.ok(tilePaint(0, 0)); assert.equal(ts.tiles.length, 1);
+  assert.equal(L.tilemap.cells[0].tileId, ts.tiles[0].id); assert.deepEqual(ts.tiles[0].grid[0][0], [8, 7, 6, 255]);
+});
 t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -2494,7 +2536,7 @@ t('tilemap: трансформ клетки меняет экземпляр, н�
   const { tile, L } = tmSetup(4); S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.cellFlipH();
   assert.equal(L.tilemap.cells[0].flipX, true); assert.ok(!L.tilemap.cells[1].flipX); // только эта клетка
-  assert.ok(tile.grid.every((r) => r.every((c) => !c))); // source не тронут
+  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); // source не тронут
 });
 t('tilemap: Delete Tile очищает все экземпляры', () => {
   const { ts, tile, L } = tmSetup(4); tops.removeTile(ts, tile.id);
@@ -2517,6 +2559,7 @@ t('tileset-manager: пустой тайлсет не сохраняется', ()
 t('tile-brush: паттерн штампует выровненно по сетке', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 1, 1); const t1 = tsmgr.addTile(ts), t2 = tsmgr.addTile(ts);
+  t1.grid[0][0] = [1, 1, 1, 255]; t2.grid[0][0] = [2, 2, 2, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 4, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tilePattern = { w: 2, h: 1, ids: [t1.id, t2.id] }; S.activeTile = { tilesetId: ts.id, tileId: t1.id }; S.tileMode = 'paint'; S.tileRandom = false;
   const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.move({ gx: 1, gy: 0 }); h.up({});

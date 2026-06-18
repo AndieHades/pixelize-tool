@@ -9,6 +9,7 @@ import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
 import { toast, t } from './dom.js';
 import { ZOOM_MIN, ZOOM_MAX } from '../config/limits.js';
+import { isTilemap, rasterLayer, remapToCanvas } from './tilemap.js';
 
 function keepCanvasScreenSize(oldW, oldH, newW, newH) {
   const z0 = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number.isFinite(S.view.zoom) ? S.view.zoom : ZOOM_MIN));
@@ -24,14 +25,14 @@ function keepCanvasScreenSize(oldW, oldH, newW, newH) {
 export function expandCanvas(pl, pt, pr, pb) {
   if (!(pl || pt || pr || pb)) return;
   S.W += pl + pr; S.H += pt + pb;
-  for (const L of S.layers) { const g = L.grid, out = [];
+  for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i], g = L.grid, out = [];
     for (let y = 0; y < S.H; y++) { const row = new Array(S.W).fill(null);
       const sy = y - pt; if (sy >= 0 && sy < g.length) for (let x = 0; x < g[sy].length; x++) row[x + pl] = g[sy][x];
       out.push(row); }
     const ne = new Map(); // запасные пиксели за краем: сдвигаем и впитываем попавшие в холст
     for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx + pl, ay = ky + pt;
       if (ax >= 0 && ay >= 0 && ax < S.W && ay < S.H) out[ay][ax] = c; else ne.set(ax + ',' + ay, c); }
-    L.grid = out; L.ext = ne; }
+    L.grid = out; L.ext = ne; if (isTilemap(L)) { remapToCanvas(L, -pl, -pt, S.W, S.H); rasterLayer(i); } }
   S.view.ox -= pl * S.view.zoom; S.view.oy -= pt * S.view.zoom;
   S.sel = null; bus.emit('selection'); dirtyAll();
 }
@@ -73,8 +74,9 @@ export function applyCropRect(x0, y0, x1, y1) {
       if (nx2 >= 0 && ny2 >= 0 && nx2 < nw && ny2 < nh) out[ny2][nx2] = c; else ne.set(nx2 + ',' + ny2, c); }
     for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx - x0, ay = ky - y0;
       if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; } else ne.set(ax + ',' + ay, c); }
-    L.grid = out; L.ext = ne; }
+    L.grid = out; L.ext = ne; if (isTilemap(L)) remapToCanvas(L, x0, y0, nw, nh); }
   S.W = nw; S.H = nh; keepCanvasScreenSize(oldW, oldH, nw, nh); S.sel = null;
+  S.layers.forEach((L, i) => { if (isTilemap(L)) rasterLayer(i); });
   bus.emit('selection'); dirtyAll(); bus.emitDoc();
   toast(t('toast.canvasSize', { w: S.W, h: S.H }));
 }
