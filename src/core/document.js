@@ -8,7 +8,7 @@ import { folderChain } from './layers.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
 import { snapshot } from './history.js';
 import { toast, t } from './dom.js';
-import { ZOOM_MIN, ZOOM_MAX } from '../config/limits.js';
+import { MAX_SIZE, ZOOM_MIN, ZOOM_MAX } from '../config/limits.js';
 import { isTilemap, rasterLayer, remapToCanvas } from './tilemap.js';
 
 function keepCanvasScreenSize(oldW, oldH, newW, newH) {
@@ -122,6 +122,14 @@ export function clearLayer() {
   if (isTilemap(L)) { L.tilemap.cells = new Array(L.tilemap.mapW * L.tilemap.mapH).fill(null); rasterLayer(S.cur); }
   else { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.cur); }
   bus.emit('render'); bus.emit('layers'); return true;
+}
+
+export function canvasSizeForTiles(tw, th) {
+  const w = Math.max(1, Math.round(tw || 1)), h = Math.max(1, Math.round(th || tw || 1));
+  return {
+    w: Math.min(MAX_SIZE, Math.max(S.W, Math.ceil(S.W / w) * w)),
+    h: Math.min(MAX_SIZE, Math.max(S.H, Math.ceil(S.H / h) * h)),
+  };
 }
 
 // гарантировать активный пиксельный слой. Когда удалены все слои (остаётся только

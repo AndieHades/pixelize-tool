@@ -20,8 +20,8 @@ function bakeDuplicate() { const L = activeTm(); if (!L) { toast(t('toast.needTi
   S.layers.splice(S.cur + 1, 0, copy); S.cur++; dirtyAll(); bus.emitDoc(); toast(t('toast.tilesBaked')); }
 
 // преобразовать tilemap-слой в обычный пиксельный (связь с тайлами теряется)
-function bakeConvert() { const L = activeTm(); if (!L) { toast(t('toast.needTilemapLayer')); return; }
-  snapshot(); delete L.tilemap; L.kind = 'pixel'; markDirty(S.cur); bus.emitDoc(); toast(t('toast.tilesBaked')); }
+export function convertTilemapLayer(index = S.cur) { const L = S.layers[index]; if (!isTilemap(L)) { toast(t('toast.needTilemapLayer')); return false; }
+  snapshot(); delete L.tilemap; L.kind = 'pixel'; markDirty(index); bus.emitDoc(); toast(t('toast.tilesBaked')); return true; }
 
 // PNG картинки tilemap-слоя (его пиксельная область)
 function exportImage() { const L = activeTm(); if (!L) { toast(t('toast.needTilemapLayer')); return; }
@@ -44,6 +44,6 @@ function exportData() { const L = activeTm(); if (!L) { toast(t('toast.needTilem
   saveFile(new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }), 'tilemap.json', 'application/json', 'tilemap'); }
 
 actions.register('tile.bakeDuplicate', bakeDuplicate);
-actions.register('tile.bakeConvert', bakeConvert);
+actions.register('tile.bakeConvert', convertTilemapLayer);
 actions.register('tile.exportImage', exportImage);
 actions.register('tile.exportData', exportData);

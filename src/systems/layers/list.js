@@ -118,8 +118,8 @@ function layerRow(L, i, depth) {
   const vis = document.createElement('button'); vis.className = 'eye' + (L.visible ? '' : ' off'); vis.innerHTML = EYE; wireVis(vis, L); // глаз = видимость
   if (L.clip) { const ar = document.createElement('i'); ar.className = 'clip-arrow'; ar.innerHTML = CLIP_IC; row.append(ar); } // обтравка: стрелка + сдвиг
   row.append(thumbFor(i), nm); // миниатюра + имя
-  if (L.kind === 'tilemap') { const tl = document.createElement('button'); tl.className = 'eye ltile'; tl.innerHTML = TILE_IC; tl.title = t('side.tileLayer'); // метка Tile Layer рядом с глазом
-    tl.addEventListener('pointerdown', (e) => e.stopPropagation()); tl.addEventListener('click', (ev) => { ev.stopPropagation(); actions.run('tile.palette.open'); }); row.append(tl); }
+  if (L.kind === 'tilemap') { const tl = document.createElement('button'); tl.className = 'eye ltile'; tl.innerHTML = TILE_IC; tl.title = t('menu.convertLayer'); // клик запекает Tilemap обратно в обычный слой
+    tl.addEventListener('pointerdown', (e) => e.stopPropagation()); tl.addEventListener('click', (ev) => { ev.stopPropagation(); actions.run('tile.bakeConvert', i); }); row.append(tl); }
   if (S.sym || S.symH || S.symD1 || S.symD2) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (L.symLock ? ' off' : ''); sy.innerHTML = SYM_IC; // симметрия на слое (можно выключить)
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.symLock = !L.symLock; sy.classList.toggle('off', L.symLock); bus.emit('render'); }); row.append(sy); }

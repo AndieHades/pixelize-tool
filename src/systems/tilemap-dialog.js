@@ -1,11 +1,14 @@
 import { S } from '../core/state.js';
+import * as bus from '../core/bus.js';
 import { $, t } from '../core/dom.js';
+import { canvasSizeForTiles } from '../core/document.js';
 import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { TILE_GRID_DEFAULT, TILEMAP_PRESET_SIZES } from '../config/tileset.js';
+import { C } from '../styles/canvas-colors.js';
 
 const STORE = 'tilemapPresets';
-let submit = null, mounted = false, suppressOutsideClick = false, linked = false, ratio = 1, nameCustom = false;
+let submit = null, mounted = false, suppressOutsideClick = false, linked = false, ratio = 1, nameCustom = false, previewGrid = false;
 
 const custom = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
 const saveCustom = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {} };
@@ -17,6 +20,45 @@ const isOpen = () => $('tilemap-ovl')?.classList.contains('on');
 const dimValue = (id) => numericFieldValue($(id), fallbackSize());
 const currentDimName = () => dim({ tileW: dimValue('tm-grid-w'), tileH: dimValue('tm-grid-h') });
 const syncName = (force = false) => { if (force || !nameCustom) $('tm-name').value = currentDimName(); };
+const requestPreview = () => { if (previewGrid) bus.emit('render'); };
+const previewDimValue = (id) => {
+  const el = $(id); if (!el || !isNumericLiteral(el.value)) return null;
+  const n = Math.max(1, Math.min(MAX_SIZE, Math.round(numericFieldValue(el, fallbackSize()))));
+  return Number.isFinite(n) ? n : null;
+};
+
+function previewSpec() {
+  if (!previewGrid || !isOpen()) return null;
+  const tileW = previewDimValue('tm-grid-w'), tileH = previewDimValue('tm-grid-h');
+  if (!tileW || !tileH) return null;
+  const resize = !!$('tm-resize-canvas')?.checked;
+  const size = resize ? canvasSizeForTiles(tileW, tileH) : { w: S.W, h: S.H };
+  return { tileW, tileH, w: size.w, h: size.h, resize };
+}
+
+function drawPreviewGrid(ctx, ox, oy, z, p) {
+  ctx.save(); ctx.globalAlpha = 0.58; ctx.strokeStyle = C.tileGrid; ctx.lineWidth = 1; ctx.beginPath();
+  const xs = new Set([p.w]); for (let x = 0; x <= p.w; x += p.tileW) xs.add(x);
+  const ys = new Set([p.h]); for (let y = 0; y <= p.h; y += p.tileH) ys.add(y);
+  for (const x of xs) { ctx.moveTo(ox + x * z, oy); ctx.lineTo(ox + x * z, oy + p.h * z); }
+  for (const y of ys) { ctx.moveTo(ox, oy + y * z); ctx.lineTo(ox + p.w * z, oy + y * z); }
+  ctx.stroke(); ctx.restore();
+}
+
+function drawResizePreview({ ctx, ox, oy, z }) {
+  const p = previewSpec(); if (!p || !ctx) return;
+  const x = ox, y = oy, w = p.w * z, h = p.h * z, oldW = S.W * z, oldH = S.H * z;
+  ctx.save();
+  if (p.resize && (p.w > S.W || p.h > S.H)) {
+    ctx.fillStyle = 'rgba(61,139,253,.14)';
+    if (p.w > S.W) ctx.fillRect(x + oldW, y, (p.w - S.W) * z, h);
+    if (p.h > S.H) ctx.fillRect(x, y + oldH, w, (p.h - S.H) * z);
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, Math.max(0, oldW - 1), Math.max(0, oldH - 1));
+  }
+  drawPreviewGrid(ctx, ox, oy, z, p);
+  ctx.globalAlpha = 1; ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
 
 function ensure() {
   if ($('tilemap-ovl')) return;
@@ -111,10 +153,11 @@ function applyPreset(p) {
   setDim('tm-grid-w', p.tileW); setDim('tm-grid-h', p.tileH);
   nameCustom = !!(p.name && p.name !== dim(p)); $('tm-name').value = p.name || dim(p);
   if (linked) setLinked(true);
-  syncName();
+  syncName(); requestPreview();
 }
 
-function closeDlg() { const ovl = $('tilemap-ovl'); if (ovl) ovl.classList.remove('on'); submit = null; }
+function closeDlg() { const ovl = $('tilemap-ovl'); if (ovl) ovl.classList.remove('on'); submit = null;
+  const hadPreview = previewGrid; previewGrid = false; if (hadPreview) bus.emit('render'); }
 
 function confirmDlg() {
   const entry = readEntry(); if (!entry) return;
@@ -134,20 +177,22 @@ function bind() {
   if (mounted) return; mounted = true;
   $('tm-apply').onclick = confirmDlg;
   $('tm-cancel').onclick = closeDlg;
-  $('tm-link').onclick = () => setLinked(!linked);
+  $('tm-link').onclick = () => { setLinked(!linked); requestPreview(); };
   for (const [id, which] of [['tm-grid-w', 'w'], ['tm-grid-h', 'h']]) {
-    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) { syncRatio(which); syncName(); } });
-    $(id).addEventListener('blur', () => commitDim(which));
+    $(id).addEventListener('input', () => { if (isNumericLiteral($(id).value)) { syncRatio(which); syncName(); requestPreview(); } });
+    $(id).addEventListener('blur', () => { commitDim(which); requestPreview(); });
     $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
   }
   $('tm-name').addEventListener('input', () => { nameCustom = $('tm-name').value.trim() !== ''; if (!nameCustom) syncName(true); });
   $('tm-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmDlg(); } });
+  $('tm-resize-canvas').addEventListener('change', requestPreview);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) closeDlg(); }, true);
   document.addEventListener('pointerdown', closeOutside, true);
   document.addEventListener('click', (e) => {
     if (!suppressOutsideClick) return;
     suppressOutsideClick = false; e.preventDefault(); e.stopPropagation();
   }, true);
+  bus.on('overlay', drawResizePreview);
 }
 
 export function openTilemapDialog(opts = {}) {
@@ -160,9 +205,11 @@ export function openTilemapDialog(opts = {}) {
   setLinked(linked);
   $('tm-save').checked = false;
   $('tm-resize-canvas').checked = !!opts.resizeCanvas;
+  const wasPreview = previewGrid; previewGrid = !!opts.gridPreview;
   submit = opts.onSubmit || null;
   renderSaved();
   const ovl = $('tilemap-ovl'); ovl.dataset.openedAt = Date.now(); ovl.classList.add('on');
+  if (wasPreview || previewGrid) bus.emit('render');
   $('tm-name').focus(); $('tm-name').select();
 }
 

@@ -2121,6 +2121,20 @@ t('layers-ui: Tilemap в ПКМ-меню конвертируется обрат
   assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3, 255]);
   assert.equal(S.tilesets[0].tiles.length, 1);
 });
+t('layers-ui: иконка Tilemap в строке конвертирует этот слой обратно', () => {
+  resetWH(8, 8); layers.mount(); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [4, 5, 6, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = 0; tmap.setCell(1, 0, 0, { tileId: tile.id });
+  document.getElementById('lay-pop').classList.add('on'); layList();
+  const btn = document.querySelector('#lay-list .lrow[data-li="1"] .ltile');
+  assert.ok(btn); assert.equal(btn.title, i18n.t('menu.convertLayer'));
+  btn.click();
+  assert.equal(S.cur, 0);
+  assert.equal(S.layers[1].kind, 'pixel');
+  assert.equal(S.layers[1].tilemap, undefined);
+  assert.deepEqual(S.layers[1].grid[0][0], [4, 5, 6, 255]);
+  assert.equal(S.tilesets[0].tiles.length, 1);
+});
 t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
   assert.ok(edge);
@@ -2673,6 +2687,30 @@ t('tilemap-dialog: Convert to Tilemap может расширить canvas', () 
   assert.equal(S.W, 48); assert.equal(S.H, 32);
   assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 2);
   assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
+});
+t('tilemap-dialog: Convert to Tilemap показывает превью сетки и Resize canvas', () => {
+  resetWH(33, 17); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
+  S.layers[0].grid[0][0] = [1, 2, 3, 255];
+  tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  const calls = { fills: [], strokes: [], lines: 0 };
+  const ctx = {
+    save() {}, restore() {}, beginPath() {}, setLineDash() {},
+    moveTo() { calls.lines++; }, lineTo() { calls.lines++; }, stroke() {},
+    fillRect(x, y, w, h) { calls.fills.push([x, y, w, h]); },
+    strokeRect(x, y, w, h) { calls.strokes.push([x, y, w, h]); },
+  };
+  bus.emit('overlay', { ctx, ox: 0, oy: 0, z: 1 });
+  assert.ok(calls.lines > 0); // выбранная сетка видна даже без Resize canvas
+  assert.ok(calls.strokes.some((r) => r[2] === 33 && r[3] === 17));
+  assert.equal(calls.fills.length, 0);
+  document.getElementById('tm-resize-canvas').checked = true;
+  document.getElementById('tm-resize-canvas').dispatchEvent(new window.Event('change', { bubbles: true }));
+  calls.fills = []; calls.strokes = []; calls.lines = 0;
+  bus.emit('overlay', { ctx, ox: 0, oy: 0, z: 1 });
+  assert.ok(calls.strokes.some((r) => r[2] === 48 && r[3] === 32));
+  assert.ok(calls.fills.some((r) => r[0] === 33 && r[2] === 15 && r[3] === 32));
+  assert.ok(calls.fills.some((r) => r[1] === 17 && r[2] === 48 && r[3] === 15));
+  document.getElementById('tm-cancel').click();
 });
 t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;

@@ -89,6 +89,7 @@ export function openConvertDialog() {
     title: t('menu.convertTile'),
     tileW: w,
     tileH: h,
+    gridPreview: true,
     onSubmit: (entry) => convertToTile({ ...entry, newTileset: true }),
   });
 }
