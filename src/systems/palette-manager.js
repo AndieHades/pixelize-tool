@@ -124,7 +124,8 @@ export function mount() {
   $('pal-canvas').onclick = createFromCanvas;
   $('pal-save-open').onclick = openPaletteWindow;
   $('pal-presets').onclick = openPresetMenu;
-  dialog().save.onclick = () => { const nm = (dialog().name.value.trim() || t('label.palette')).slice(0, 20);
+  dialog().save.onclick = () => { if (!S.palette.length) { toast(t('toast.paletteEmpty')); return; }
+    const nm = (dialog().name.value.trim() || t('label.palette')).slice(0, 20);
     const s2 = palStore(); s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
   bus.on('locale', () => { dialog().refresh(); palListUI(); });
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';

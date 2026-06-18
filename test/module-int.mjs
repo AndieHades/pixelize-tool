@@ -93,6 +93,7 @@ const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
 const { showMenuAt, showMenuForAnchor } = await import('../src/core/dom.js');
 const tsmgr = await import('../src/core/tileset.js');
+const tsetMgr = await import('../src/systems/tileset-manager.js');
 const tmap = await import('../src/core/tilemap.js');
 await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
@@ -1278,6 +1279,11 @@ t('palette-manager: монтируется и сохраняет палитру'
   document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
 });
+t('palette-manager: пустая палитра не сохраняется', () => { localStorage.setItem('palettes', JSON.stringify({ keep: [[9, 9, 9]] }));
+  S.palette = []; palMgr.mount(); document.getElementById('pal-name').value = 'empty'; document.getElementById('pal-save').click();
+  assert.deepEqual(JSON.parse(localStorage.getItem('palettes')), { keep: [[9, 9, 9]] });
+  assert.equal(document.getElementById('toast').textContent, i18n.t('toast.paletteEmpty'));
+});
 t('palette-manager: палитра из картинки сохраняет 46 точных цветов', () => {
   const d = new Uint8ClampedArray(46 * 2 * 4);
   for (let i = 0; i < 46; i++) for (let y = 0; y < 2; y++) { const o = (y * 46 + i) * 4;
@@ -2459,6 +2465,14 @@ t('tileset: addTileUnique не дублирует одинаковые тайл�
   const a = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
   const b = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
   assert.equal(a.added, true); assert.equal(b.added, false); assert.equal(b.tile, a.tile);
+});
+t('tileset-manager: пустой тайлсет не сохраняется', () => { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.activeTile = null;
+  const ts = tsmgr.createTileset('empty', 4, 4);
+  const keep = { id: 1, name: 'keep', tileW: 1, tileH: 1, tiles: [], groups: [], tileSeq: 0 };
+  localStorage.setItem('tilesetsLib', JSON.stringify({ keep }));
+  tsetMgr.mount(); tsetMgr.open(); document.getElementById('tsetm-name').value = ts.name; document.getElementById('tsetm-save').click();
+  assert.deepEqual(JSON.parse(localStorage.getItem('tilesetsLib')), { keep });
+  assert.equal(document.getElementById('toast').textContent, i18n.t('toast.tilesetEmpty'));
 });
 t('tile-brush: паттерн штампует выровненно по сетке', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;

@@ -27,6 +27,7 @@ function setPreview(ts) { const n = Math.min(ts.tiles.length, 8), c = makeCanvas
   return c; }
 
 function saveCurrent() { const ts = activeTileset(); if (!ts) { toast(t('toast.noTilemap')); return; }
+  if (!ts.tiles.length) { toast(t('toast.tilesetEmpty')); return; }
   const nm = (nameIn.value.trim() || ts.name || t('tile.palette')).slice(0, 24); ts.name = nm;
   const st = lib(); st[nm] = cloneTileset(ts); save(st); listUI(); bus.emit('tileset-changed'); }
 
