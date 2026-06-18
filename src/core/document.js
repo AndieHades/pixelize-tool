@@ -114,8 +114,13 @@ export function shiftLayerGrid(L, dx, dy, wrap = false) { const ng = blank(S.W, 
 
 // очистить текущий слой; false — если уже пуст
 export function clearLayer() {
-  const L = S.layers[S.cur]; if (!L) return false; if (!L.grid.some((r) => r.some((c) => c)) && !L.ext.size) return false;
-  snapshot(); L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.cur);
+  const L = S.layers[S.cur]; if (!L) return false;
+  const hasPixels = L.grid.some((r) => r.some((c) => c)) || !!L.ext.size;
+  const hasTiles = isTilemap(L) && L.tilemap.cells.some(Boolean);
+  if (!hasPixels && !hasTiles) return false;
+  snapshot();
+  if (isTilemap(L)) { L.tilemap.cells = new Array(L.tilemap.mapW * L.tilemap.mapH).fill(null); rasterLayer(S.cur); }
+  else { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.cur); }
   bus.emit('render'); bus.emit('layers'); return true;
 }
 

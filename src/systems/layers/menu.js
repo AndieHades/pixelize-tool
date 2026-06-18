@@ -1,6 +1,6 @@
 // Контекстное меню слоя/папки и переименование. Кросс-системные операции —
 // через actions; правки слоёв — на месте.
-import { S, blank } from '../../core/state.js';
+import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $, showMenuBeside } from '../../core/dom.js';
@@ -8,7 +8,8 @@ import { snapshot } from '../../core/history.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { t } from '../../i18n/index.js';
 import { folderLayers } from './helpers.js';
-import { duplicateLayer, duplicateFolder, symmetrizeLayerRefs, toggleLock, toggleAlphaLock, toggleClip, toggleReference, deleteLayerRef, deleteFolder } from './ops.js';
+import { isTilemap } from '../../core/tilemap.js';
+import { clearLayerContent, duplicateLayer, duplicateFolder, symmetrizeLayerRefs, toggleLock, toggleAlphaLock, toggleClip, toggleReference, deleteLayerRef, deleteFolder } from './ops.js';
 
 let lctxRef = null, renRef = null;
 const targets = () => (!lctxRef ? [] : (lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref])).filter((L) => S.layers.includes(L));
@@ -26,12 +27,13 @@ const canCopyFx = () => !!(lctxRef && lctxRef.kind !== 'background' && hasFx(lct
 
 export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   const isFolder = kind === 'folder', isLayer = kind === 'layer', isBg = kind === 'background';
+  const isTm = isLayer && isTilemap(ref);
   // фон — то же меню #lctx (единый вид/поведение), но только Залить/Очистить
   for (const id of ['lctx-ren', 'lctx-dup', 'lctx-symm', 'lctx-rotate', 'lctx-copy-fx', 'lctx-paste-fx']) showItem(id, !isBg);
   showItem('lctx-mono', false); showItem('lctx-bc', false);
   showItem('lctx-ung', isFolder); showItem('lctx-clip', isLayer);
   for (const id of ['lctx-select', 'lctx-invert', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-png-full', 'lctx-png-tight']) showItem(id, isLayer);
-  showItem('lctx-tile', isLayer && ref.kind !== 'tilemap'); // Convert to Tilemap — только для обычного пиксельного слоя
+  showItem('lctx-tile', isLayer);
   showItem('lctx-del', !isBg); showItem('lctx-fill', true); showItem('lctx-clear', true); // фон не удаляется
   if (isLayer) for (const id of LAYER_MENU_HIDDEN) showItem(id, false);
   if (isFolder) for (const id of FOLDER_MENU_HIDDEN) showItem(id, false);
@@ -42,6 +44,7 @@ export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   $('lctx-del').textContent = t(isFolder ? 'menu.deleteFolder' : 'menu.deleteLayer');
   $('lctx-fill').textContent = t('menu.fill');
   $('lctx-clear').textContent = t(isBg ? 'menu.clearSimple' : isFolder ? 'menu.clearFolder' : 'menu.clearLayer');
+  if (isLayer) $('lctx-tile').textContent = t(isTm ? 'menu.convertLayer' : 'menu.convertTile');
   $('lctx-rotate').textContent = t(isFolder ? 'menu.transformFolder' : 'menu.transform');
   if (isLayer) { $('lctx-clip').textContent = (ref.clip ? '✓ ' : '') + t('menu.clip');
     $('lctx-lock').textContent = (ref.lock ? '✓ ' : '') + t('menu.lock'); $('lctx-alpha').textContent = (ref.alphaLock ? '✓ ' : '') + t('menu.alphaLock');
@@ -61,14 +64,16 @@ export function mountMenu() {
     actions.run('color.used', S.active); bus.emitDoc(); };
   $('lctx-clear').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'background') { actions.run('bg.clear'); return; }
     const ts = targets(); if (!ts.length) return; snapshot();
-    for (const L of ts) { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(S.layers.indexOf(L)); } bus.emitDoc(); };
+    let changed = false; for (const L of ts) changed = clearLayerContent(L) || changed;
+    if (changed) bus.emitDoc(); };
   $('lctx-symm').onclick = () => { close(); symmetrizeLayerRefs(targets()); };
   $('lctx-rotate').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('transform.enterTargets', ts); };
   $('lctx-copy-fx').onclick = () => { close(); if (canCopyFx()) actions.run('fx.copyAll', lctxRef.ref); };
   $('lctx-paste-fx').onclick = () => { close(); if (hasFxClip()) actions.run('fx.paste'); };
   $('lctx-mono').onclick = () => { close(); const ts = targets(); if (ts.length) actions.run('effect.mono', ts); };
   $('lctx-bc').onclick = () => { close(); if (lctxRef) actions.run('effect.bc', [lctxRef.ref], t('pop.bc'), { scope: 'layer' }); };
-  $('lctx-tile').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') { curTo(lctxRef.ref); actions.run('tile.convertLayer'); } };
+  $('lctx-tile').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') {
+    curTo(lctxRef.ref); actions.run(isTilemap(lctxRef.ref) ? 'tile.bakeConvert' : 'tile.convertLayer'); } };
   $('lctx-clip').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleClip(lctxRef.ref); };
   $('lctx-lock').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleLock(lctxRef.ref); };
   $('lctx-alpha').onclick = () => { close(); if (lctxRef && lctxRef.kind === 'layer') toggleAlphaLock(lctxRef.ref); };

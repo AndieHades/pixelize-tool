@@ -151,8 +151,15 @@ export function toggleClip(L) { snapshot(); L.clip = !L.clip; bus.emitDoc(); }
 export function toggleReference(L) { if (!L) return; snapshot(); const on = !L.reference;
   for (const x of S.layers) if (x !== L) x.reference = false;
   L.reference = on; bus.emit('layers'); }
-export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0) return; snapshot();
-  L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); bus.emitDoc(); toast(t('toast.layerCleared')); }
+const layerHasContent = (L) => gridHasPixels(L.grid) || !!L.ext.size || (isTilemap(L) && L.tilemap.cells.some(Boolean));
+export function clearLayerContent(L) {
+  const idx = S.layers.indexOf(L); if (idx < 0 || !layerHasContent(L)) return false;
+  if (isTilemap(L)) { L.tilemap.cells = new Array(L.tilemap.mapW * L.tilemap.mapH).fill(null); rasterLayer(idx); }
+  else { L.grid = blank(S.W, S.H); L.ext = new Map(); markDirty(idx); }
+  return true;
+}
+export function clearLayerRef(L) { const idx = S.layers.indexOf(L); if (idx < 0 || !layerHasContent(L)) return; snapshot();
+  clearLayerContent(L); bus.emitDoc(); toast(t('toast.layerCleared')); }
 
 export function deleteLayerRef(L) { // фон неудаляем; пиксельных слоёв может остаться ноль
   const idx = S.layers.indexOf(L); if (idx < 0) return; const restoreActive = activeAfterDelete([idx]);

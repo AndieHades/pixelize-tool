@@ -100,6 +100,7 @@ const tmcreate = await import('../src/systems/tilemap-create.js');
 const tmDialog = await import('../src/systems/tilemap-dialog.js');
 await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
+await import('../src/systems/tilemap-export.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
 const tfl = await import('../src/systems/tile-from-layer.js');
 const tmode = await import('../src/systems/tileset-mode/index.js');
@@ -2104,6 +2105,22 @@ t('layers-ui: меню слоя не дублирует кнопки панел�
   assert.equal(i18n.t('menu.convertTile'), 'Convert to Tilemap');
   fxShared.setFxClip([]);
 });
+t('layers-ui: Tilemap в ПКМ-меню конвертируется обратно в обычный слой', () => {
+  resetWH(8, 8); layers.mount(); S.tilesets = []; S.tilesetSeq = 0;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers = [L]; S.cur = 0; tmap.setCell(0, 0, 0, { tileId: tile.id });
+  document.getElementById('lay-pop').classList.add('on'); layList();
+  const row = document.querySelector('#lay-list .lrow[data-li="0"]');
+  row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
+  const btn = document.getElementById('lctx-tile');
+  assert.notEqual(btn.style.display, 'none');
+  assert.equal(btn.textContent, i18n.t('menu.convertLayer'));
+  btn.click();
+  assert.equal(S.layers[0].kind, 'pixel');
+  assert.equal(S.layers[0].tilemap, undefined);
+  assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3, 255]);
+  assert.equal(S.tilesets[0].tiles.length, 1);
+});
 t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
   assert.ok(edge);
@@ -2816,6 +2833,16 @@ t('tilemap: трансформ клетки меняет экземпляр, н�
 t('tilemap: Delete Tile очищает все экземпляры', () => {
   const { ts, tile, L } = tmSetup(4); tops.removeTile(ts, tile.id);
   assert.equal(ts.tiles.length, 0); assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null);
+});
+t('tilemap: кнопка Clear очищает карту, а не только пиксельный кеш', () => {
+  const { ts, tile, L } = tmSetup(4); layers.mount();
+  document.getElementById('lay-clean').click();
+  assert.ok(L.tilemap.cells.every((c) => c === null));
+  assert.equal(L.grid[0][0], null);
+  tmap.rasterLayer(S.cur); // повторная пересборка после клика по холсту не должна вернуть тайл
+  assert.equal(L.grid[0][0], null);
+  assert.equal(ts.tiles.length, 1);
+  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]);
 });
 t('tileset: addTileUnique не дублирует одинаковые тайлы', () => {
   const ts = tsmgr.createTileset('t', 1, 1); const g = [[[1, 2, 3, 255]]];
