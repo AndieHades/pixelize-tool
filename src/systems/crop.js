@@ -19,12 +19,18 @@ const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 }
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
 const cellW = () => gridCellW();
 const cellH = () => gridCellH();
+const maxCellW = () => Math.max(1, Math.floor(MAX_SIZE / cellW()));
+const maxCellH = () => Math.max(1, Math.floor(MAX_SIZE / cellH()));
+const clampCellW = (v) => clampRound(v, 1, maxCellW());
+const clampCellH = (v) => clampRound(v, 1, maxCellH());
+const cellCountW = (c = S.cropMode) => clampCellW(cropSize(c).w / cellW());
+const cellCountH = (c = S.cropMode) => clampCellH(cropSize(c).h / cellH());
 const cloneCrop = (c) => (c ? { ...c, b: c.b ? { ...c.b } : c.b } : null);
 function restoreCrop(src) { if (!S.cropMode || !src) return; Object.assign(S.cropMode, cloneCrop(src)); }
 function syncTrim() { $('crop-trim')?.classList.toggle('on', cropTrim); }
 function clearTrimPreview() { cropTrim = false; trimBase = null; syncTrim(); }
 function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();
-  if (cropCells) { setNumericField($('crop-w'), Math.max(1, Math.round(s.w / cellW()))); setNumericField($('crop-h'), Math.max(1, Math.round(s.h / cellH()))); }
+  if (cropCells) { setNumericField($('crop-w'), cellCountW()); setNumericField($('crop-h'), cellCountH()); }
   else { setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
   const px = $('crop-px'); if (px) px.textContent = s.w + '×' + s.h + ' px'; } // всегда показываем размер холста в пикселях
 
@@ -37,18 +43,10 @@ function setCropUnits(on, opts = {}) { if (cropCells === on) { syncCropInputs();
   if (on && S.cropMode) snapCells(S.cropMode);
   if (!on) { if (opts.restore !== false) restoreCrop(cellBase); cellBase = null; }
   syncCropInputs(); bus.emit('render'); }
-function syncCropGrid() { const g = ensureGrid(); $('crop-grid')?.classList.toggle('on', !!g.visible);
-  $('crop-grid-size-row')?.classList.toggle('on', !!g.visible);
-  if ($('crop-grid-size')) setNumericField($('crop-grid-size'), g.w); }
-function toggleCropGrid() { const g = ensureGrid(); setGridVisible(!g.visible); syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
-function setCropGridSize(commit = false) { const input = $('crop-grid-size'); if (!input) return;
-  const g = ensureGrid();
-  if (commit) commitNumericField(input, { min: 1, max: 128, integer: true, relativeMinus: true });
-  if (!isNumericLiteral(input.value)) return;
-  const v = numericFieldValue(input, g.w); if (!v) return;
-  g.w = g.h = clampRound(v, 1, 128);
-  if (cropCells) cropInput('w');
-  syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
+function syncCropGrid() { const g = ensureGrid(); $('crop-grid')?.classList.remove('on');
+  const visible = $('crop-grid-visible'); if (visible) visible.checked = !!g.visible; }
+function setCropGridVisibility(on) { setGridVisible(on); syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
+function focusCropGridVisibility() { $('crop-grid-visible')?.focus(); }
 function trimFromCrop() { if (!S.cropMode) return;
   if (cropTrim) { restoreCrop(trimBase); cropTrim = false; trimBase = null; syncTrim(); syncCropInputs(); bus.emit('render'); return; }
   const g = canvasContentBounds();
@@ -65,6 +63,7 @@ function snapCells(c) { const cw = cellW(), ch = cellH();
   c.x1 = c.x0 + clampDim(Math.max(1, Math.round((c.x1 - c.x0 + 1) / cw)) * cw) - 1;
   c.y1 = c.y0 + clampDim(Math.max(1, Math.round((c.y1 - c.y0 + 1) / ch)) * ch) - 1; }
 function placeCells(wc, hc) { clearTrimPreview(); const c = S.cropMode, cw = cellW(), ch = cellH();
+  wc = clampCellW(wc); hc = clampCellH(hc);
   c.x0 = Math.round(c.x0 / cw) * cw; c.y0 = Math.round(c.y0 / ch) * ch;
   c.x1 = c.x0 + clampDim(wc * cw) - 1; c.y1 = c.y0 + clampDim(hc * ch) - 1; syncCropInputs(); bus.emit('render'); }
 function setCropLink(on) { cropLink = on; $('crop-link').classList.toggle('on', on);
@@ -79,6 +78,13 @@ function ratioDims(w, h, preferW) {
   if (preferW) h = clampDim(w / cropRatio); else w = clampDim(h * cropRatio);
   return { w, h };
 }
+function ratioCells(wc, hc, preferW) {
+  wc = clampCellW(wc); hc = clampCellH(hc);
+  const cw = cellW(), ch = cellH();
+  if (preferW) hc = clampCellH((wc * cw) / cropRatio / ch);
+  else wc = clampCellW((hc * ch) * cropRatio / cw);
+  return { wc, hc };
+}
 function lockRatio(c, d, symm) {
   const s = cropSize(c), sw = d.x1 - d.x0 + 1, sh = d.y1 - d.y0 + 1;
   const preferW = (d.l || d.r) && !(d.t || d.b) ? true : (d.t || d.b) && !(d.l || d.r) ? false : s.w / sw >= s.h / sh;
@@ -86,6 +92,15 @@ function lockRatio(c, d, symm) {
   c.x0 = byCx ? Math.round(d.cx - (r.w - 1) / 2) : d.l ? d.x1 - r.w + 1 : d.x0;
   c.y0 = byCy ? Math.round(d.cy - (r.h - 1) / 2) : d.t ? d.y1 - r.h + 1 : d.y0;
   c.x1 = c.x0 + r.w - 1; c.y1 = c.y0 + r.h - 1;
+}
+function lockCellRatio(c, d, symm) {
+  const s = cropSize(c), sw = d.x1 - d.x0 + 1, sh = d.y1 - d.y0 + 1;
+  const preferW = (d.l || d.r) && !(d.t || d.b) ? true : (d.t || d.b) && !(d.l || d.r) ? false : s.w / sw >= s.h / sh;
+  const r = ratioCells(s.w / cellW(), s.h / cellH(), preferW), w = r.wc * cellW(), h = r.hc * cellH();
+  const byCx = symm || !(d.l || d.r), byCy = symm || !(d.t || d.b);
+  c.x0 = byCx ? Math.round((d.cx - (w - 1) / 2) / cellW()) * cellW() : d.l ? c.x1 - w + 1 : c.x0;
+  c.y0 = byCy ? Math.round((d.cy - (h - 1) / 2) / cellH()) * cellH() : d.t ? c.y1 - h + 1 : c.y0;
+  c.x1 = c.x0 + w - 1; c.y1 = c.y0 + h - 1;
 }
 
 export function toggleCrop() { if (S.cropMode) { cancelCrop(); return; }
@@ -134,15 +149,18 @@ function cropMovePt({ e }) { if (!cropDrag || !S.cropMode) return; const r = $('
     if (cropCells) { const cw = cellW(), ch = cellH(); // тянем ровно по клеткам
       if (cropDrag.l) c.x0 = Math.round(c.x0 / cw) * cw; if (cropDrag.r) c.x1 = Math.round((c.x1 + 1) / cw) * cw - 1;
       if (cropDrag.t) c.y0 = Math.round(c.y0 / ch) * ch; if (cropDrag.b) c.y1 = Math.round((c.y1 + 1) / ch) * ch - 1;
-      if (c.x1 < c.x0) c.x1 = c.x0 + cw - 1; if (c.y1 < c.y0) c.y1 = c.y0 + ch - 1; } }
+      if (c.x1 < c.x0) c.x1 = c.x0 + cw - 1; if (c.y1 < c.y0) c.y1 = c.y0 + ch - 1;
+      if (cropLink) lockCellRatio(c, cropDrag, symm); } }
   syncCropInputs(); bus.emit('render'); }
 
 function cropInput(which, commit = false) { if (!S.cropMode) return;
   const id = which === 'w' ? 'crop-w' : 'crop-h';
-  if (cropCells) { const maxC = Math.floor(MAX_SIZE / (which === 'w' ? cellW() : cellH()));
+  if (cropCells) { const maxC = which === 'w' ? maxCellW() : maxCellH();
     if (commit) commitNumericField($(id), { min: 1, max: maxC, integer: true, relativeMinus: true });
     if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return;
-    const wc = numericFieldValue($('crop-w'), 1), hc = numericFieldValue($('crop-h'), 1); if (!wc || !hc) return;
+    let wc = numericFieldValue($('crop-w'), cellCountW()), hc = numericFieldValue($('crop-h'), cellCountH()); if (!wc || !hc) return;
+    wc = clampCellW(wc); hc = clampCellH(hc);
+    if (cropLink) { const r = ratioCells(wc, hc, which === 'w'); wc = r.wc; hc = r.hc; }
     placeCells(wc, hc); return; }
   if (commit) commitNumericField($(id), { min: 1, max: MAX_SIZE, integer: true, relativeMinus: true });
   if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return;
@@ -156,11 +174,9 @@ export function mount() {
   $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   $('crop-link').onclick = () => setCropLink(!cropLink);
   $('crop-units').onclick = () => setCropUnits(!cropCells);
-  $('crop-grid').onclick = toggleCropGrid;
+  $('crop-grid').onclick = focusCropGridVisibility;
   $('crop-trim').onclick = trimFromCrop;
-  $('crop-grid-size').addEventListener('input', () => setCropGridSize(false));
-  $('crop-grid-size').addEventListener('blur', () => setCropGridSize(true));
-  $('crop-grid-size').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); $('crop-grid-size').blur(); } });
+  $('crop-grid-visible').addEventListener('change', () => setCropGridVisibility($('crop-grid-visible').checked));
   bus.on('grid', syncCropGrid);
   syncCropGrid();
   for (const id of ['crop-w', 'crop-h']) { const which = id === 'crop-w' ? 'w' : 'h';

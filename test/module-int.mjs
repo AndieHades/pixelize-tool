@@ -1550,9 +1550,13 @@ t('grid: отдельного попапа нет, action переключает
   gridSys.openGridPop(); assert.equal(S.grid.visible, false);
 });
 t('grid: Canvas size управляет видимостью сетки', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
-  const btn = document.getElementById('crop-grid'); assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
-  btn.click(); assert.equal(S.grid.visible, true); assert.equal(btn.classList.contains('on'), true);
+  const btn = document.getElementById('crop-grid'), visible = document.getElementById('crop-grid-visible');
+  assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
   btn.click(); assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
+  visible.checked = true; visible.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert.equal(S.grid.visible, true); assert.equal(btn.classList.contains('on'), false);
+  visible.checked = false; visible.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
   crop.cancelCrop();
 });
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
@@ -1798,16 +1802,33 @@ t('crop: поля размера и скрепка меняют рамку', () 
   crop.cancelCrop(); });
 
 t('crop: режим клеток задаёт размер ровно по Grid даже в tile-контексте', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; S.tileset = { on: true }; S.tileGrid ||= {}; S.tileGrid.size = 16; crop.toggleCrop();
-  document.getElementById('crop-units').click(); // переключить в клетки
+  const units = document.getElementById('crop-units'), link = document.getElementById('crop-link');
+  if (link.classList.contains('on')) link.click();
+  if (!units.classList.contains('on')) units.click(); // переключить в клетки
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h');
   cw.value = '5'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
   ch.value = '7'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25); // 5 клеток × 5 px
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49); // 7 клеток × 7 px
-  document.getElementById('crop-units').click();
+  units.click();
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 40); // отключение Cells убирает cell-preview
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 40);
   S.tileset.on = false; crop.cancelCrop(); });
+
+t('crop: скрепка держит пропорцию в Cells', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
+  const units = document.getElementById('crop-units'), link = document.getElementById('crop-link');
+  if (!units.classList.contains('on')) units.click();
+  if (!link.classList.contains('on')) link.click();
+  const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h');
+  cw.value = '4'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 20);
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 20);
+  assert.equal(ch.value, '4');
+  ch.value = '6'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 30);
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 30);
+  assert.equal(cw.value, '6');
+  crop.cancelCrop(); });
 
 t('crop: Trim в Canvas size только выставляет рамку до Apply', () => { crop.mount(); resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; crop.toggleCrop();
   const units = document.getElementById('crop-units'); if (units.classList.contains('on')) units.click();
@@ -1817,12 +1838,16 @@ t('crop: Trim в Canvas size только выставляет рамку до A
   crop.applyCrop(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
 });
 
-t('crop: Grid задаёт размер одной ячейки и Trim не снапится к Cells', () => { crop.mount(); resetWH(20, 20); S.grid.w = 5; S.grid.h = 5; S.grid.visible = false; crop.toggleCrop();
+t('crop: Grid переключает видимость, а Cells берёт размер из общей сетки', () => { crop.mount(); resetWH(20, 20); S.grid.w = 4; S.grid.h = 4; S.grid.visible = false; crop.toggleCrop();
   document.getElementById('crop-grid').click();
-  assert.equal(document.getElementById('crop-grid-size-row').classList.contains('on'), true);
-  const gs = document.getElementById('crop-grid-size'); gs.value = '4'; gs.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 4);
+  assert.equal(S.grid.visible, false);
+  assert.equal(document.getElementById('crop-grid').classList.contains('on'), false);
+  document.getElementById('crop-grid-visible').checked = true;
+  document.getElementById('crop-grid-visible').dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert.equal(S.grid.visible, true);
+  assert.equal(document.getElementById('crop-grid').classList.contains('on'), false);
   document.getElementById('crop-units').click(); document.getElementById('crop-w').value = '3'; document.getElementById('crop-w').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 12);
   S.layers[0].grid[7][11] = [1, 2, 3, 255];
   document.getElementById('crop-trim').click();
   assert.equal(document.getElementById('crop-units').classList.contains('on'), false);

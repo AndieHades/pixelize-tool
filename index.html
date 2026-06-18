@@ -79,9 +79,11 @@
         <button id="crop-grid" type="button" data-i18n-title="crop.grid"><svg viewBox="0 0 24 24"><path d="M4.5 8.5h15M4.5 15.5h15M8.5 4.5v15M15.5 4.5v15"/><rect x="4.5" y="4.5" width="15" height="15" rx="2"/></svg></button>
         <button id="crop-trim" type="button" data-i18n-title="side.trim"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9" rx="1"/><path d="M4 7.5V4.5h3M20 7.5V4.5h-3M4 16.5v3h3M20 16.5v3h-3"/></svg></button>
       </div>
-      <div id="crop-grid-size-row" class="crop-grid-size">
-        <label><span data-i18n="crop.gridSize"></span><input id="crop-grid-size" type="text" inputmode="text" spellcheck="false" /></label>
-      </div>
+      <label class="crop-checkrow">
+        <input id="crop-grid-visible" type="checkbox" />
+        <span></span>
+        <b data-i18n="crop.gridVisible"></b>
+      </label>
       <div class="crop-grid-fields">
         <label><span id="crop-wl" data-i18n="label.width"></span><input id="crop-w" type="text" inputmode="text" spellcheck="false" /></label>
         <button id="crop-link" class="new-link crop-link" type="button" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
