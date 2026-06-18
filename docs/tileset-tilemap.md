@@ -320,9 +320,10 @@ Layer / Convert to Pixel Layer); Export as image (уже есть composite); Ex
 - **Нижний тулбар** (SVG-иконки): **M** Manual / **A** Auto, штамп, пипетка,
   Random, New, Delete Tile.
 - **Manual/Auto рисование по холсту** (`tilemap-paint`): Manual пишет в source
-  тайла клетки (все экземпляры обновляются), Auto делает клетку уникальной
-  (новый tileId, source цел). Рисунок в пустой клетке → новый тайл; стёртая в
-  ноль клетка тайла не создаёт.
+  тайла клетки (все экземпляры обновляются). Auto создаёт новый tileId только
+  для пустой клетки; если клетка уже ссылается на tileId, правится именно этот
+  tileId без добавления нового тайла. Стёртая в ноль пустая клетка тайла не
+  создаёт.
 - **ПКМ по клетке** (Tileset Mode): Flip H/V, Rotate 90/180/270, Diagonal,
   Clear Cell — трансформы экземпляра, не source.
 - **Delete Tile vs Clear Cell**: Delete Tile (палитра, с подтверждением) удаляет

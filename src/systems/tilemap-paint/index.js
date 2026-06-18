@@ -1,7 +1,7 @@
 // Manual/Auto пиксельное рисование по tilemap-слою (как в Aseprite tiles).
 // Глобальный обработчик перехватывает pencil/eraser в Tileset Mode на tilemap:
 //  Manual — пишем в source тайла клетки (обновляются все экземпляры);
-//  Auto   — делаем клетку уникальной (новый tileId), source цел.
+//  Auto   — пустая клетка получает новый tileId, занятая правит свой tileId.
 // Пустая клетка → создаётся новый тайл; если штрих оставил её пустой — тайл
 // удаляется (пустая клетка тайла не порождает).
 import { S } from '../../core/state.js';
@@ -21,17 +21,13 @@ const active = () => S.layers[S.cur];
 // grid и затирались при пересборке). Режим правки — S.tileAutoMode (M/A).
 const applicable = () => isTilemap(active()) && (S.tool === 'pencil' || S.tool === 'eraser' || S.tool === 'fill');
 
-let st = null; // { ts, li, uniqued:Set, created:Set, touched:Set, last:[gx,gy] }
+let st = null; // { ts, li, created:Set, touched:Set, last:[gx,gy] }
 
 // тайл, в source которого пишем для клетки (cx,cy) согласно режиму
 function targetTile(cx, cy) {
-  const tm = active().tilemap, ts = st.ts, key = cx + ',' + cy, cell = getCell(tm, cx, cy);
-  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id); st.created.add(tl.id); st.uniqued.add(key); return tl; }
-  if (S.tileAutoMode === 'auto' && !st.uniqued.has(key)) { // Auto: отделить клетку от общего источника
-    const src = getTile(ts, cell.tileId), clone = addTile(ts, src ? src.grid : null, src ? { name: src.name, weight: src.weight, groupId: src.groupId } : {});
-    setTileId(tm, cx, cy, clone.id); st.uniqued.add(key); st.created.add(clone.id); return clone;
-  }
-  return getTile(ts, getCell(tm, cx, cy).tileId);
+  const tm = active().tilemap, ts = st.ts, cell = getCell(tm, cx, cy);
+  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id); st.created.add(tl.id); return tl; }
+  return getTile(ts, cell.tileId);
 }
 function setTileId(tm, cx, cy, id) { const c = tm.cells[cy * tm.mapW + cx]; if (c) c.tileId = id; else tm.cells[cy * tm.mapW + cx] = { tileId: id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 }; }
 
@@ -85,7 +81,7 @@ const handler = {
     const ts = getTileset(active().tilemap.tilesetId); if (!ts) return false;
     const erase = S.tool === 'eraser' || (e && e.button === 2);
     autoOnEmpty(ts, gx, gy, erase);
-    snapshot(); st = { ts, li: S.cur, uniqued: new Set(), created: new Set(), touched: new Set(), last: [gx, gy] };
+    snapshot(); st = { ts, li: S.cur, created: new Set(), touched: new Set(), last: [gx, gy] };
     if (S.tool === 'fill') { fillCell(gx, gy); finishStroke(); return true; } // заливка — на одну клетку, разово
     paintPx(gx, gy, erase); flush(); return true; },
   move({ gx, gy, e }) { if (!st) return; const erase = S.tool === 'eraser' || (e && e.buttons === 2);

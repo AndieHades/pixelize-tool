@@ -2475,17 +2475,19 @@ t('tilemap: Manual пишет в source — обновляются все экз
   assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
   assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
 });
-t('tilemap: Auto создаёт новый tileId для клетки, source цел', () => {
+t('tilemap: Auto редактирует tileId занятой клетки без нового тайла', () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
-  assert.equal(ts.tiles.length, before + 1); assert.notEqual(L.tilemap.cells[0].tileId, tile.id);
-  assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.equal(tile.grid[0][0], null); // соседняя и source целы
+  assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
+  assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.deepEqual(tile.grid[0][0], [9, 9, 9, 255]);
 });
 t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
   tilePaint(0, 0); assert.equal(ts.tiles.length, 1); // в пустой клетке создан тайл
+  const id = L.tilemap.cells[0].tileId; S.active = [6, 6, 6]; tilePaint(1, 0);
+  assert.equal(ts.tiles.length, 1); assert.equal(L.tilemap.cells[0].tileId, id); assert.deepEqual(tsmgr.getTile(ts, id).grid[0][1], [6, 6, 6, 255]);
   S.tool = 'eraser'; tilePaint(4, 0); assert.equal(ts.tiles.length, 1); // стёртая пустая клетка нового тайла не дала
 });
 t('tilemap: трансформ клетки меняет экземпляр, не source', () => {
