@@ -102,6 +102,18 @@ export function open() {
   bus.emit('render');
 }
 
+export function enable() {
+  if (!hasRamp()) return false;
+  const sh = state();
+  sh.on = true; sh.open = false; sh.picking = false;
+  actions.run('palette.clearSelection');
+  render();
+  changed();
+  bus.emit('palette');
+  bus.emit('render');
+  return true;
+}
+
 export function disable() {
   const sh = state();
   if (!sh.on && !sh.open && !sh.picking) return;
@@ -136,6 +148,7 @@ export function mount() {
   actions.register('shading.clear', clear);
   actions.register('shading.close', close);
   actions.register('shading.open', open);
+  actions.register('shading.enable', enable);
   actions.register('shading.disable', disable);
   actions.register('shading.pickColors', enablePick);
   actions.register('shading.reverse', reverse);
