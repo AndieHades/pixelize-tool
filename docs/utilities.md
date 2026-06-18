@@ -78,6 +78,8 @@
 | `core/env.js` → `isDesktop()` | `(hover:hover)` — мышь vs тач; свайпы только на таче | слои, «Новый холст» |
 | `core/image.js` → `imageData(im,w,h,smooth)` / `looksPixelArt(im)` | растеризация картинки + эвристика «это пиксель-арт» | импорт, Photo в галерее |
 | `core/numeric-field.js` → `setNumericField` / `numericFieldValue` / `commitNumericField` | DOM-обвязка для числовых полей с мини-математикой (`+8`, `*2`, `/2`) | размеры нового холста, кроп, сетка |
+| `core/grid.js` → `ensureGrid` / `gridCellW` / `gridCellH` / `setGridVisible` | нормализация состояния обычной Grid-сетки и единая смена видимости | Canvas size, render overlay, совместимый `grid.open` |
+| `core/canvas-bounds.js` → `canvasContentBounds` | границы содержимого холста с учётом `ext` и эффектов слоёв/папок | Trim и кнопка Trim внутри Canvas size |
 
 > На время миграции часть этих помощников ещё живёт в `js/00-util.js`
 > (классическая сборка). Канон — версии в `src/`. При портировании системы

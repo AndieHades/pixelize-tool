@@ -122,7 +122,7 @@ export function start() {
     onResize: resizeSidebar }); // сайдбар — в общем порядке: последний тронутый сверху (без alwaysOnTop)
   $('topbar').addEventListener('pointerdown', () => { $('topbar').style.zIndex = nextFloatingZ(); }, true); // верхняя панель — в общий порядок, поднимается по тапу
   for (const id of ['selbar', 'cropbar', 'rotbar']) {
-    const bar = $(id); if (bar) floatingWindow(bar, { grip: bar, storeKey: 'action-' + id, minW: 120, minH: 44, clampBottom: 64, avoidOverlap: false });
+    const bar = $(id); if (bar) floatingWindow(bar, { grip: bar.querySelector('.crop-head') || bar, storeKey: 'action-' + id, minW: 120, minH: 44, clampBottom: 64, avoidOverlap: false });
   }
 
   // ЕДИНО: любой модальный диалог (.ovl .sheet) — перетаскиваемое окно за заголовок.

@@ -47,14 +47,12 @@
   <aside id="sidebar">
     <div id="sb-grip" data-i18n-title="ui.dragPanel"></div>
     <button id="sym" data-i18n-title="side.symmetry"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
-    <button id="grid-btn" data-i18n-title="side.grid"><svg viewBox="0 0 24 24"><path d="M4.5 8.5h15M4.5 15.5h15M8.5 4.5v15M15.5 4.5v15"/><rect x="4.5" y="4.5" width="15" height="15" rx="2"/></svg></button>
     <button id="tile-btn" data-i18n-title="side.tile"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="17" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="17" width="4.5" height="4.5" rx="1"/><rect x="17" y="17" width="4.5" height="4.5" rx="1"/></svg></button>
     <button id="pp" class="on" data-i18n-title="side.pp"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
     <button id="stab" class="on" data-i18n-title="side.stab"><svg viewBox="0 0 24 24"><path d="M3.5 15.5c3-6.5 5-6.5 8.5-3.5s5.5 3 8.5-3.5"/></svg></button>
     <button id="flip-h" data-i18n-title="side.flipH"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M8 7.5v9L3.8 12 8 7.5z" fill="currentColor" stroke="none"/><path d="M16 7.5v9l4.2-4.5L16 7.5z" fill="currentColor" stroke="none"/></svg></button>
     <button id="rot" data-i18n-title="side.rotate"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg></button>
     <button id="crop" data-i18n-title="side.crop"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
-    <button id="trim" data-i18n-title="side.trim"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9" rx="1"/><path d="M4 7.5V4.5h3M20 7.5V4.5h-3M4 16.5v3h3M20 16.5v3h-3"/></svg></button>
     <button id="center" data-i18n-title="side.center"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg></button>
     <div id="sb-rsz" data-i18n-title="ui.resizePanel"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </aside>
@@ -69,18 +67,6 @@
   <div id="sym-choice" class="tool-choice"></div>
   <div id="flip-choice" class="tool-choice"></div>
 
-  <div id="grid-pop" class="toolpop">
-    <div class="bp-head"><span class="bp-title" data-i18n="grid.title"></span><button class="win-x" data-i18n-title="btn.close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="grid-dims">
-      <div class="irow grid-size"><label data-i18n="label.width"></label><input id="grid-w" type="text" inputmode="text" spellcheck="false" /><b>px</b></div>
-      <button id="grid-link" class="se-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-      <div class="irow grid-size"><label data-i18n="label.height"></label><input id="grid-h" type="text" inputmode="text" spellcheck="false" /><b>px</b></div>
-    </div>
-    <div class="irow"><label data-i18n="label.opacity"></label><input id="grid-op" type="range" min="5" max="100" step="5" value="70" /><b id="grid-opv">70%</b></div>
-    <div class="irow"><label data-i18n="label.color"></label><button id="grid-color" class="fx-colbtn"></button></div>
-    <div class="iact"><button id="grid-cancel" data-i18n="btn.cancel" class="txtbtn"></button><button id="grid-apply" data-i18n="btn.apply" class="txtbtn primary"></button></div>
-  </div>
-
   <div id="tools-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.panels"></h3>
     <p class="hint" style="margin:0 2px" data-i18n="hint.panels"></p>
@@ -88,15 +74,27 @@
     <div class="iact"><button id="tools-reset" class="txtbtn" data-i18n="btn.resetPanels"></button><button id="tools-close" data-i18n="btn.done" class="txtbtn primary"></button></div>
   </div></div>
 
-  <div id="cropbar">
-    <button id="crop-sym" data-i18n-title="crop.center"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
-    <button id="crop-units" data-i18n-title="crop.units"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M9.5 4.5v15M14.5 4.5v15M4.5 9.5h15M4.5 14.5h15"/></svg></button>
-    <div class="crop-size"><span id="crop-wl" data-i18n="label.width"></span><input id="crop-w" type="text" inputmode="text" spellcheck="false" /></div>
-    <button id="crop-link" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
-    <div class="crop-size"><span id="crop-hl" data-i18n="label.height"></span><input id="crop-h" type="text" inputmode="text" spellcheck="false" /></div>
-    <span id="crop-px" class="crop-px"></span>
-    <button id="crop-ok" data-i18n-title="crop.apply"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></svg></button>
-    <button id="crop-cancel" data-i18n-title="crop.cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div id="cropbar" class="crop-panel">
+    <header class="crop-head"><h3 data-i18n="crop.canvasSize"></h3></header>
+    <section class="crop-custom">
+      <h4 data-i18n="crop.custom"></h4>
+      <div class="crop-toolrow">
+        <button id="crop-sym" type="button" data-i18n-title="crop.center"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></button>
+        <button id="crop-units" type="button" data-i18n-title="crop.units"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M9.5 4.5v15M14.5 4.5v15M4.5 9.5h15M4.5 14.5h15"/></svg></button>
+        <button id="crop-grid" type="button" data-i18n-title="crop.grid"><svg viewBox="0 0 24 24"><path d="M4.5 8.5h15M4.5 15.5h15M8.5 4.5v15M15.5 4.5v15"/><rect x="4.5" y="4.5" width="15" height="15" rx="2"/></svg></button>
+        <button id="crop-trim" type="button" data-i18n-title="side.trim"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9" rx="1"/><path d="M4 7.5V4.5h3M20 7.5V4.5h-3M4 16.5v3h3M20 16.5v3h-3"/></svg></button>
+      </div>
+      <div class="crop-grid-fields">
+        <label><span id="crop-wl" data-i18n="label.width"></span><input id="crop-w" type="text" inputmode="text" spellcheck="false" /></label>
+        <button id="crop-link" class="new-link crop-link" type="button" data-i18n-title="new.lockRatio"><svg viewBox="0 0 24 24"><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/><path d="M8.5 12h7"/></svg></button>
+        <label><span id="crop-hl" data-i18n="label.height"></span><input id="crop-h" type="text" inputmode="text" spellcheck="false" /></label>
+      </div>
+      <span id="crop-px" class="crop-px"></span>
+      <div class="crop-actions iact">
+        <button id="crop-cancel" type="button" class="txtbtn" data-i18n="btn.cancel"></button>
+        <button id="crop-ok" type="button" class="txtbtn primary" data-i18n="btn.apply"></button>
+      </div>
+    </section>
   </div>
 
 

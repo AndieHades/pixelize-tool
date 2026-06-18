@@ -7,16 +7,17 @@ import { $, toast, t } from '../core/dom.js';
 import { commitNumericField, isNumericLiteral, numericFieldValue, setNumericField } from '../core/numeric-field.js';
 import { applyCropRect } from '../core/document.js';
 import { registerMode } from '../core/canvas-handlers.js';
+import { ensureGrid, gridCellH, gridCellW, setGridVisible } from '../core/grid.js';
+import { canvasContentBounds } from '../core/canvas-bounds.js';
 import { MAX_SIZE } from '../config/limits.js';
 import { clampRound } from '../logic/math.js';
 
-let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1, cropCells = false;
+let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1, cropCells = false, mounted = false;
 
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
-// размер клетки: на Tilemap-слое — квадрат Tileset Grid; иначе — ячейка обычной сетки Grid
-const cellW = () => (S.tileset && S.tileset.on ? S.tileGrid.size : Math.max(1, Math.round(S.grid.w) || 16));
-const cellH = () => (S.tileset && S.tileset.on ? S.tileGrid.size : Math.max(1, Math.round(S.grid.h) || 16));
+const cellW = () => gridCellW();
+const cellH = () => gridCellH();
 function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();
   if (cropCells) { setNumericField($('crop-w'), Math.max(1, Math.round(s.w / cellW()))); setNumericField($('crop-h'), Math.max(1, Math.round(s.h / cellH()))); }
   else { setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
@@ -26,6 +27,14 @@ function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();
 function setCropUnits(on) { cropCells = on; $('crop-units').classList.toggle('on', on);
   $('crop-wl').textContent = on ? 'X' : t('label.width'); $('crop-hl').textContent = on ? 'Y' : t('label.height');
   if (on && S.cropMode) snapCells(S.cropMode); syncCropInputs(); bus.emit('render'); }
+function syncCropGrid() { const g = ensureGrid(); $('crop-grid')?.classList.toggle('on', !!g.visible); }
+function toggleCropGrid() { const g = ensureGrid(); setGridVisible(!g.visible); syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
+function trimFromCrop() { if (!S.cropMode) return; const g = canvasContentBounds();
+  if (!g) { toast(t('toast.canvasEmpty')); return; }
+  const c = S.cropMode, was = c.x0 === g.minx && c.y0 === g.miny && c.x1 === g.maxx && c.y1 === g.maxy && !c.idx && !c.idy;
+  c.x0 = g.minx; c.y0 = g.miny; c.x1 = g.maxx; c.y1 = g.maxy; c.idx = 0; c.idy = 0;
+  if (cropCells) snapCells(c); if (cropLink) setCropLink(true); syncCropInputs(); bus.emit('render');
+  if (was) toast(t('toast.nothingTrim')); }
 // привязать рамку к границам клеток (с сохранением целого числа клеток)
 function snapCells(c) { const cw = cellW(), ch = cellH();
   c.x0 = Math.round(c.x0 / cw) * cw; c.y0 = Math.round(c.y0 / ch) * ch;
@@ -57,7 +66,7 @@ function lockRatio(c, d, symm) {
 export function toggleCrop() { if (S.cropMode) { cancelCrop(); return; }
   const b = S.sel ? { x0: S.sel.x0, y0: S.sel.y0, x1: S.sel.x1, y1: S.sel.y1 } : { x0: 0, y0: 0, x1: S.W - 1, y1: S.H - 1 };
   S.cropMode = { ...b, idx: 0, idy: 0, b }; S.sel = null; S.selMask = null; bus.emit('selection');
-  $('crop').classList.add('on'); $('cropbar').classList.add('on'); if (cropLink) setCropLink(true); syncCropInputs(); bus.emit('render');
+  $('crop').classList.add('on'); $('cropbar').classList.add('on'); if (cropLink) setCropLink(true); syncCropGrid(); syncCropInputs(); bus.emit('render');
   toast(t('toast.cropHint')); }
 
 export function cancelCrop() { S.cropMode = null; cropDrag = null; $('cv').style.cursor = '';
@@ -114,10 +123,15 @@ function cropInput(which, commit = false) { if (!S.cropMode) return;
   placeCrop(w, h); }
 
 export function mount() {
+  if (mounted) return; mounted = true;
   $('crop').onclick = toggleCrop; $('crop-ok').onclick = applyCrop; $('crop-cancel').onclick = cancelCrop;
   $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   $('crop-link').onclick = () => setCropLink(!cropLink);
   $('crop-units').onclick = () => setCropUnits(!cropCells);
+  $('crop-grid').onclick = toggleCropGrid;
+  $('crop-trim').onclick = trimFromCrop;
+  bus.on('grid', syncCropGrid);
+  syncCropGrid();
   for (const id of ['crop-w', 'crop-h']) { const which = id === 'crop-w' ? 'w' : 'h';
     $(id).addEventListener('input', () => cropInput(which));
     $(id).addEventListener('blur', () => cropInput(which, true));

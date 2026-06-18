@@ -1,18 +1,12 @@
-/* Панели выделения, кропа, поворота и SVG ants overlay. */
-    /* ---- панели действий (выделение, кроп) ---- */
-    #selbar, #cropbar, #rotbar { position: fixed; left: 50%; transform: translateX(-50%);
+/* Панели выделения, поворота и SVG ants overlay. */
+    /* ---- панели действий (выделение, поворот) ---- */
+    #selbar, #rotbar { position: fixed; left: 50%; transform: translateX(-50%);
       bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 15; display: none; gap: 2px; padding: 5px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-xl);
       box-shadow: var(--win-shadow); cursor: grab; touch-action: none; }
-    #selbar:active, #cropbar:active, #rotbar:active { cursor: grabbing; }
-    #selbar.on, #cropbar.on, #rotbar.on { display: flex; }
-    #crop-ok, #rot-ok { color: var(--ok); }
-    .crop-size { display: flex; align-items: center; gap: 5px; height: 40px; padding: 0 7px;
-      background: var(--row); border-radius: var(--r-lg); color: var(--txt2); font-size: var(--type-caption); font-weight: var(--fw-heading); }
-    .crop-size input { width: 54px; height: 28px; box-sizing: border-box; text-align: right; padding: 0 6px;
-      background: var(--surface); color: var(--txt); border: 1px solid var(--line); border-radius: var(--r-sm); font: var(--type-label)/1 var(--font-mono); }
-    #crop-link { width: 38px; }
-    .crop-px { align-self: center; padding: 0 6px; color: var(--txt2); font-size: var(--type-caption); white-space: nowrap; } /* размер холста в пикселях */
+    #selbar:active, #rotbar:active { cursor: grabbing; }
+    #selbar.on, #rotbar.on { display: flex; }
+    #rot-ok { color: var(--ok); }
 
     /* «бегущие муравьи» выделения — SVG поверх холста, анимация чистым CSS */
     #sel-ants { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }

@@ -1467,38 +1467,17 @@ t('toolbars: симметрия и флип свернуты в кнопки с 
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
   S.sym = false; S.symH = false; S.symD1 = false; S.symLines.mode = null;
 });
-t('grid: popup настраивает сетку, Apply включает, повторный клик выключает', () => { gridSys.mount(); resetWH(8, 8); gridSys.openGridPop();
-  const w = document.getElementById('grid-w'), h = document.getElementById('grid-h'), op = document.getElementById('grid-op');
-  assert.equal(w.value, '16'); assert.equal(h.value, '16'); assert.equal(S.grid.color, '#4aa3ff'); assert.equal(S.grid.opacity, 70);
-  assert.equal(S.grid.preview, true); assert.equal(S.grid.visible, false); assert.equal(document.getElementById('grid-btn').classList.contains('on'), false);
-  w.value = '4'; w.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 4);
-  document.getElementById('grid-link').click();
-  h.value = '3'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
-  op.value = '35'; op.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.grid.w, 4); assert.equal(S.grid.h, 3); assert.equal(S.grid.opacity, 35); assert.equal(S.grid.link, false);
-  document.getElementById('grid-color').click();
-  assert.ok(document.getElementById('colpop').classList.contains('on'));
-  const hex = document.getElementById('col-hex'); hex.value = '#112233'; hex.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.grid.color, '#112233');
-  document.getElementById('grid-apply').click();
-  assert.equal(S.grid.preview, false); assert.equal(S.grid.visible, true); assert.ok(document.getElementById('grid-btn').classList.contains('on'));
-  document.getElementById('grid-btn').click();
-  assert.equal(S.grid.visible, false); assert.equal(document.getElementById('grid-btn').classList.contains('on'), false);
-  document.getElementById('grid-btn').click();
-  assert.equal(document.getElementById('grid-pop').classList.contains('on'), true); assert.equal(w.value, '4'); assert.equal(h.value, '3'); assert.equal(op.value, '35');
-  w.value = '9'; w.dispatchEvent(new window.Event('input', { bubbles: true }));
-  document.getElementById('grid-cancel').click();
-  assert.equal(S.grid.w, 4); assert.equal(S.grid.preview, false); assert.equal(S.grid.visible, false);
+t('grid: отдельного попапа нет, action переключает видимость сетки', () => { gridSys.mount(); resetWH(8, 8);
+  assert.equal(document.getElementById('grid-btn'), null); assert.equal(document.getElementById('grid-pop'), null);
+  assert.equal(S.grid.visible, false); gridSys.openGridPop();
+  assert.equal(S.grid.visible, true); assert.equal(S.grid.preview, false);
+  gridSys.openGridPop(); assert.equal(S.grid.visible, false);
 });
-t('grid: поля размера считают относительные выражения', () => { gridSys.mount(); resetWH(8, 8); gridSys.openGridPop();
-  const w = document.getElementById('grid-w'), h = document.getElementById('grid-h');
-  w.value = '/2'; w.dispatchEvent(new window.Event('blur'));
-  assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 8); assert.equal(w.value, '8');
-  document.getElementById('grid-link').click();
-  h.value = '+4'; h.dispatchEvent(new window.Event('blur'));
-  assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 12);
-  document.getElementById('grid-cancel').click();
+t('grid: Canvas size управляет видимостью сетки', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+  const btn = document.getElementById('crop-grid'); assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
+  btn.click(); assert.equal(S.grid.visible, true); assert.equal(btn.classList.contains('on'), true);
+  btn.click(); assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
+  crop.cancelCrop();
 });
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
   localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();
@@ -1742,14 +1721,21 @@ t('crop: поля размера и скрепка меняют рамку', () 
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 3); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 6);
   crop.cancelCrop(); });
 
-t('crop: режим клеток задаёт размер ровно по сетке (X×Y)', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; crop.toggleCrop();
+t('crop: режим клеток задаёт размер ровно по Grid даже в tile-контексте', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; S.tileset = { on: true }; S.tileGrid ||= {}; S.tileGrid.size = 16; crop.toggleCrop();
   document.getElementById('crop-units').click(); // переключить в клетки
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h');
   cw.value = '5'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
   ch.value = '7'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25); // 5 клеток × 5 px
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49); // 7 клеток × 7 px
-  document.getElementById('crop-units').click(); crop.cancelCrop(); });
+  document.getElementById('crop-units').click(); S.tileset.on = false; crop.cancelCrop(); });
+
+t('crop: Trim в Canvas size только выставляет рамку до Apply', () => { crop.mount(); resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; crop.toggleCrop();
+  const units = document.getElementById('crop-units'); if (units.classList.contains('on')) units.click();
+  document.getElementById('crop-trim').click();
+  assert.equal(S.W, 6); assert.equal(S.H, 6); assert.deepEqual({ x0: S.cropMode.x0, y0: S.cropMode.y0, x1: S.cropMode.x1, y1: S.cropMode.y1 }, { x0: 3, y0: 2, x1: 3, y1: 2 });
+  crop.applyCrop(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
+});
 
 t('crop: поля размера считают выражения от текущего значения', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
