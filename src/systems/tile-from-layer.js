@@ -12,6 +12,7 @@ import { blank } from '../logic/raster.js';
 import { localeValues } from '../i18n/index.js';
 import { TILE_GRID_SIZES } from '../config/tileset.js';
 import { openTilemapDialog } from './tilemap-dialog.js';
+import { resizeCanvasForTiles } from './tilemap-create.js';
 
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function isDefaultLayerName(name) {
@@ -64,6 +65,7 @@ export function convertToTile(opts = {}) {
   const { tw, th } = convertDims(opts);
   const ts = convertTileset(opts, tw, th);
   snapshot();
+  if (opts.resizeCanvas) resizeCanvasForTiles(tw, th);
   const mapW = Math.ceil(S.W / tw), mapH = Math.ceil(S.H / th), cells = new Array(mapW * mapH).fill(null);
   for (let cy = 0; cy < mapH; cy++) for (let cx = 0; cx < mapW; cx++) {
     const g = block(L.grid, cx, cy, tw, th); if (!g) continue;

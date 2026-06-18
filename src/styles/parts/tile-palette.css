@@ -12,7 +12,7 @@
     /* свотчи реального размера, ВПЛОТНУЮ как в палитре цветов; «своя сетка» — 1px
        линии (фон контейнера просвечивает через gap), без рамок/скруглений/отступов */
     #tile-list { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 1px;
-      padding: 1px; background: var(--line); overflow: auto; flex: 1; min-height: 56px; scrollbar-width: none; }
+      padding: 1px; background: transparent; overflow: auto; flex: 1; min-height: 56px; scrollbar-width: none; }
     #tile-list::-webkit-scrollbar { display: none; }
     .tile-cell { position: relative; cursor: pointer; background: var(--panel); line-height: 0; }
     /* обводка выбора — как у свотчей, квадратная (outline поверх превью-canvas) */

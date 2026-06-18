@@ -8,8 +8,10 @@ import { snapshot } from '../core/history.js';
 import { $, toast, t } from '../core/dom.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { createTileset } from '../core/tileset.js';
+import { expandCanvas } from '../core/document.js';
 import { makeTilemapLayer, rasterLayer, isTilemap } from '../core/tilemap.js';
 import { TILE_GRID_SIZES } from '../config/tileset.js';
+import { MAX_SIZE } from '../config/limits.js';
 import { openTilemapDialog } from './tilemap-dialog.js';
 
 // подстроить Tileset Grid под размер тайлов активного Tile-слоя
@@ -22,11 +24,17 @@ export function syncGridToTilemap() {
 
 const fallbackSize = () => Math.max(1, Math.round(S.tileGrid.size || 16));
 const dialogDefaults = () => ({ tileW: fallbackSize(), tileH: fallbackSize() });
+export function resizeCanvasForTiles(tw, th) {
+  const nw = Math.min(MAX_SIZE, Math.max(S.W, Math.ceil(S.W / tw) * tw));
+  const nh = Math.min(MAX_SIZE, Math.max(S.H, Math.ceil(S.H / th) * th));
+  if (nw > S.W || nh > S.H) expandCanvas(0, 0, nw - S.W, nh - S.H);
+}
 
 export function createTilemap(opts = {}) {
   snapshot();
   const tw = Math.max(1, Math.round(opts.tileW || fallbackSize()));
   const th = Math.max(1, Math.round(opts.tileH || opts.tileW || fallbackSize()));
+  if (opts.resizeCanvas) resizeCanvasForTiles(tw, th);
   const ts = createTileset(opts.name || t('tilemap.newTileset'), tw, th);
   const mapW = Math.max(1, Math.ceil(S.W / tw)), mapH = Math.max(1, Math.ceil(S.H / th));
   const L = makeTilemapLayer(t('tile.tilemapLayer'), ts.id, mapW, mapH);

@@ -2592,6 +2592,7 @@ t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () =
     document.getElementById('tm-grid-w').value = '24';
     document.getElementById('tm-grid-h').value = '12';
     document.getElementById('tm-save').checked = true;
+    assert.equal(document.getElementById('tm-resize-canvas').checked, false);
     assert.ok(document.getElementById('tm-cancel').classList.contains('txtbtn'));
     assert.ok(document.getElementById('tm-apply').classList.contains('primary'));
     document.getElementById('tm-link').click();
@@ -2615,6 +2616,18 @@ t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () =
     if (old == null) localStorage.removeItem('tilemapPresets'); else localStorage.setItem('tilemapPresets', old);
   }
 });
+t('tilemap-dialog: Resize canvas расширяет холст до кратности тайла', () => {
+  resetWH(50, 50); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
+  tmcreate.open(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  if (document.getElementById('tm-link').classList.contains('on')) document.getElementById('tm-link').click();
+  document.getElementById('tm-grid-w').value = '24';
+  document.getElementById('tm-grid-h').value = '12';
+  document.getElementById('tm-resize-canvas').checked = true;
+  document.getElementById('tm-apply').click();
+  const L = S.layers[S.cur];
+  assert.equal(S.W, 72); assert.equal(S.H, 60);
+  assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 5);
+});
 t('tilemap-dialog: Convert to Tilemap использует размер из диалога', () => {
   resetWH(32, 16); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   S.layers[0].grid[0][0] = [1, 2, 3, 255];
@@ -2629,6 +2642,19 @@ t('tilemap-dialog: Convert to Tilemap использует размер из д�
   const ts = S.tilesets[0], L = S.layers[S.cur];
   assert.equal(ts.name, 'Dungeon'); assert.equal(ts.tileW, 8); assert.equal(ts.tileH, 16);
   assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 4); assert.equal(L.tilemap.mapH, 1);
+  assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
+});
+t('tilemap-dialog: Convert to Tilemap может расширить canvas', () => {
+  resetWH(33, 17); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
+  S.layers[0].grid[0][0] = [1, 2, 3, 255];
+  tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  document.getElementById('tm-grid-w').value = '16';
+  document.getElementById('tm-grid-h').value = '16';
+  document.getElementById('tm-resize-canvas').checked = true;
+  document.getElementById('tm-apply').click();
+  const L = S.layers[S.cur];
+  assert.equal(S.W, 48); assert.equal(S.H, 32);
+  assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 2);
   assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
 });
 t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {

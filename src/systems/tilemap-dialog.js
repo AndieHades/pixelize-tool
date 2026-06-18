@@ -45,6 +45,7 @@ function ensure() {
           <label><span data-i18n="tilemap.gridH"></span><input id="tm-grid-h" inputmode="numeric"></label>
         </div>
         <label class="tilemap-save"><input id="tm-save" type="checkbox"><span></span><b data-i18n="tilemap.savePreset"></b></label>
+        <label class="tilemap-save tilemap-resize"><input id="tm-resize-canvas" type="checkbox"><span></span><b data-i18n="tilemap.resizeCanvas"></b></label>
         <div class="tilemap-actions iact">
           <button id="tm-cancel" type="button" class="txtbtn" data-i18n="btn.cancel"></button>
           <button id="tm-apply" type="button" class="txtbtn primary" data-i18n="btn.apply"></button>
@@ -80,7 +81,7 @@ function commitDims() { const first = document.activeElement === $('tm-grid-h') 
 
 function readEntry() {
   commitDims(); const tileW = dimValue('tm-grid-w'), tileH = dimValue('tm-grid-h');
-  return tileW && tileH ? { name: ($('tm-name').value.trim() || currentDimName()).slice(0, 32), tileW, tileH } : null;
+  return tileW && tileH ? { name: ($('tm-name').value.trim() || currentDimName()).slice(0, 32), tileW, tileH, resizeCanvas: !!$('tm-resize-canvas')?.checked } : null;
 }
 
 function renderSaved() {
@@ -117,7 +118,7 @@ function closeDlg() { const ovl = $('tilemap-ovl'); if (ovl) ovl.classList.remov
 
 function confirmDlg() {
   const entry = readEntry(); if (!entry) return;
-  if ($('tm-save').checked) persistPreset(entry);
+  if ($('tm-save').checked) persistPreset({ name: entry.name, tileW: entry.tileW, tileH: entry.tileH });
   const fn = submit; closeDlg();
   if (fn) fn(entry);
 }
@@ -158,6 +159,7 @@ export function openTilemapDialog(opts = {}) {
   nameCustom = !!opts.name; $('tm-name').value = opts.name || currentDimName();
   setLinked(linked);
   $('tm-save').checked = false;
+  $('tm-resize-canvas').checked = !!opts.resizeCanvas;
   submit = opts.onSubmit || null;
   renderSaved();
   const ovl = $('tilemap-ovl'); ovl.dataset.openedAt = Date.now(); ovl.classList.add('on');

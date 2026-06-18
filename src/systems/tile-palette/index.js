@@ -12,6 +12,30 @@ import { initSelect, mountSelect } from './select.js';
 import { buildToolbar, syncToolbar } from './toolbar.js';
 
 let panel = null, mounted = false;
+const TILE_GAP = 1, TILE_LIST_PAD = 2;
+
+function tileWindowChromeX() {
+  if (!panel) return 18;
+  const list = $('tile-list');
+  const pr = panel.getBoundingClientRect(), lw = list?.clientWidth || 0;
+  return pr.width > 0 && lw > 0 ? Math.max(0, pr.width - lw) : 18;
+}
+
+function snapTileWindowWidth(w) {
+  const maxW = Math.max(160, window.innerWidth - 12);
+  const ts = activeTileset();
+  if (!ts) return Math.max(160, Math.min(maxW, w));
+  const chromeX = tileWindowChromeX();
+  const innerW = Math.max(1, w - chromeX);
+  const tileW = Math.max(1, Math.round(ts.tileW || S.tileGrid?.size || 16));
+  const cols = Math.max(1, Math.round((innerW - TILE_LIST_PAD + TILE_GAP) / (tileW + TILE_GAP)));
+  const snapped = TILE_LIST_PAD + cols * tileW + Math.max(0, cols - 1) * TILE_GAP;
+  return Math.max(160, Math.min(maxW, snapped + chromeX));
+}
+
+function clampTileWindowHeight(h) {
+  return Math.max(140, Math.min(window.innerHeight - 12, h));
+}
 
 function build() {
   if (panel) return panel;
@@ -54,12 +78,12 @@ export function mount() {
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
   actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
   initSelect(refresh); mountSelect();
-  // тянется со всех сторон, размер независим от содержимого (как окно слоёв):
-  // панель задаёт w/h, список скроллится внутри
+  // Ширина прилипает к колонкам тайлов: после ресайза не остаётся случайная
+  // пустая полоса справа, а список по высоте всё ещё скроллится внутри окна.
   floatingWindow(panel, { grip: $('tilegrip'), handle: $('tilersz'), storeKey: 'tilewin', minW: 160, minH: 140, clampBottom: 50, resizeEdges: true,
     onClose: () => { panel.classList.add('closed'); S.tileset.open = false; },
-    onResize: (w, h) => { panel.style.width = Math.max(160, Math.min(window.innerWidth - 12, w)) + 'px';
-      panel.style.height = Math.max(140, Math.min(window.innerHeight - 12, h)) + 'px'; } });
+    onResize: (w, h) => { panel.style.width = snapTileWindowWidth(w) + 'px';
+      panel.style.height = clampTileWindowHeight(h) + 'px'; } });
   bus.on('tileset-changed', refresh);
   bus.on('tool', refresh);
   bus.on('layers', refresh);
