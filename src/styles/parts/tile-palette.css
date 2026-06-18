@@ -51,6 +51,3 @@
 
     /* перенос иконок тулбара зажатым ПКМ */
     .tile-act button.reordering { opacity: .4; }
-
-    /* попап размера Tileset Grid — тот же menu-bubble, что у кнопок тулбаров */
-    .tilegrid-pop button { width: auto; min-width: var(--btn-sm); padding: 0 8px; font-weight: var(--fw-display); }

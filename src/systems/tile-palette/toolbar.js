@@ -26,14 +26,13 @@ function placeTile() { S.tileMode = 'paint'; setTool('tilebrush'); bus.emit('til
 // id → { html|letter, title, run, mark }
 const DEFS = {
   place: { html: IC.place, title: () => t('tile.place'), run: placeTile, mark: 'place' },
-  gridsize: { title: () => t('tile.gridSize'), run: () => actions.run('tileset.gridPop'), mark: 'gridsize', size: true },
   drawtile: { html: IC.drawTile, title: () => t('tile.auto'), run: () => actions.run('tile.auto'), mark: 'drawtile' },
   edittile: { html: IC.editTile, title: () => t('tile.manual'), run: () => actions.run('tile.manual'), mark: 'edittile' },
   rnd: { html: IC.rnd, title: () => t('tile.random'), run: () => actions.run('tile.random'), mark: 'rnd' },
   save: { html: IC.save, title: () => t('tile.loadSet'), run: () => actions.run('tileset.manager') },
   del: { html: IC.del, title: () => t('tile.delete'), run: () => actions.run('tile.delActive') },
 };
-const DEFAULT_ORDER = ['place', 'gridsize', 'drawtile', 'edittile', 'rnd', 'save', 'del'];
+const DEFAULT_ORDER = ['place', 'drawtile', 'edittile', 'rnd', 'save', 'del'];
 const ALIAS = { draw: 'place', auto: 'drawtile', manual: 'edittile' };
 const savedOrder = () => { try { const a = JSON.parse(localStorage.getItem(STORE));
   return Array.isArray(a) ? [...new Set(a.map((id) => ALIAS[id] || id))] : null; } catch (e) { return null; } };
@@ -66,5 +65,4 @@ export function syncToolbar() {
   set('drawtile', pixel && S.tileAutoMode === 'auto');
   set('edittile', pixel && S.tileAutoMode === 'manual');
   set('rnd', S.tileRandom);
-  const gs = bar.querySelector('[data-tb="gridsize"]'); if (gs) gs.textContent = S.tileGrid.size; // текущий размер Tileset Grid
 }

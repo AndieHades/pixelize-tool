@@ -7,8 +7,10 @@ import * as actions from '../core/actions.js';
 import { snapshot } from '../core/history.js';
 import { $, toast, t } from '../core/dom.js';
 import { dirtyAll } from '../core/layer-cache.js';
-import { makeTilemapLayer, rasterLayer, isTilemap, gridTileSize, tilesetForSize } from '../core/tilemap.js';
+import { createTileset } from '../core/tileset.js';
+import { makeTilemapLayer, rasterLayer, isTilemap } from '../core/tilemap.js';
 import { TILE_GRID_SIZES } from '../config/tileset.js';
+import { openTilemapDialog } from './tilemap-dialog.js';
 
 // подстроить Tileset Grid под размер тайлов активного Tile-слоя
 export function syncGridToTilemap() {
@@ -18,16 +20,25 @@ export function syncGridToTilemap() {
   bus.emit('render');
 }
 
-export function open() {
+const fallbackSize = () => Math.max(1, Math.round(S.tileGrid.size || 16));
+const dialogDefaults = () => ({ tileW: fallbackSize(), tileH: fallbackSize(), name: t('tilemap.newTileset') });
+
+export function createTilemap(opts = {}) {
   snapshot();
-  const { w: tw, h: th } = gridTileSize();
-  const ts = tilesetForSize(tw, th);
+  const tw = Math.max(1, Math.round(opts.tileW || fallbackSize()));
+  const th = Math.max(1, Math.round(opts.tileH || opts.tileW || fallbackSize()));
+  const ts = createTileset(opts.name || t('tilemap.newTileset'), tw, th);
   const mapW = Math.max(1, Math.ceil(S.W / tw)), mapH = Math.max(1, Math.ceil(S.H / th));
   const L = makeTilemapLayer(t('tile.tilemapLayer'), ts.id, mapW, mapH);
   const at = S.layers.length; S.layers.splice(at, 0, L); S.cur = at;
   S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxCur = null;
   S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
+  if (tw === th && TILE_GRID_SIZES.includes(tw)) S.tileGrid.size = tw;
   rasterLayer(at); dirtyAll(); bus.emit('render'); bus.emitDoc(); bus.emit('tileset-changed'); toast(t('toast.tilemapCreated'));
+}
+
+export function open() {
+  openTilemapDialog({ ...dialogDefaults(), title: t('tile.newLayer'), onSubmit: createTilemap });
 }
 
 export function mount() {

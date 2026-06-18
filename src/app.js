@@ -45,6 +45,7 @@ import * as penButton from './systems/pen-button.js';
 import * as status from './systems/status.js';
 import * as toolpops from './systems/toolpops.js';
 import * as tilePalette from './systems/tile-palette/index.js';
+import * as tilemapDialog from './systems/tilemap-dialog.js';
 import * as tilemapCreate from './systems/tilemap-create.js';
 import * as tilemapOverlay from './systems/tilemap-overlay.js';
 import * as tilesetMode from './systems/tileset-mode/index.js';
@@ -75,7 +76,7 @@ import './systems/tile-variants.js';
 import './systems/tilemap-export.js';
 import './systems/tilemap-paint/index.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapDialog, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {
@@ -127,7 +128,7 @@ export function start() {
   // ЕДИНО: любой модальный диалог (.ovl .sheet) — перетаскиваемое окно за заголовок.
   // Уже подключённые окна (конвертер/экспорт) пропускаются идемпотентным floatingWindow.
   // Новые диалоги достаточно сверстать как <div class="ovl"><div class="sheet"><h3>…
-  for (const win of document.querySelectorAll('.ovl .sheet, .ovl .new-panel')) floatingWindow(win, { grip: win.querySelector('.new-head, .pop-head, h3') || win, storeKey: win.id ? 'win-' + win.id : undefined });
+  for (const win of document.querySelectorAll('.ovl .sheet, .ovl .new-panel, .ovl .tilemap-panel')) floatingWindow(win, { grip: win.querySelector('.new-head, .tilemap-head, .pop-head, h3') || win, storeKey: win.id ? 'win-' + win.id : undefined });
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => {
     const el = $(id), openedAt = +(el.dataset.openedAt || 0);

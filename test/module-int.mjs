@@ -97,6 +97,7 @@ const tsmgr = await import('../src/core/tileset.js');
 const tsetMgr = await import('../src/systems/tileset-manager.js');
 const tmap = await import('../src/core/tilemap.js');
 const tmcreate = await import('../src/systems/tilemap-create.js');
+const tmDialog = await import('../src/systems/tilemap-dialog.js');
 await import('../src/systems/tile-brush/index.js');
 await import('../src/systems/tile-selection/index.js');
 const tsel = await import('../src/systems/tile-selection/ops.js');
@@ -105,7 +106,6 @@ const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
 const tilePalette = await import('../src/systems/tile-palette/index.js');
-const tgridPop = await import('../src/systems/tile-palette/grid-pop.js');
 const tileToolbar = await import('../src/systems/tile-palette/toolbar.js');
 const tileSelect = await import('../src/systems/tile-palette/select.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
@@ -991,7 +991,7 @@ t('tile-toolbar: Add tile не появляется даже из старого
     localStorage.setItem('tileToolbarOrder4', JSON.stringify(['draw', 'new', 'auto', 'manual', 'save']));
     const bar = tileToolbar.buildToolbar();
     assert.equal(bar.querySelector('[data-tb="new"]'), null);
-    assert.deepEqual([...bar.querySelectorAll('button')].map((b) => b.dataset.tb), ['place', 'drawtile', 'edittile', 'save', 'gridsize', 'rnd', 'del']);
+    assert.deepEqual([...bar.querySelectorAll('button')].map((b) => b.dataset.tb), ['place', 'drawtile', 'edittile', 'save', 'rnd', 'del']);
   } finally {
     if (old == null) localStorage.removeItem('tileToolbarOrder4'); else localStorage.setItem('tileToolbarOrder4', old);
   }
@@ -1009,22 +1009,6 @@ t('tile-toolbar: Place tile и Draw/Edit подсвечиваются взаим
     S.tool = 'fill'; S.tileAutoMode = 'auto'; tileToolbar.syncToolbar();
     assert.equal(on('place'), false); assert.equal(on('drawtile'), true); assert.equal(on('edittile'), false);
   } finally { bar.remove(); }
-});
-t('menus: размер Tileset Grid использует общий bubble и указывает на кнопку', () => {
-  const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
-  const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
-  const tilebar = document.createElement('div'), act = document.createElement('div'), btn = document.createElement('button');
-  tilebar.id = 'tilebar'; act.id = 'tile-act'; btn.dataset.tb = 'gridsize'; btn.textContent = '32'; act.appendChild(btn); tilebar.appendChild(act); document.body.appendChild(tilebar);
-  tgridPop.mountGridPop(); const pop = document.getElementById('tilegrid-pop');
-  const undo = [mockRect(tilebar, rect(100, 100, 240, 130)), mockRect(btn, rect(132, 214, 34, 30)), mockRect(pop, rect(0, 0, 230, 46))];
-  try {
-    tgridPop.toggleGridPop();
-    const arrow = pop.querySelector('.menu-arrow');
-    assert.ok(pop.classList.contains('tool-choice')); assert.ok(pop.classList.contains('on'));
-    assert.ok(arrow.classList.contains('up'));
-    const arrowCenter = parseFloat(pop.style.left) + parseFloat(arrow.style.left) + 6;
-    assert.equal(arrowCenter, 149);
-  } finally { pop.classList.remove('on'); undo.forEach((fn) => fn()); tilebar.remove(); }
 });
 await ta('floating-window: новое окно и активное окно поднимаются, toolbar выше всех', async () => {
   const root = document.createElement('div'), rootGrip = document.createElement('div');
@@ -2461,7 +2445,7 @@ t('tilemap: create tile from layer режет слой по сетке', () => {
   const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
 });
 t('tilemap: новые и конвертированные default-слои называются Tilemap', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; tmcreate.open();
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; tmcreate.createTilemap();
   assert.equal(S.layers[S.cur].name, 'Tilemap'); assert.equal(i18n.t('tile.newLayer'), 'New Tilemap');
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].name = i18n.t('layer.name') + ' 1'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
@@ -2469,6 +2453,44 @@ t('tilemap: новые и конвертированные default-слои на
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].name = 'Custom'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
   tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Custom');
+});
+t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () => {
+  const old = localStorage.getItem('tilemapPresets');
+  try {
+    localStorage.removeItem('tilemapPresets'); tmDialog.mount();
+    resetWH(64, 64); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16;
+    tmcreate.open(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+    document.getElementById('tm-name').value = 'Cave';
+    document.getElementById('tm-grid-w').value = '24';
+    document.getElementById('tm-grid-h').value = '12';
+    document.getElementById('tm-save').checked = true;
+    document.getElementById('tm-ok').click();
+    const ts = S.tilesets[0], L = S.layers[S.cur];
+    assert.equal(ts.name, 'Cave'); assert.equal(ts.tileW, 24); assert.equal(ts.tileH, 12);
+    assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 6);
+    assert.deepEqual(JSON.parse(localStorage.getItem('tilemapPresets'))[0], { name: 'Cave', tileW: 24, tileH: 12 });
+    resetWH(16, 16); tmcreate.open();
+    document.querySelector('#tm-saved .saved').click();
+    assert.equal(document.getElementById('tm-name').value, 'Cave');
+    assert.equal(document.getElementById('tm-grid-w').value, '24');
+    assert.equal(document.getElementById('tm-grid-h').value, '12');
+    document.getElementById('tm-cancel').click();
+  } finally {
+    if (old == null) localStorage.removeItem('tilemapPresets'); else localStorage.setItem('tilemapPresets', old);
+  }
+});
+t('tilemap-dialog: Convert to Tilemap использует размер из диалога', () => {
+  resetWH(32, 16); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
+  S.layers[0].grid[0][0] = [1, 2, 3, 255];
+  tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
+  document.getElementById('tm-name').value = 'Dungeon';
+  document.getElementById('tm-grid-w').value = '8';
+  document.getElementById('tm-grid-h').value = '16';
+  document.getElementById('tm-ok').click();
+  const ts = S.tilesets[0], L = S.layers[S.cur];
+  assert.equal(ts.name, 'Dungeon'); assert.equal(ts.tileW, 8); assert.equal(ts.tileH, 16);
+  assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 4); assert.equal(L.tilemap.mapH, 1);
+  assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
 });
 t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
