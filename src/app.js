@@ -87,21 +87,29 @@ function sidebarMetrics() {
     n: buttons.length,
     btnW: px(bcs && bcs.width, 38),
     btnH: px(bcs && bcs.height, 38),
-    gap: px(cs.rowGap || cs.gap, 3),
-    padT: px(cs.paddingTop, 16),
-    padB: px(cs.paddingBottom, 12),
+    gap: px(cs.rowGap || cs.gap, 2),
+    padT: px(cs.paddingTop, 14),
+    padB: px(cs.paddingBottom, 10),
+    padL: px(cs.paddingLeft, 5),
+    padR: px(cs.paddingRight, 5),
+    borderL: px(cs.borderLeftWidth, 1),
+    borderR: px(cs.borderRightWidth, 1),
   };
 }
 function sidebarMinHeight(width) {
   const m = sidebarMetrics();
   if (!m.n) return 80;
-  const cols = Math.max(1, Math.floor((Math.max(m.btnW, width) + m.gap) / (m.btnW + m.gap)));
+  const contentW = Math.max(m.btnW, width - m.padL - m.padR - m.borderL - m.borderR);
+  const cols = Math.min(2, Math.max(1, Math.floor((contentW + m.gap) / (m.btnW + m.gap))));
   const rows = Math.ceil(m.n / cols);
   return Math.ceil(m.padT + m.padB + rows * m.btnH + Math.max(0, rows - 1) * m.gap);
 }
 function resizeSidebar(w, h) {
   const bar = $('sidebar'), m = sidebarMetrics();
-  const width = Math.max(m.btnW, Math.min(window.innerWidth - 12, w));
+  const minW = m.btnW + m.padL + m.padR + m.borderL + m.borderR;
+  const maxW = Math.min(window.innerWidth - 12, m.btnW * 2 + m.gap + m.padL + m.padR + m.borderL + m.borderR);
+  const requested = Math.max(minW, Math.min(maxW, w));
+  const width = requested > (minW + maxW) / 2 ? maxW : minW;
   const minH = sidebarMinHeight(width);
   bar.style.width = width + 'px';
   bar.style.minHeight = minH + 'px';
@@ -135,7 +143,7 @@ export function start() {
     if (e.target.id === id && Date.now() - openedAt > 500) el.classList.remove('on');
   }); // рабочие модальные окна не закрываем по фону — только крестиком/явной кнопкой
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'shape-choice', 'sym-choice', 'flip-choice']) {
+    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'shape-choice', 'sym-choice', 'flip-choice', 'zoom-choice']) {
       const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on');
     } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');

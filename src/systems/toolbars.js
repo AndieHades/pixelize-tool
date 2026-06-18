@@ -8,13 +8,14 @@ import { setTool } from '../core/tools.js';
 import { longPress } from '../core/long-press.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { ensureSymmetryDefaults } from '../core/layers.js';
-import { ICONS, BRUSH_MODES, LINE_MODES, SHAPE_MODES, SYM_MODES, SYM_TOOLS, FLIP_MODES } from '../config/toolbar.js';
+import { ICONS, BRUSH_MODES, LINE_MODES, SHAPE_MODES, SYM_MODES, SYM_TOOLS, FLIP_MODES, ZOOM_MODES } from '../config/toolbar.js';
 
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'move', 'adjust'];
 let lastBrushMode = 'normal';
 let lastShapeMode = { kind: 'shape', tool: 'rect', fill: false };
 let lastSymChoice = { kind: 'flag', flag: 'sym' };
 let lastFlipMode = 'h';
+let lastZoomMode = 'fit';
 
 function setButtonIcon(btn, mode) {
   if (!btn || !mode) return;
@@ -30,13 +31,12 @@ function shapeModeCfg(mode = lastShapeMode) {
   const tool = mode.tool || 'rect', fill = !!mode.fill;
   return SHAPE_MODES.find((m) => m.tool === tool && m.fill === fill) || SHAPE_MODES[0]; }
 function currentShapeMode() { return shapeModeCfg(lastShapeMode); }
-function currentSymMode() { const on = SYM_MODES.filter((m) => S[m.flag]);
-  if (on.length > 1) return { icon: S.sym && S.symH && on.length === 2 ? 'symBoth' : 'symMulti', key: 'side.symBoth' };
-  if (on.length === 1) return on[0];
-  if (S.symLines && S.symLines.mode) return SYM_TOOLS.find((m) => m.mode === S.symLines.mode) || { icon: 'symV', key: 'side.symmetry' };
+function currentSymMode() {
   return lastSymChoice.kind === 'tool'
     ? (SYM_TOOLS.find((m) => m.mode === lastSymChoice.mode) || { icon: 'symV', key: 'side.symmetry' })
     : (SYM_MODES.find((m) => m.flag === lastSymChoice.flag) || { icon: 'symV', key: 'side.symmetry' }); }
+function currentFlipMode() { return FLIP_MODES.find((m) => m.mode === lastFlipMode) || FLIP_MODES[0]; }
+function currentZoomMode() { return ZOOM_MODES.find((m) => m.mode === lastZoomMode) || ZOOM_MODES[0]; }
 
 function syncChoiceMenus() {
   const brush = $('brush-choice'); if (brush) for (const b of brush.querySelectorAll('button')) b.classList.toggle('on', b.dataset.brushMode === lastBrushMode);
@@ -49,13 +49,15 @@ function syncChoiceMenus() {
     if (b.dataset.symTool) b.classList.toggle('on', (S.symLines && S.symLines.mode) === b.dataset.symTool);
   }
   const flip = $('flip-choice'); if (flip) for (const b of flip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.flipMode === lastFlipMode);
+  const zoom = $('zoom-choice'); if (zoom) for (const b of zoom.querySelectorAll('button')) b.classList.toggle('on', b.dataset.zoomMode === lastZoomMode);
 }
 
 function syncModeButtons() {
   setButtonIcon($('t-pencil'), currentBrushMode());
   setButtonIcon($('t-shape'), currentShapeMode());
   setButtonIcon($('sym'), currentSymMode());
-  setButtonIcon($('flip-h'), { icon: 'transformCanvas', key: 'side.transformCanvas' });
+  setButtonIcon($('flip-h'), currentFlipMode());
+  setButtonIcon($('zoom'), currentZoomMode());
   const sym = $('sym'); if (sym) sym.classList.toggle('on', !!(S.sym || S.symH || S.symD1 || S.symD2 || (S.symLines && S.symLines.mode)));
   syncChoiceMenus();
 }
@@ -94,6 +96,11 @@ function buildToolChoices() {
     for (const m of FLIP_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.flipMode = m.mode;
       b.onclick = () => { lastFlipMode = m.mode; syncModeButtons(); actions.run(m.action); };
       flip.appendChild(b); } }
+  const zoom = $('zoom-choice');
+  if (zoom && !zoom.dataset.ready) { zoom.dataset.ready = '1';
+    for (const m of ZOOM_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.zoomMode = m.mode;
+      b.onclick = () => { lastZoomMode = m.mode; syncModeButtons(); actions.run(m.action); };
+      zoom.appendChild(b); } }
 }
 
 function showToolChoice(menuId, anchor) {
@@ -173,14 +180,13 @@ export function mount() {
   $('pp').onclick = () => toggle('ppOn', 'pp', 'toast.ppOn', 'toast.ppOff', true);
   $('stab').onclick = () => toggle('stabOn', 'stab', 'toast.stabOn', 'toast.stabOff', true);
 
-  $('flip-h').onclick = () => { const m = FLIP_MODES.find((x) => x.mode === lastFlipMode) || FLIP_MODES[0]; actions.run(m.action); };
+  $('flip-h').onclick = () => { const m = currentFlipMode(); actions.run(m.action); };
   $('flip-h').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('flip-choice', e.currentTarget); });
   $('img-settings').onclick = () => actions.run('effect.bc', null, null, { scope: S.bgSel ? 'canvas' : 'layer' }); // фон → весь документ, слой/папка → к выбранному
   $('center').onclick = () => actions.run('layer.center');
 
-  $('zin').onclick = () => actions.run('zoom.in');
-  $('zout').onclick = () => actions.run('zoom.out');
-  $('fit').onclick = () => actions.run('view.fit');
+  $('zoom').onclick = () => { const m = currentZoomMode(); actions.run(m.action); };
+  $('zoom').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('zoom-choice', e.currentTarget); });
 
   syncBrushFlags(); syncModeButtons();
   bus.on('tool', syncToolButtons); bus.on('selection', syncToolButtons); bus.on('shading', syncToolButtons);

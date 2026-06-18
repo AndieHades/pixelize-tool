@@ -4,7 +4,7 @@
     #ctx, #lctx, #cctx, #sctx, #trctx, #fxctx, #impmenu, #setmenu, #tctx, #rowctx, #brush-plus { position: fixed; z-index: 70; display: none; flex-direction: column; min-width: 210px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 6px;
       box-shadow: var(--win-shadow); }
-    .tool-choice { position: fixed; z-index: 70; display: none; gap: 4px; padding: 5px;
+    .tool-choice { position: fixed; z-index: 70; display: none; flex-wrap: nowrap; gap: 4px; padding: 5px;
       background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--win-shadow); }
     .tool-choice.on { display: flex; }
     .tool-choice button { width: var(--btn-sm); height: var(--btn-sm); border-radius: var(--r-sm); background: var(--row); color: var(--txt); }

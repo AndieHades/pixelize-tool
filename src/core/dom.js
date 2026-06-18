@@ -21,7 +21,7 @@ export async function copyText(t) {
   }
 }
 
-const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus', 'brush-choice', 'shape-choice', 'sym-choice', 'flip-choice', 'tile-menu', 'tile-cctx'];
+const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus', 'brush-choice', 'shape-choice', 'sym-choice', 'flip-choice', 'zoom-choice', 'tile-menu', 'tile-cctx'];
 const menus = () => MENU_IDS.map($).filter(Boolean);
 export function closeMenus(except = null) { for (const m of menus()) if (m !== except) m.classList.remove('on'); }
 function raiseMenu(m) {
@@ -56,8 +56,8 @@ function resetArrow(arrow) {
   for (const p of ['left', 'right', 'top', 'bottom']) arrow.style[p] = '';
 }
 
-// Меню от кнопки тулбара: позиционируем снаружи всей панели, но выравниваем
-// по самой кнопке. Так вложенные панели не прячутся под ресайзнутым тулбаром.
+// Меню от кнопки тулбара: для вертикальной панели выводим горизонтально от
+// самой кнопки, чтобы двухколоночный тулбар не диктовал место появления.
 export function showMenuForAnchor(m, anchorEl, opts = {}) {
   showMenu(m);
   let arrow = m.querySelector(':scope > .menu-arrow');
@@ -68,6 +68,19 @@ export function showMenuForAnchor(m, anchorEl, opts = {}) {
     const h = host.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
     const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    if (host.id === 'sidebar') {
+      const side = (h.left + h.width / 2) <= vw / 2 ? 'right' : 'left';
+      resetArrow(arrow);
+      let left = side === 'right' ? a.right + gap : a.left - gap - r.width;
+      let top = ay - r.height / 2;
+      left = clamp(left, margin, vw - r.width - margin);
+      top = clamp(top, margin, vh - r.height - margin);
+      arrow.className = 'menu-arrow ' + (side === 'right' ? 'left' : 'right');
+      m.style.left = left + 'px'; m.style.top = top + 'px';
+      arrow.style.top = (clamp(ay - top, 16, r.height - 16) - 6) + 'px';
+      m.style.visibility = '';
+      return;
+    }
     const room = {
       right: vw - h.right - margin - gap,
       left: h.left - margin - gap,

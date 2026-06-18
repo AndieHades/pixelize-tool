@@ -24,20 +24,8 @@
       <div class="tb-sep" id="tb-sep-l"></div>
       <button id="prev" data-i18n-title="tool.preview"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="12.5" y="11.5" width="5" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg></button>
       <button id="refbtn" data-i18n-title="tool.reference"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 8h17"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M5.5 19l4-4 2.6 2.6 2.2-2.2 4.2 3.6"/></svg></button>
-      <button id="fit" data-i18n-title="tool.fit"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
-      <button id="zin" data-i18n-title="tool.zoomIn"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-      <button id="zout" data-i18n-title="tool.zoomOut"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
     </div>
     <div class="tb-group" id="tb-right">
-      <button id="t-pencil" class="on" data-i18n-title="tool.pencil"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
-      <button id="t-eraser" data-i18n-title="tool.eraser"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
-      <button id="t-fill" data-i18n-title="tool.fill"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
-      <button id="t-shape" data-i18n-title="tool.rect"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg></button>
-      <button id="t-move" data-i18n-title="tool.move"><svg viewBox="0 0 24 24"><path d="M5 2.5l13.5 7.9-5.8 1.4-2.9 6z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
-      <button id="t-adjust" data-i18n-title="tool.adjust"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
-      <button id="t-select" data-i18n-title="tool.select"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
-      <button id="t-lasso" data-i18n-title="tool.lasso"><svg viewBox="0 0 24 24"><path d="M4 13c0-5 4-8.5 8.5-8.5S20 7.5 20 11.5c0 3-2.5 4.5-4.5 4.5-1.5 0-2.5-1-2.5-2s.8-1.8 1.8-1.8" stroke-dasharray="3 2.6"/><path d="M9 18.5a2 2 0 1 1-2.6-1.9" stroke-dasharray="2.6 2.4"/></svg></button>
-      <div class="tb-sep" id="tb-sep1"></div>
       <button id="layers" data-i18n-title="tool.layers"><svg viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z"/><path d="M4.5 12.5L12 16.5l7.5-4"/><path d="M4.5 16.5L12 20.5l7.5-4"/></svg></button>
       <button id="activewrap" data-i18n-title="tool.color"><span id="active"></span></button>
     </div>
@@ -45,6 +33,14 @@
 
   <aside id="sidebar">
     <div id="sb-grip" data-i18n-title="ui.dragPanel"></div>
+    <button id="t-pencil" class="on" data-i18n-title="tool.pencil"><svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2.05 2.05 0 0 1 2.9 2.9L8.3 18.8l-3.8.7z"/><path d="M14.7 6.6l2.9 2.9"/></svg></button>
+    <button id="t-eraser" data-i18n-title="tool.eraser"><svg viewBox="0 0 24 24"><path d="M8.7 18.7H6.3L4 16.4a1.9 1.9 0 0 1 0-2.7l8.6-8.6a1.9 1.9 0 0 1 2.7 0l4 4a1.9 1.9 0 0 1 0 2.7l-7 6.9z"/><path d="M9.3 8.3l6.4 6.4"/><path d="M12.5 20.5H20"/></svg></button>
+    <button id="t-fill" data-i18n-title="tool.fill"><svg viewBox="0 0 24 24"><path d="M11.3 3.8l7 7-6.2 6.2a1.9 1.9 0 0 1-2.7 0l-4.3-4.3a1.9 1.9 0 0 1 0-2.7l6.2-6.2z"/><path d="M4.6 12.5h12.2"/><path d="M19.9 14.6s1.6 2 1.6 3.1a1.6 1.6 0 0 1-3.2 0c0-1.1 1.6-3.1 1.6-3.1z"/></svg></button>
+    <button id="t-shape" data-i18n-title="tool.rect"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5"/></svg></button>
+    <button id="t-move" data-i18n-title="tool.move"><svg viewBox="0 0 24 24"><path d="M5 2.5l13.5 7.9-5.8 1.4-2.9 6z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+    <button id="t-adjust" data-i18n-title="tool.adjust"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg></button>
+    <button id="t-select" data-i18n-title="tool.select"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke-dasharray="3.5 3"/></svg></button>
+    <button id="t-lasso" data-i18n-title="tool.lasso"><svg viewBox="0 0 24 24"><path d="M4 13c0-5 4-8.5 8.5-8.5S20 7.5 20 11.5c0 3-2.5 4.5-4.5 4.5-1.5 0-2.5-1-2.5-2s.8-1.8 1.8-1.8" stroke-dasharray="3 2.6"/><path d="M9 18.5a2 2 0 1 1-2.6-1.9" stroke-dasharray="2.6 2.4"/></svg></button>
     <button id="sym" data-i18n-title="side.symmetry"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="3 3"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg></button>
     <button id="tile-btn" data-i18n-title="side.tile"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="17" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="17" width="4.5" height="4.5" rx="1"/><rect x="17" y="17" width="4.5" height="4.5" rx="1"/></svg></button>
     <button id="pp" class="on" data-i18n-title="side.pp"><svg viewBox="0 0 24 24"><path d="M4 20v-5h5v-5h5V5h6"/></svg></button>
@@ -52,6 +48,7 @@
     <button id="flip-h" data-i18n-title="side.transformCanvas"><svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/><path d="M18.5 6.5A6.5 6.5 0 0 0 7.5 5"/><path d="M7.5 2.5V5h2.5"/></svg></button>
     <button id="crop" data-i18n-title="side.crop"><svg viewBox="0 0 24 24"><path d="M6 2.5V18h15.5"/><path d="M2.5 6H18v15.5"/></svg></button>
     <button id="center" data-i18n-title="side.center"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg></button>
+    <button id="zoom" data-i18n-title="tool.fit"><svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg></button>
     <div id="sb-rsz" data-i18n-title="ui.resizePanel"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </aside>
 
@@ -63,6 +60,7 @@
   <div id="shape-choice" class="tool-choice"></div>
   <div id="sym-choice" class="tool-choice"></div>
   <div id="flip-choice" class="tool-choice"></div>
+  <div id="zoom-choice" class="tool-choice"></div>
 
   <div id="tools-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.panels"></h3>

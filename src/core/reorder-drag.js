@@ -12,9 +12,10 @@ function onMove(e) { if (!cur) return;
     cur.moved = true; cur.el.classList.add('reordering'); cur.ghost = cur.el.cloneNode(true); cur.ghost.classList.add('reorder-ghost'); document.body.appendChild(cur.ghost); }
   cur.ghost.style.left = e.clientX + 'px'; cur.ghost.style.top = e.clientY + 'px';
   const t = document.elementFromPoint(e.clientX, e.clientY), item = t && t.closest ? t.closest(cur.itemSel) : null, cont = t && t.closest ? t.closest(cur.dropSel) : null;
-  if (item && item !== cur.el && item.parentNode) { const r = item.getBoundingClientRect();
+  const canDrop = (c) => !cur.accept || cur.accept(cur.el, c);
+  if (item && item !== cur.el && item.parentNode && canDrop(item.parentNode)) { const r = item.getBoundingClientRect();
     item.parentNode.insertBefore(cur.el, (e.clientX < r.left + r.width / 2) ? item : item.nextSibling); }
-  else if (cont && !cont.contains(cur.el)) cont.appendChild(cur.el);
+  else if (cont && !cont.contains(cur.el) && canDrop(cont)) cont.appendChild(cur.el);
 }
 function onUp() { if (!cur) return; clearTimeout(cur.hold);
   const c = cur; cur = null; if (c.ghost) c.ghost.remove(); c.el.classList.remove('reordering');

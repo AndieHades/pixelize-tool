@@ -23,6 +23,9 @@ export const ICONS = {
   flipV: '<svg viewBox="0 0 24 24"><path d="M4 12h16" stroke-dasharray="2 2"/><path d="M7.5 8h9L12 3.8 7.5 8z" fill="currentColor" stroke="none"/><path d="M7.5 16h9L12 20.2 7.5 16z" fill="currentColor" stroke="none"/></svg>',
   transformCanvas: '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/><path d="M18.5 6.5A6.5 6.5 0 0 0 7.5 5"/><path d="M7.5 2.5V5h2.5"/></svg>',
   rotate90: '<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg>',
+  zoomFit: '<svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg>',
+  zoomIn: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M10.5 7.5v6M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
+  zoomOut: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
 };
 
 export const BRUSH_MODES = [
@@ -53,4 +56,9 @@ export const FLIP_MODES = [
   { mode: 'h', icon: 'flipH', key: 'side.flipH', action: 'layer.flipH' },
   { mode: 'v', icon: 'flipV', key: 'side.flipV', action: 'layer.flipV' },
   { mode: 'r', icon: 'rotate90', key: 'side.rotate', action: 'canvas.rotate' },
+];
+export const ZOOM_MODES = [
+  { mode: 'fit', icon: 'zoomFit', key: 'tool.fit', action: 'view.fit' },
+  { mode: 'in', icon: 'zoomIn', key: 'tool.zoomIn', action: 'zoom.in' },
+  { mode: 'out', icon: 'zoomOut', key: 'tool.zoomOut', action: 'zoom.out' },
 ];

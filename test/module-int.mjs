@@ -969,20 +969,26 @@ t('menus: tool-choice открывается снаружи панели тул�
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
   const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
   const sidebar = document.getElementById('sidebar'), sym = document.getElementById('sym'), symMenu = document.getElementById('sym-choice');
-  const topbar = document.getElementById('topbar'), shape = document.getElementById('t-shape'), shapeMenu = document.getElementById('shape-choice');
+  const shape = document.getElementById('t-shape'), shapeMenu = document.getElementById('shape-choice');
   const undo = [
     mockRect(sidebar, rect(96, 120, 54, 320)), mockRect(sym, rect(104, 260, 38, 38)), mockRect(symMenu, rect(0, 0, 220, 46)),
-    mockRect(topbar, rect(0, 0, 640, 58)), mockRect(shape, rect(330, 10, 38, 38)), mockRect(shapeMenu, rect(0, 0, 160, 46)),
+    mockRect(shape, rect(104, 170, 38, 38)), mockRect(shapeMenu, rect(0, 0, 160, 46)),
   ];
   try {
     showMenuForAnchor(symMenu, sym);
-    assert.equal(symMenu.style.left, '160px');
+    assert.equal(symMenu.style.left, '152px');
     assert.ok(symMenu.querySelector('.menu-arrow').classList.contains('left'));
     symMenu.classList.remove('on');
     showMenuForAnchor(shapeMenu, shape);
-    assert.equal(shapeMenu.style.top, '68px');
-    assert.ok(shapeMenu.querySelector('.menu-arrow').classList.contains('up'));
+    assert.equal(shapeMenu.style.left, '152px');
+    assert.ok(shapeMenu.querySelector('.menu-arrow').classList.contains('left'));
     shapeMenu.classList.remove('on');
+    sidebar.getBoundingClientRect = () => rect(540, 120, 54, 320);
+    sym.getBoundingClientRect = () => rect(548, 260, 38, 38);
+    showMenuForAnchor(symMenu, sym);
+    assert.equal(symMenu.style.left, '318px');
+    assert.ok(symMenu.querySelector('.menu-arrow').classList.contains('right'));
+    symMenu.classList.remove('on');
   } finally { undo.forEach((fn) => fn()); }
 });
 t('tile-toolbar: Add tile не появляется даже из старого сохранённого порядка', () => {
@@ -1417,6 +1423,17 @@ t('tint-shade: без активного цвета в палитре — окн
 });
 
 t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t('toolbars: рабочие кнопки в вертикальном тулбаре, верхняя панель держит только глобальные окна', () => {
+  const sideIds = ['t-pencil', 't-eraser', 't-fill', 't-shape', 't-move', 't-adjust', 't-select', 't-lasso',
+    'sym', 'tile-btn', 'pp', 'stab', 'flip-h', 'crop', 'center', 'zoom'];
+  for (const id of sideIds) assert.equal(document.getElementById(id).parentElement.id, 'sidebar');
+  for (const id of ['docsbtn', 'imp-btn', 'export-btn', 'prev', 'refbtn']) assert.equal(document.getElementById(id).parentElement.id, 'tb-left');
+  assert.equal(document.getElementById('layers').parentElement.id, 'tb-right');
+  assert.equal(document.getElementById('activewrap').parentElement.id, 'tb-right');
+  assert.equal(document.getElementById('fit'), null);
+  assert.equal(document.getElementById('zin'), null);
+  assert.equal(document.getElementById('zout'), null);
+});
 t('toolbars: линия и фигуры выбираются одной кнопкой с режимами', () => { tb.mount(); resetWH(8, 8);
   assert.equal(document.getElementById('t-line'), null); assert.equal(document.getElementById('line-choice'), null);
   document.getElementById('t-shape').click();
@@ -1481,14 +1498,25 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
   assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
   document.getElementById('flip-h').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   assert.ok(document.getElementById('flip-choice').classList.contains('on'));
-  assert.equal(document.getElementById('flip-h').title, 'Transform Canvas');
+  assert.equal(document.getElementById('flip-h').title, i18n.t('side.flipH'));
   assert.equal(document.getElementById('rot'), null);
   assert.equal(document.querySelectorAll('#flip-choice [data-flip-mode]').length, 3);
   document.querySelector('#flip-choice [data-flip-mode="r"]').click();
   assert.ok(document.getElementById('flip-choice').classList.contains('on'));
+  assert.equal(document.getElementById('flip-h').title, i18n.t('side.rotate'));
   assert.deepEqual(S.layers[0].grid[3][2], [5, 5, 5, 255]);
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
   S.sym = false; S.symH = false; S.symD1 = false; S.symLines.mode = null;
+});
+t('toolbars: Zoom свернут в одну кнопку с последним выбранным действием', () => { tb.mount(); resetWH(8, 8);
+  document.getElementById('zoom').click();
+  assert.equal(document.getElementById('zoom').title, i18n.t('tool.fit'));
+  document.getElementById('zoom').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
+  assert.equal(document.querySelectorAll('#zoom-choice [data-zoom-mode]').length, 3);
+  document.querySelector('#zoom-choice [data-zoom-mode="in"]').click();
+  assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
+  assert.equal(document.getElementById('zoom').title, i18n.t('tool.zoomIn'));
 });
 t('grid: отдельного попапа нет, action переключает видимость сетки', () => { gridSys.mount(); resetWH(8, 8);
   assert.equal(document.getElementById('grid-btn'), null); assert.equal(document.getElementById('grid-pop'), null);
@@ -2048,11 +2076,14 @@ t('layers-ui: бары действий слоя и команды слоя', ()
   document.getElementById('lay-del').click(); assert.equal(S.layers.length, 1); });
 await ta('panels: старый порядок тулбара не утаскивает эффекты/настройки из панели слоёв', async () => {
   const panels = await import('../src/systems/panels.js');
-  localStorage.setItem('panelOrder', JSON.stringify({ 'tb-left': ['fx-btn'], 'tb-right': [], sidebar: ['img-settings', 'bc'] }));
+  localStorage.setItem('panelOrder', JSON.stringify({ 'tb-left': ['fx-btn', 't-pencil'], 'tb-right': [], sidebar: ['img-settings', 'bc', 'layers', 'activewrap'] }));
   panels.mount();
   assert.ok(document.getElementById('fx-btn').closest('#lay-act-top')); // эффекты остались в баре слоёв
   assert.ok(document.getElementById('img-settings').closest('#lay-act-top')); // настройки остались в баре слоёв
   assert.equal(document.querySelector('#tb-left #fx-btn'), null); // не вернулись на тулбар
+  assert.equal(document.getElementById('t-pencil').parentElement.id, 'sidebar');
+  assert.equal(document.getElementById('layers').parentElement.id, 'tb-right');
+  assert.equal(document.getElementById('activewrap').parentElement.id, 'tb-right');
   localStorage.removeItem('panelOrder');
 });
 t('layers-ui: можно удалить все слои — остаётся фон и становится активным', () => { resetWH(8, 8);
