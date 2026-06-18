@@ -2,6 +2,7 @@
 import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import { $, showMenuAt, toast, t } from '../core/dom.js';
+import { createLibraryDialog } from '../core/library-dialog.js';
 import { paintStack } from '../core/composite.js';
 import { compositeAt } from '../core/layer-cache.js';
 import { makeCanvas } from '../core/canvas.js';
@@ -15,6 +16,13 @@ const palStore = () => { try { return JSON.parse(localStorage.getItem(STORE)) ||
 const saveStore = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
 const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
 const hasFileTransfer = (dt) => dt && Array.from(dt.types || []).includes('Files');
+let dlg = null;
+
+function dialog() { if (dlg) return dlg;
+  dlg = createLibraryDialog({ overlayId: 'pal-ovl', sheetId: 'pal-sheet', titleKey: 'dialog.palettes',
+    nameId: 'pal-name', saveId: 'pal-save', saveRowId: 'pal-save-row', listId: 'pal-list',
+    placeholderKey: 'palette.namePlaceholder', nameMax: 20 });
+  return dlg; }
 
 function cleanPalette(arr) { const seen = new Set(), out = [];
   for (const c of arr || []) { if (!c) continue; const k = c[0] + ',' + c[1] + ',' + c[2];
@@ -23,14 +31,14 @@ function cleanPalette(arr) { const seen = new Set(), out = [];
 }
 
 function loadPalette(arr, name) { S.palette = cleanPalette(arr); if (S.palette.length) S.active = S.palette[0].slice();
-  bus.emit('palette'); bus.emit('render'); $('pal-ovl').classList.remove('on'); if (name) toast(t('toast.paletteLoaded', { name })); }
+  bus.emit('palette'); bus.emit('render'); dialog().close(); if (name) toast(t('toast.paletteLoaded', { name })); }
 function replaceFromImage(pal) { loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); }
 function addFromImage(pal) { let n = 0;
   for (const c of pal) if (!S.palette.some((p) => eqc(p, c))) { S.palette.push(c.slice()); n++; }
   bus.emit('palette'); bus.emit('render'); toast(t('toast.tsgAdded', { n }));
 }
 
-function palListUI() { const box = $('pal-list'); box.innerHTML = '';
+function palListUI() { const box = dialog().list; box.innerHTML = '';
   const st = palStore(), names = Object.keys(st);
   if (!names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('palette.none') + '</p>'; return; }
   for (const nm of names) { const row = document.createElement('div'); row.className = 'prow';
@@ -102,8 +110,8 @@ function dropPalette(e) {
   paletteFromImageFile(f, 'ask', { x: e.clientX, y: e.clientY });
 }
 
-function openPaletteWindow() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = ''; $('pal-ovl').classList.add('on'); }
-function openPresetMenu() { $('pal-name').value = ''; palListUI(); $('pal-save-row').style.display = 'none'; $('pal-ovl').classList.add('on'); }
+function openPaletteWindow() { const d = dialog(); d.name.value = ''; palListUI(); d.setSaveVisible(true); d.open(); }
+function openPresetMenu() { const d = dialog(); d.name.value = ''; palListUI(); d.setSaveVisible(false); d.open(); }
 function newPalette() { S.palette = []; bus.emit('palette'); bus.emit('render'); toast(t('palette.new')); }
 function createFromCanvas() { const pal = paletteFromCanvas();
   if (!pal.length) { toast(t('toast.canvasEmpty')); return; }
@@ -111,14 +119,14 @@ function createFromCanvas() { const pal = paletteFromCanvas();
 }
 
 export function mount() {
+  dialog();
   $('pal-new').onclick = newPalette;
   $('pal-canvas').onclick = createFromCanvas;
   $('pal-save-open').onclick = openPaletteWindow;
   $('pal-presets').onclick = openPresetMenu;
-  $('pal-close').onclick = () => $('pal-ovl').classList.remove('on');
-  $('pal-save').onclick = () => { const nm = ($('pal-name').value.trim() || t('label.palette')).slice(0, 20);
+  dialog().save.onclick = () => { const nm = (dialog().name.value.trim() || t('label.palette')).slice(0, 20);
     const s2 = palStore(); s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
-  bus.on('locale', palListUI);
+  bus.on('locale', () => { dialog().refresh(); palListUI(); });
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
   $('pal-file').onclick = () => palImg.click();
   palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;

@@ -12,10 +12,6 @@
     .prow-del svg { width: 14px; height: 14px; }
     .pswatches { display: flex; flex-wrap: wrap; cursor: pointer; }
     .pswatches i { width: 26px; height: 26px; display: block; }
-    /* окно палитр — единая шапка как у плавающих окон (заголовок + крестик) */
-    #pal-sheet { padding-top: 0; }
-    #pal-sheet .pop-head { margin: 0 -18px 12px; padding: 11px 10px 11px 18px; border-radius: var(--win-radius) var(--win-radius) 0 0; }
-
     /* ---- Tint & Shade Generator ---- */
     #tsg-btn svg { width: 18px; height: 18px; }
     #tsg-win { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 14;

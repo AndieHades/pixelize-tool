@@ -13,6 +13,12 @@
     @keyframes fadein { from { opacity: 0; } }
     .sheet h3 { margin: 0 0 14px; font-size: var(--type-dialog-title); font-weight: var(--fw-heading); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
     .sheet h3:active { cursor: grabbing; }
+    .library-sheet { padding-top: 0; }
+    .library-sheet .pop-head { margin: 0 calc(var(--dialog-pad-x) * -1) var(--dialog-head-gap);
+      padding: var(--dialog-head-pad-y) var(--dialog-head-pad-r) var(--dialog-head-pad-y) var(--dialog-pad-x);
+      border-radius: var(--win-radius) var(--win-radius) 0 0; }
+    .library-save-row input { flex: 1; }
+    .library-save-row .txtbtn { height: var(--dialog-action-h); }
     /* конвертер — перетаскиваемое окно по центру (а не «шторка»), без закрытия по фону.
        Всё помещается без прокрутки: превью гибкое и ужимается на низких экранах */
     #imp-box { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);

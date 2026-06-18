@@ -5,6 +5,7 @@ import { S } from '../core/state.js';
 import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, toast, t } from '../core/dom.js';
+import { createLibraryDialog } from '../core/library-dialog.js';
 import { makeCanvas } from '../core/canvas.js';
 import { cloneTileset } from '../logic/tileset-data.js';
 import { isTilemap, rasterLayer } from '../core/tilemap.js';
@@ -14,7 +15,7 @@ const STORE = 'tilesetsLib';
 const lib = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
 const save = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
 
-let ovl = null, nameIn = null;
+let dlg = null, nameIn = null;
 
 // мини-превью тайлсета: первые тайлы подряд
 function setPreview(ts) { const n = Math.min(ts.tiles.length, 8), c = makeCanvas(Math.max(1, n) * 10, 10), x = c.getContext('2d');
@@ -39,7 +40,7 @@ function load(name) { const data = lib()[name]; if (!data) return;
   bus.emit('tileset-changed'); bus.emitDoc(); toast(t('toast.tilesetLoaded', { name })); close();
 }
 
-function listUI() { const box = $('tsetm-list'); if (!box) return; box.innerHTML = '';
+function listUI() { const box = dlg && dlg.list; if (!box) return; box.innerHTML = '';
   const st = lib(), names = Object.keys(st);
   if (!names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('tile.noSets') + '</p>'; return; }
   for (const nm of names) { const row = document.createElement('div'); row.className = 'prow';
@@ -52,17 +53,12 @@ function listUI() { const box = $('tsetm-list'); if (!box) return; box.innerHTML
     const prev = setPreview(st[nm]); prev.onclick = () => load(nm);
     row.append(head, prev); box.appendChild(row); } }
 
-function build() { if (ovl) return;
-  ovl = document.createElement('div'); ovl.className = 'ovl'; ovl.id = 'tsetm-ovl';
-  const sheet = document.createElement('div'); sheet.className = 'sheet';
-  const h = document.createElement('h3'); h.textContent = t('tile.loadSet');
-  const row = document.createElement('div'); row.className = 'irow';
-  nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.maxLength = 24; nameIn.placeholder = t('tile.setName'); nameIn.style.flex = '1';
-  const sb = document.createElement('button'); sb.className = 'txtbtn'; sb.textContent = t('btn.save'); sb.onclick = saveCurrent;
-  row.append(nameIn, sb);
-  const list = document.createElement('div'); list.id = 'tsetm-list';
-  sheet.append(h, row, list); ovl.appendChild(sheet); document.body.appendChild(ovl); }
+function build() { if (dlg) return;
+  dlg = createLibraryDialog({ overlayId: 'tsetm-ovl', sheetId: 'tsetm-sheet', titleKey: 'tile.loadSet',
+    nameId: 'tsetm-name', saveId: 'tsetm-save', saveRowId: 'tsetm-save-row', listId: 'tsetm-list',
+    placeholderKey: 'tile.setName', nameMax: 24 });
+  nameIn = dlg.name; dlg.save.onclick = saveCurrent; }
 
-const close = () => ovl && ovl.classList.remove('on');
-export function open() { build(); const ts = activeTileset(); if (ts) nameIn.value = ts.name || ''; listUI(); ovl.dataset.openedAt = Date.now(); ovl.classList.add('on'); }
-export function mount() { build(); actions.register('tileset.manager', open); const b = $('tset-lib'); if (b) b.onclick = open; }
+const close = () => dlg && dlg.close();
+export function open() { build(); const ts = activeTileset(); if (ts) nameIn.value = ts.name || ''; listUI(); dlg.open(); }
+export function mount() { build(); actions.register('tileset.manager', open); bus.on('locale', () => { dlg.refresh(); listUI(); }); const b = $('tset-lib'); if (b) b.onclick = open; }
