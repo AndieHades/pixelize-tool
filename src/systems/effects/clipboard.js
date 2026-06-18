@@ -33,6 +33,8 @@ export function copyOneFx(eff) { if (!eff) return; setFxClip(cloneFx([eff])); to
 export function copyEffectsOf(target) { const list = (target && target.effects) || [];
   if (!list.length) { toast(t('toast.noFxToCopy')); return; } setFxClip(cloneFx(list)); toast(t('toast.fxCopied')); }
 
+export const hasFxClipboard = () => getFxClip().length > 0;
+
 export function pasteFx() { const clip = getFxClip(); if (!clip.length) { toast(t('toast.noFxClipboard')); return; }
   const targets = pasteTargets(); if (!targets.length) return; snapshot();
   for (const tg of targets) tg.effects.push(...cloneFx(clip)); refresh(); toast(t('toast.fxPasted')); }

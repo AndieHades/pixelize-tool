@@ -3,7 +3,7 @@
 import * as actions from '../../core/actions.js';
 import { mountPanel } from './panel.js';
 import { mountSettings, openFxEdit } from './settings.js';
-import { mountClipboard, openFxMenu, deleteFx, copyFx, copyEffectsOf, duplicateFx, pasteFx } from './clipboard.js';
+import { mountClipboard, openFxMenu, deleteFx, copyFx, copyEffectsOf, duplicateFx, pasteFx, hasFxClipboard } from './clipboard.js';
 import { convertFxToLayer } from './convert.js';
 
 export function mount() {
@@ -16,4 +16,5 @@ export function mount() {
   actions.register('fx.convert', convertFxToLayer);
   actions.register('fx.duplicate', duplicateFx);
   actions.register('fx.paste', pasteFx);
+  actions.register('fx.clipboardHasEffects', hasFxClipboard);
 }

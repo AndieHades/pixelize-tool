@@ -135,7 +135,7 @@ export function mount() {
   $('t-move').onclick = () => actions.run(S.rotMode ? 'transform.apply' : 'transform.enter'); // повторное нажатие — применить и выключить
   $('t-select').onclick = () => ((S.tool === 'select' || S.sel) ? selOff() : setTool('select'));
   $('t-lasso').onclick = () => (S.tool === 'lasso' ? selOff() : setTool('lasso'));
-  $('t-fill').onclick = () => { if (S.sel) actions.run('selection.fill'); else setTool('fill'); };
+  $('t-fill').onclick = () => actions.run('tool.fill');
   $('t-adjust').onclick = () => { if (S.tool === 'adjust') $('adjpop').classList.toggle('on'); else setTool('adjust'); };
 
   $('sym').onclick = (e) => showToolChoice('sym-choice', e.currentTarget);

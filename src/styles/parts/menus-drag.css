@@ -18,6 +18,8 @@
       align-items: center; justify-content: flex-start; padding: 0 12px; font-size: var(--type-body); }
     /* подсветка пункта меню при наведении (десктоп) */
     #ctx button:hover, #lctx button:hover, #cctx button:hover, #sctx button:hover, #trctx button:hover, #fxctx button:hover, #impmenu button:hover, #setmenu button:hover, #tctx button:hover, #rowctx button:hover, #brush-plus button:hover button:hover { background: var(--accent-soft); }
+    #ctx button:disabled, #lctx button:disabled, #cctx button:disabled, #sctx button:disabled, #trctx button:disabled, #fxctx button:disabled, #impmenu button:disabled, #setmenu button:disabled, #tctx button:disabled, #rowctx button:disabled {
+      opacity: .35; cursor: default; pointer-events: none; }
     #rowctx button.danger { color: var(--danger); }
     #cctx button.cur { background: var(--accent); }
     #cctx button.dim { opacity: .45; }

@@ -70,6 +70,7 @@ const tb = await import('../src/systems/toolbars.js');
 const gridSys = await import('../src/systems/grid.js');
 const symLines = await import('../src/systems/symmetry-lines.js');
 const effects = await import('../src/systems/effects/index.js');
+const fxShared = await import('../src/systems/effects/shared.js');
 const fxr = await import('../src/core/effects-render.js');
 const fxlogic = await import('../src/logic/layer-effects.js');
 const { EFFECT_TYPES } = await import('../src/config/defaults.js');
@@ -1943,13 +1944,23 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
-t('layers-ui: меню слоя не дублирует кнопки панели', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
+t('layers-ui: меню слоя не дублирует кнопки панели', () => { resetWH(8, 8); layers.mount(); effects.mount(); fxShared.setFxClip([]);
+  document.getElementById('lay-pop').classList.add('on'); layList();
   const row = document.querySelector('#lay-list .lrow[data-li="0"]');
   row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
-  const hidden = ['lctx-ren', 'lctx-dup', 'lctx-select', 'lctx-fill', 'lctx-clear', 'lctx-symm', 'lctx-rotate', 'lctx-clip', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-del'];
+  const hidden = ['lctx-ren', 'lctx-dup', 'lctx-select', 'lctx-fill', 'lctx-clear', 'lctx-symm', 'lctx-rotate', 'lctx-clip', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-del', 'lctx-mono', 'lctx-bc'];
   for (const id of hidden) assert.equal(document.getElementById(id).style.display, 'none', id);
   assert.notEqual(document.getElementById('lctx-tile').style.display, 'none');
+  assert.equal(document.getElementById('lctx-invert').disabled, true);
+  assert.equal(document.getElementById('lctx-copy-fx').disabled, true);
+  assert.equal(document.getElementById('lctx-paste-fx').disabled, true);
+  S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.layers[0].effects = [newEffect('adjustment', { brightness: 10 })]; fxShared.setFxClip([newEffect('stroke')]);
+  row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
+  assert.equal(document.getElementById('lctx-invert').disabled, false);
+  assert.equal(document.getElementById('lctx-copy-fx').disabled, false);
+  assert.equal(document.getElementById('lctx-paste-fx').disabled, false);
   assert.equal(i18n.t('menu.convertTile'), 'Convert to Tilemap');
+  fxShared.setFxClip([]);
 });
 t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
@@ -2314,9 +2325,9 @@ t('настройки: при нескольких слоях/выбранном
   document.getElementById('bc-cancel').click(); assert.equal(S.fxDraft, null); // отмена убирает черновик
   S.fxSel = new Set(); S.fxCur = null; S.layers[1].effects = [];
 });
-t('background: заливка/очистка/контекст-меню на выбранном фоне', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+t('background: заливка/очистка/контекст-меню на выбранном фоне', () => { resetWH(4, 4); layers.mount(); tb.mount(); document.getElementById('lay-pop').classList.add('on');
   S.bg = { color: null, visible: true }; S.bgSel = true; S.active = [3, 4, 5]; layList();
-  actions.run('edit.floodAt', 0, 0); assert.deepEqual(S.bg.color, [3, 4, 5]); // Fill-инструмент красит фон
+  document.getElementById('t-fill').click(); assert.deepEqual(S.bg.color, [3, 4, 5]); assert.equal(S.tool, 'pencil'); // Fill-кнопка сразу красит фон
   document.getElementById('lay-clean').click(); assert.equal(S.bg.color, null); // кнопка очистить → прозрачный
   const cv = document.getElementById('cv'); const prev = document.elementFromPoint; document.elementFromPoint = () => cv;
   try { actions.run('edit.dropColorAt', [2, 2, 2], 5, 5); } finally { document.elementFromPoint = prev; }
@@ -2325,6 +2336,8 @@ t('background: заливка/очистка/контекст-меню на вы
   let bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true })); // меню фона = общее #lctx
   assert.ok(document.getElementById('lctx').classList.contains('on')); // то же меню, что у слоёв
   assert.equal(document.getElementById('lctx-del').style.display, 'none'); // фон нельзя удалить — пункт скрыт
+  assert.equal(document.getElementById('lctx-fill').textContent, i18n.t('menu.fill'));
+  assert.equal(document.getElementById('lctx-clear').textContent, i18n.t('menu.clearSimple'));
   document.getElementById('lctx-fill').click(); assert.deepEqual(S.bg.color, [9, 9, 9]); // меню: Залить
   bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   document.getElementById('lctx-clear').click(); assert.equal(S.bg.color, null); // меню: Очистить
