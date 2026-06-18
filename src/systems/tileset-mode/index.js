@@ -45,7 +45,9 @@ const item = (label, fn) => { const b = document.createElement('button'); b.text
 function openCellMenu(px, py) {
   if (!menu) { menu = document.createElement('div'); menu.id = 'tile-cctx'; menu.className = 'menu'; document.body.appendChild(menu); }
   menu.innerHTML = '';
-  menu.append(item(t('tile.addToSet'), addToSet), item(t('tile.flipH'), cellFlipH), item(t('tile.flipV'), cellFlipV),
+  // на Tile-слое Add tile не нужен (тайл уже в палитре или попадёт туда автоматически)
+  if (!isTilemap(S.layers[S.cur])) menu.append(item(t('tile.addToSet'), addToSet));
+  menu.append(item(t('tile.flipH'), cellFlipH), item(t('tile.flipV'), cellFlipV),
     item(t('tile.select'), cellSelect), item(t('tile.fill'), cellFill), item(t('tile.clearCell'), cellClear));
   showMenuAt(menu, px, py);
 }
@@ -57,12 +59,21 @@ function interactCell(cx, cy, px, py) { if (cellEmptyAt(cx, cy)) { toast(t('toas
 // режим клеток активен, кроме штампа тайлов (draw on) — там ЛКМ ставит тайл
 const cellActive = () => !!(S.tileset && S.tileset.on) && !(S.tool === 'tilebrush' && S.tileMode === 'paint');
 
+// смена активного слоя на Tile-слой (клик/конверт) сама включает Tileset Mode
+let lastCur = -1, lastKind = '';
+function autoTileMode() {
+  const kind = isTilemap(S.layers[S.cur]) ? 'tm' : 'px';
+  if ((S.cur !== lastCur || kind !== lastKind) && kind === 'tm' && !(S.tileset && S.tileset.on)) setMode(true);
+  lastCur = S.cur; lastKind = kind;
+}
+
 let pend = null;
 const cellHandler = {
-  down({ gx, gy, e }) { if (!cellActive()) return false; const c = cellFromGrid(gx, gy); if (!c) return false;
-    // пустая клетка: на обычном слое кисть выключена — клик «съедается» (меню/сообщение на ПКМ);
-    // на Tile-слое отдаём пиксельную правку (Manual/Auto) обработчику tilemap-paint
-    if (cellEmptyAt(c.cx, c.cy)) return !isTilemap(S.layers[S.cur]);
+  down({ gx, gy, e }) { if (!cellActive()) return false;
+    // Tile-слой: ЛКМ рисует (штамп/M/A), меню — только на ПКМ; обработчик не вмешивается
+    if (isTilemap(S.layers[S.cur])) return false;
+    const c = cellFromGrid(gx, gy); if (!c) return false;
+    if (cellEmptyAt(c.cx, c.cy)) return true; // обычный слой, пусто: кисть выключена, клик «съедается»
     pend = { cx: c.cx, cy: c.cy, x: e.clientX, y: e.clientY }; return true; },
   up() { if (!pend) return; const p = pend; pend = null; selectCell(p.cx, p.cy); openCellMenu(p.x, p.y); },
 };
@@ -79,5 +90,6 @@ export function mount() {
   actions.register('tile.cell.flipH', cellFlipH); actions.register('tile.cell.flipV', cellFlipV); actions.register('tile.cell.clear', cellClear);
   actions.register('tile.addToSet', addToSet);
   bus.on('canvas-menu', onCanvasMenu);
+  bus.on('layers', autoTileMode); // активный Tile-слой → Tileset Mode включается сам
 }
 export { addToSet, cellFlipH, cellFlipV };

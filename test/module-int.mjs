@@ -2377,6 +2377,38 @@ t('tilemap: ПКМ в Tileset Mode — клетка с пикселями даё
   assert.ok(S.tileSel && S.tileSel.x0 === 0 && S.tileSel.y0 === 0);
   undo(); S.tileset = { on: false, open: false };
 });
+t('tilemap: активный Tile-слой сам включает Tileset Mode (обычный — нет)', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null;
+  tmode.mount(); S.tileset = { on: false, open: false };
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L);
+  S.cur = 0; bus.emit('layers'); assert.equal(S.tileset.on, false); // обычный слой — режим не трогаем
+  S.cur = S.layers.length - 1; bus.emit('layers'); assert.equal(S.tileset.on, true); // перешли на Tile-слой → включилось
+  tmode.setMode(false);
+});
+t('tilemap: Manual на пустой клетке Tile-слоя автоматически переключается на Auto', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
+  tilePaint(0, 0); // красим по пустой клетке
+  assert.equal(S.tileAutoMode, 'auto'); // M не работает на пустой → включился A
+  assert.equal(ts.tiles.length, 1); // тайл создан и в палитре
+  S.tileset = { on: false };
+});
+t('tilemap: контекст-меню на Tile-слое без Add tile', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1; tmap.setCell(S.cur, 0, 0, { tileId: tile.id });
+  S.tileset = { on: true, open: false }; S.tilesetPrev = null; S.sel = null; S.selMask = null;
+  tmode.mount(); const undo = overCv(10);
+  let m = document.getElementById('tile-cctx'); if (m) m.classList.remove('on');
+  input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
+  input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
+  undo(); m = document.getElementById('tile-cctx');
+  assert.ok(m && m.classList.contains('on')); // меню есть
+  const labels = [...m.querySelectorAll('button')].map((b) => b.textContent);
+  assert.ok(!labels.includes(i18n.t('tile.addToSet'))); // но без Add tile
+  S.tileset = { on: false, open: false };
+});
 
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
 function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;

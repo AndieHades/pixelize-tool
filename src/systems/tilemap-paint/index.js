@@ -26,7 +26,7 @@ let st = null; // { ts, li, uniqued:Set, created:Set, touched:Set, last:[gx,gy] 
 // тайл, в source которого пишем для клетки (cx,cy) согласно режиму
 function targetTile(cx, cy) {
   const tm = active().tilemap, ts = st.ts, key = cx + ',' + cy, cell = getCell(tm, cx, cy);
-  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id); st.created.add(tl.id); return tl; }
+  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id); st.created.add(tl.id); st.uniqued.add(key); return tl; }
   if (S.tileAutoMode === 'auto' && !st.uniqued.has(key)) { // Auto: отделить клетку от общего источника
     const src = getTile(ts, cell.tileId), clone = addTile(ts, src ? src.grid : null, src ? { name: src.name, weight: src.weight, groupId: src.groupId } : {});
     setTileId(tm, cx, cy, clone.id); st.uniqued.add(key); st.created.add(clone.id); return clone;
@@ -71,12 +71,23 @@ function finishStroke() {
   flush(); bus.emit('tileset-changed'); afterStroke(); st = null;
 }
 
+// Manual не работает на пустой клетке: сразу включаем Auto (новый тайл создастся
+// сам, попадёт в палитру и продолжит обновляться по мере рисования)
+function autoOnEmpty(ts, gx, gy, erase) {
+  if (S.tileAutoMode !== 'manual' || erase) return;
+  const cx = Math.floor(gx / ts.tileW), cy = Math.floor(gy / ts.tileH), tm = active().tilemap;
+  if (!inMap(tm, cx, cy)) return; const cell = getCell(tm, cx, cy);
+  if (!cell || cell.tileId == null) { S.tileAutoMode = 'auto'; bus.emit('tileset-changed'); }
+}
+
 const handler = {
   down({ gx, gy, e }) { if (!applicable()) return false;
     const ts = getTileset(active().tilemap.tilesetId); if (!ts) return false;
+    const erase = S.tool === 'eraser' || (e && e.button === 2);
+    autoOnEmpty(ts, gx, gy, erase);
     snapshot(); st = { ts, li: S.cur, uniqued: new Set(), created: new Set(), touched: new Set(), last: [gx, gy] };
     if (S.tool === 'fill') { fillCell(gx, gy); finishStroke(); return true; } // заливка — на одну клетку, разово
-    paintPx(gx, gy, S.tool === 'eraser' || (e && e.button === 2)); flush(); return true; },
+    paintPx(gx, gy, erase); flush(); return true; },
   move({ gx, gy, e }) { if (!st) return; const erase = S.tool === 'eraser' || (e && e.buttons === 2);
     line(st.last[0], st.last[1], gx, gy, erase); st.last = [gx, gy]; flush(); },
   up() { if (st) finishStroke(); },
