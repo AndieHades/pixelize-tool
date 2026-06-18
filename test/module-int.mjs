@@ -105,6 +105,7 @@ const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
 const tgridPop = await import('../src/systems/tile-palette/grid-pop.js');
+const tileToolbar = await import('../src/systems/tile-palette/toolbar.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -981,6 +982,17 @@ t('menus: tool-choice открывается снаружи панели тул�
     assert.ok(lineMenu.querySelector('.menu-arrow').classList.contains('up'));
     lineMenu.classList.remove('on');
   } finally { undo.forEach((fn) => fn()); }
+});
+t('tile-toolbar: Add tile не появляется даже из старого сохранённого порядка', () => {
+  const old = localStorage.getItem('tileToolbarOrder4');
+  try {
+    localStorage.setItem('tileToolbarOrder4', JSON.stringify(['draw', 'new', 'save']));
+    const bar = tileToolbar.buildToolbar();
+    assert.equal(bar.querySelector('[data-tb="new"]'), null);
+    assert.deepEqual([...bar.querySelectorAll('button')].map((b) => b.dataset.tb), ['draw', 'save', 'gridsize', 'manual', 'auto', 'rnd', 'del']);
+  } finally {
+    if (old == null) localStorage.removeItem('tileToolbarOrder4'); else localStorage.setItem('tileToolbarOrder4', old);
+  }
 });
 t('menus: размер Tileset Grid использует общий bubble и указывает на кнопку', () => {
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });

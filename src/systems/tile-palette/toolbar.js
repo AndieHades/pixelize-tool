@@ -1,5 +1,5 @@
 // Нижний тулбар Tileset Palette (закреплён снизу): Manual/Auto-режимы правки,
-// штамп/пипетка тайлов, Random (кубик), создать и удалить тайл. Иконки — SVG в
+// штамп/пипетка тайлов, Random (кубик), менеджер и удаление тайла. Иконки — SVG в
 // стиле проекта. Кнопки можно переставлять зажатым ПКМ/долгим тапом (attachReorder).
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
@@ -15,7 +15,6 @@ const squelch = () => { squelchUntil = performance.now() + 350; };
 const IC = {
   draw: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/><path d="M14 14l5.5-5.5a1.6 1.6 0 0 1 2.3 2.3L16.3 16.3l-3 .7.7-3z"/></svg>',
   rnd: '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="3"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>',
-  add: '<svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M5 4.5h12l2 2v13H5z"/><path d="M8 4.5v6h8v-6"/><path d="M8 16.5h8"/></svg>',
   del: '<svg viewBox="0 0 24 24"><path d="M4.5 6.5h15"/><path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M6.5 6.5l.8 11.7A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8l.8-11.7"/><path d="M10 10.5v6M14 10.5v6"/></svg>',
 };
@@ -31,11 +30,10 @@ const DEFS = {
   manual: { letter: 'M', title: () => t('tile.manual'), run: () => actions.run('tile.manual'), mark: 'manual' },
   auto: { letter: 'A', title: () => t('tile.auto'), run: () => actions.run('tile.auto'), mark: 'auto' },
   rnd: { html: IC.rnd, title: () => t('tile.random'), run: () => actions.run('tile.random'), mark: 'rnd' },
-  new: { html: IC.add, title: () => t('tile.addToSet'), run: () => actions.run('tile.addToSet') },
   save: { html: IC.save, title: () => t('tile.loadSet'), run: () => actions.run('tileset.manager') },
   del: { html: IC.del, title: () => t('tile.delete'), run: () => actions.run('tile.delActive') },
 };
-const DEFAULT_ORDER = ['draw', 'gridsize', 'manual', 'auto', 'rnd', 'new', 'save', 'del'];
+const DEFAULT_ORDER = ['draw', 'gridsize', 'manual', 'auto', 'rnd', 'save', 'del'];
 const savedOrder = () => { try { const a = JSON.parse(localStorage.getItem(STORE)); return Array.isArray(a) ? a : null; } catch (e) { return null; } };
 function saveOrder() { const bar = document.getElementById('tile-act'); if (!bar) return;
   try { localStorage.setItem(STORE, JSON.stringify([...bar.children].map((b) => b.dataset.tb))); } catch (e) {} }

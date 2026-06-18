@@ -318,7 +318,7 @@ Layer / Convert to Pixel Layer); Export as image (уже есть composite); Ex
   Godot): штампуются с выравниванием по сетке (острова/замкнутые участки).
   Кнопка **Random** (кубик) — случайные тайлы из выбранных.
 - **Нижний тулбар** (SVG-иконки): **M** Manual / **A** Auto, штамп, пипетка,
-  Random, New, Delete Tile.
+  Random, менеджер тайлсетов, Delete Tile.
 - **Manual/Auto рисование по холсту** (`tilemap-paint`): Manual пишет в source
   тайла клетки (все экземпляры обновляются). Auto создаёт новый tileId только
   для пустой клетки; если клетка уже ссылается на tileId, правится именно этот
