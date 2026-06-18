@@ -209,6 +209,18 @@ t('render: с выделением и кропом не падает', () => { r
   S.sel = null; S.cropMode = { x0: 0, y0: 0, x1: 2, y1: 2, idx: 0, idy: 0 }; render.render();
   S.cropMode = null; assert.ok(true);
 });
+t('render: ants остаются только у выделения, ручки лежат поверх пунктира', () => { reset4();
+  S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null; render.render();
+  const ants = document.getElementById('sel-ants');
+  assert.equal(ants.style.display, '');
+  assert.equal(ants.querySelectorAll('.handles circle').length, 8);
+  assert.equal(ants.lastElementChild.classList.contains('handles'), true);
+  S.sel = null; S.rotMode = { b: { x0: 0, y0: 0, w: 2, h: 2 }, ang: 0, sx: 1, sy: 1, tx: 0, ty: 0 };
+  S.rotQuad = [[0, 0], [2, 0], [2, 2], [0, 2]]; render.render();
+  assert.equal(ants.style.display, 'none');
+  assert.equal(ants.querySelectorAll('.handles circle').length, 0);
+  S.rotMode = null; S.rotQuad = null;
+});
 t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
 t('render: zoom in/out идут чётким шагом 50%', () => { reset4();
   const cv = document.getElementById('cv');

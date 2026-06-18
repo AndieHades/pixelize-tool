@@ -76,12 +76,8 @@ export function drawOverlays(ctx, ox, oy, z) {
     else if (type === 'ellipse') (!q && S.fillShape.ellipse ? ellipseFill : ellipseEdges)(lp[0], lp[1], lp[2], lp[3], paint);
     else bres(lp[0], lp[1], lp[2], lp[3], paint);
     ctx.globalAlpha = 1; }
-  // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет
-  if (S.sel && !S.selFloat) { // ручки активного выделения видны всегда, поверх любого инструмента
-    const hx = ox + S.sel.x0 * z, hy = oy + S.sel.y0 * z, hw = (S.sel.x1 - S.sel.x0 + 1) * z, hh = (S.sel.y1 - S.sel.y0 + 1) * z, R = 5;
-    for (const p of [[hx, hy], [hx + hw, hy], [hx, hy + hh], [hx + hw, hy + hh], [hx + hw / 2, hy], [hx + hw / 2, hy + hh], [hx, hy + hh / 2], [hx + hw, hy + hh / 2]]) {
-      ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2);
-      ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = C.fg; ctx.stroke(); } }
+  // плавающий фрагмент рисуется в композите слоёв (layerFloatCanvas) — обтравка видит его, швов нет.
+  // Ручки активного выделения рисует SVG ants-layer поверх пунктирной рамки.
   if (S.lassoPath && S.lassoPath.pts.length) drawLasso(ctx, ox, oy, z);
   if (S.replaceMode) { const replaceColors = Array.isArray(S.replaceMode.from && S.replaceMode.from[0]) ? S.replaceMode.from : [S.replaceMode.from];
     ctx.fillStyle = 'rgba(61,139,253,.5)';

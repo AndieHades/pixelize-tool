@@ -36,10 +36,17 @@ export function rotDrag(e, rebuild) { const g = S.rotMode && S.rotMode.grab; if 
 export function rotHover({ e }) { const h = rotHit(e);
   cv().style.cursor = !h ? '' : h.kind === 'move' ? 'move' : h.kind === 'rotate' ? 'grab' : h.kind === 'scale-x' ? 'ew-resize' : 'ns-resize'; }
 
-// рамка трансформации: те же синие кружки + бегущий пунктир, что и у выделения
-// (контур рисует SVG-ants по S.rotQuad — бег обеспечивает CSS, как у выделения)
+function strokeFrame(ctx, pts, dashed) {
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath(); ctx.setLineDash(dashed); ctx.stroke();
+}
+
+// Рамка трансформации статична: пунктир под синими кружками, без SVG ants-анимации.
 export function drawTransformFrame(ctx) { if (!S.rotMode) return; const f = rotFrame(S.rotMode);
-  S.rotQuad = f.p.map((p) => [p.x, p.y]);
+  const pts = f.p.map(rotScreen);
+  ctx.save(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,.8)'; strokeFrame(ctx, pts, []);
+  ctx.strokeStyle = C.fg; strokeFrame(ctx, pts, [6, 4]); ctx.restore();
   const dot = (p) => { const s = rotScreen(p); ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = C.accent; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = C.fg; ctx.stroke(); };
   for (const p of f.p) dot(p);          // углы — поворот
