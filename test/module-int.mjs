@@ -1815,6 +1815,24 @@ t('crop: режим клеток задаёт размер ровно по Grid 
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 40);
   S.tileset.on = false; crop.cancelCrop(); });
 
+t('crop: Cell size в Cells пересчитывает холст по количеству клеток', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
+  const units = document.getElementById('crop-units'), link = document.getElementById('crop-link'), cs = document.getElementById('crop-cell-size');
+  assert.equal(document.getElementById('crop-cell-size-row').classList.contains('on'), false);
+  if (link.classList.contains('on')) link.click();
+  if (!units.classList.contains('on')) units.click();
+  assert.equal(document.getElementById('crop-cell-size-row').classList.contains('on'), true);
+  assert.equal(cs.value, '5');
+  document.getElementById('crop-w').value = '4'; document.getElementById('crop-w').dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('crop-h').value = '6'; document.getElementById('crop-h').dispatchEvent(new window.Event('input', { bubbles: true }));
+  cs.value = '8'; cs.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 8);
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 32);
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 48);
+  assert.equal(document.getElementById('crop-w').value, '4');
+  assert.equal(document.getElementById('crop-h').value, '6');
+  units.click(); assert.equal(document.getElementById('crop-cell-size-row').classList.contains('on'), false);
+  crop.cancelCrop(); });
+
 t('crop: скрепка держит пропорцию в Cells', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
   const units = document.getElementById('crop-units'), link = document.getElementById('crop-link');
   if (!units.classList.contains('on')) units.click();

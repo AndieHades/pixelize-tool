@@ -17,6 +17,7 @@ let cellBase = null, trimBase = null;
 
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
+const clampCellSize = (v) => clampRound(v, 1, 128);
 const cellW = () => gridCellW();
 const cellH = () => gridCellH();
 const maxCellW = () => Math.max(1, Math.floor(MAX_SIZE / cellW()));
@@ -29,9 +30,12 @@ const cloneCrop = (c) => (c ? { ...c, b: c.b ? { ...c.b } : c.b } : null);
 function restoreCrop(src) { if (!S.cropMode || !src) return; Object.assign(S.cropMode, cloneCrop(src)); }
 function syncTrim() { $('crop-trim')?.classList.toggle('on', cropTrim); }
 function clearTrimPreview() { cropTrim = false; trimBase = null; syncTrim(); }
+function syncCellSize() { $('crop-cell-size-row')?.classList.toggle('on', cropCells);
+  if ($('crop-cell-size')) setNumericField($('crop-cell-size'), cellW()); }
 function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();
   if (cropCells) { setNumericField($('crop-w'), cellCountW()); setNumericField($('crop-h'), cellCountH()); }
   else { setNumericField($('crop-w'), s.w); setNumericField($('crop-h'), s.h); }
+  syncCellSize();
   const px = $('crop-px'); if (px) px.textContent = s.w + '×' + s.h + ' px'; } // всегда показываем размер холста в пикселях
 
 // режим единиц: пиксели ↔ клетки (X×Y по текущей сетке Grid)
@@ -44,8 +48,23 @@ function setCropUnits(on, opts = {}) { if (cropCells === on) { syncCropInputs();
   if (!on) { if (opts.restore !== false) restoreCrop(cellBase); cellBase = null; }
   syncCropInputs(); bus.emit('render'); }
 function syncCropGrid() { const g = ensureGrid();
-  const visible = $('crop-grid-visible'); if (visible) visible.checked = !!g.visible; }
+  const visible = $('crop-grid-visible'); if (visible) visible.checked = !!g.visible;
+  syncCellSize(); }
 function setCropGridVisibility(on) { setGridVisible(on); syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
+function cropCellInputCounts() {
+  if (!isNumericLiteral($('crop-w').value) || !isNumericLiteral($('crop-h').value)) return { wc: cellCountW(), hc: cellCountH() };
+  const wc = numericFieldValue($('crop-w'), cellCountW()), hc = numericFieldValue($('crop-h'), cellCountH());
+  return { wc: wc ? clampCellW(wc) : cellCountW(), hc: hc ? clampCellH(hc) : cellCountH() };
+}
+function setCropCellSize(commit = false) { if (!cropCells || !S.cropMode) return; const input = $('crop-cell-size'); if (!input) return;
+  const counts = cropCellInputCounts();
+  if (commit) commitNumericField(input, { min: 1, max: 128, integer: true, relativeMinus: true });
+  if (!isNumericLiteral(input.value)) return;
+  const v = numericFieldValue(input, cellW()); if (!v) return;
+  const g = ensureGrid(), size = clampCellSize(v);
+  g.w = g.h = size;
+  placeCells(counts.wc, counts.hc);
+  syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
 function trimFromCrop() { if (!S.cropMode) return;
   if (cropTrim) { restoreCrop(trimBase); cropTrim = false; trimBase = null; syncTrim(); syncCropInputs(); bus.emit('render'); return; }
   const g = canvasContentBounds();
@@ -175,6 +194,9 @@ export function mount() {
   $('crop-units').onclick = () => setCropUnits(!cropCells);
   $('crop-trim').onclick = trimFromCrop;
   $('crop-grid-visible').addEventListener('change', () => setCropGridVisibility($('crop-grid-visible').checked));
+  $('crop-cell-size').addEventListener('input', () => setCropCellSize(false));
+  $('crop-cell-size').addEventListener('blur', () => setCropCellSize(true));
+  $('crop-cell-size').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); $('crop-cell-size').blur(); } });
   bus.on('grid', syncCropGrid);
   syncCropGrid();
   for (const id of ['crop-w', 'crop-h']) { const which = id === 'crop-w' ? 'w' : 'h';
