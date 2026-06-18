@@ -14,14 +14,16 @@ import { getTileset, getTile, addTile, deleteTile, findTileByGrid } from '../../
 import { isTilemap, inMap, getCell, refreshTile, rasterLayer, layersUsingTile } from '../../core/tilemap.js';
 import { invTransformCoord, cellFlags } from '../../logic/tile-transform.js';
 import { floodRegion } from '../../logic/flood.js';
+import { blendOver } from '../../logic/raster.js';
 import { afterStroke } from '../draw/stroke.js';
+import { brushStampWith, resetScatter } from '../draw/brush.js';
 
 const active = () => S.layers[S.cur];
 // пиксельные инструменты на tilemap-слое всегда идут сюда (иначе писали бы в кеш
 // grid и затирались при пересборке). Режим правки — S.tileAutoMode.
 const applicable = () => isTilemap(active()) && (S.tool === 'pencil' || S.tool === 'eraser' || S.tool === 'fill');
 
-let st = null; // { ts, li, created:Set, touched:Set, last:[gx,gy] }
+let st = null; // { ts, li, created:Set, touched:Set, seen:Set, last:[gx,gy] }
 
 // тайл, в source которого пишем для клетки (cx,cy) согласно режиму
 function targetTile(cx, cy) {
@@ -38,15 +40,29 @@ function paintPx(gx, gy, erase) {
   const flags = cellFlags(getCell(active().tilemap, cx, cy));
   const [sx, sy] = ts.tileW === ts.tileH ? invTransformCoord(gx - cx * ts.tileW, gy - cy * ts.tileH, ts.tileW, flags) : [gx - cx * ts.tileW, gy - cy * ts.tileH];
   if (sx < 0 || sy < 0 || sx >= ts.tileW || sy >= ts.tileH) return;
-  tile.grid[sy][sx] = erase ? null : [S.active[0], S.active[1], S.active[2], 255];
+  const br = S.brushes[erase ? 'eraser' : 'pencil'], op = br ? br.op : 1, key = tile.id + ':' + sx + ':' + sy;
+  if (op < 1) { if (st.seen.has(key)) return; st.seen.add(key); }
+  const dst = tile.grid[sy][sx];
+  if (erase) {
+    if (op >= 1) tile.grid[sy][sx] = null;
+    else if (dst) { const a1 = ((dst.length > 3 ? dst[3] : 255) / 255) * (1 - op);
+      tile.grid[sy][sx] = a1 < .04 ? null : [dst[0], dst[1], dst[2], Math.round(a1 * 255)]; }
+  } else {
+    const col = [S.active[0], S.active[1], S.active[2], 255];
+    tile.grid[sy][sx] = op >= 1 ? col : blendOver(col, dst, op);
+  }
   st.touched.add(tile.id);
+}
+
+function dab(gx, gy, erase) {
+  brushStampWith(gx, gy, erase ? 'eraser' : 'pencil', paintPx, erase);
 }
 
 // интерполяция между точками штриха, чтобы не было разрывов на быстром движении
 function line(x0, y0, x1, y1, erase) {
   const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
   let err = dx - dy, x = x0, y = y0;
-  for (;;) { paintPx(x, y, erase); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+  for (;;) { dab(x, y, erase); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
 }
 
 // заливка ОДНОЙ клетки (тайла) — связная область внутри одного тайла, не по всему
@@ -81,9 +97,9 @@ const handler = {
     const ts = getTileset(active().tilemap.tilesetId); if (!ts) return false;
     const erase = S.tool === 'eraser' || (e && e.button === 2);
     autoOnEmpty(ts, gx, gy, erase);
-    snapshot(); st = { ts, li: S.cur, created: new Set(), touched: new Set(), last: [gx, gy] };
+    snapshot(); resetScatter(); st = { ts, li: S.cur, created: new Set(), touched: new Set(), seen: new Set(), last: [gx, gy] };
     if (S.tool === 'fill') { fillCell(gx, gy); finishStroke(); return true; } // заливка — на одну клетку, разово
-    paintPx(gx, gy, erase); flush(); return true; },
+    dab(gx, gy, erase); flush(); return true; },
   move({ gx, gy, e }) { if (!st) return; const erase = S.tool === 'eraser' || (e && e.buttons === 2);
     line(st.last[0], st.last[1], gx, gy, erase); st.last = [gx, gy]; flush(); },
   up() { if (st) finishStroke(); },

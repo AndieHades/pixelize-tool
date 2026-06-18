@@ -2575,6 +2575,14 @@ t('tilemap: Edit tile пишет в source — обновляются все э�
   assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
   assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
 });
+t('tilemap: Edit tile использует реальный размер кисти', () => {
+  const { tile } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.brushes.pencil.size = 3; S.active = [2, 3, 4];
+  assert.ok(tilePaint(1, 1));
+  assert.deepEqual(tile.grid[0][0], [2, 3, 4, 255]);
+  assert.deepEqual(tile.grid[1][1], [2, 3, 4, 255]);
+  assert.deepEqual(tile.grid[2][2], [2, 3, 4, 255]);
+  assert.equal(tile.grid[3][3], null);
+});
 t('tilemap: Draw Tile редактирует tileId занятой клетки без нового тайла', () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
@@ -2588,6 +2596,17 @@ t('tilemap: Draw Tile на пустой клетке создаёт непуст
   S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [8, 7, 6];
   assert.ok(tilePaint(0, 0)); assert.equal(ts.tiles.length, 1);
   assert.equal(L.tilemap.cells[0].tileId, ts.tiles[0].id); assert.deepEqual(ts.tiles[0].grid[0][0], [8, 7, 6, 255]);
+});
+t('tilemap: Draw Tile на пустой клетке использует реальный размер кисти', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
+  S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
+  S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.brushes.pencil.size = 3; S.active = [7, 6, 5];
+  assert.ok(tilePaint(1, 1)); assert.equal(ts.tiles.length, 1);
+  assert.deepEqual(ts.tiles[0].grid[0][0], [7, 6, 5, 255]);
+  assert.deepEqual(ts.tiles[0].grid[1][1], [7, 6, 5, 255]);
+  assert.deepEqual(ts.tiles[0].grid[2][2], [7, 6, 5, 255]);
+  assert.equal(ts.tiles[0].grid[3][3], null);
 });
 t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
