@@ -8,7 +8,7 @@ import { toast, t } from '../../core/dom.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { effVis } from '../../core/layers.js';
 import { getTileset, getTile, addTileUnique } from '../../core/tileset.js';
-import { isTilemap, getCell, rasterLayer, refreshTile, tileLayerIdxs, composeCell, cellIndex, gridTileSize, tilesetForSize } from '../../core/tilemap.js';
+import { isTilemap, getCell, rasterLayer, refreshTile, tileLayerIdxs, composeCell, cellIndex, inMap, gridTileSize, tilesetForSize } from '../../core/tilemap.js';
 
 // все видимые слои снизу вверх — «всё, что сейчас есть на клетке» для Add tile
 const visibleIdxs = () => S.layers.map((_, i) => i).filter((i) => effVis(i) && S.layers[i].opacity > 0);
@@ -52,7 +52,7 @@ export const cellFlipH = () => flipCell('x');
 export const cellFlipV = () => flipCell('y');
 
 export function cellClear() { const s = S.tileSel; if (!s) return; snapshot();
-  if (isTilemap(S.layers[S.cur])) { for (const i of tileLayerIdxs()) { const tm = S.layers[i].tilemap; tm.cells[cellIndex(tm, s.x0, s.y0)] = null; rasterLayer(i); } }
+  if (isTilemap(S.layers[S.cur])) { for (const i of tileLayerIdxs()) { const tm = S.layers[i].tilemap; if (!inMap(tm, s.x0, s.y0)) continue; tm.cells[cellIndex(tm, s.x0, s.y0)] = null; rasterLayer(i); } }
   else { eachPx(S.layers[S.cur], s.x0, s.y0, (g, sx, sy) => { g[sy][sx] = null; }); markDirty(S.cur); }
   bus.emit('render'); }
 

@@ -7,7 +7,7 @@ import { showMenuAt, toast, t } from '../../core/dom.js';
 import { setTool } from '../../core/tools.js';
 import { gridAt } from '../../core/viewport.js';
 import { registerGlobal } from '../../core/canvas-handlers.js';
-import { isTilemap, getCell } from '../../core/tilemap.js';
+import { isTilemap, getCell, inMap } from '../../core/tilemap.js';
 import { cellFlags } from '../../logic/tile-transform.js';
 import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellClear, cellFill, cellSelect } from './cell-ops.js';
 
@@ -55,9 +55,14 @@ function openCellMenu(px, py) {
   showMenuAt(menu, px, py);
 }
 
-// ПКМ по клетке (любой слой): есть пиксели → выбрать + меню; пусто → тост «клетка пустая»
-function interactCell(cx, cy, px, py) { if (cellEmptyAt(cx, cy)) { toast(t('toast.cellEmpty')); return; }
-  selectCell(cx, cy); openCellMenu(px, py); }
+// ПКМ по Tilemap-клетке открывает меню даже на пустом месте: Clear cell должен
+// удалять только экземпляр на карте, не трогая тайл в палитре.
+function interactCell(cx, cy, px, py) {
+  const L = S.layers[S.cur];
+  if (isTilemap(L)) { if (!inMap(L.tilemap, cx, cy)) return; selectCell(cx, cy); openCellMenu(px, py); return; }
+  if (cellEmptyAt(cx, cy)) { toast(t('toast.cellEmpty')); return; }
+  selectCell(cx, cy); openCellMenu(px, py);
+}
 
 // режим клеток активен, кроме Place tile — там ЛКМ ставит тайл
 const cellActive = () => !!(S.tileset && S.tileset.on) && !(S.tool === 'tilebrush' && S.tileMode === 'paint');

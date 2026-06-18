@@ -2725,6 +2725,31 @@ t('tilemap: контекст-меню на Tile-слое без Add tile', () =>
   assert.ok(!labels.includes(i18n.t('tile.addToSet'))); // но без Add tile
   S.tileset = { on: false, open: false };
 });
+t('tilemap: Clear cell чистит экземпляр, не удаляя тайл из палитры', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
+  S.tileset = { on: true, open: false }; S.tilesetPrev = null; S.sel = null; S.selMask = null;
+  tmode.mount(); const undo = overCv(10);
+  let m = document.getElementById('tile-cctx'); if (m) m.classList.remove('on');
+  input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 45, pointerId: 1 });
+  input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 45, pointerId: 1 });
+  m = document.getElementById('tile-cctx');
+  assert.ok(m && m.classList.contains('on')); // пустая клетка Tilemap всё равно выбирается
+  assert.deepEqual(S.tileSel, { li: S.cur, x0: 0, y0: 1, x1: 0, y1: 1 });
+  m.classList.remove('on');
+  input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 2 });
+  input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 2 });
+  m = document.getElementById('tile-cctx');
+  const clear = [...m.querySelectorAll('button')].find((b) => b.textContent === i18n.t('tile.clearCell'));
+  assert.ok(clear); clear.click(); undo();
+  assert.equal(L.tilemap.cells[0], null);
+  assert.equal(L.tilemap.cells[1].tileId, tile.id);
+  assert.equal(ts.tiles.length, 1);
+  assert.deepEqual(ts.tiles[0].grid[0][0], [1, 2, 3, 255]);
+  S.tileset = { on: false, open: false };
+});
 
 function tilePaint(gx, gy) { for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e: {} })) { gh.up({ e: {} }); return true; } return false; }
 function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = tw; S.grid.h = tw;
