@@ -43,10 +43,9 @@ function setCropUnits(on, opts = {}) { if (cropCells === on) { syncCropInputs();
   if (on && S.cropMode) snapCells(S.cropMode);
   if (!on) { if (opts.restore !== false) restoreCrop(cellBase); cellBase = null; }
   syncCropInputs(); bus.emit('render'); }
-function syncCropGrid() { const g = ensureGrid(); $('crop-grid')?.classList.remove('on');
+function syncCropGrid() { const g = ensureGrid();
   const visible = $('crop-grid-visible'); if (visible) visible.checked = !!g.visible; }
 function setCropGridVisibility(on) { setGridVisible(on); syncCropGrid(); bus.emit('grid'); bus.emit('render'); }
-function focusCropGridVisibility() { $('crop-grid-visible')?.focus(); }
 function trimFromCrop() { if (!S.cropMode) return;
   if (cropTrim) { restoreCrop(trimBase); cropTrim = false; trimBase = null; syncTrim(); syncCropInputs(); bus.emit('render'); return; }
   const g = canvasContentBounds();
@@ -174,7 +173,6 @@ export function mount() {
   $('crop-sym').onclick = () => { cropSym = !cropSym; $('crop-sym').classList.toggle('on', cropSym); toast(cropSym ? t('toast.cropCenter') : t('toast.cropEdge')); };
   $('crop-link').onclick = () => setCropLink(!cropLink);
   $('crop-units').onclick = () => setCropUnits(!cropCells);
-  $('crop-grid').onclick = focusCropGridVisibility;
   $('crop-trim').onclick = trimFromCrop;
   $('crop-grid-visible').addEventListener('change', () => setCropGridVisibility($('crop-grid-visible').checked));
   bus.on('grid', syncCropGrid);

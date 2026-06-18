@@ -1549,14 +1549,14 @@ t('grid: отдельного попапа нет, action переключает
   assert.equal(S.grid.visible, true); assert.equal(S.grid.preview, false);
   gridSys.openGridPop(); assert.equal(S.grid.visible, false);
 });
-t('grid: Canvas size управляет видимостью сетки', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
-  const btn = document.getElementById('crop-grid'), visible = document.getElementById('crop-grid-visible');
-  assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
-  btn.click(); assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
+t('grid: Canvas size управляет видимостью сетки только чекбоксом', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+  const visible = document.getElementById('crop-grid-visible');
+  assert.equal(document.getElementById('crop-grid'), null);
+  assert.equal(S.grid.visible, false);
   visible.checked = true; visible.dispatchEvent(new window.Event('change', { bubbles: true }));
-  assert.equal(S.grid.visible, true); assert.equal(btn.classList.contains('on'), false);
+  assert.equal(S.grid.visible, true);
   visible.checked = false; visible.dispatchEvent(new window.Event('change', { bubbles: true }));
-  assert.equal(S.grid.visible, false); assert.equal(btn.classList.contains('on'), false);
+  assert.equal(S.grid.visible, false);
   crop.cancelCrop();
 });
 t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
@@ -1838,14 +1838,11 @@ t('crop: Trim в Canvas size только выставляет рамку до A
   crop.applyCrop(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
 });
 
-t('crop: Grid переключает видимость, а Cells берёт размер из общей сетки', () => { crop.mount(); resetWH(20, 20); S.grid.w = 4; S.grid.h = 4; S.grid.visible = false; crop.toggleCrop();
-  document.getElementById('crop-grid').click();
-  assert.equal(S.grid.visible, false);
-  assert.equal(document.getElementById('crop-grid').classList.contains('on'), false);
+t('crop: Cells берёт размер из общей сетки, видимость меняет чекбокс', () => { crop.mount(); resetWH(20, 20); S.grid.w = 4; S.grid.h = 4; S.grid.visible = false; crop.toggleCrop();
+  assert.equal(document.getElementById('crop-grid'), null);
   document.getElementById('crop-grid-visible').checked = true;
   document.getElementById('crop-grid-visible').dispatchEvent(new window.Event('change', { bubbles: true }));
   assert.equal(S.grid.visible, true);
-  assert.equal(document.getElementById('crop-grid').classList.contains('on'), false);
   document.getElementById('crop-units').click(); document.getElementById('crop-w').value = '3'; document.getElementById('crop-w').dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 12);
   S.layers[0].grid[7][11] = [1, 2, 3, 255];
