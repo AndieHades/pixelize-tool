@@ -21,6 +21,7 @@ function suspendBrush() { if (S.tilesetPrev) return; S.tilesetPrev = { stab: S.s
 function restoreBrush() { if (!S.tilesetPrev) return; S.stabOn = S.tilesetPrev.stab; S.tilesetPrev = null; bus.emit('brush-flags'); }
 
 export function setMode(on) {
+  if (!on && isTilemap(S.layers[S.cur])) return; // на Tile-слое режим обязателен — выключить нельзя
   S.tileset.on = on; syncBtn(); // Tileset Grid — собственный оверлей (виден когда режим включён), обычную сетку Grid не трогаем
   if (on) { suspendBrush(); actions.run('tile.palette.open'); if (isTilemap(S.layers[S.cur])) actions.run('tilemap.syncGrid'); }
   else { restoreBrush(); actions.run('tile.palette.close'); S.tileSel = null; if (S.tool === 'tilebrush' || S.tool === 'tileselect') setTool('pencil'); }

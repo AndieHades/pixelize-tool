@@ -2350,12 +2350,18 @@ t('tilemap: create tile from layer режет слой по сетке', () => {
   tfl.fromLayer();
   const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
 });
-t('tilemap: Tileset Mode тумблер включает и выключает режим', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16;
-  const ts = tsmgr.createTileset('t', 8, 8); tsmgr.addTile(ts);
-  const L = tmap.makeTilemapLayer('tm', ts.id, 1, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+t('tilemap: Tileset Mode тумблер включает и выключает режим (обычный слой)', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; S.cur = 0; // обычный слой
   tmode.setMode(true); assert.equal(S.tileset.on, true);
   tmode.setMode(false); assert.equal(S.tileset.on, false);
+});
+t('tilemap: на Tile-слое Tileset Mode нельзя выключить', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null;
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmode.setMode(true); assert.equal(S.tileset.on, true);
+  tmode.setMode(false); assert.equal(S.tileset.on, true); // на Tile-слое выключить нельзя
+  tmode.toggle(); assert.equal(S.tileset.on, true); // и тумблером тоже
+  S.cur = 0; tmode.setMode(false); assert.equal(S.tileset.on, false); // на обычном — выключается
 });
 t('tilemap: Tileset Mode выключает стабилизацию и возвращает её при выходе', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.stabOn = true; S.tilesetPrev = null;
