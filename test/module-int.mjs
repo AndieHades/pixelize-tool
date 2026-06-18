@@ -210,6 +210,19 @@ t('render: с выделением и кропом не падает', () => { r
   S.cropMode = null; assert.ok(true);
 });
 t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
+t('render: zoom in/out идут чётким шагом 50%', () => { reset4();
+  const cv = document.getElementById('cv');
+  Object.defineProperty(cv, 'clientWidth', { configurable: true, value: 800 });
+  Object.defineProperty(cv, 'clientHeight', { configurable: true, value: 600 });
+  S.view = { zoom: 4.59, ox: 120, oy: 80 };
+  const wx = (400 - S.view.ox) / S.view.zoom, wy = (300 - S.view.oy) / S.view.zoom;
+  actions.run('zoom.in');
+  assert.equal(S.view.zoom, 5);
+  assert.ok(Math.abs((400 - S.view.ox) / S.view.zoom - wx) < 1e-9);
+  assert.ok(Math.abs((300 - S.view.oy) / S.view.zoom - wy) < 1e-9);
+  actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
+  S.view = { zoom: 4.59, ox: 120, oy: 80 }; actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
+});
 t('cursor: предпросмотр отпечатка рисуется в real/circle без падений', () => { reset4();
   S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; render.render();
   S.cursorMode = 'circle'; render.render(); // круг размера

@@ -17,6 +17,7 @@ import { updateAnts } from './ants.js';
 
 const cv = $('cv'), ctx = cv.getContext('2d');
 const buf = makeCanvas(1, 1); // композит слой+эффекты в пиксельном масштабе (размер ставится по кадру)
+const ZOOM_STEP = 0.5;
 const gridOpacity = (v) => clamp01((+v || 70) / 100);
 function gridStroke(hex, opacity) {
   const c = hexToRgb(hex || '#4aa3ff');
@@ -67,10 +68,17 @@ export function fitView() {
   render();
 }
 
-export function zoomBy(f) { const cw = cv.clientWidth / 2, chh = cv.clientHeight / 2;
+function zoomTo(nextZoom) { const cw = cv.clientWidth / 2, chh = cv.clientHeight / 2;
   const wx = (cw - S.view.ox) / S.view.zoom, wy = (chh - S.view.oy) / S.view.zoom;
-  S.view.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, S.view.zoom * f));
+  S.view.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextZoom));
   S.view.ox = cw - wx * S.view.zoom; S.view.oy = chh - wy * S.view.zoom; render();
+}
+export function zoomBy(f) { zoomTo(S.view.zoom * f); }
+export function zoomStep(dir) {
+  const z = Number.isFinite(S.view.zoom) ? S.view.zoom : ZOOM_MIN;
+  const q = z / ZOOM_STEP;
+  const next = (dir > 0 ? Math.floor(q + 1e-6) + 1 : Math.ceil(q - 1e-6) - 1) * ZOOM_STEP;
+  zoomTo(next);
 }
 
 // система сама подписывается на сигналы (app.js только импортирует систему)
@@ -78,5 +86,5 @@ bus.on('render', render);
 bus.on('fit', fitView);
 window.addEventListener('resize', fitView);
 actions.register('view.fit', fitView);
-actions.register('zoom.in', () => zoomBy(1.25));
-actions.register('zoom.out', () => zoomBy(0.8));
+actions.register('zoom.in', () => zoomStep(1));
+actions.register('zoom.out', () => zoomStep(-1));
