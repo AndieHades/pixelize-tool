@@ -327,7 +327,7 @@ Layer / Convert to Pixel Layer); Export as image (уже есть composite); Ex
   Clear Cell — трансформы экземпляра, не source.
 - **Delete Tile vs Clear Cell**: Delete Tile (палитра, с подтверждением) удаляет
   tileId и чистит все экземпляры; Clear Cell чистит одну клетку.
-- **Convert to Tile** (меню слоя): пиксельный слой → Tilemap-слой с
+- **Convert to Tilemap** (меню слоя): пиксельный слой → Tilemap-слой с
   дедупликацией (одинаковые блоки → один tileId); слой получает иконку Tile
   Layer рядом с глазом. Удаление слоя НЕ удаляет тайлы из палитры.
 - **Дедуп**: одинаковые тайлы не добавляются (как одинаковые цвета палитры) —

@@ -1943,6 +1943,14 @@ t('transform: превью строится с эффектами слоя и п
 
 t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
+t('layers-ui: меню слоя не дублирует кнопки панели', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
+  const row = document.querySelector('#lay-list .lrow[data-li="0"]');
+  row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
+  const hidden = ['lctx-ren', 'lctx-dup', 'lctx-select', 'lctx-fill', 'lctx-clear', 'lctx-symm', 'lctx-rotate', 'lctx-clip', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-del'];
+  for (const id of hidden) assert.equal(document.getElementById(id).style.display, 'none', id);
+  assert.notEqual(document.getElementById('lctx-tile').style.display, 'none');
+  assert.equal(i18n.t('menu.convertTile'), 'Convert to Tilemap');
+});
 t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
   assert.ok(edge);

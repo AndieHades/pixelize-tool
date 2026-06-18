@@ -36,7 +36,7 @@ export function fromLayer() {
   toast(t('toast.tilesFromLayer', { n: added }));
 }
 
-// Convert to Tile: превратить активный пиксельный слой в Tilemap-слой. Режем по
+// Convert to Tilemap: превратить активный пиксельный слой в Tilemap-слой. Режем по
 // сетке с дедупликацией (одинаковые блоки → один tileId), клетки ссылаются на
 // тайлы. Слой меняет тип на 'tilemap' и получает иконку в списке.
 export function convertToTile() {
@@ -59,6 +59,6 @@ export function convertToTile() {
 }
 
 export function mount() {
-  actions.register('tile.fromLayer', fromLayer); // действие осталось (вызов из кода), кнопка убрана — есть «Convert to Tile» в меню слоя
+  actions.register('tile.fromLayer', fromLayer); // действие осталось (вызов из кода), кнопка убрана — есть «Convert to Tilemap» в меню слоя
   actions.register('tile.convertLayer', convertToTile);
 }

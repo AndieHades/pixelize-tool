@@ -230,7 +230,7 @@ export const ru = {
   'tile.saveSet': 'Сохранить тайлсет', 'tile.loadSet': 'Тайлсеты', 'tile.setName': 'Имя тайлсета', 'tile.noSets': 'Сохранённых тайлсетов нет',
   'toast.tilesetEmpty': 'Тайлсет пустой',
   'toast.tilesetLoaded': 'Тайлсет загружен: {name}',
-  'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: случайные тайлы из выбранных',
+  'menu.convertTile': 'Convert to Tilemap', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: случайные тайлы из выбранных',
   'tile.draw': 'Рисовать тайлами (вкл/выкл)', 'tile.tileset': 'Tileset', 'tile.addToSet': 'Add tile',
   'tile.select': 'Выделить клетку', 'tile.fill': 'Залить клетку', 'tile.gridSize': 'Размер клетки Tileset',
   'tile.palette': 'Тайлы', 'tile.newLayer': 'Новый Tile-слой', 'tile.tilemapLayer': 'Tile-слой',

@@ -229,7 +229,7 @@ export const en = {
   'tile.saveSet': 'Save tileset', 'tile.loadSet': 'Tilesets', 'tile.setName': 'Tileset name', 'tile.noSets': 'No saved tilesets',
   'toast.tilesetEmpty': 'Tileset is empty',
   'toast.tilesetLoaded': 'Tileset loaded: {name}',
-  'menu.convertTile': 'Convert to Tile', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: random tiles from selected',
+  'menu.convertTile': 'Convert to Tilemap', 'side.tileLayer': 'Tile Layer', 'tile.random': 'Random: random tiles from selected',
   'tile.draw': 'Draw with tiles (on/off)', 'tile.tileset': 'Tileset', 'tile.addToSet': 'Add tile',
   'tile.select': 'Select cell', 'tile.fill': 'Fill cell', 'tile.gridSize': 'Tileset cell size',
   'tile.palette': 'Tiles', 'tile.newLayer': 'New tile layer', 'tile.tilemapLayer': 'Tile layer',

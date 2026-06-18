@@ -14,6 +14,8 @@ let lctxRef = null, renRef = null;
 const targets = () => (!lctxRef ? [] : (lctxRef.kind === 'folder' ? folderLayers(lctxRef.ref) : [lctxRef.ref])).filter((L) => S.layers.includes(L));
 const close = () => $('lctx').classList.remove('on');
 const curTo = (L) => { const i = S.layers.indexOf(L); if (i >= 0) S.cur = i; };
+const LAYER_MENU_HIDDEN = ['lctx-ren', 'lctx-dup', 'lctx-select', 'lctx-fill', 'lctx-clear', 'lctx-symm', 'lctx-rotate', 'lctx-clip', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-del'];
+const FOLDER_MENU_HIDDEN = ['lctx-ren', 'lctx-fill', 'lctx-rotate'];
 
 const showItem = (id, on) => { const el = $(id); if (el) el.style.display = on ? '' : 'none'; };
 
@@ -23,8 +25,10 @@ export function openLctx(x, y, kind, ref) { lctxRef = { kind, ref };
   for (const id of ['lctx-ren', 'lctx-dup', 'lctx-symm', 'lctx-rotate', 'lctx-copy-fx', 'lctx-paste-fx', 'lctx-mono', 'lctx-bc']) showItem(id, !isBg);
   showItem('lctx-ung', isFolder); showItem('lctx-clip', isLayer);
   for (const id of ['lctx-select', 'lctx-invert', 'lctx-lock', 'lctx-alpha', 'lctx-ref', 'lctx-png-full', 'lctx-png-tight']) showItem(id, isLayer);
-  showItem('lctx-tile', isLayer && ref.kind !== 'tilemap'); // Convert to Tile — только для обычного пиксельного слоя
+  showItem('lctx-tile', isLayer && ref.kind !== 'tilemap'); // Convert to Tilemap — только для обычного пиксельного слоя
   showItem('lctx-del', !isBg); showItem('lctx-fill', true); showItem('lctx-clear', true); // фон не удаляется
+  if (isLayer) for (const id of LAYER_MENU_HIDDEN) showItem(id, false);
+  if (isFolder) for (const id of FOLDER_MENU_HIDDEN) showItem(id, false);
   $('lctx-dup').textContent = t(isFolder ? 'menu.dupFolder' : 'menu.dupLayer');
   $('lctx-del').textContent = t(isFolder ? 'menu.deleteFolder' : 'menu.deleteLayer');
   $('lctx-fill').textContent = t('menu.fill');
