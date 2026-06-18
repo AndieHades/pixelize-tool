@@ -126,7 +126,7 @@ export function start() {
     onClose: () => $('palbar').classList.add('closed'), // крестик прячет палитру; вернуть — кружком цвета
     onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
   resizeSidebar(px(window.getComputedStyle($('sidebar')).width, 50), sidebarMinHeight(50));
-  floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', clampRight: 46, clampBottom: 60,
+  floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', minW: 38, clampRight: 46, clampBottom: 60,
     onResize: resizeSidebar }); // сайдбар — в общем порядке: последний тронутый сверху (без alwaysOnTop)
   $('topbar').addEventListener('pointerdown', () => { $('topbar').style.zIndex = nextFloatingZ(); }, true); // верхняя панель — в общий порядок, поднимается по тапу
   for (const id of ['selbar', 'cropbar', 'rotbar']) {
