@@ -90,6 +90,6 @@ export function mount() {
   actions.register('tile.cell.flipH', cellFlipH); actions.register('tile.cell.flipV', cellFlipV); actions.register('tile.cell.clear', cellClear);
   actions.register('tile.addToSet', addToSet);
   bus.on('canvas-menu', onCanvasMenu);
-  bus.on('layers', autoTileMode); // активный Tile-слой → Tileset Mode включается сам
+  bus.on('layer-active', autoTileMode); // переход на Tile-слой (в т.ч. выбор строки) → Tileset Mode включается сам
 }
 export { addToSet, cellFlipH, cellFlipV };

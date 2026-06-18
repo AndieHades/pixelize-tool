@@ -2381,9 +2381,11 @@ t('tilemap: активный Tile-слой сам включает Tileset Mode 
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null;
   tmode.mount(); S.tileset = { on: false, open: false };
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L);
-  S.cur = 0; bus.emit('layers'); assert.equal(S.tileset.on, false); // обычный слой — режим не трогаем
-  S.cur = S.layers.length - 1; bus.emit('layers'); assert.equal(S.tileset.on, true); // перешли на Tile-слой → включилось
+  S.cur = 0; bus.emit('layer-active'); assert.equal(S.tileset.on, false); // обычный слой — режим не трогаем
+  S.cur = S.layers.length - 1; bus.emit('layer-active'); assert.equal(S.tileset.on, true); // перешли на Tile-слой → включилось
   tmode.setMode(false);
+  S.cur = 0; bus.emit('layer-active'); // ушли на обычный
+  S.cur = S.layers.length - 1; bus.emit('layer-active'); assert.equal(S.tileset.on, true); // вернулись на Tile-слой → снова включилось
 });
 t('tilemap: Manual на пустой клетке Tile-слоя автоматически переключается на Auto', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
