@@ -6,9 +6,11 @@ import { snapshot } from '../../core/history.js';
 import { symmetrizeGrid } from '../../logic/raster.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { bakeFolder, bakeLayerIndices } from '../../core/layer-bake.js';
+import { isTilemap, rasterLayer, composeCell } from '../../core/tilemap.js';
+import { getTileset, addTileUnique } from '../../core/tileset.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
-import { folderChain } from '../../core/layers.js';
+import { effVis, folderChain } from '../../core/layers.js';
 import { localeValues } from '../../i18n/index.js';
 import { folderLayers, topOfFolder, selectedIdx, nextFolderId, uniqueFolderName, nextFolderName, clearFolderEmptyPos, rememberEmptyFolderPositions } from './helpers.js';
 
@@ -18,6 +20,39 @@ function nextLayerName() {
   let max = 0;
   for (const L of S.layers) { const m = (L.name || '').trim().match(re); if (m) max = Math.max(max, +m[1]); }
   S.layerSeq = max + 1; return t('layer.name') + ' ' + S.layerSeq;
+}
+
+const gridHasPixels = (g) => g.some((row) => row.some((c) => c && (c[3] ?? 255) > 0));
+const visibleFx = (L) => (L.effects || []).some((e) => e.visible !== false);
+const mergeKeepsTilemap = (idx, meta) => {
+  const top = S.layers[meta]; if (!isTilemap(top)) return null;
+  const topTs = getTileset(top.tilemap.tilesetId); if (!topTs) return null;
+  for (const i of idx) { const L = S.layers[i]; if (L.clip || L.opacity !== 1 || visibleFx(L)) return null;
+    if (!isTilemap(L)) continue;
+    const ts = getTileset(L.tilemap.tilesetId); if (!ts || ts.tileW !== topTs.tileW || ts.tileH !== topTs.tileH) return null; }
+  return topTs;
+};
+
+function mergeTilemapIndices(idx, meta) {
+  const ts = mergeKeepsTilemap(idx, meta); if (!ts) return false;
+  snapshot();
+  const src = S.layers[meta], contrib = idx.filter((i) => effVis(i));
+  const mapW = Math.max(Math.ceil(S.W / ts.tileW), ...idx.map((i) => S.layers[i].tilemap?.mapW || 0));
+  const mapH = Math.max(Math.ceil(S.H / ts.tileH), ...idx.map((i) => S.layers[i].tilemap?.mapH || 0));
+  const cells = new Array(mapW * mapH).fill(null);
+  for (let cy = 0; cy < mapH; cy++) for (let cx = 0; cx < mapW; cx++) {
+    const g = composeCell(contrib, cx, cy, ts.tileW, ts.tileH); if (!gridHasPixels(g)) continue;
+    const tile = addTileUnique(ts, g).tile;
+    cells[cy * mapW + cx] = { tileId: tile.id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
+  }
+  const merged = { name: src.name, grid: blank(S.W, S.H), opacity: 1, visible: true, fid: src.fid, clip: false,
+    lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext: new Map(), effects: [],
+    kind: 'tilemap', tilemap: { tilesetId: ts.id, mapW, mapH, cells } };
+  for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
+  const at = meta - idx.length + 1;
+  S.layers.splice(at, 0, merged); rasterLayer(at); clearFolderEmptyPos(merged.fid);
+  S.cur = at; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxSel.clear(); S.fxCur = null;
+  dirtyAll(); bus.emitDoc(); toast(t('toast.layersMerged')); return true;
 }
 
 export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return; }
@@ -30,8 +65,9 @@ export function doAddLayer() { if (S.layers.length >= MAX_LAYERS) { toast(t('toa
   dirtyAll(); bus.emitDoc(); }
 
 function mergeIndices(idx) { idx = [...new Set(idx)].filter((i) => S.layers[i]).sort((a, b) => a - b); if (idx.length < 2) return;
+  const meta = idx[idx.length - 1]; if (mergeTilemapIndices(idx, meta)) return;
   snapshot();
-  const meta = idx[idx.length - 1], out = bakeLayerIndices(idx), ext = new Map();
+  const out = bakeLayerIndices(idx), ext = new Map();
   const merged = { name: S.layers[meta].name, grid: out, opacity: 1, visible: true, fid: S.layers[meta].fid, clip: false, lock: false, alphaLock: false, reference: idx.some((i) => S.layers[i].reference), ext, effects: [] };
   for (let j = idx.length - 1; j >= 0; j--) S.layers.splice(idx[j], 1);
   const at = meta - idx.length + 1;

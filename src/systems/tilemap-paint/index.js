@@ -1,7 +1,7 @@
-// Manual/Auto пиксельное рисование по tilemap-слою (как в Aseprite tiles).
-// Глобальный обработчик перехватывает pencil/eraser в Tileset Mode на tilemap:
-//  Manual — пишем в source тайла клетки (обновляются все экземпляры);
-//  Auto   — пустая клетка получает новый tileId, занятая правит свой tileId.
+// Draw Tile/Edit tile: пиксельное рисование по tilemap-слою (как в Aseprite tiles).
+// Глобальный обработчик перехватывает pencil/eraser/fill на активном Tilemap:
+//  Edit tile — пишем в source тайла клетки (обновляются все экземпляры);
+//  Draw Tile — пустая клетка получает новый tileId, занятая правит свой tileId.
 // Пустая клетка → создаётся новый тайл; если штрих оставил её пустой — тайл
 // удаляется (пустая клетка тайла не порождает).
 import { S } from '../../core/state.js';
@@ -18,7 +18,7 @@ import { afterStroke } from '../draw/stroke.js';
 
 const active = () => S.layers[S.cur];
 // пиксельные инструменты на tilemap-слое всегда идут сюда (иначе писали бы в кеш
-// grid и затирались при пересборке). Режим правки — S.tileAutoMode (M/A).
+// grid и затирались при пересборке). Режим правки — S.tileAutoMode.
 const applicable = () => isTilemap(active()) && (S.tool === 'pencil' || S.tool === 'eraser' || S.tool === 'fill');
 
 let st = null; // { ts, li, created:Set, touched:Set, last:[gx,gy] }
@@ -67,7 +67,7 @@ function finishStroke() {
   flush(); bus.emit('tileset-changed'); afterStroke(); st = null;
 }
 
-// Manual не работает на пустой клетке: сразу включаем Auto (новый тайл создастся
+// Edit tile не работает на пустой клетке: сразу включаем Draw Tile (новый тайл создастся
 // сам, попадёт в палитру и продолжит обновляться по мере рисования)
 function autoOnEmpty(ts, gx, gy, erase) {
   if (S.tileAutoMode !== 'manual' || erase) return;
@@ -101,6 +101,6 @@ function dedupe(id) { const tl = getTile(st.ts, id); if (!tl) return;
 function flush() { for (const id of st.touched) refreshTile(st.ts.id, id); rasterLayer(st.li); bus.emit('render'); }
 
 registerGlobal(handler);
-// M/A: режим пиксельной правки тайлов; переключение выбирает карандаш для правки
+// Режим пиксельной правки тайлов; переключение выбирает карандаш для правки.
 actions.register('tile.manual', () => { S.tileAutoMode = 'manual'; setTool('pencil'); bus.emit('tileset-changed'); });
 actions.register('tile.auto', () => { S.tileAutoMode = 'auto'; setTool('pencil'); bus.emit('tileset-changed'); });

@@ -14,7 +14,7 @@ let cropDrag = null, cropSym = false, cropLink = false, cropRatio = 1, cropCells
 
 const cropSize = (c = S.cropMode) => ({ w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 });
 const clampDim = (v) => clampRound(v, 1, MAX_SIZE);
-// размер клетки: в Tileset mode — квадрат Tileset Grid; иначе — ячейка обычной сетки Grid
+// размер клетки: на Tilemap-слое — квадрат Tileset Grid; иначе — ячейка обычной сетки Grid
 const cellW = () => (S.tileset && S.tileset.on ? S.tileGrid.size : Math.max(1, Math.round(S.grid.w) || 16));
 const cellH = () => (S.tileset && S.tileset.on ? S.tileGrid.size : Math.max(1, Math.round(S.grid.h) || 16));
 function syncCropInputs() { if (!S.cropMode) return; const s = cropSize();

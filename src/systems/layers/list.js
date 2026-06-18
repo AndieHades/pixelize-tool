@@ -167,5 +167,5 @@ export function layList() {
   box.appendChild(bgRow()); // фон-слой Background — всегда в самом низу, с отступом (CSS)
   const ref = activeOpacityRef(), op = $('lay-op'); if (op && ref) { const v = Math.round((ref.opacity ?? 1) * 100); op.value = v; $('lay-opv').textContent = v + '%'; } // ползунок — прозрачность активной строки
   syncLayerActionButtons();
-  bus.emit('layer-active'); // активный слой мог смениться (выбор строки идёт через layList) — для подписчиков вроде Tileset Mode
+  bus.emit('layer-active'); // активный слой мог смениться (выбор строки идёт через layList)
 }

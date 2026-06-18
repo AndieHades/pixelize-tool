@@ -18,7 +18,7 @@ function tilesetGridColor() {
 }
 
 function draw({ ctx, ox, oy, z }) {
-  if (!(S.tileset && S.tileset.on)) return; // Tileset Grid и его оверлеи — только в Tileset mode
+  if (!(S.tileset && S.tileset.on)) return; // Tileset Grid и его оверлеи — только на активном Tilemap
   drawTilesetGrid(ctx, ox, oy, z); // квадраты Tileset Grid поверх всего холста (любой слой)
   drawSelCell(ctx, ox, oy, z); // выбранная клетка — белая обводка
   const L = S.layers[S.cur]; if (!isTilemap(L)) return;

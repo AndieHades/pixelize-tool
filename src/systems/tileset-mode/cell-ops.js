@@ -1,4 +1,4 @@
-// Операции над выбранной клеткой (S.tileSel) для Tileset Mode. Работают и на
+// Операции над выбранной клеткой (S.tileSel) для Tilemap-контекста. Работают и на
 // Tile-слое (экземпляр/тайл), и на обычном слое (пиксельный блок клетки):
 // Add tile / Flip X / Flip Y / Select / Fill / Clear. Размер клетки — ctxTileSize.
 import { S } from '../../core/state.js';

@@ -5,6 +5,7 @@
 // призрак — core/drag-ghost, место вставки — core/drop-gap.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
+import { setTool } from '../../core/tools.js';
 import { dragGhost } from '../../core/drag-ghost.js';
 import { makeDropGap, dropZone } from '../../core/drop-gap.js';
 import { LONG_PRESS_MS, DRAG_THRESHOLD } from '../../config/timings.js';
@@ -22,6 +23,7 @@ function rangeIds(ts, a, b) { const arr = ids(ts), i = arr.indexOf(a), j = arr.i
 
 export function selectTile(ts, tileId, e) {
   S.activeTile = { tilesetId: ts.id, tileId };
+  S.tileMode = 'paint'; setTool('tilebrush');
   if (e && (e.ctrlKey || e.metaKey)) { if (S.tileMarks.has(tileId)) S.tileMarks.delete(tileId); else S.tileMarks.add(tileId); anchor = tileId; }
   else if (e && e.shiftKey) { S.tileMarks = new Set(rangeIds(ts, anchor ?? tileId, tileId)); }
   else { S.tileMarks = new Set([tileId]); anchor = tileId; }

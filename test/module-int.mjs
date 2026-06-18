@@ -104,8 +104,10 @@ const tfl = await import('../src/systems/tile-from-layer.js');
 const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
+const tilePalette = await import('../src/systems/tile-palette/index.js');
 const tgridPop = await import('../src/systems/tile-palette/grid-pop.js');
 const tileToolbar = await import('../src/systems/tile-palette/toolbar.js');
+const tileSelect = await import('../src/systems/tile-palette/select.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
@@ -986,13 +988,27 @@ t('menus: tool-choice открывается снаружи панели тул�
 t('tile-toolbar: Add tile не появляется даже из старого сохранённого порядка', () => {
   const old = localStorage.getItem('tileToolbarOrder4');
   try {
-    localStorage.setItem('tileToolbarOrder4', JSON.stringify(['draw', 'new', 'save']));
+    localStorage.setItem('tileToolbarOrder4', JSON.stringify(['draw', 'new', 'auto', 'manual', 'save']));
     const bar = tileToolbar.buildToolbar();
     assert.equal(bar.querySelector('[data-tb="new"]'), null);
-    assert.deepEqual([...bar.querySelectorAll('button')].map((b) => b.dataset.tb), ['draw', 'save', 'gridsize', 'manual', 'auto', 'rnd', 'del']);
+    assert.deepEqual([...bar.querySelectorAll('button')].map((b) => b.dataset.tb), ['place', 'drawtile', 'edittile', 'save', 'gridsize', 'rnd', 'del']);
   } finally {
     if (old == null) localStorage.removeItem('tileToolbarOrder4'); else localStorage.setItem('tileToolbarOrder4', old);
   }
+});
+t('tile-toolbar: Place tile и Draw/Edit подсвечиваются взаимоисключающе', () => {
+  const bar = tileToolbar.buildToolbar(); document.body.appendChild(bar);
+  const on = (id) => bar.querySelector('[data-tb="' + id + '"]').classList.contains('on');
+  try {
+    S.tool = 'tilebrush'; S.tileMode = 'paint'; S.tileAutoMode = 'auto'; tileToolbar.syncToolbar();
+    assert.equal(on('place'), true); assert.equal(on('drawtile'), false); assert.equal(on('edittile'), false);
+    S.tool = 'pencil'; S.tileAutoMode = 'auto'; tileToolbar.syncToolbar();
+    assert.equal(on('place'), false); assert.equal(on('drawtile'), true); assert.equal(on('edittile'), false);
+    S.tool = 'eraser'; S.tileAutoMode = 'manual'; tileToolbar.syncToolbar();
+    assert.equal(on('place'), false); assert.equal(on('drawtile'), false); assert.equal(on('edittile'), true);
+    S.tool = 'fill'; S.tileAutoMode = 'auto'; tileToolbar.syncToolbar();
+    assert.equal(on('place'), false); assert.equal(on('drawtile'), true); assert.equal(on('edittile'), false);
+  } finally { bar.remove(); }
 });
 t('menus: размер Tileset Grid использует общий bubble и указывает на кнопку', () => {
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
@@ -2389,6 +2405,21 @@ t('tilemap: рисование тайлом, правка source обновля�
   tile.grid[1][1] = [9, 9, 9, 255]; tmap.refreshTile(ts.id, tile.id);
   assert.deepEqual(S.layers[S.cur].grid[1][1], [9, 9, 9, 255]); // правка source отразилась на экземпляре
 });
+t('tile-palette: выбор тайла включает Place tile и сохраняет последний Draw/Edit', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileAutoMode = 'manual'; S.tileMode = 'pick'; S.tool = 'pencil';
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
+  tileSelect.selectTile(ts, tile.id);
+  assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: tile.id });
+  assert.equal(S.tool, 'tilebrush'); assert.equal(S.tileMode, 'paint'); assert.equal(S.tileAutoMode, 'manual');
+});
+t('tilemap: цвет, кисть и ластик возвращают последний Draw/Edit режим', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tool = 'tilebrush'; S.tileMode = 'paint'; S.tileAutoMode = 'manual';
+  pal.setActiveColor([9, 8, 7]); assert.equal(S.tool, 'pencil'); assert.equal(S.tileAutoMode, 'manual');
+  S.tool = 'tilebrush'; S.tileAutoMode = 'auto'; setTool('eraser');
+  assert.equal(S.tool, 'eraser'); assert.equal(S.tileAutoMode, 'auto');
+  S.tool = 'tilebrush'; S.tileAutoMode = 'manual'; setTool('pencil');
+  assert.equal(S.tool, 'pencil'); assert.equal(S.tileAutoMode, 'manual');
+});
 t('tilemap: erase и pick через Tile Brush', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [5, 6, 7, 255];
@@ -2439,55 +2470,56 @@ t('tilemap: новые и конвертированные default-слои на
   S.layers[0].name = 'Custom'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
   tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Custom');
 });
-t('tilemap: Tileset Mode тумблер включает и выключает режим (обычный слой)', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; S.cur = 0; // обычный слой
-  tmode.setMode(true); assert.equal(S.tileset.on, true);
-  tmode.setMode(false); assert.equal(S.tileset.on, false);
+t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4);
+  const red = tsmgr.addTile(ts); red.grid[0][0] = [200, 0, 0, 255];
+  const blue = tsmgr.addTile(ts); blue.grid[0][0] = [0, 0, 200, 255];
+  const low = tmap.makeTilemapLayer('low', ts.id, 2, 1), top = tmap.makeTilemapLayer('top', ts.id, 2, 1);
+  S.layers = [low, top]; S.cur = 1; S.marked = new Set();
+  tmap.setCell(0, 0, 0, { tileId: red.id }); tmap.setCell(1, 1, 0, { tileId: blue.id });
+  lops.doMerge();
+  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].kind, 'tilemap'); assert.equal(S.layers[0].name, 'top');
+  assert.equal(S.layers[0].tilemap.cells[0].tileId, red.id); assert.equal(S.layers[0].tilemap.cells[1].tileId, blue.id);
+  assert.deepEqual(S.layers[0].grid[0][0], [200, 0, 0, 255]); assert.deepEqual(S.layers[0].grid[0][4], [0, 0, 200, 255]);
 });
-t('tilemap: на Tile-слое Tileset Mode нельзя выключить', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null;
-  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
-  tmode.setMode(true); assert.equal(S.tileset.on, true);
-  tmode.setMode(false); assert.equal(S.tileset.on, true); // на Tile-слое выключить нельзя
-  tmode.toggle(); assert.equal(S.tileset.on, true); // и тумблером тоже
-  S.cur = 0; tmode.setMode(false); assert.equal(S.tileset.on, false); // на обычном — выключается
-});
-t('tilemap: Tileset Mode выключает стабилизацию и возвращает её при выходе', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.stabOn = true; S.tilesetPrev = null;
-  tmode.setMode(true); assert.equal(S.stabOn, false); // в режиме стабилизация выключена
-  tmode.setMode(false); assert.equal(S.stabOn, true); // вышли — вернулась как была
-});
-t('tilemap: ПКМ в Tileset Mode — клетка с пикселями даёт меню, пустая нет (без Tile Layer)', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.cur = 0; S.marked = new Set();
-  S.tileset = { on: true, open: false }; S.tilesetPrev = null; S.selFloat = null;
-  S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null; // активное выделение не перехватывает ПКМ
-  tmode.mount(); const undo = overCv(10);
-  const rmb = () => { const m0 = document.getElementById('tile-cctx'); if (m0) m0.classList.remove('on');
-    input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
-    input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
-    const m = document.getElementById('tile-cctx'); return !!(m && m.classList.contains('on')); };
-  assert.equal(rmb(), false); // обычный слой, клетка пуста → меню не открывается (тост «клетка пустая»)
-  S.layers[0].grid[1][1] = [200, 100, 50, 255]; // нарисовали пиксель в клетке (0,0)
-  assert.equal(rmb(), true); // теперь меню открывается без всякого Tile Layer
-  assert.ok(S.tileSel && S.tileSel.x0 === 0 && S.tileSel.y0 === 0);
-  undo(); S.tileset = { on: false, open: false };
-});
-t('tilemap: активный Tile-слой сам включает Tileset Mode (обычный — нет)', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null;
-  tmode.mount(); S.tileset = { on: false, open: false };
+t('tilemap: Tileset-панель следует за активным Tilemap-слоем', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null; S.tileset = { on: false, open: false };
+  tilePalette.mount(); tmode.mount();
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L);
-  S.cur = 0; bus.emit('layer-active'); assert.equal(S.tileset.on, false); // обычный слой — режим не трогаем
-  S.cur = S.layers.length - 1; bus.emit('layer-active'); assert.equal(S.tileset.on, true); // перешли на Tile-слой → включилось
-  tmode.setMode(false);
-  S.cur = 0; bus.emit('layer-active'); // ушли на обычный
-  S.cur = S.layers.length - 1; bus.emit('layer-active'); assert.equal(S.tileset.on, true); // вернулись на Tile-слой → снова включилось
+  const panel = document.getElementById('tilebar');
+  S.cur = 0; bus.emit('layer-active');
+  assert.equal(S.tileset.on, false); assert.equal(S.tileset.open, false); assert.ok(panel.classList.contains('closed'));
+  S.cur = S.layers.length - 1; bus.emit('layer-active');
+  assert.equal(S.tileset.on, true); assert.equal(S.tileset.open, true); assert.ok(!panel.classList.contains('closed'));
+  S.cur = 0; bus.emit('layer-active');
+  assert.equal(S.tileset.on, false); assert.equal(S.tileset.open, false); assert.ok(panel.classList.contains('closed'));
 });
-t('tilemap: Manual на пустой клетке Tile-слоя автоматически переключается на Auto', () => {
+t('tilemap: уход с Tilemap возвращает стабилизацию и обычный инструмент', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.stabOn = true; S.tilesetPrev = null; S.tileset = { on: false, open: false };
+  tilePalette.mount(); tmode.mount();
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  S.tool = 'tilebrush'; S.tileMode = 'paint'; bus.emit('layer-active');
+  assert.equal(S.stabOn, false);
+  S.cur = 0; bus.emit('layer-active');
+  assert.equal(S.stabOn, true); assert.equal(S.tool, 'pencil');
+});
+t('tilemap: фон или эффект не держат Tileset-панель открытой', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null; S.tileset = { on: false, open: false };
+  tilePalette.mount(); tmode.mount();
+  const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  bus.emit('layer-active'); assert.equal(S.tileset.on, true);
+  S.bgSel = true; bus.emit('layer-active'); assert.equal(S.tileset.on, false);
+  S.bgSel = false; S.layers[S.cur].effects = [newEffect('stroke')]; S.fxCur = S.layers[S.cur].effects[0];
+  bus.emit('layer-active'); assert.equal(S.tileset.on, false);
+  S.layers[S.cur].effects = []; S.fxCur = null;
+});
+t('tilemap: Edit tile на пустой клетке автоматически переключается на Draw Tile', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
   tilePaint(0, 0); // красим по пустой клетке
-  assert.equal(S.tileAutoMode, 'auto'); // M не работает на пустой → включился A
+  assert.equal(S.tileAutoMode, 'auto'); // Edit tile не работает на пустой → включился Draw Tile
   assert.equal(ts.tiles.length, 1); // тайл создан и в палитре
   S.tileset = { on: false };
 });
@@ -2515,19 +2547,19 @@ function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
   S.tileset = { on: true }; S.tilePattern = null; S.tileRandom = false; return { ts, tile, L }; }
 
-t('tilemap: Manual пишет в source — обновляются все экземпляры', () => {
+t('tilemap: Edit tile пишет в source — обновляются все экземпляры', () => {
   const { tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [10, 20, 30];
   assert.ok(tilePaint(0, 0));
   assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
   assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
 });
-t('tilemap: Auto редактирует tileId занятой клетки без нового тайла', () => {
+t('tilemap: Draw Tile редактирует tileId занятой клетки без нового тайла', () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
   assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
   assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.deepEqual(tile.grid[0][0], [9, 9, 9, 255]);
 });
-t('tilemap: Auto на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
+t('tilemap: Draw Tile на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
   S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };

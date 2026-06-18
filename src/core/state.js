@@ -58,8 +58,8 @@ export const S = {
   // Tileset/Tilemap: библиотека тайлов, активный тайл/группа для Tile Brush,
   // transform-флаги новых экземпляров, выделение клеток, редактор source tile.
   tilesets: [], tilesetSeq: 0,
-  tileset: { on: false, open: false }, // Tileset Mode (тумблер) + признак открытой палитры тайлов (harvest-режим ПКМ)
-  tilesetPrev: null, // сохранённое состояние кисти/стабилизации на время Tileset Mode (восстанавливается при выходе)
+  tileset: { on: false, open: false }, // активный Tilemap-слой показывает Tileset-панель и сетку клеток
+  tilesetPrev: null, // сохранённое состояние кисти/стабилизации на время работы с Tilemap
   tileGrid: { size: loadTileGrid() }, // размер квадрата Tileset Grid (отдельно от обычной сетки Grid)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
   tileMarks: new Set(), // мульти-выбор тайлов в палитре (как свотчи)
@@ -67,7 +67,7 @@ export const S = {
   tileRandom: false, // Random: рисовать случайными тайлами из выбранных (кубик)
   tileRandomNext: null, // зафиксированный следующий случайный tileId (превью == то, что ляжет)
   tileMode: 'paint', // режим Tile Brush: paint | erase | pick
-  tileAutoMode: 'manual', // M/A: source tile (manual) | create-on-empty (auto)
+  tileAutoMode: 'auto', // Draw Tile (auto) | Edit tile (manual)
   tileFlags: { ...TILE_FLAGS_DEFAULT },
   tileSel: null, // { li, x0, y0, x1, y1 } — прямоугольное выделение клеток
   tileEdit: null, // состояние открытого редактора source tile

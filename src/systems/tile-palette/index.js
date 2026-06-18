@@ -12,7 +12,7 @@ import { initSelect, mountSelect } from './select.js';
 import { buildToolbar, syncToolbar } from './toolbar.js';
 import { mountGridPop, toggleGridPop } from './grid-pop.js';
 
-let panel = null;
+let panel = null, mounted = false;
 
 function build() {
   if (panel) return panel;
@@ -46,6 +46,8 @@ export function openPanel() { build(); panel.classList.remove('closed'); S.tiles
 
 export function mount() {
   build();
+  if (mounted) return;
+  mounted = true;
   actions.register('tile.palette.toggle', toggle);
   actions.register('tile.palette.open', openPanel);
   actions.register('tile.palette.close', () => { build(); panel.classList.add('closed'); S.tileset.open = false; });
