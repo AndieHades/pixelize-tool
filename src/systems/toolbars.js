@@ -132,7 +132,19 @@ function activateSymTool(mode) {
   S.symLines.mode = S.symLines.mode === mode ? null : mode; S.symLines.hover = null; syncModeButtons(); bus.emit('render');
 }
 
+const anySymButtonActive = () => !!(S.sym || S.symH || S.symD1 || S.symD2 || (S.symLines && S.symLines.mode));
+
+function clearSymmetry() {
+  const lastFlag = ['sym', 'symH', 'symD1', 'symD2'].find((flag) => S[flag]);
+  if (lastFlag) lastSymChoice = { kind: 'flag', flag: lastFlag };
+  else if (lastSymChoice.kind === 'tool') lastSymChoice = { kind: 'flag', flag: 'sym' };
+  S.sym = S.symH = S.symD1 = S.symD2 = false;
+  if (S.symLines) { S.symLines.mode = null; S.symLines.hover = null; }
+  syncModeButtons(); bus.emit('render'); bus.emit('layers');
+}
+
 function activateLastSymChoice() {
+  if (anySymButtonActive()) { clearSymmetry(); return; }
   if (lastSymChoice.kind === 'tool') activateSymTool(lastSymChoice.mode);
   else toggleSym(lastSymChoice.flag);
 }

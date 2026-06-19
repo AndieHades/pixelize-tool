@@ -1525,10 +1525,12 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
   document.querySelector('#sym-choice [data-sym-flag="symH"]').click();
   assert.equal(S.symH, true);
   document.getElementById('sym').click();
-  assert.equal(S.symH, false);
+  assert.equal(S.sym, false); assert.equal(S.symH, false);
+  assert.ok(!document.getElementById('sym').classList.contains('on'));
   document.querySelector('#sym-choice [data-sym-flag="symD1"]').click(); assert.equal(S.symD1, true);
   document.querySelector('#sym-choice [data-sym-tool="move"]').click(); assert.equal(S.symLines.mode, 'move');
-  document.getElementById('sym').click(); assert.equal(S.symLines.mode, null);
+  document.getElementById('sym').click(); assert.equal(S.symLines.mode, null); assert.equal(S.symD1, false);
+  assert.ok(!document.getElementById('sym').classList.contains('on'));
   S.layers[0].grid[1][0] = [5, 5, 5, 255]; document.getElementById('flip-h').click();
   assert.ok(!document.getElementById('flip-choice').classList.contains('on'));
   assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]);
