@@ -13,9 +13,9 @@ let squelchUntil = 0;
 const squelch = () => { squelchUntil = performance.now() + 350; };
 
 const IC = {
-  place: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M15 13v5M12.5 15.5L15 18l2.5-2.5"/><path d="M19 14.5v4.5h-4.5"/></svg>',
-  drawTile: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/><path d="M17 3.5l3.5 3.5"/></svg>',
-  editTile: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="10" height="10" rx="1.5"/><path d="M14 14l4.8-4.8a1.4 1.4 0 0 1 2 2L16 16l-2.7.7z"/></svg>',
+  place: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.2" fill="currentColor" stroke="none"/><rect x="13" y="13" width="7" height="7" rx="1.2"/><path d="M11.5 7.5H15a2.5 2.5 0 0 1 2.5 2.5v1.5"/><path d="M15.2 9.7l2.3 2.3 2.3-2.3"/></svg>',
+  drawTile: '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="12" height="12" rx="1.6"/><path d="M8 8h5M8 12h3"/><path d="M13.4 18.8l5.4-5.4a1.45 1.45 0 0 1 2.05 2.05l-5.4 5.4-2.8.7z"/><path d="M17.6 14.6l2 2"/></svg>',
+  editTile: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="6" height="6" rx="1"/><rect x="14.5" y="4" width="6" height="6" rx="1"/><rect x="3.5" y="14" width="6" height="6" rx="1"/><path d="M9.5 7h5M6.5 10v4"/><path d="M13.2 18.9l5.2-5.2a1.35 1.35 0 0 1 1.9 1.9l-5.2 5.2-2.6.6z"/><path d="M17.2 14.8l1.9 1.9"/></svg>',
   rnd: '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="3"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M5 4.5h12l2 2v13H5z"/><path d="M8 4.5v6h8v-6"/><path d="M8 16.5h8"/></svg>',
   del: '<svg viewBox="0 0 24 24"><path d="M4.5 6.5h15"/><path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M6.5 6.5l.8 11.7A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8l.8-11.7"/><path d="M10 10.5v6M14 10.5v6"/></svg>',
