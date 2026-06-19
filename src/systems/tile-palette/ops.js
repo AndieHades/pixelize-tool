@@ -6,6 +6,7 @@ import { snapshot } from '../../core/history.js';
 import { toast, t } from '../../core/dom.js';
 import { addTileUnique, duplicateTile, deleteTile, renameTile, tileIndex } from '../../core/tileset.js';
 import { isTilemap, rasterLayer, layersUsingTile } from '../../core/tilemap.js';
+import { createTileVariantCell } from '../../core/tile-variant.js';
 import { confirmDialog } from '../../core/confirm.js';
 
 // активный тайлсет для палитры. Палитра — как набор кистей, НЕ зависит от слоёв:
@@ -26,6 +27,14 @@ export function newTile() { const ts = activeTileset(); if (!ts) { toast(t('toas
 
 export function dupTile(tileId) { const ts = activeTileset(); if (!ts) return;
   snapshot(); const tl = duplicateTile(ts, tileId); if (tl) S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: tl.id }; changed(); }
+
+export function transformTile(tileId, op) { const ts = activeTileset(); if (!ts) return null;
+  snapshot();
+  const res = createTileVariantCell(ts, { tileId }, op); if (!res) return null;
+  S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: res.tile.id };
+  S.tileMarks = new Set([res.tile.id]); S.tilePattern = null; S.tileRandomNext = null;
+  changed(); toast(t(res.added ? 'toast.tileAdded' : 'toast.tileExists'));
+  return res.tile; }
 
 // удалить тайл из тайлсета и очистить ВСЕ его экземпляры на холсте (без UI-подтв.)
 export function removeTiles(ts, tileIds) { const live = liveIds(ts), ids = [...new Set(tileIds)].filter((id) => live.has(id));

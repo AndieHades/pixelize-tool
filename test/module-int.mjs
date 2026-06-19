@@ -108,6 +108,7 @@ const tmode = await import('../src/systems/tileset-mode/index.js');
 await import('../src/systems/tilemap-paint/index.js');
 const tops = await import('../src/systems/tile-palette/ops.js');
 const tilePalette = await import('../src/systems/tile-palette/index.js');
+const tileMenu = await import('../src/systems/tile-palette/menu.js');
 const tileToolbar = await import('../src/systems/tile-palette/toolbar.js');
 const tileSelect = await import('../src/systems/tile-palette/select.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
@@ -2633,6 +2634,21 @@ await ta('tile-palette: Delete Tile удаляет весь мультивыбо
   assert.deepEqual(ts.tiles.map((tile) => tile.id), [c.id]);
   assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null); assert.equal(L.tilemap.cells[2].tileId, c.id);
   assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: c.id }); assert.equal(S.tileMarks.size, 0); assert.equal(S.tileRandomNext, null);
+});
+t('tile-palette: ПКМ-меню создаёт повернутый/отраженный новый тайл', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null; S.tileRandomNext = null;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts);
+  tile.grid[0][0] = [1, 2, 3, 255]; tile.grid[1][0] = [4, 5, 6, 255];
+  S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: tile.id };
+  tileMenu.openTileMenu(10, 10, tile.id);
+  const menu = document.getElementById('tile-menu'), labels = [...menu.querySelectorAll('button')].map((b) => b.textContent);
+  assert.ok(labels.includes(i18n.t('tile.flipH'))); assert.ok(labels.includes(i18n.t('tile.flipV'))); assert.ok(labels.includes(i18n.t('tile.rot90')));
+  menu.querySelectorAll('button')[labels.indexOf(i18n.t('tile.rot90'))].click();
+  assert.equal(ts.tiles.length, 2);
+  const rotated = ts.tiles[1];
+  assert.deepEqual(tile.grid[0][0], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][3], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][2], [4, 5, 6, 255]);
+  assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: rotated.id }); assert.deepEqual([...S.tileMarks], [rotated.id]);
+  tops.transformTile(tile.id, 'rot90'); assert.equal(ts.tiles.length, 2); // тот же bitmap не дублируется
 });
 t('tilemap: Place tile использует выбранный тайл, а не редактируемую клетку', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;

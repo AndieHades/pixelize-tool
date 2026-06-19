@@ -2,7 +2,7 @@
 // Variant дёргается по имени через actions — без прямого импорта систем.
 import * as actions from '../../core/actions.js';
 import { $, showMenuAt, t } from '../../core/dom.js';
-import { dupTile, delTile } from './ops.js';
+import { dupTile, delTile, transformTile } from './ops.js';
 import { startTileRename } from './list.js';
 
 let menu = null;
@@ -21,6 +21,9 @@ export function openTileMenu(x, y, tileId) {
   menu.append(
     item(t('tile.dup'), () => dupTile(tileId)),
     item(t('tile.rename'), () => startTileRename(tileId)),
+    item(t('tile.flipH'), () => transformTile(tileId, 'flipH')),
+    item(t('tile.flipV'), () => transformTile(tileId, 'flipV')),
+    item(t('tile.rot90'), () => transformTile(tileId, 'rot90')),
     item(t('tile.variant'), () => actions.run('tile.variant')),
     item(t('tile.delete'), () => delTile(tileId)),
   );
