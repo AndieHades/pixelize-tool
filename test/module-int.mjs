@@ -1353,6 +1353,35 @@ t('color-picker: hue-кольцо совпадает с HSV и зазор не �
 });
 
 t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
+await ta('reference: drop image into reference window and drag outside detaches it', async () => {
+  const OldImage = globalThis.Image, OldWinImage = window.Image;
+  class MockImage {
+    constructor() { this.naturalWidth = 3; this.naturalHeight = 2; this.width = 3; this.height = 2; }
+    set src(v) { this._src = v; Promise.resolve().then(() => { if (this.onload) this.onload(); }); }
+    get src() { return this._src; }
+  }
+  globalThis.Image = MockImage; window.Image = MockImage;
+  const refwin = document.getElementById('refwin'), file = new File(['x'], 'ref.png', { type: 'image/png' });
+  const dtEvent = (type) => { const e = new window.Event(type, { bubbles: true, cancelable: true });
+    Object.defineProperty(e, 'dataTransfer', { value: { types: ['Files'], files: [file], dropEffect: '' } }); return e; };
+  let bubbled = false; const onDrop = () => { bubbled = true; }; window.addEventListener('drop', onDrop);
+  try {
+    refwin.dispatchEvent(dtEvent('dragenter')); assert.ok(refwin.classList.contains('drop-over'));
+    refwin.dispatchEvent(dtEvent('drop')); await new Promise((r) => setTimeout(r, 0));
+    assert.ok(refwin.classList.contains('on')); assert.ok(!refwin.classList.contains('drop-over')); assert.equal(bubbled, false);
+    let wrote = '', focused = false;
+    const popup = { closed: false, __pxhSetReference: (url) => { popup.refUrl = url; }, focus: () => { focused = true; },
+      document: { open() {}, write(html) { wrote = html; }, close() {} }, addEventListener() {} };
+    const oldOpen = window.open; window.open = () => popup;
+    document.getElementById('refgrip').dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10, screenX: 10, screenY: 10 }));
+    window.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: -40, clientY: 10, screenX: -40, screenY: 10 }));
+    await new Promise((r) => setTimeout(r, 0)); window.open = oldOpen;
+    assert.ok(wrote.includes('pxhSetReference')); assert.equal(document.getElementById('ref-pop'), null);
+    assert.ok(!refwin.classList.contains('on')); assert.ok(document.getElementById('refbtn').classList.contains('on')); assert.ok(popup.refUrl);
+    document.getElementById('refbtn').click(); assert.equal(focused, true);
+    popup.closed = true; window.dispatchEvent(new window.Event('pointercancel'));
+  } finally { window.removeEventListener('drop', onDrop); globalThis.Image = OldImage; window.Image = OldWinImage; }
+});
 
 t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();

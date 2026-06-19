@@ -76,6 +76,7 @@ export function mount() {
     setImportMode('replace'); };
   floatingWindow($('imp-box'), { grip: $('imp-grip'), storeKey: 'impwin' }); // конвертер — перетаскиваемое окно
   let depth = 0; const show = (on) => $('dropmask').classList.toggle('on', on);
+  window.addEventListener('pxh:drop-reset', () => { depth = 0; show(false); });
   window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
   window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); depth++; show(true); } });
   window.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) show(false); });
