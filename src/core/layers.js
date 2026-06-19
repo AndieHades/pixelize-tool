@@ -27,10 +27,11 @@ export function clipBase(i) { if (!S.layers[i].clip) return -1;
   let j = i - 1; while (j >= 0 && S.layers[j].clip) j--; return j; }
 
 // активна ли симметрия на текущем слое (с учётом замка слоя/папки)
-export const symA = () => S.sym && !layerSymLocked(S.layers[S.cur]);   // лево-право
-export const symHA = () => S.symH && !layerSymLocked(S.layers[S.cur]); // верх-низ
-export const symDA = () => S.symD1 && !layerSymLocked(S.layers[S.cur]); // диагональ 45°
-export const symDB = () => S.symD2 && !layerSymLocked(S.layers[S.cur]); // диагональ -45°
+export const symEnabled = () => S.symEnabled !== false;
+export const symA = () => symEnabled() && S.sym && !layerSymLocked(S.layers[S.cur]);   // лево-право
+export const symHA = () => symEnabled() && S.symH && !layerSymLocked(S.layers[S.cur]); // верх-низ
+export const symDA = () => symEnabled() && S.symD1 && !layerSymLocked(S.layers[S.cur]); // диагональ 45°
+export const symDB = () => symEnabled() && S.symD2 && !layerSymLocked(S.layers[S.cur]); // диагональ -45°
 export const anySym = () => symA() || symHA() || symDA() || symDB();
 
 export function symmetryConfig() {

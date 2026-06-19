@@ -114,7 +114,7 @@ const tileSelect = await import('../src/systems/tile-palette/select.js');
 const { floatingWindow, nextFloatingZ } = await import('../src/core/floating-window.js');
 const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(w, h), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false; S.symEnabled = true;
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
@@ -123,7 +123,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
   S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
-  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false;
+  S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.moveDrag = null; S.tool = 'pencil'; S.sym = S.symH = S.symD1 = S.symD2 = false; S.symEnabled = true;
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
@@ -1525,11 +1525,16 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
   document.querySelector('#sym-choice [data-sym-flag="symH"]').click();
   assert.equal(S.symH, true);
   document.getElementById('sym').click();
-  assert.equal(S.sym, false); assert.equal(S.symH, false);
+  assert.equal(S.sym, true); assert.equal(S.symH, true); assert.equal(S.symEnabled, false);
   assert.ok(!document.getElementById('sym').classList.contains('on'));
+  assert.ok(document.querySelector('#sym-choice [data-sym-flag="sym"]').classList.contains('on'));
+  assert.ok(document.querySelector('#sym-choice [data-sym-flag="symH"]').classList.contains('on'));
+  document.getElementById('sym').click();
+  assert.equal(S.symEnabled, true); assert.equal(S.sym, true); assert.equal(S.symH, true);
+  S.sym = false; S.symH = false; S.symEnabled = true;
   document.querySelector('#sym-choice [data-sym-flag="symD1"]').click(); assert.equal(S.symD1, true);
   document.querySelector('#sym-choice [data-sym-tool="move"]').click(); assert.equal(S.symLines.mode, 'move');
-  document.getElementById('sym').click(); assert.equal(S.symLines.mode, null); assert.equal(S.symD1, false);
+  document.getElementById('sym').click(); assert.equal(S.symLines.mode, null); assert.equal(S.symD1, true); assert.equal(S.symEnabled, false);
   assert.ok(!document.getElementById('sym').classList.contains('on'));
   S.layers[0].grid[1][0] = [5, 5, 5, 255]; document.getElementById('flip-h').click();
   assert.ok(!document.getElementById('flip-choice').classList.contains('on'));
@@ -1544,7 +1549,7 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
   assert.equal(document.getElementById('flip-h').title, i18n.t('side.rotate'));
   assert.deepEqual(S.layers[0].grid[3][2], [5, 5, 5, 255]);
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
-  S.sym = false; S.symH = false; S.symD1 = false; S.symLines.mode = null;
+  S.sym = false; S.symH = false; S.symD1 = false; S.symEnabled = true; S.symLines.mode = null;
 });
 t('toolbars: Zoom свернут в одну кнопку с последним выбранным действием', () => { tb.mount(); resetWH(8, 8);
   document.getElementById('zoom').click();

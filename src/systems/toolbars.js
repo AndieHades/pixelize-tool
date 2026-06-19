@@ -58,7 +58,7 @@ function syncModeButtons() {
   setButtonIcon($('sym'), currentSymMode());
   setButtonIcon($('flip-h'), currentFlipMode());
   setButtonIcon($('zoom'), currentZoomMode());
-  const sym = $('sym'); if (sym) sym.classList.toggle('on', !!(S.sym || S.symH || S.symD1 || S.symD2 || (S.symLines && S.symLines.mode)));
+  const sym = $('sym'); if (sym) sym.classList.toggle('on', isSymmetryModeActive());
   syncChoiceMenus();
 }
 
@@ -128,23 +128,24 @@ function activateShapeMode(mode = lastShapeMode) {
 
 function activateSymTool(mode) {
   lastSymChoice = { kind: 'tool', mode };
+  S.symEnabled = true;
   S.symLines ||= { x: null, y: null, d1: null, d2: null, mode: null, hover: null };
   S.symLines.mode = S.symLines.mode === mode ? null : mode; S.symLines.hover = null; syncModeButtons(); bus.emit('render');
 }
 
-const anySymButtonActive = () => !!(S.sym || S.symH || S.symD1 || S.symD2 || (S.symLines && S.symLines.mode));
+const hasSymmetryAxes = () => !!(S.sym || S.symH || S.symD1 || S.symD2);
+const isSymmetryModeActive = () => S.symEnabled !== false && !!(hasSymmetryAxes() || (S.symLines && S.symLines.mode));
 
-function clearSymmetry() {
-  const lastFlag = ['sym', 'symH', 'symD1', 'symD2'].find((flag) => S[flag]);
-  if (lastFlag) lastSymChoice = { kind: 'flag', flag: lastFlag };
-  else if (lastSymChoice.kind === 'tool') lastSymChoice = { kind: 'flag', flag: 'sym' };
-  S.sym = S.symH = S.symD1 = S.symD2 = false;
+function suspendSymmetryMode() {
+  S.symEnabled = false;
   if (S.symLines) { S.symLines.mode = null; S.symLines.hover = null; }
   syncModeButtons(); bus.emit('render'); bus.emit('layers');
 }
 
 function activateLastSymChoice() {
-  if (anySymButtonActive()) { clearSymmetry(); return; }
+  if (isSymmetryModeActive()) { suspendSymmetryMode(); return; }
+  S.symEnabled = true;
+  if (hasSymmetryAxes()) { syncModeButtons(); bus.emit('render'); bus.emit('layers'); return; }
   if (lastSymChoice.kind === 'tool') activateSymTool(lastSymChoice.mode);
   else toggleSym(lastSymChoice.flag);
 }
@@ -167,6 +168,7 @@ function toggle(flag, btnId, onKey, offKey, save = false) { S[flag] = !S[flag]; 
   $(btnId).classList.toggle('on', S[flag]); bus.emit('render'); toast(t(S[flag] ? onKey : offKey)); }
 function toggleSym(flag) { const m = SYM_MODES.find((x) => x.flag === flag); if (!m) return;
   ensureSymmetryDefaults();
+  S.symEnabled = true;
   S[flag] = !S[flag]; syncModeButtons(); bus.emit('render'); bus.emit('layers'); toast(t(S[flag] ? m.onKey : m.offKey)); }
 // повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
 const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };

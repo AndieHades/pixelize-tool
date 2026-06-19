@@ -79,7 +79,7 @@ export function applyImport() {
   // остатки в волосах и т.п.), чтобы их можно было найти через «Выбрать все пиксели»
   const cap = (+$('imp-colors').value) || 64;
   S.palette = paletteFromGrid(g, Math.max(cap, 16)); if (S.palette.length) S.active = S.palette[0].slice();
-  S.sym = $('imp-sym').checked; $('sym').classList.toggle('on', S.sym);
+  S.sym = $('imp-sym').checked; S.symEnabled = true; $('sym').classList.toggle('on', S.sym);
   S.undoStack.length = S.redoStack.length = 0; dirtyAll();
   bus.emit('palette'); setTool('pencil'); bus.emit('layers');
   $('imp-ovl').classList.remove('on'); actions.run('gallery.hide'); bus.emit('fit'); // применили — уходим с галереи в редактор
