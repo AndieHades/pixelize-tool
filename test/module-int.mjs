@@ -74,6 +74,7 @@ const fxShared = await import('../src/systems/effects/shared.js');
 const fxr = await import('../src/core/effects-render.js');
 const fxlogic = await import('../src/logic/layer-effects.js');
 const { EFFECT_TYPES } = await import('../src/config/defaults.js');
+const { tileGridKey } = await import('../src/logic/tileset-data.js');
 const adjust = await import('../src/systems/draw/adjust.js');
 const crop = await import('../src/systems/crop.js');
 const status = await import('../src/systems/status.js');
@@ -2621,6 +2622,18 @@ t('tile-palette: ПКМ-протяжка выделяет тайлы навед�
     assert.equal(document.querySelectorAll('#tile-list .marked').length, 3);
   } finally { document.elementFromPoint = oldHit; }
 });
+await ta('tile-palette: Delete Tile удаляет весь мультивыбор', async () => {
+  resetWH(12, 4); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
+  const ts = tsmgr.createTileset('t', 4, 4), a = tsmgr.addTile(ts), b = tsmgr.addTile(ts), c = tsmgr.addTile(ts);
+  a.grid[0][0] = [1, 0, 0, 255]; b.grid[0][0] = [2, 0, 0, 255]; c.grid[0][0] = [3, 0, 0, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 3, 1); S.layers = [L]; S.cur = 0;
+  tmap.setCell(0, 0, 0, { tileId: a.id }); tmap.setCell(0, 1, 0, { tileId: b.id }); tmap.setCell(0, 2, 0, { tileId: c.id });
+  S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: c.id }; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = b.id;
+  const p = tops.delTile(); document.querySelector('#confirm-ovl .primary').click(); await p;
+  assert.deepEqual(ts.tiles.map((tile) => tile.id), [c.id]);
+  assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null); assert.equal(L.tilemap.cells[2].tileId, c.id);
+  assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: c.id }); assert.equal(S.tileMarks.size, 0); assert.equal(S.tileRandomNext, null);
+});
 t('tilemap: Place tile использует выбранный тайл, а не редактируемую клетку', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
   const ts = tsmgr.createTileset('t', 4, 4), a = tsmgr.addTile(ts), b = tsmgr.addTile(ts);
@@ -2811,6 +2824,29 @@ t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
   assert.equal(S.layers.length, 1); assert.equal(S.layers[0].kind, 'tilemap'); assert.equal(S.layers[0].name, 'top');
   assert.equal(S.layers[0].tilemap.cells[0].tileId, red.id); assert.equal(S.layers[0].tilemap.cells[1].tileId, blue.id);
   assert.deepEqual(S.layers[0].grid[0][0], [200, 0, 0, 255]); assert.deepEqual(S.layers[0].grid[0][4], [0, 0, 200, 255]);
+});
+t('tilemap: merge Tilemap-слоёв объединяет палитры и композиты без дублей', () => {
+  resetWH(8, 4); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const lowTs = tsmgr.createTileset('low', 4, 4), topTs = tsmgr.createTileset('top', 4, 4);
+  const red = tsmgr.addTile(lowTs); red.grid[0][0] = [200, 0, 0, 255];
+  const green = tsmgr.addTile(lowTs); green.grid[0][1] = [0, 200, 0, 255];
+  const blueHalf = tsmgr.addTile(topTs); blueHalf.grid[0][0] = [0, 0, 200, 128];
+  const greenDup = tsmgr.addTile(topTs); greenDup.grid[0][1] = [0, 200, 0, 255];
+  const low = tmap.makeTilemapLayer('low', lowTs.id, 2, 1), top = tmap.makeTilemapLayer('top', topTs.id, 2, 1);
+  S.layers = [low, top]; S.cur = 1; S.marked = new Set();
+  tmap.setCell(0, 0, 0, { tileId: red.id }); tmap.setCell(0, 1, 0, { tileId: green.id });
+  tmap.setCell(1, 0, 0, { tileId: blueHalf.id });
+  lops.doMerge();
+  const L = S.layers[0], ts = tsmgr.getTileset(L.tilemap.tilesetId);
+  assert.equal(L.kind, 'tilemap'); assert.equal(ts.id, topTs.id);
+  assert.equal(ts.tiles.length, 4);
+  assert.equal(new Set(ts.tiles.map((tile) => tileGridKey(tile.grid))).size, ts.tiles.length);
+  assert.ok(ts.tiles.some((tile) => JSON.stringify(tile.grid[0][0]) === JSON.stringify([200, 0, 0, 255])));
+  assert.ok(ts.tiles.some((tile) => JSON.stringify(tile.grid[0][0]) === JSON.stringify([0, 0, 200, 128])));
+  assert.ok(ts.tiles.some((tile) => JSON.stringify(tile.grid[0][1]) === JSON.stringify([0, 200, 0, 255])));
+  const c0 = tsmgr.getTile(ts, L.tilemap.cells[0].tileId), c1 = tsmgr.getTile(ts, L.tilemap.cells[1].tileId);
+  assert.deepEqual(c0.grid[0][0], [100, 0, 100, 255]);
+  assert.equal(c1.id, greenDup.id);
 });
 t('tilemap: Tileset-панель следует за активным Tilemap-слоем', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null; S.tileset = { on: false, open: false };
@@ -3077,6 +3113,9 @@ t('tilemap: stampTileId — одиночный/паттерн/зафиксиро
   assert.equal(tmap.stampTileId(0, 0), a.id); // одиночный
   S.tilePattern = { w: 2, h: 1, ids: [a.id, b.id] };
   assert.equal(tmap.stampTileId(0, 0), a.id); assert.equal(tmap.stampTileId(1, 0), b.id); // паттерн по сетке
+  S.tileRandom = true; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = null;
+  const oldRandom = Math.random; Math.random = () => 0.99;
+  try { assert.equal(tmap.stampTileId(0, 0), b.id); assert.equal(tmap.stampTileId(1, 0), b.id); } finally { Math.random = oldRandom; }
   S.tilePattern = null; S.tileRandom = true; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = null;
   const r1 = tmap.stampTileId(0, 0); assert.ok(r1 === a.id || r1 === b.id);
   assert.equal(tmap.stampTileId(0, 0), r1); // random зафиксирован → превью == штамп

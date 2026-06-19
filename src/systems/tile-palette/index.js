@@ -76,7 +76,7 @@ export function mount() {
   actions.register('tile.palette.close', () => { build(); panel.classList.add('closed'); S.tileset.open = false; });
   actions.register('tile.new', newTile);
   actions.register('tile.dupActive', () => { if (S.activeTile) dupTile(S.activeTile.tileId); });
-  actions.register('tile.delActive', () => { if (S.activeTile) delTile(S.activeTile.tileId); });
+  actions.register('tile.delActive', () => delTile());
   initSelect(refresh); mountSelect();
   // Ширина прилипает к колонкам тайлов: после ресайза не остаётся случайная
   // пустая полоса справа, а список по высоте всё ещё скроллится внутри окна.

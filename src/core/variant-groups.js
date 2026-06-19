@@ -5,6 +5,7 @@ import { weightedPick } from '../logic/tile-variants.js';
 let groupSeq = 0;
 
 export function createGroup(ts, name, baseTileId = null) {
+  groupSeq = Math.max(groupSeq, ...(ts.groups || []).map((g) => g.id || 0));
   const g = { id: ++groupSeq, name: name || '', baseTileId };
   ts.groups = ts.groups || []; ts.groups.push(g); return g;
 }

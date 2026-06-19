@@ -8,6 +8,7 @@ import { dirtyAll, markDirty } from '../../core/layer-cache.js';
 import { bakeFolder, bakeLayerIndices } from '../../core/layer-bake.js';
 import { isTilemap, rasterLayer, composeCell } from '../../core/tilemap.js';
 import { getTileset, addTileUnique } from '../../core/tileset.js';
+import { createGroup } from '../../core/variant-groups.js';
 import { toast, t } from '../../core/dom.js';
 import { MAX_LAYERS } from '../../config/limits.js';
 import { effVis, folderChain } from '../../core/layers.js';
@@ -33,10 +34,30 @@ const mergeKeepsTilemap = (idx, meta) => {
   return topTs;
 };
 
+function copyTilePalettesIntoTarget(idx, targetTs) {
+  for (const i of idx) {
+    const L = S.layers[i]; if (!isTilemap(L)) continue;
+    const srcTs = getTileset(L.tilemap.tilesetId); if (!srcTs || srcTs === targetTs) continue;
+    const groupMap = new Map(), tileMap = new Map();
+    for (const g of (srcTs.groups || [])) groupMap.set(g.id, createGroup(targetTs, g.name, null).id);
+    for (const tile of srcTs.tiles) {
+      const groupId = tile.groupId == null ? null : groupMap.get(tile.groupId) ?? null;
+      const res = addTileUnique(targetTs, tile.grid, { name: tile.name, groupId, weight: tile.weight });
+      tileMap.set(tile.id, res.tile.id);
+    }
+    for (const g of (srcTs.groups || [])) {
+      const ng = (targetTs.groups || []).find((x) => x.id === groupMap.get(g.id));
+      if (ng) ng.baseTileId = tileMap.get(g.baseTileId) ?? null;
+    }
+    targetTs.groups = (targetTs.groups || []).filter((g) => targetTs.tiles.some((tile) => tile.groupId === g.id));
+  }
+}
+
 function mergeTilemapIndices(idx, meta) {
   const ts = mergeKeepsTilemap(idx, meta); if (!ts) return false;
   snapshot();
   const src = S.layers[meta], contrib = idx.filter((i) => effVis(i));
+  copyTilePalettesIntoTarget(idx, ts);
   const mapW = Math.max(Math.ceil(S.W / ts.tileW), ...idx.map((i) => S.layers[i].tilemap?.mapW || 0));
   const mapH = Math.max(Math.ceil(S.H / ts.tileH), ...idx.map((i) => S.layers[i].tilemap?.mapH || 0));
   const cells = new Array(mapW * mapH).fill(null);

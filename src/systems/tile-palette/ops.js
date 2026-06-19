@@ -19,6 +19,7 @@ export function activeTileset() {
 }
 
 const changed = () => { bus.emit('tileset-changed'); bus.emit('render'); };
+const liveIds = (ts) => new Set((ts?.tiles || []).map((tile) => tile.id));
 
 export function newTile() { const ts = activeTileset(); if (!ts) { toast(t('toast.noTilemap')); return; }
   snapshot(); const { tile } = addTileUnique(ts); S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: tile.id }; changed(); }
@@ -27,20 +28,37 @@ export function dupTile(tileId) { const ts = activeTileset(); if (!ts) return;
   snapshot(); const tl = duplicateTile(ts, tileId); if (tl) S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: tl.id }; changed(); }
 
 // удалить тайл из тайлсета и очистить ВСЕ его экземпляры на холсте (без UI-подтв.)
-export function removeTile(ts, tileId) { snapshot();
-  deleteTile(ts, tileId);
+export function removeTiles(ts, tileIds) { const live = liveIds(ts), ids = [...new Set(tileIds)].filter((id) => live.has(id));
+  if (!ids.length) return;
+  const del = new Set(ids);
+  snapshot();
+  ids.forEach((id) => deleteTile(ts, id));
   S.layers.forEach((L, i) => { if (!isTilemap(L) || L.tilemap.tilesetId !== ts.id) return;
     let touched = false;
-    L.tilemap.cells = L.tilemap.cells.map((c) => { if (c && c.tileId === tileId) { touched = true; return null; } return c; });
+    L.tilemap.cells = L.tilemap.cells.map((c) => { if (c && del.has(c.tileId)) { touched = true; return null; } return c; });
     if (touched) rasterLayer(i); });
-  if (S.activeTile && S.activeTile.tilesetId === ts.id && S.activeTile.tileId === tileId) S.activeTile = ts.tiles[0] ? { tilesetId: ts.id, tileId: ts.tiles[0].id } : null;
-  if (S.placeTile && S.placeTile.tilesetId === ts.id && S.placeTile.tileId === tileId) S.placeTile = ts.tiles[0] ? { tilesetId: ts.id, tileId: ts.tiles[0].id } : null;
-  S.tileMarks.delete(tileId); changed(); }
+  const fallback = ts.tiles[0] ? { tilesetId: ts.id, tileId: ts.tiles[0].id } : null;
+  if (S.activeTile && S.activeTile.tilesetId === ts.id && del.has(S.activeTile.tileId)) S.activeTile = fallback;
+  if (S.placeTile && S.placeTile.tilesetId === ts.id && del.has(S.placeTile.tileId)) S.placeTile = fallback;
+  if (del.has(S.tileRandomNext)) S.tileRandomNext = null;
+  const liveNow = liveIds(ts);
+  S.tileMarks = new Set([...S.tileMarks].filter((id) => liveNow.has(id) && !del.has(id)));
+  if (S.tileMarks.size < 2) S.tilePattern = null;
+  changed(); }
+
+export function removeTile(ts, tileId) { removeTiles(ts, [tileId]); }
 
 // Delete Tile: глобально удаляет тайл; если он есть на холсте — спросить подтверждение
-export async function delTile(tileId) { const ts = activeTileset(); if (!ts) return;
-  if (layersUsingTile(ts.id, tileId).length && !(await confirmDialog(t('tile.deleteConfirm')))) return;
-  removeTile(ts, tileId); }
+function deleteTargets(ts, tileId = null) {
+  const live = liveIds(ts), marks = [...S.tileMarks].filter((id) => live.has(id));
+  if (tileId != null && live.has(tileId)) return S.tileMarks.has(tileId) && marks.length ? marks : [tileId];
+  if (marks.length) return marks;
+  return (S.activeTile && S.activeTile.tilesetId === ts.id && live.has(S.activeTile.tileId)) ? [S.activeTile.tileId] : [];
+}
+export async function delTile(tileId = null) { const ts = activeTileset(); if (!ts) return;
+  const ids = deleteTargets(ts, tileId); if (!ids.length) return;
+  if (ids.some((id) => layersUsingTile(ts.id, id).length) && !(await confirmDialog(t('tile.deleteConfirm')))) return;
+  removeTiles(ts, ids); }
 
 export function renTile(tileId, name) { const ts = activeTileset(); if (!ts) return; snapshot(); renameTile(ts, tileId, name); changed(); }
 
