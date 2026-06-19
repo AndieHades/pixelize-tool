@@ -38,7 +38,7 @@ export function createTilemap(opts = {}) {
   const L = makeTilemapLayer(t('tile.tilemapLayer'), ts.id, mapW, mapH);
   const at = S.layers.length; S.layers.splice(at, 0, L); S.cur = at;
   S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxCur = null;
-  S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
+  S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: ts.tiles[0] ? ts.tiles[0].id : null };
   if (tw === th && TILE_GRID_SIZES.includes(tw)) S.tileGrid.size = tw;
   rasterLayer(at); dirtyAll(); bus.emit('render'); bus.emitDoc(); bus.emit('tileset-changed'); toast(t('toast.tilemapCreated'));
 }

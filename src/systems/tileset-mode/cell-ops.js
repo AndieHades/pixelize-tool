@@ -1,6 +1,6 @@
 // Операции над выбранной клеткой (S.tileSel) для Tilemap-контекста. Работают и на
 // Tile-слое (экземпляр/тайл), и на обычном слое (пиксельный блок клетки):
-// Add tile / Flip X / Flip Y / Select / Fill / Clear. Размер клетки — ctxTileSize.
+// Add tile / Flip X / Flip Y / Rotate / Select / Fill / Clear. Размер клетки — ctxTileSize.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import { snapshot } from '../../core/history.js';
@@ -8,7 +8,8 @@ import { toast, t } from '../../core/dom.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { effVis } from '../../core/layers.js';
 import { getTileset, getTile, addTileUnique } from '../../core/tileset.js';
-import { isTilemap, getCell, rasterLayer, refreshTile, tileLayerIdxs, composeCell, cellIndex, inMap, gridTileSize, tilesetForSize } from '../../core/tilemap.js';
+import { createTileVariantCell } from '../../core/tile-variant.js';
+import { isTilemap, getCell, rasterLayer, refreshTile, composeCell, cellIndex, inMap, gridTileSize, tilesetForSize } from '../../core/tilemap.js';
 
 // все видимые слои снизу вверх — «всё, что сейчас есть на клетке» для Add tile
 const visibleIdxs = () => S.layers.map((_, i) => i).filter((i) => effVis(i) && S.layers[i].opacity > 0);
@@ -37,22 +38,32 @@ export function addToSet() {
   bus.emit('tileset-changed'); bus.emit('render'); toast(t(res.added ? 'toast.tileAdded' : 'toast.tileExists'));
 }
 
-function flipTiles(fn) { const idxs = tileLayerIdxs(), s = S.tileSel; if (!idxs.length || !s) return;
-  for (const i of idxs) { const c = getCell(S.layers[i].tilemap, s.x0, s.y0); if (c && c.tileId != null) { fn(c); rasterLayer(i); } } }
 function flipBlock(L, cx, cy, axis) { const r = rectOf(cx, cy), buf = [];
   for (let y = 0; y < r.h; y++) { buf[y] = []; for (let x = 0; x < r.w; x++) { const sx = r.x0 + x, sy = r.y0 + y; buf[y][x] = (sx < S.W && sy < S.H && L.grid[sy][sx]) ? L.grid[sy][sx].slice() : null; } }
   for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) { const sx = r.x0 + x, sy = r.y0 + y; if (sx >= S.W || sy >= S.H) continue;
     const c = axis === 'x' ? buf[y][r.w - 1 - x] : buf[r.h - 1 - y][x]; L.grid[sy][sx] = c ? c.slice() : null; }
   markDirty(S.cur); }
-function flipCell(axis) { const s = S.tileSel; if (!s) return; snapshot();
-  if (isTilemap(S.layers[S.cur])) flipTiles((c) => { if (axis === 'x') c.flipX = !c.flipX; else c.flipY = !c.flipY; });
-  else flipBlock(S.layers[S.cur], s.x0, s.y0, axis);
-  bus.emit('render'); }
+function transformTilemapCell(op) {
+  const s = S.tileSel, L = S.layers[S.cur]; if (!s || !isTilemap(L) || !inMap(L.tilemap, s.x0, s.y0)) return false;
+  const cell = getCell(L.tilemap, s.x0, s.y0), ts = getTileset(L.tilemap.tilesetId);
+  if (!cell || cell.tileId == null || !ts || !getTile(ts, cell.tileId)) return false;
+  snapshot();
+  const res = createTileVariantCell(ts, cell, op); if (!res) return false;
+  S.activeTile = { tilesetId: ts.id, tileId: res.tile.id };
+  L.tilemap.cells[cellIndex(L.tilemap, s.x0, s.y0)] = res.cell;
+  rasterLayer(S.cur);
+  bus.emit('tileset-changed'); bus.emit('render');
+  return true;
+}
+function flipCell(axis) { const s = S.tileSel; if (!s) return;
+  if (isTilemap(S.layers[S.cur])) { transformTilemapCell(axis === 'x' ? 'flipH' : 'flipV'); return; }
+  snapshot(); flipBlock(S.layers[S.cur], s.x0, s.y0, axis); bus.emit('render'); }
 export const cellFlipH = () => flipCell('x');
 export const cellFlipV = () => flipCell('y');
+export const cellRotate = () => transformTilemapCell('rot90');
 
 export function cellClear() { const s = S.tileSel; if (!s) return; snapshot();
-  if (isTilemap(S.layers[S.cur])) { for (const i of tileLayerIdxs()) { const tm = S.layers[i].tilemap; if (!inMap(tm, s.x0, s.y0)) continue; tm.cells[cellIndex(tm, s.x0, s.y0)] = null; rasterLayer(i); } }
+  if (isTilemap(S.layers[S.cur])) { const L = S.layers[S.cur]; if (inMap(L.tilemap, s.x0, s.y0)) { L.tilemap.cells[cellIndex(L.tilemap, s.x0, s.y0)] = null; rasterLayer(S.cur); } }
   else { eachPx(S.layers[S.cur], s.x0, s.y0, (g, sx, sy) => { g[sy][sx] = null; }); markDirty(S.cur); }
   bus.emit('render'); }
 

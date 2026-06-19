@@ -59,7 +59,7 @@ function drawBrushPreview(ctx, ox, oy, z, ts, L) {
   if (!inMap(L.tilemap, cx, cy)) return;
   const key = cx + ',' + cy; if (S.tileRandom && key !== lastCell) rollRandomTile(); lastCell = key;
   const px0 = ox + cx * ts.tileW * z, py0 = oy + cy * ts.tileH * z;
-  const id = stampTileId(cx, cy), tile = id != null && getTile(ts, id);
+  const id = stampTileId(cx, cy, ts.id), tile = id != null && getTile(ts, id);
   ctx.save();
   if (tile) { const g = transformTile(tile.grid, S.tileFlags); ctx.globalAlpha = 0.75;
     for (let y = 0; y < ts.tileH; y++) for (let x = 0; x < ts.tileW; x++) { const c = g[y] && g[y][x]; if (!c) continue;

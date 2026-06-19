@@ -63,6 +63,7 @@ export const S = {
   tilesetPrev: null, // сохранённое состояние кисти/стабилизации на время работы с Tilemap
   tileGrid: { size: loadTileGrid() }, // размер квадрата Tileset Grid (отдельно от обычной сетки Grid)
   activeTile: null, // { tilesetId, tileId } или { tilesetId, groupId }
+  placeTile: null, // последний явно выбранный тайл/группа для Place tile
   tileMarks: new Set(), // мульти-выбор тайлов в палитре (как свотчи)
   tilePattern: null, // паттерн из нескольких выбранных тайлов (Godot-стиль): { w, h, ids }
   tileRandom: false, // Random: рисовать случайными тайлами из выбранных (кубик)

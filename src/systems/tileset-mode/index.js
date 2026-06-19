@@ -9,7 +9,7 @@ import { gridAt } from '../../core/viewport.js';
 import { registerGlobal } from '../../core/canvas-handlers.js';
 import { isTilemap, getCell, inMap } from '../../core/tilemap.js';
 import { cellFlags } from '../../logic/tile-transform.js';
-import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellClear, cellFill, cellSelect } from './cell-ops.js';
+import { ctxTileSize, cellEmptyAt, addToSet, cellFlipH, cellFlipV, cellRotate, cellClear, cellFill, cellSelect } from './cell-ops.js';
 
 let menu = null, mounted = false;
 
@@ -50,8 +50,9 @@ function openCellMenu(px, py) {
   menu.innerHTML = '';
   // на Tile-слое Add tile не нужен (тайл уже в палитре или попадёт туда автоматически)
   if (!isTilemap(S.layers[S.cur])) menu.append(item(t('tile.addToSet'), addToSet));
-  menu.append(item(t('tile.flipH'), cellFlipH), item(t('tile.flipV'), cellFlipV),
-    item(t('tile.select'), cellSelect), item(t('tile.fill'), cellFill), item(t('tile.clearCell'), cellClear));
+  menu.append(item(t('tile.flipH'), cellFlipH), item(t('tile.flipV'), cellFlipV));
+  if (isTilemap(S.layers[S.cur])) menu.append(item(t('tile.rot90'), cellRotate));
+  menu.append(item(t('tile.select'), cellSelect), item(t('tile.fill'), cellFill), item(t('tile.clearCell'), cellClear));
   showMenuAt(menu, px, py);
 }
 
@@ -79,18 +80,19 @@ const cellHandler = {
 };
 registerGlobal(cellHandler);
 
-function onCanvasMenu(e) { if (!S.tileset || !S.tileset.on) return false;
+function onCanvasMenu(e) {
   const [gx, gy] = gridAt(e.clientX, e.clientY); const c = cellFromGrid(gx, gy); if (!c) return false;
+  if (!activeIsTilemap() && (!S.tileset || !S.tileset.on)) return false;
   interactCell(c.cx, c.cy, e.clientX, e.clientY); return true; }
 
 export function mount() {
   if (mounted) { syncForActiveLayer(); return; }
   mounted = true;
-  actions.register('tile.cell.flipH', cellFlipH); actions.register('tile.cell.flipV', cellFlipV); actions.register('tile.cell.clear', cellClear);
+  actions.register('tile.cell.flipH', cellFlipH); actions.register('tile.cell.flipV', cellFlipV); actions.register('tile.cell.rotate', cellRotate); actions.register('tile.cell.clear', cellClear);
   actions.register('tile.addToSet', addToSet);
   bus.on('canvas-menu', onCanvasMenu);
   bus.on('layer-active', syncForActiveLayer);
   bus.on('layers', syncForActiveLayer);
   syncForActiveLayer();
 }
-export { addToSet, cellFlipH, cellFlipV };
+export { addToSet, cellFlipH, cellFlipV, cellRotate };

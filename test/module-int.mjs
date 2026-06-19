@@ -116,7 +116,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; S.placeTile = null;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
@@ -125,7 +125,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.symLines = { x: null, y: null, d1: null, d2: null, mode: null, hover: null }; S.grid = { w: 16, h: 16, color: '#4aa3ff', opacity: 70, visible: false, preview: false, link: true };
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
-  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
+  S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; S.placeTile = null;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
@@ -2586,7 +2586,54 @@ t('tile-palette: выбор тайла включает Place tile и сохра
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   tileSelect.selectTile(ts, tile.id);
   assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: tile.id });
+  assert.deepEqual(S.placeTile, { tilesetId: ts.id, tileId: tile.id });
   assert.equal(S.tool, 'tilebrush'); assert.equal(S.tileMode, 'paint'); assert.equal(S.tileAutoMode, 'manual');
+});
+t('tile-palette: Ctrl и Shift выделяют тайлы как свотчи', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
+  const ts = tsmgr.createTileset('t', 4, 4), tiles = Array.from({ length: 5 }, () => tsmgr.addTile(ts));
+  S.activeTile = { tilesetId: ts.id, tileId: tiles[0].id }; tilePalette.mount(); tilePalette.openPanel();
+  let cells = [...document.querySelectorAll('#tile-list .tile-cell')];
+  cells[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.deepEqual([...S.tileMarks], [tiles[1].id]); assert.equal(document.querySelectorAll('#tile-list .marked').length, 1);
+  cells = [...document.querySelectorAll('#tile-list .tile-cell')];
+  cells[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  assert.deepEqual([...S.tileMarks], [tiles[1].id, tiles[2].id, tiles[3].id]);
+  assert.equal(document.querySelectorAll('#tile-list .marked').length, 3);
+  cells = [...document.querySelectorAll('#tile-list .tile-cell')];
+  cells[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.deepEqual([...S.tileMarks], [tiles[1].id, tiles[3].id]);
+});
+t('tile-palette: ПКМ-протяжка выделяет тайлы наведением, не переставляет', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
+  const ts = tsmgr.createTileset('t', 4, 4); Array.from({ length: 4 }, () => tsmgr.addTile(ts));
+  S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0].id }; tilePalette.mount(); tilePalette.openPanel();
+  const cells = [...document.querySelectorAll('#tile-list .tile-cell')], oldHit = document.elementFromPoint;
+  try {
+    document.elementFromPoint = () => cells[2];
+    cells[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
+    document.elementFromPoint = () => cells[3];
+    document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 40, clientY: 0 }));
+    document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 40, clientY: 0 }));
+    assert.deepEqual(ts.tiles.map((tile) => tile.id), [1, 2, 3, 4]); // ПКМ-драг не переставляет
+    assert.deepEqual([...S.tileMarks], [ts.tiles[0].id, ts.tiles[2].id, ts.tiles[3].id]);
+    assert.equal(document.querySelectorAll('#tile-list .marked').length, 3);
+  } finally { document.elementFromPoint = oldHit; }
+});
+t('tilemap: Place tile использует выбранный тайл, а не редактируемую клетку', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), a = tsmgr.addTile(ts), b = tsmgr.addTile(ts);
+  a.grid[0][0] = [1, 1, 1, 255]; b.grid[0][0] = [2, 2, 2, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: a.id });
+  tileSelect.selectTile(ts, b.id); // именно этот тайл должен остаться источником Place tile
+  S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
+  assert.ok(tilePaint(0, 0));
+  assert.notEqual(S.activeTile.tileId, b.id); assert.equal(S.placeTile.tileId, b.id);
+  S.tool = 'tilebrush'; S.tileMode = 'paint'; const h = toolHandler('tilebrush'); h.down({ gx: 4, gy: 0 }); h.up({});
+  assert.equal(L.tilemap.cells[1].tileId, b.id);
+  assert.deepEqual(b.grid[0][0], [2, 2, 2, 255]);
 });
 t('tilemap: цвет, кисть и ластик возвращают последний Draw/Edit режим', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tool = 'tilebrush'; S.tileMode = 'paint'; S.tileAutoMode = 'manual';
@@ -2805,19 +2852,25 @@ t('tilemap: Edit All Tiles на пустой клетке автоматичес
   assert.equal(ts.tiles.length, 1); // тайл создан и в палитре
   S.tileset = { on: false };
 });
-t('tilemap: контекст-меню на Tile-слое без Add tile', () => {
+t('tilemap: контекст-меню Tilemap-клетки работает без Tileset mode', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1; tmap.setCell(S.cur, 0, 0, { tileId: tile.id });
   S.tileset = { on: true, open: false }; S.tilesetPrev = null; S.sel = null; S.selMask = null;
-  tmode.mount(); const undo = overCv(10);
+  tmode.mount(); S.tileset.on = false; S.tileset.open = false; const undo = overCv(10);
   let m = document.getElementById('tile-cctx'); if (m) m.classList.remove('on');
   input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
   input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
-  undo(); m = document.getElementById('tile-cctx');
+  m = document.getElementById('tile-cctx');
   assert.ok(m && m.classList.contains('on')); // меню есть
   const labels = [...m.querySelectorAll('button')].map((b) => b.textContent);
   assert.ok(!labels.includes(i18n.t('tile.addToSet'))); // но без Add tile
+  assert.deepEqual(labels, [i18n.t('tile.flipH'), i18n.t('tile.flipV'), i18n.t('tile.rot90'), i18n.t('tile.select'), i18n.t('tile.fill'), i18n.t('tile.clearCell')]);
+  const rot = [...m.querySelectorAll('button')].find((b) => b.textContent === i18n.t('tile.rot90'));
+  assert.ok(rot); rot.click(); undo();
+  const id = L.tilemap.cells[0].tileId, rotated = tsmgr.getTile(ts, id);
+  assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id); assert.equal(L.tilemap.cells[0].rotation, 0);
+  assert.deepEqual(tile.grid[0][0], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][3], [1, 2, 3, 255]);
   S.tileset = { on: false, open: false };
 });
 t('tilemap: Clear cell чистит экземпляр, не удаляя тайл из палитры', () => {
@@ -2937,10 +2990,13 @@ t('tilemap: пустая клетка → тайл; стёртая в ноль �
   S.tool = 'eraser'; tilePaint(4, 0); assert.equal(ts.tiles.length, 1); // стёртая пустая клетка нового тайла не дала
 });
 t('tilemap: трансформ клетки меняет экземпляр, не source', () => {
-  const { tile, L } = tmSetup(4); S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
+  const { ts, tile, L } = tmSetup(4); tile.grid[0][1] = [2, 2, 2, 255]; S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.cellFlipH();
-  assert.equal(L.tilemap.cells[0].flipX, true); assert.ok(!L.tilemap.cells[1].flipX); // только эта клетка
+  const id = L.tilemap.cells[0].tileId, flipped = tsmgr.getTile(ts, id);
+  assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id);
+  assert.equal(L.tilemap.cells[0].flipX, false); assert.equal(L.tilemap.cells[1].tileId, tile.id); // только эта клетка
   assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); // source не тронут
+  assert.deepEqual(flipped.grid[0][3], [1, 1, 1, 255]); assert.deepEqual(flipped.grid[0][2], [2, 2, 2, 255]);
 });
 t('tilemap: Delete Tile очищает все экземпляры', () => {
   const { ts, tile, L } = tmSetup(4); tops.removeTile(ts, tile.id);

@@ -9,7 +9,7 @@ import { setTool } from '../../core/tools.js';
 import { snapshot } from '../../core/history.js';
 import { toast, t } from '../../core/dom.js';
 import { getTileset, getTile } from '../../core/tileset.js';
-import { isTilemap, getCell, setCell, inMap, stampTileId, rollRandomTile } from '../../core/tilemap.js';
+import { isTilemap, getCell, setCell, inMap, stampTileId, stampTileSource, rollRandomTile } from '../../core/tilemap.js';
 import { pickVariant } from '../../core/variant-groups.js';
 import { cellFlags } from '../../logic/tile-transform.js';
 
@@ -20,9 +20,10 @@ function toCell(gx, gy) { const L = S.layers[S.cur]; if (!isTilemap(L)) return n
   return inMap(L.tilemap, cx, cy) ? { cx, cy, ts } : null; }
 
 function paintAt(cx, cy, ts) {
+  const src = stampTileSource(ts.id);
   // активная variant-группа без паттерна/рандома — случайный вариант группы
-  let id = (S.activeTile && S.activeTile.groupId != null && !S.tilePattern && !S.tileRandom)
-    ? pickVariant(ts, S.activeTile.groupId, Math.random) : stampTileId(cx, cy);
+  let id = (src && src.groupId != null && !S.tilePattern && !S.tileRandom)
+    ? pickVariant(ts, src.groupId, Math.random) : stampTileId(cx, cy, ts.id);
   if (id == null || !getTile(ts, id)) { if (!S.tilePattern) toast(t('toast.noTiles')); return; }
   setCell(S.cur, cx, cy, { tileId: id, ...S.tileFlags });
   if (S.tileRandom && S.tileMarks.size) rollRandomTile(); // следующий штамп — новый случайный (и превью обновится)
@@ -32,7 +33,7 @@ function pickAt(cx, cy) {
   const L = S.layers[S.cur];
   S.tileSel = { li: S.cur, x0: cx, y0: cy, x1: cx, y1: cy }; // выбор клетки (draw выключен)
   const cell = getCell(L.tilemap, cx, cy);
-  if (cell && cell.tileId != null) { S.activeTile = { tilesetId: L.tilemap.tilesetId, tileId: cell.tileId }; S.tileFlags = cellFlags(cell); }
+  if (cell && cell.tileId != null) { S.activeTile = S.placeTile = { tilesetId: L.tilemap.tilesetId, tileId: cell.tileId }; S.tileFlags = cellFlags(cell); }
   bus.emit('tileset-changed'); bus.emit('render');
 }
 

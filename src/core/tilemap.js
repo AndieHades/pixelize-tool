@@ -112,10 +112,16 @@ export function composeCell(idxs, cx, cy, w, h) {
 // штампа и превью на кисти (WYSIWYG): паттерн / зафиксированный random / активный
 const patternAt = (p, cx, cy) => p.ids[(((cy % p.h) + p.h) % p.h) * p.w + (((cx % p.w) + p.w) % p.w)];
 export function rollRandomTile() { const ids = [...S.tileMarks]; if (ids.length) S.tileRandomNext = ids[Math.floor(Math.random() * ids.length)]; }
-export function stampTileId(cx, cy) {
+export function stampTileSource(tilesetId = null) {
+  const ok = (a) => a && (tilesetId == null || a.tilesetId === tilesetId);
+  return (ok(S.placeTile) && S.placeTile) || (ok(S.activeTile) && S.activeTile) || null;
+}
+
+export function stampTileId(cx, cy, tilesetId = null) {
   if (S.tilePattern) return patternAt(S.tilePattern, cx, cy);
   if (S.tileRandom && S.tileMarks.size) { if (S.tileRandomNext == null) rollRandomTile(); return S.tileRandomNext; }
-  return S.activeTile ? S.activeTile.tileId : null;
+  const a = stampTileSource(tilesetId);
+  return a ? a.tileId : null;
 }
 
 // поставить/стереть клетку и пересобрать слой (стирание — cell=null)
