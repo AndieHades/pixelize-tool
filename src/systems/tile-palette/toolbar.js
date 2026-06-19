@@ -1,4 +1,4 @@
-// Нижний тулбар Tileset Palette (закреплён снизу): Place tile, Draw Tile/Edit
+// Нижний тулбар Tileset Palette (закреплён снизу): Place tile, Draw on Tile/Edit All Tiles
 // tile, Random (кубик), менеджер и удаление тайла. Иконки — SVG в
 // стиле проекта. Кнопки можно переставлять зажатым ПКМ/долгим тапом (attachReorder).
 import { S } from '../../core/state.js';

@@ -230,7 +230,7 @@ export const ru = {
   'tool.tilebrush': 'Кисть тайлов',
   'tile.copy': 'Копировать', 'tile.cut': 'Вырезать', 'tile.paste': 'Вставить',
   'tile.fromLayer': 'Создать тайл из слоя',
-  'tile.manual': 'Edit tile', 'tile.auto': 'Draw Tile',
+  'tile.manual': 'Edit All Tiles', 'tile.auto': 'Draw on Tile',
   'tile.clearCell': 'Очистить клетку', 'tile.deleteConfirm': 'Тайл используется на холсте. Удалить его и очистить все экземпляры?',
   'tile.saveSet': 'Сохранить тайлсет', 'tile.loadSet': 'Тайлсеты', 'tile.setName': 'Имя тайлсета', 'tile.noSets': 'Сохранённых тайлсетов нет',
   'toast.tilesetEmpty': 'Тайлсет пустой',

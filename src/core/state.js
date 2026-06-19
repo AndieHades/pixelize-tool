@@ -68,7 +68,7 @@ export const S = {
   tileRandom: false, // Random: рисовать случайными тайлами из выбранных (кубик)
   tileRandomNext: null, // зафиксированный следующий случайный tileId (превью == то, что ляжет)
   tileMode: 'paint', // режим Tile Brush: paint | erase | pick
-  tileAutoMode: 'auto', // Draw Tile (auto) | Edit tile (manual)
+  tileAutoMode: 'auto', // Draw on Tile (auto) | Edit All Tiles (manual)
   tileFlags: { ...TILE_FLAGS_DEFAULT },
   tileSel: null, // { li, x0, y0, x1, y1 } — прямоугольное выделение клеток
   tileEdit: null, // состояние открытого редактора source tile

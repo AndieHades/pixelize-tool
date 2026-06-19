@@ -364,15 +364,23 @@ t('eyedropper: color.setActive ставит активный цвет, не ме
 t('rotate-canvas: поворачивает содержимое без изменения размера холста', () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
   rotateCanvas(); assert.equal(S.W, 4); assert.equal(S.H, 6); assert.deepEqual(S.layers[0].ext.get('4,1'), [7, 7, 7, 255]); });
 t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
-t('flip: слой → только он, фон → весь документ', () => { resetWH(4, 4); lops.doAddLayer();
+t('flip: без Selection отражает весь документ, с Selection — активный фрагмент слоя', () => { resetWH(4, 4); lops.doAddLayer();
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255]; cache.dirtyAll();
   S.cur = 1; S.marked = new Set(); S.selFolder = null; S.bgSel = false;
-  flipLayer(true); // выбран слой 1 → флипается только он
-  assert.deepEqual(S.layers[1].grid[0][3], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
-  assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]); // слой 0 не тронут
-  S.bgSel = true; flipLayer(true); // выбран фон → флипается весь документ
-  assert.deepEqual(S.layers[0].grid[0][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[0][0], [2, 2, 2, 255]);
-  S.bgSel = false;
+  flipLayer(true); // без выделения → весь canvas / все слои
+  assert.deepEqual(S.layers[0].grid[0][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[0][3], [2, 2, 2, 255]);
+  resetWH(4, 4); lops.doAddLayer(); S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255];
+  S.cur = 1; S.sel = { x0: 0, y0: 0, x1: 1, y1: 0 }; S.selMask = null;
+  flipLayer(true); // Selection → только активный слой и только выбранный фрагмент
+  assert.deepEqual(S.layers[1].grid[0][1], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
+  assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]);
+});
+t('rotate-canvas: с Selection поворачивает только активный фрагмент слоя', () => { resetWH(4, 4); lops.doAddLayer();
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255];
+  S.cur = 1; S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null;
+  rotateCanvas();
+  assert.deepEqual(S.layers[1].grid[0][1], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
+  assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]);
 });
 t('symmetrize (lay-symm): фон → весь документ', () => { resetWH(4, 4); layers.mount(); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on');
   S.sym = false; S.symH = false; S.layers[0].grid[1][0] = [1, 1, 1, 255]; S.layers[1].grid[1][0] = [2, 2, 2, 255]; cache.dirtyAll();
@@ -2788,12 +2796,12 @@ t('tilemap: фон или эффект не держат Tileset-панель о
   bus.emit('layer-active'); assert.equal(S.tileset.on, false);
   S.layers[S.cur].effects = []; S.fxCur = null;
 });
-t('tilemap: Edit tile на пустой клетке автоматически переключается на Draw Tile', () => {
+t('tilemap: Edit All Tiles на пустой клетке автоматически переключается на Draw on Tile', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
   tilePaint(0, 0); // красим по пустой клетке
-  assert.equal(S.tileAutoMode, 'auto'); // Edit tile не работает на пустой → включился Draw Tile
+  assert.equal(S.tileAutoMode, 'auto'); // Edit All Tiles не работает на пустой → включился Draw on Tile
   assert.equal(ts.tiles.length, 1); // тайл создан и в палитре
   S.tileset = { on: false };
 });
@@ -2846,13 +2854,13 @@ function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
   S.tileset = { on: true }; S.tilePattern = null; S.tileRandom = false; return { ts, tile, L }; }
 
-t('tilemap: Edit tile пишет в source — обновляются все экземпляры', () => {
+t('tilemap: Edit All Tiles пишет в source — обновляются все экземпляры', () => {
   const { tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [10, 20, 30];
   assert.ok(tilePaint(0, 0));
   assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
   assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
 });
-t('tilemap: Edit tile использует реальный размер кисти', () => {
+t('tilemap: Edit All Tiles использует реальный размер кисти', () => {
   const { tile } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.brushes.pencil.size = 3; S.active = [2, 3, 4];
   assert.ok(tilePaint(1, 1));
   assert.deepEqual(tile.grid[0][0], [2, 3, 4, 255]);
@@ -2860,13 +2868,25 @@ t('tilemap: Edit tile использует реальный размер кис�
   assert.deepEqual(tile.grid[2][2], [2, 3, 4, 255]);
   assert.equal(tile.grid[3][3], null);
 });
-t('tilemap: Draw Tile редактирует tileId занятой клетки без нового тайла', () => {
+t('tilemap: Draw on Tile создаёт локальный вариант занятой клетки', () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
-  assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
-  assert.equal(L.tilemap.cells[1].tileId, tile.id); assert.deepEqual(tile.grid[0][0], [9, 9, 9, 255]);
+  const localId = L.tilemap.cells[0].tileId, local = tsmgr.getTile(ts, localId);
+  assert.equal(ts.tiles.length, before + 1); assert.notEqual(localId, tile.id);
+  assert.equal(L.tilemap.cells[0].local, true); assert.equal(L.tilemap.cells[1].tileId, tile.id);
+  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); assert.deepEqual(local.grid[0][0], [9, 9, 9, 255]);
+  assert.deepEqual(L.grid[0][4], [1, 1, 1, 255]);
+  S.active = [8, 8, 8]; assert.ok(tilePaint(1, 0));
+  assert.equal(ts.tiles.length, before + 1); assert.equal(L.tilemap.cells[0].tileId, localId);
+  assert.deepEqual(local.grid[0][1], [8, 8, 8, 255]);
 });
-t('tilemap: Draw Tile на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
+t('tilemap: Draw on Tile не оставляет дубль, если версия не изменилась', () => {
+  const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [1, 1, 1];
+  const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
+  assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
+  assert.equal(L.tilemap.cells[0].local, undefined);
+});
+t('tilemap: Draw on Tile на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
   S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
@@ -2874,7 +2894,7 @@ t('tilemap: Draw Tile на пустой клетке создаёт непуст
   assert.ok(tilePaint(0, 0)); assert.equal(ts.tiles.length, 1);
   assert.equal(L.tilemap.cells[0].tileId, ts.tiles[0].id); assert.deepEqual(ts.tiles[0].grid[0][0], [8, 7, 6, 255]);
 });
-t('tilemap: Draw Tile на пустой клетке использует реальный размер кисти', () => {
+t('tilemap: Draw on Tile на пустой клетке использует реальный размер кисти', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
   S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
@@ -2884,6 +2904,28 @@ t('tilemap: Draw Tile на пустой клетке использует реа
   assert.deepEqual(ts.tiles[0].grid[1][1], [7, 6, 5, 255]);
   assert.deepEqual(ts.tiles[0].grid[2][2], [7, 6, 5, 255]);
   assert.equal(ts.tiles[0].grid[3][3], null);
+});
+t('tilemap: Rotate Selection добавляет повернутую версию в палитру', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts);
+  tile.grid[0][0] = [1, 1, 1, 255]; tile.grid[1][0] = [2, 2, 2, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); S.sel = { x0: 0, y0: 0, x1: 3, y1: 3 }; S.selMask = null;
+  rotateCanvas();
+  const id = L.tilemap.cells[0].tileId, rotated = tsmgr.getTile(ts, id);
+  assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id); assert.equal(L.tilemap.cells[0].rotation, 0);
+  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); assert.deepEqual(rotated.grid[0][3], [1, 1, 1, 255]);
+  assert.deepEqual(rotated.grid[0][2], [2, 2, 2, 255]);
+});
+t('tilemap: Flip Selection добавляет отраженную версию в палитру', () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [3, 3, 3, 255];
+  const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
+  tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); S.sel = { x0: 0, y0: 0, x1: 3, y1: 3 }; S.selMask = null;
+  flipLayer(true);
+  const id = L.tilemap.cells[0].tileId, flipped = tsmgr.getTile(ts, id);
+  assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id); assert.equal(L.tilemap.cells[0].flipX, false);
+  assert.deepEqual(tile.grid[0][0], [3, 3, 3, 255]); assert.deepEqual(flipped.grid[0][3], [3, 3, 3, 255]);
 });
 t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;

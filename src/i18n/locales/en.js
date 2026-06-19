@@ -229,7 +229,7 @@ export const en = {
   'tool.tilebrush': 'Tile brush',
   'tile.copy': 'Copy', 'tile.cut': 'Cut', 'tile.paste': 'Paste',
   'tile.fromLayer': 'Create tile from layer',
-  'tile.manual': 'Edit tile', 'tile.auto': 'Draw Tile',
+  'tile.manual': 'Edit All Tiles', 'tile.auto': 'Draw on Tile',
   'tile.clearCell': 'Clear cell', 'tile.deleteConfirm': 'This tile is used on the canvas. Delete it and clear all its instances?',
   'tile.saveSet': 'Save tileset', 'tile.loadSet': 'Tilesets', 'tile.setName': 'Tileset name', 'tile.noSets': 'No saved tilesets',
   'toast.tilesetEmpty': 'Tileset is empty',

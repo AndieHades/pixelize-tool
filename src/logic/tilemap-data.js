@@ -3,7 +3,7 @@
 
 // глубокая копия tilemap слоя: { tilesetId, mapW, mapH, cells: [cell|null] }
 export const cloneCell = (c) => (c && c.tileId != null
-  ? { tileId: c.tileId, flipX: !!c.flipX, flipY: !!c.flipY, diagonalFlip: !!c.diagonalFlip, rotation: c.rotation || 0 }
+  ? { tileId: c.tileId, flipX: !!c.flipX, flipY: !!c.flipY, diagonalFlip: !!c.diagonalFlip, rotation: c.rotation || 0, ...(c.local ? { local: true } : {}) }
   : null);
 
 export const cloneTilemap = (tm) => ({
@@ -15,7 +15,8 @@ export const cloneTilemap = (tm) => ({
 export function cellsToList(tm) {
   const out = [];
   for (let i = 0; i < tm.cells.length; i++) { const c = tm.cells[i]; if (!c || c.tileId == null) continue;
-    out.push({ x: i % tm.mapW, y: Math.floor(i / tm.mapW), ...cloneCell(c) }); }
+    const cell = cloneCell(c); delete cell.local;
+    out.push({ x: i % tm.mapW, y: Math.floor(i / tm.mapW), ...cell }); }
   return out;
 }
 

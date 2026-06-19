@@ -1,9 +1,9 @@
-// Draw Tile/Edit tile: пиксельное рисование по tilemap-слою (как в Aseprite tiles).
+// Draw on Tile/Edit All Tiles: пиксельное рисование по tilemap-слою.
 // Глобальный обработчик перехватывает pencil/eraser/fill на активном Tilemap:
-//  Edit tile — пишем в source тайла клетки (обновляются все экземпляры);
-//  Draw Tile — пустая клетка получает новый tileId, занятая правит свой tileId.
-// Пустая клетка → создаётся новый тайл; если штрих оставил её пустой — тайл
-// удаляется (пустая клетка тайла не порождает).
+//  Edit All Tiles — пишем в source тайла клетки (обновляются все экземпляры);
+//  Draw on Tile — клетка получает локальный tileId-вариант и дальше правится одна.
+// Пустая клетка/локальный вариант → создаётся новый тайл; если штрих оставил его
+// пустым — тайл удаляется (пустая клетка тайла не порождает).
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
@@ -25,13 +25,40 @@ const applicable = () => isTilemap(active()) && (S.tool === 'pencil' || S.tool =
 
 let st = null; // { ts, li, created:Set, touched:Set, seen:Set, last:[gx,gy] }
 
+function setTileId(tm, cx, cy, id, local = false) {
+  const c = tm.cells[cy * tm.mapW + cx];
+  if (c) { c.tileId = id; if (local) c.local = true; else delete c.local; }
+  else {
+    const cell = { tileId: id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
+    if (local) cell.local = true;
+    tm.cells[cy * tm.mapW + cx] = cell;
+  }
+}
+
+function tileUseCount(tileId) {
+  let n = 0;
+  for (const L of S.layers) { if (!isTilemap(L) || L.tilemap.tilesetId !== st.ts.id) continue;
+    for (const c of L.tilemap.cells) if (c && c.tileId === tileId) n++; }
+  return n;
+}
+
+function makeLocalVariant(tm, cx, cy, cell) {
+  const src = getTile(st.ts, cell.tileId);
+  const tl = addTile(st.ts, src ? src.grid : undefined, { name: src?.name || '', groupId: src?.groupId ?? null, weight: src?.weight });
+  setTileId(tm, cx, cy, tl.id, true);
+  st.created.add(tl.id); st.touched.add(cell.tileId);
+  S.activeTile = { tilesetId: st.ts.id, tileId: tl.id };
+  return tl;
+}
+
 // тайл, в source которого пишем для клетки (cx,cy) согласно режиму
 function targetTile(cx, cy) {
   const tm = active().tilemap, ts = st.ts, cell = getCell(tm, cx, cy);
-  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id); st.created.add(tl.id); return tl; }
+  if (!cell || cell.tileId == null) { const tl = addTile(ts); setTileId(tm, cx, cy, tl.id, true); st.created.add(tl.id);
+    S.activeTile = { tilesetId: ts.id, tileId: tl.id }; return tl; }
+  if (S.tileAutoMode !== 'manual' && (!cell.local || tileUseCount(cell.tileId) > 1)) return makeLocalVariant(tm, cx, cy, cell);
   return getTile(ts, cell.tileId);
 }
-function setTileId(tm, cx, cy, id) { const c = tm.cells[cy * tm.mapW + cx]; if (c) c.tileId = id; else tm.cells[cy * tm.mapW + cx] = { tileId: id, flipX: false, flipY: false, diagonalFlip: false, rotation: 0 }; }
 
 function paintPx(gx, gy, erase) {
   const ts = st.ts; const cx = Math.floor(gx / ts.tileW), cy = Math.floor(gy / ts.tileH);
@@ -79,11 +106,11 @@ function fillCell(gx, gy) { const ts = st.ts, cx = Math.floor(gx / ts.tileW), cy
 
 function finishStroke() {
   for (const id of st.created) { const tl = getTile(st.ts, id); if (tl && tl.grid.every((r) => r.every((c) => !c))) clearTile(id); } // пустой созданный тайл → удалить
-  for (const id of st.created) dedupe(id); // одинаковые тайлы не плодим
+  for (const id of st.created) dedupe(id); // одинаковые версии в палитру не попадают
   flush(); bus.emit('tileset-changed'); afterStroke(); st = null;
 }
 
-// Edit tile не работает на пустой клетке: сразу включаем Draw Tile (новый тайл создастся
+// Edit All Tiles не работает на пустой клетке: сразу включаем Draw on Tile (новый тайл создастся
 // сам, попадёт в палитру и продолжит обновляться по мере рисования)
 function autoOnEmpty(ts, gx, gy, erase) {
   if (S.tileAutoMode !== 'manual' || erase) return;
@@ -106,14 +133,17 @@ const handler = {
 };
 
 function clearTile(id) { deleteTile(st.ts, id); const tm = active().tilemap;
-  tm.cells = tm.cells.map((c) => (c && c.tileId === id ? null : c)); st.touched.add(id); }
+  tm.cells = tm.cells.map((c) => (c && c.tileId === id ? null : c)); st.touched.add(id);
+  if (S.activeTile?.tilesetId === st.ts.id && S.activeTile.tileId === id) S.activeTile = null; }
 
-// если созданный тайл совпал с уже существующим — перенаправить клетки на него
+// Если созданная локальная версия совпала с уже существующей — оставляем один
+// tileId. Отличающиеся хотя бы на пиксель версии остаются отдельными тайлами.
 function dedupe(id) { const tl = getTile(st.ts, id); if (!tl) return;
   const match = findTileByGrid(st.ts, tl.grid); if (!match || match.id === id) return;
   for (const li of layersUsingTile(st.ts.id, id)) { const tm = S.layers[li].tilemap;
-    tm.cells.forEach((c) => { if (c && c.tileId === id) c.tileId = match.id; }); rasterLayer(li); }
-  deleteTile(st.ts, id); st.touched.add(match.id); }
+    tm.cells.forEach((c) => { if (c && c.tileId === id) { c.tileId = match.id; delete c.local; } }); rasterLayer(li); }
+  deleteTile(st.ts, id); st.touched.add(match.id);
+  if (S.activeTile?.tilesetId === st.ts.id && S.activeTile.tileId === id) S.activeTile = { tilesetId: st.ts.id, tileId: match.id }; }
 function flush() { for (const id of st.touched) refreshTile(st.ts.id, id); rasterLayer(st.li); bus.emit('render'); }
 
 registerGlobal(handler);
