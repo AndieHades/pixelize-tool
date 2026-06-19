@@ -2630,10 +2630,13 @@ await ta('tile-palette: Delete Tile удаляет весь мультивыбо
   const L = tmap.makeTilemapLayer('tm', ts.id, 3, 1); S.layers = [L]; S.cur = 0;
   tmap.setCell(0, 0, 0, { tileId: a.id }); tmap.setCell(0, 1, 0, { tileId: b.id }); tmap.setCell(0, 2, 0, { tileId: c.id });
   S.activeTile = S.placeTile = { tilesetId: ts.id, tileId: c.id }; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = b.id;
+  let layerEvents = 0; const off = bus.on('layers', () => layerEvents++);
   const p = tops.delTile(); document.querySelector('#confirm-ovl .primary').click(); await p;
+  off();
   assert.deepEqual(ts.tiles.map((tile) => tile.id), [c.id]);
   assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null); assert.equal(L.tilemap.cells[2].tileId, c.id);
   assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: c.id }); assert.equal(S.tileMarks.size, 0); assert.equal(S.tileRandomNext, null);
+  assert.equal(layerEvents, 1);
 });
 t('tile-palette: ПКМ-меню создаёт повернутый/отраженный новый тайл', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null; S.tileRandomNext = null;

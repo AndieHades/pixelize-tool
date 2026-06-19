@@ -39,13 +39,13 @@ export function transformTile(tileId, op) { const ts = activeTileset(); if (!ts)
 // удалить тайл из тайлсета и очистить ВСЕ его экземпляры на холсте (без UI-подтв.)
 export function removeTiles(ts, tileIds) { const live = liveIds(ts), ids = [...new Set(tileIds)].filter((id) => live.has(id));
   if (!ids.length) return;
-  const del = new Set(ids);
+  const del = new Set(ids); let touchedLayers = false;
   snapshot();
   ids.forEach((id) => deleteTile(ts, id));
   S.layers.forEach((L, i) => { if (!isTilemap(L) || L.tilemap.tilesetId !== ts.id) return;
     let touched = false;
     L.tilemap.cells = L.tilemap.cells.map((c) => { if (c && del.has(c.tileId)) { touched = true; return null; } return c; });
-    if (touched) rasterLayer(i); });
+    if (touched) { touchedLayers = true; rasterLayer(i); } });
   const fallback = ts.tiles[0] ? { tilesetId: ts.id, tileId: ts.tiles[0].id } : null;
   if (S.activeTile && S.activeTile.tilesetId === ts.id && del.has(S.activeTile.tileId)) S.activeTile = fallback;
   if (S.placeTile && S.placeTile.tilesetId === ts.id && del.has(S.placeTile.tileId)) S.placeTile = fallback;
@@ -53,7 +53,7 @@ export function removeTiles(ts, tileIds) { const live = liveIds(ts), ids = [...n
   const liveNow = liveIds(ts);
   S.tileMarks = new Set([...S.tileMarks].filter((id) => liveNow.has(id) && !del.has(id)));
   if (S.tileMarks.size < 2) S.tilePattern = null;
-  changed(); }
+  changed(); if (touchedLayers) bus.emit('layers'); }
 
 export function removeTile(ts, tileId) { removeTiles(ts, [tileId]); }
 
