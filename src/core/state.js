@@ -14,6 +14,7 @@ import { loadBrushPrefs } from './brush-prefs.js';
 import { cloneGrid, blank } from '../logic/raster.js';
 import { cloneTilemap } from '../logic/tilemap-data.js';
 import { TILE_FLAGS_DEFAULT, TILE_GRID_DEFAULT, TILE_GRID_SIZES } from '../config/tileset.js';
+import { defaultReferenceBoard } from './reference-board.js';
 import { t } from '../i18n/index.js';
 export { MAX_LAYERS, MAX_SIZE, BP_SMAX };
 
@@ -83,6 +84,7 @@ export const S = {
   cursorMode: CURSOR.mode, // Cursor Preview Mode: real | circle | hybrid
   brushResize: { ...BRUSH_RESIZE, capturing: false }, // жест Brush Size Modifier (настройки + захват клавиши)
   eyedrop: { ...EYEDROPPER, capturing: false }, // Eyedropper System (Hot Key + захват клавиши)
+  referenceBoard: defaultReferenceBoard(),
   view: { zoom: 12, ox: 0, oy: 0 },
   undoStack: [], redoStack: [],
   // общая интерактивная/превью-стейт, которую читает рендер и пишут системы

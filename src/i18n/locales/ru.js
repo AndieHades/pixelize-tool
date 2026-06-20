@@ -113,7 +113,7 @@ export const ru = {
   'transform.apply': 'Применить трансформацию (Enter)', 'transform.cancel': 'Отменить трансформацию (Esc)',
   'edit.undo': 'Отменить (Ctrl+Z)', 'edit.redo': 'Вернуть (Ctrl+Y)',
   'preview.actualSize': 'Реальный размер 1:1',
-  'reference.openImage': 'Открыть картинку', 'reference.rotate90': 'Повернуть 90°', 'reference.flip': 'Отразить', 'reference.emptyHint': 'Открой кнопкой папки или перетащи картинку сюда',
+  'reference.openImage': 'Открыть картинку', 'reference.rotate90': 'Повернуть 90°', 'reference.flip': 'Отразить', 'reference.saveImage': 'Сохранить картинку', 'reference.emptyHint': 'Открой кнопкой папки или перетащи картинку сюда',
   'drop.releaseImage': 'Отпусти картинку', 'drop.imageHint': 'пиксель-арт вставится как есть, фото — в пикселизатор',
   'palette.none': 'Сохранённых палитр пока нет',
   'tool.tsg': 'Тени и тинты', 'tsg.title': 'Тинты и тени', 'tsg.base': 'База', 'tsg.tints': 'Тинты', 'tsg.shades': 'Шейды', 'tsg.harmony': 'Гармония цвета', 'tsg.selected': 'Выбрано', 'tsg.selectAll': 'Выбрать всю шкалу', 'harm.complementary': 'Комплементарная', 'harm.split': 'Сплит-комплементарная', 'harm.analogous': 'Аналоговая', 'harm.triadic': 'Триада',

@@ -1,132 +1,170 @@
-// Окно референса: открыть картинку, пан/зум, поворот, отражение. Пипетка по
-// референсу — через единую Eyedropper System (читает пиксели #refcv), не здесь.
+// Reference board: several draggable images, persisted with the current doc.
+// Eyedropper reads rendered pixels from #refcv through systems/eyedropper.
 import { $, toast, t } from '../core/dom.js';
-import * as actions from '../core/actions.js';
+import { S } from '../core/state.js';
+import * as bus from '../core/bus.js';
 import { floatingWindow } from '../core/floating-window.js';
-import { attachPanZoom } from '../core/pan-zoom.js';
 import { makeCanvas, syncCanvasSize } from '../core/canvas.js';
+import { defaultReferenceBoard, normalizeReferenceBoard } from '../core/reference-board.js';
 import { C } from '../styles/canvas-colors.js';
+import { copyRefs, pasteRef, saveRef } from './reference-window-clipboard.js';
+import { bindDetachDrag, detachedOpen, focusDetached, syncDetached } from './reference-window-detached.js';
+import { bindReferenceDrop, isImageFile } from './reference-window-drop.js';
+import { openReferenceMenu } from './reference-window-menu.js';
+import { boxRect, bringFrontIds, selectedItems, selectedSet, setSelected, transformBoardItems, transformItem, updateBoxSelection } from './reference-window-ops.js';
 
-let refOn = false, refSrc = null, detachedWin = null, detachedPoll = null; const rv = { z: 1, x: 0, y: 0 };
-const rcv = () => $('refcv');
-const IMG_EXT = /\.(png|jpe?g|gif|webp|bmp|avif|svg)$/i;
-const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || IMG_EXT.test(f.name || ''));
-const hasFiles = (e) => e.dataTransfer && ([...(e.dataTransfer.types || [])].includes('Files') || (e.dataTransfer.files && e.dataTransfer.files.length));
-const dropImageFile = (e) => e.dataTransfer && [...(e.dataTransfer.files || [])].find(isImageFile);
-const resetGlobalDrop = () => window.dispatchEvent(new window.CustomEvent('pxh:drop-reset'));
-const detachedOpen = () => !!(detachedWin && !detachedWin.closed);
-const refDataUrl = () => refSrc ? refSrc.toDataURL('image/png') : null;
-const syncRefButton = () => $('refbtn').classList.toggle('on', refOn || detachedOpen());
+let refOn = false, drag = null, mounted = false, localEmit = false, menuRefId = null;
+const imgs = new Map(), rcv = () => $('refcv');
 
-function refRender() { if (!refOn) return; const cv = rcv();
-  const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth, ch = cv.clientHeight;
-  syncCanvasSize(cv, cw, ch, dpr);
-  const c = cv.getContext('2d', { willReadFrequently: true });
-  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, cw, ch); c.fillStyle = C.prevBg; c.fillRect(0, 0, cw, ch);
-  if (!refSrc) { c.fillStyle = C.hint; c.font = '12px system-ui'; c.textAlign = 'center'; c.fillText(t('reference.emptyHint'), cw / 2, ch / 2); return; }
-  c.imageSmoothingEnabled = rv.z < 2; c.drawImage(refSrc, rv.x, rv.y, refSrc.width * rv.z, refSrc.height * rv.z); }
+function board() { if (!S.referenceBoard || !S.referenceBoard.view || !Array.isArray(S.referenceBoard.items)) S.referenceBoard = defaultReferenceBoard(); return S.referenceBoard; }
+function refSize() { const cv = rcv(), r = cv.getBoundingClientRect();
+  return { w: Math.max(1, cv.clientWidth || r.width || 260), h: Math.max(1, cv.clientHeight || r.height || 200) }; }
+function syncRefButton() { $('refbtn').classList.toggle('on', refOn || detachedOpen()); }
+function emitReference() { localEmit = true; bus.emit('reference'); localEmit = false; }
+function changed() { refRender(); syncDetachedImage(); emitReference(); }
 
-function refFit() { if (!refSrc) { refRender(); return; } const cv = rcv(), cw = cv.clientWidth, ch = cv.clientHeight;
-  rv.z = Math.min(cw / refSrc.width, ch / refSrc.height); rv.x = (cw - refSrc.width * rv.z) / 2; rv.y = (ch - refSrc.height * rv.z) / 2; refRender(); }
+function cacheLoaded(item, img) { imgs.set(item.id, { src: item.src, img, ready: true }); }
+function ensureImage(item) {
+  const old = imgs.get(item.id); if (old && old.src === item.src) return old;
+  const rec = { src: item.src, img: new Image(), ready: false };
+  rec.img.onload = () => { rec.ready = true; refRender(); syncDetachedImage(); };
+  rec.img.onerror = () => { rec.ready = false; };
+  rec.img.src = item.src; imgs.set(item.id, rec); return rec;
+}
+function pruneCache() { const ids = new Set(board().items.map((it) => it.id)); for (const id of imgs.keys()) if (!ids.has(id)) imgs.delete(id); }
 
-function toggleRef(on) { refOn = on === undefined ? !refOn : on;
+function bounds() {
+  const items = board().items; if (!items.length) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const it of items) { x0 = Math.min(x0, it.x); y0 = Math.min(y0, it.y); x1 = Math.max(x1, it.x + it.w); y1 = Math.max(y1, it.y + it.h); }
+  return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+}
+function fitBoard() { const bd = bounds(); if (!bd) return;
+  const b = board(), s = refSize(), pad = 24;
+  b.view.z = Math.max(0.05, Math.min(40, Math.min((s.w - pad) / bd.w, (s.h - pad) / bd.h)));
+  b.view.x = (s.w - bd.w * b.view.z) / 2 - bd.x * b.view.z;
+  b.view.y = (s.h - bd.h * b.view.z) / 2 - bd.y * b.view.z;
+}
+function placeNext(w, h) { const b = board(), s = refSize(), gap = 12 / Math.max(0.05, b.view.z || 1);
+  if (!b.items.length) return { x: 0, y: 0 };
+  const bd = bounds(), x = bd.x + bd.w + gap, y = bd.y;
+  const right = b.view.x + (x + w) * b.view.z;
+  if (right <= s.w - 8) return { x, y };
+  return { x: bd.x, y: bd.y + bd.h + gap };
+}
+
+export function refRender() { if (!refOn) return; const cv = rcv(), s = refSize(), dpr = window.devicePixelRatio || 1;
+  syncCanvasSize(cv, s.w, s.h, dpr);
+  const x = cv.getContext('2d', { willReadFrequently: true }), b = board();
+  x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, s.w, s.h); x.fillStyle = C.prevBg; x.fillRect(0, 0, s.w, s.h);
+  if (!b.items.length) { x.fillStyle = C.hint; x.font = '12px system-ui'; x.textAlign = 'center'; x.fillText(t('reference.emptyHint'), s.w / 2, s.h / 2); return; }
+  const sel = selectedSet(b);
+  for (const it of b.items) { const rec = ensureImage(it), sx = b.view.x + it.x * b.view.z, sy = b.view.y + it.y * b.view.z;
+    const sw = it.w * b.view.z, sh = it.h * b.view.z; x.imageSmoothingEnabled = b.view.z < 2;
+    if (rec.ready) x.drawImage(rec.img, sx, sy, sw, sh); else { x.strokeStyle = C.hint; x.strokeRect(sx, sy, sw, sh); }
+    if (sel.has(it.id)) { x.save(); x.strokeStyle = C.accent; x.lineWidth = 2; x.setLineDash([5, 3]); x.strokeRect(sx - 1, sy - 1, sw + 2, sh + 2); x.restore(); } }
+  if (drag && drag.kind === 'box' && drag.moved) { const r = boxRect(b, drag); x.save(); x.strokeStyle = C.accent; x.fillStyle = C.accent; x.globalAlpha = 0.14; x.fillRect(r.sx, r.sy, r.sw, r.sh); x.globalAlpha = 1; x.setLineDash([5, 3]); x.strokeRect(r.sx, r.sy, r.sw, r.sh); x.restore(); }
+}
+
+function snapshotCanvas() { const bd = bounds(); if (!bd) return null;
+  const c = makeCanvas(Math.ceil(bd.w), Math.ceil(bd.h)), x = c.getContext('2d');
+  x.fillStyle = C.prevBg; x.fillRect(0, 0, c.width, c.height);
+  for (const it of board().items) { const rec = ensureImage(it); if (rec.ready) x.drawImage(rec.img, it.x - bd.x, it.y - bd.y, it.w, it.h); }
+  return c;
+}
+function refDataUrl() { const c = snapshotCanvas(); return c ? c.toDataURL('image/png') : null; }
+function syncDetachedImage() { syncDetached(refDataUrl()); syncRefButton(); }
+
+function toggleRef(on, emit = true) {
+  refOn = on === undefined ? !refOn : !!on; board().open = refOn || detachedOpen();
   $('refwin').classList.toggle('on', refOn); syncRefButton();
-  if (refOn) requestAnimationFrame(refFit); }
-
-function syncDetachedImage() { if (detachedOpen() && detachedWin.__pxhSetReference) detachedWin.__pxhSetReference(refDataUrl()); }
-
-function setRefImage(im, opts = {}) {
-  const w = Math.max(1, im.naturalWidth || im.width || 1), h = Math.max(1, im.naturalHeight || im.height || 1);
-  const c = makeCanvas(w, h); c.getContext('2d').drawImage(im, 0, 0); refSrc = c;
-  if (opts.open !== false && !detachedOpen()) toggleRef(true); else if (refOn) refFit();
-  if (opts.sync !== false) syncDetachedImage();
+  if (refOn) requestAnimationFrame(refRender); if (emit) emitReference();
 }
 
-function loadRefUrl(url, opts = {}) { const im = new Image();
-  im.onerror = () => { if (opts.revoke) URL.revokeObjectURL(url); toast(t('toast.imgOpenFail')); };
-  im.onload = () => { if (opts.revoke) URL.revokeObjectURL(url); setRefImage(im, opts); };
-  im.src = url; }
-function loadRefFile(f) { if (f) loadRefUrl(URL.createObjectURL(f), { revoke: true }); }
-
-function rotateRef() { if (!refSrc) return; const c = makeCanvas(refSrc.height, refSrc.width);
-  const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(refSrc, 0, 0); refSrc = c; refFit(); syncDetachedImage(); }
-function flipRef() { if (!refSrc) return; const c = makeCanvas(refSrc.width, refSrc.height);
-  const x = c.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(refSrc, 0, 0); refSrc = c; refRender(); syncDetachedImage(); }
-
-function detachedScript() {
-  const cv = document.getElementById('cv'), hint = document.getElementById('hint'), x = cv.getContext('2d', { willReadFrequently: true });
-  const img = new Image(), src = document.createElement('canvas'), sx = src.getContext('2d', { willReadFrequently: true });
-  const view = { z: 1, x: 0, y: 0 }; let has = false, drag = null;
-  function resize() { const d = window.devicePixelRatio || 1; cv.width = Math.max(1, Math.round(innerWidth * d)); cv.height = Math.max(1, Math.round(innerHeight * d)); cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px'; x.setTransform(d, 0, 0, d, 0, 0); render(); }
-  function fit() { if (!has) { render(); return; } view.z = Math.min(innerWidth / src.width, innerHeight / src.height); view.x = (innerWidth - src.width * view.z) / 2; view.y = (innerHeight - src.height * view.z) / 2; render(); }
-  function render() { x.fillStyle = '#1f1f1f'; x.fillRect(0, 0, innerWidth, innerHeight); hint.style.display = has ? 'none' : 'block'; if (!has) return; x.imageSmoothingEnabled = view.z < 2; x.drawImage(src, view.x, view.y, src.width * view.z, src.height * view.z); }
-  function load(url) { if (!url) { has = false; render(); return; } img.onload = () => { src.width = Math.max(1, img.naturalWidth || img.width || 1); src.height = Math.max(1, img.naturalHeight || img.height || 1); sx.clearRect(0, 0, src.width, src.height); sx.drawImage(img, 0, 0); has = true; fit(); }; img.src = url; }
-  function pick(e) { if (!has) return; const px = Math.floor((e.clientX - view.x) / view.z), py = Math.floor((e.clientY - view.y) / view.z); if (px < 0 || py < 0 || px >= src.width || py >= src.height) return; const d = sx.getImageData(px, py, 1, 1).data; if (d[3] > 10 && opener && opener.__pxhReferencePick) opener.__pxhReferencePick([d[0], d[1], d[2]]); }
-  function fileDrop(e) { e.preventDefault(); const f = [...(e.dataTransfer.files || [])].find((it) => ((it.type || '').startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif|svg)$/i.test(it.name || ''))); if (!f) return; const r = new FileReader(); r.onload = () => { load(r.result); if (opener && opener.__pxhReferenceSetDataUrl) opener.__pxhReferenceSetDataUrl(r.result); }; r.readAsDataURL(f); }
-  window.__pxhSetReference = load; window.addEventListener('resize', resize);
-  cv.addEventListener('wheel', (e) => { if (!has) return; e.preventDefault(); const old = view.z, nz = Math.max(0.05, Math.min(40, old * (e.deltaY < 0 ? 1.12 : 1 / 1.12))); view.x = e.clientX - (e.clientX - view.x) * (nz / old); view.y = e.clientY - (e.clientY - view.y) * (nz / old); view.z = nz; render(); }, { passive: false });
-  cv.addEventListener('pointerdown', (e) => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} drag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: view.x, oy: view.y, moved: false, pick: e.button === 0 }; });
-  cv.addEventListener('pointermove', (e) => { if (!drag || drag.id !== e.pointerId) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 3) drag.moved = true; view.x = drag.ox + dx; view.y = drag.oy + dy; render(); });
-  cv.addEventListener('pointerup', (e) => { if (!drag || drag.id !== e.pointerId) return; const d = drag; drag = null; if (d.pick && !d.moved) pick(e); });
-  cv.addEventListener('contextmenu', (e) => e.preventDefault());
-  window.addEventListener('dragover', (e) => e.preventDefault()); window.addEventListener('drop', fileDrop); resize();
+function pt(e) { const r = rcv().getBoundingClientRect(); return { x: e.clientX - (r.left || 0), y: e.clientY - (r.top || 0) }; }
+function world(e) { const p = pt(e), v = board().view; return { x: (p.x - v.x) / v.z, y: (p.y - v.y) / v.z }; }
+function hit(e) { const p = world(e), items = board().items;
+  for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (p.x >= it.x && p.y >= it.y && p.x <= it.x + it.w && p.y <= it.y + it.h) return it; }
+  return null;
+}
+function pointerDown(e) { if (![0, 1, 2].includes(e.button || 0)) return; const item = hit(e), p = pt(e), b = board(), id = e.pointerId ?? 1;
+  if (e.button === 2 && item) return;
+  e.preventDefault(); try { rcv().setPointerCapture(e.pointerId); } catch (err) {}
+  if (e.button === 1 || e.button === 2) drag = { id, kind: 'pan', x: p.x, y: p.y, ox: b.view.x, oy: b.view.y };
+  else if (item) { const ids = selectedSet(b);
+    if (e.ctrlKey || e.metaKey) { if (ids.has(item.id)) ids.delete(item.id); else ids.add(item.id); setSelected(b, ids); }
+    else if (!ids.has(item.id)) setSelected(b, [item.id]);
+    const moving = selectedItems(b); if (moving.length && selectedSet(b).has(item.id)) { bringFrontIds(b, moving.map((it) => it.id)); drag = { id, kind: 'items', x: p.x, y: p.y, items: moving.map((it) => ({ it, x: it.x, y: it.y })) }; } }
+  else { if (!e.ctrlKey && !e.metaKey) setSelected(b, []);
+    drag = { id, kind: 'box', x: p.x, y: p.y, px: p.x, py: p.y, moved: false, mode: e.ctrlKey || e.metaKey ? 'add' : 'replace', base: [...selectedSet(b)] }; }
+  changed();
+}
+function pointerMove(e) { if (!drag || drag.id !== (e.pointerId ?? 1)) return; const p = pt(e), dx = p.x - drag.x, dy = p.y - drag.y, b = board();
+  e.preventDefault(); if (drag.kind === 'items') drag.items.forEach((m) => { m.it.x = m.x + dx / b.view.z; m.it.y = m.y + dy / b.view.z; });
+  else if (drag.kind === 'box') { drag.px = p.x; drag.py = p.y; drag.moved = drag.moved || Math.hypot(dx, dy) > 3; if (drag.moved) updateBoxSelection(b, drag); }
+  else { b.view.x = drag.ox + dx; b.view.y = drag.oy + dy; } changed();
+}
+function pointerUp(e) { if (drag && drag.id === (e.pointerId ?? 1)) { const d = drag; if (d.kind === 'box' && !d.moved && d.mode === 'add') setSelected(board(), d.base); drag = null; refRender(); emitReference(); } }
+function wheel(e) { if (!board().items.length) return; e.preventDefault(); const b = board(), p = pt(e), old = b.view.z;
+  const nz = Math.max(0.05, Math.min(40, old * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+  b.view.x = p.x - (p.x - b.view.x) * (nz / old); b.view.y = p.y - (p.y - b.view.y) * (nz / old); b.view.z = nz; changed();
 }
 
-function detachedHtml() { return `<!doctype html><html><head><meta charset="utf-8"><title>${t('label.reference')}</title><style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1f1f1f;color:#a9a9a9;font:12px system-ui}
-#cv{display:block;width:100vw;height:100vh;cursor:crosshair;touch-action:none}
-#hint{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap}
-</style></head><body><canvas id="cv"></canvas><div id="hint">${t('reference.emptyHint')}</div><script>(${detachedScript.toString()})()</script></body></html>`; }
-
-function watchDetached() {
-  clearInterval(detachedPoll);
-  detachedPoll = setInterval(() => { if (!detachedWin || detachedWin.closed) { clearInterval(detachedPoll); detachedPoll = null; detachedWin = null; syncRefButton(); } }, 600);
-  if (detachedPoll && detachedPoll.unref) detachedPoll.unref();
+function deleteSelected() { const b = board(), ids = selectedSet(b); if (!ids.size) return;
+  b.items = b.items.filter((it) => { if (!ids.has(it.id)) return true; imgs.delete(it.id); return false; }); setSelected(b, []); changed(); }
+function transformActive(kind) { const b = board(), list = selectedItems(b);
+  if (list.length) list.forEach((it) => transformItem(it, ensureImage(it), kind, cacheLoaded));
+  else if (b.items.length) { transformBoardItems(b.items, bounds(), ensureImage, cacheLoaded, kind); fitBoard(); }
+  changed();
 }
 
-function openDetached(e) {
-  if (detachedOpen()) { detachedWin.focus(); return true; }
-  const r = $('refwin').getBoundingClientRect(), w = Math.max(220, Math.round(r.width)), h = Math.max(180, Math.round(r.height));
-  const left = Math.round(Number.isFinite(e && e.screenX) ? e.screenX - w / 2 : window.screenX + r.left);
-  const top = Math.round(Number.isFinite(e && e.screenY) ? e.screenY - 18 : window.screenY + r.top);
-  const p = window.open('', 'pxh-reference-detached', `popup=yes,width=${w},height=${h},left=${left},top=${top}`);
-  if (!p) { toast(t('toast.refPopupBlocked')); return false; }
-  detachedWin = p; p.document.open(); p.document.write(detachedHtml()); p.document.close();
-  p.addEventListener('beforeunload', () => { detachedWin = null; syncRefButton(); });
-  window.__pxhReferencePick = (rgb) => actions.run('color.setActive', rgb);
-  window.__pxhReferenceSetDataUrl = (url) => loadRefUrl(url, { open: false, sync: false });
-  watchDetached(); toggleRef(false); syncRefButton(); setTimeout(syncDetachedImage, 0); return true;
+function openCtx(e) {
+  e.preventDefault(); const item = hit(e), b = board();
+  if (!item) { clearSelection(); return; }
+  if (!selectedSet(b).has(item.id)) setSelected(b, [item.id]);
+  menuRefId = item.id; changed();
+  openReferenceMenu(e.clientX, e.clientY, {
+    rotate: () => transformActive('rotate'), flip: () => transformActive('flip'), delete: deleteSelected,
+    copy: () => copyRefs(selectedItems(board()), ensureImage),
+    paste: () => pasteRef((url) => addReferenceDataUrl(url)),
+    save: () => { const ref = board().items.find((it) => it.id === menuRefId); if (ref) saveRef(ref, ensureImage); },
+  });
 }
 
-function bindDetachDrag() {
-  let d = null; const M = 24;
-  $('refgrip').addEventListener('pointerdown', (e) => { if (e.button !== 0 || (e.target.closest && e.target.closest('button'))) return; d = { id: e.pointerId }; }, true);
-  window.addEventListener('pointermove', (e) => { if (!d || e.pointerId !== d.id) return;
-    if (e.clientX < -M || e.clientY < -M || e.clientX > innerWidth + M || e.clientY > innerHeight + M) { d = null; openDetached(e); } }, true);
-  window.addEventListener('pointerup', (e) => { if (d && e.pointerId === d.id) d = null; }, true);
-  window.addEventListener('pointercancel', () => { d = null; }, true);
+function addReferenceDataUrl(url, opts = {}) { if (!url) return; const img = new Image();
+  img.onerror = () => toast(t('toast.imgOpenFail'));
+  img.onload = () => { const b = board(), first = !b.items.length, w = Math.max(1, img.naturalWidth || img.width || 1), h = Math.max(1, img.naturalHeight || img.height || 1);
+    const pos = placeNext(w, h), x = first ? 0 : pos.x, y = first ? 0 : pos.y;
+    const item = { id: b.nextId++, src: String(url), x, y, w, h }; b.items.push(item); setSelected(b, [item.id]); b.open = true; cacheLoaded(item, img);
+    if (opts.open !== false && !detachedOpen()) toggleRef(true, false); if (first) fitBoard(); changed(); };
+  img.src = url;
 }
+function loadRefFile(f, opts) { const r = new window.FileReader();
+  r.onerror = () => toast(t('toast.imgOpenFail')); r.onload = () => addReferenceDataUrl(String(r.result), opts); r.readAsDataURL(f); }
+
+function syncFromState() { if (localEmit) return; S.referenceBoard = normalizeReferenceBoard(S.referenceBoard); pruneCache(); board().items.forEach(ensureImage);
+  refOn = !!board().open && !detachedOpen(); $('refwin').classList.toggle('on', refOn); syncRefButton(); refRender(); syncDetachedImage(); }
+const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
+const inRefWindow = (target) => target && target.nodeType && $('refwin').contains(target);
+function clearSelection() { const b = board(); if (!selectedSet(b).size) return; setSelected(b, []); changed(); }
 
 export function mount() {
-  $('refbtn').onclick = () => { if (detachedOpen()) detachedWin.focus(); else toggleRef(); }; $('ref-x').onclick = () => toggleRef(false);
-  $('ref-rot').onclick = rotateRef; $('ref-flip').onclick = flipRef;
-  const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*';
-  $('ref-open').onclick = () => file.click();
-  file.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) loadRefFile(f); };
-  let dropDepth = 0; const over = (on) => $('refwin').classList.toggle('drop-over', on);
-  const stopFileDrag = (e) => { if (!hasFiles(e)) return false;
-    e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; resetGlobalDrop(); return true; };
-  $('refwin').addEventListener('dragenter', (e) => { if (stopFileDrag(e)) { dropDepth++; over(true); } });
-  $('refwin').addEventListener('dragover', stopFileDrag);
-  $('refwin').addEventListener('dragleave', (e) => { if (!stopFileDrag(e)) return;
-    if (e.relatedTarget && $('refwin').contains(e.relatedTarget)) return;
-    dropDepth = Math.max(0, dropDepth - 1); if (!dropDepth) over(false); });
-  $('refwin').addEventListener('drop', (e) => { if (!stopFileDrag(e)) return;
-    dropDepth = 0; over(false); const f = dropImageFile(e);
-    if (f) loadRefFile(f); else if (e.dataTransfer && e.dataTransfer.files.length) toast(t('toast.notImage')); });
-  bindDetachDrag();
+  if (mounted) return; mounted = true;
+  $('refbtn').onclick = () => { if (detachedOpen()) focusDetached(); else toggleRef(); }; $('ref-x').onclick = () => toggleRef(false);
+  $('ref-rot').onclick = () => transformActive('rotate'); $('ref-flip').onclick = () => transformActive('flip');
+  const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.multiple = true;
+  $('ref-open').onclick = () => file.click(); file.onchange = (e) => { const files = [...e.target.files]; e.target.value = ''; files.filter(isImageFile).forEach((f) => loadRefFile(f)); };
+  rcv().addEventListener('pointerdown', pointerDown);
+  window.addEventListener('pointermove', pointerMove); window.addEventListener('pointerup', pointerUp); window.addEventListener('pointercancel', pointerUp);
+  rcv().addEventListener('wheel', wheel, { passive: false }); rcv().addEventListener('contextmenu', openCtx);
+  window.addEventListener('pointerdown', (e) => { if (refOn && !inRefWindow(e.target)) clearSelection(); }, true);
+  window.addEventListener('keydown', (e) => { if ((e.key === 'Delete' || e.key === 'Backspace') && refOn && selectedSet(board()).size && !typing(e.target)) { e.preventDefault(); deleteSelected(); } });
+  bindReferenceDrop(loadRefFile);
+  bindDetachDrag({ dataUrl: refDataUrl, add: (url) => addReferenceDataUrl(url, { open: false }), closeLocal: () => toggleRef(false),
+    closed: () => { if (!refOn) board().open = false; syncRefButton(); emitReference(); }, rotate: () => transformActive('rotate'), flip: () => transformActive('flip') });
+  bus.on('reference', syncFromState);
   floatingWindow($('refwin'), { grip: $('refgrip'), handle: $('refrsz'), clampRight: 70,
     onResize: (w, h) => { $('refwin').style.width = Math.max(140, Math.min(innerWidth - 12, w)) + 'px';
       $('refwin').style.height = Math.max(120, Math.min(innerHeight - 12, h)) + 'px'; refRender(); } });
-  attachPanZoom(rcv(), rv, { min: 0.05, max: 40, render: refRender });
+  syncFromState();
 }

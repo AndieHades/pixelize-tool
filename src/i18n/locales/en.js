@@ -110,7 +110,7 @@ export const en = {
   'transform.apply': 'Apply transform (Enter)', 'transform.cancel': 'Cancel transform (Esc)',
   'edit.undo': 'Undo (Ctrl+Z)', 'edit.redo': 'Redo (Ctrl+Y)',
   'preview.actualSize': 'Actual size 1:1',
-  'reference.openImage': 'Open image', 'reference.rotate90': 'Rotate 90°', 'reference.flip': 'Flip', 'reference.emptyHint': 'Open with the folder button or drop an image here',
+  'reference.openImage': 'Open image', 'reference.rotate90': 'Rotate 90°', 'reference.flip': 'Flip', 'reference.saveImage': 'Save image', 'reference.emptyHint': 'Open with the folder button or drop an image here',
   'drop.releaseImage': 'Release image', 'drop.imageHint': 'pixel art inserts as is, photos open in the pixelizer',
   'palette.none': 'No saved palettes yet',
   'tool.tsg': 'Shadow & Tint', 'tsg.title': 'Tint & Shade', 'tsg.base': 'Base', 'tsg.tints': 'Tints', 'tsg.shades': 'Shades', 'tsg.harmony': 'Color harmony', 'tsg.selected': 'Selected', 'tsg.selectAll': 'Select whole scale',

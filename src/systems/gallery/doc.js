@@ -6,6 +6,7 @@ import { cloneTileset } from '../../logic/tileset-data.js';
 import { isTilemap, rasterLayer } from '../../core/tilemap.js';
 import { compositeLayers, dirtyAll } from '../../core/layer-cache.js';
 import { makeCanvas } from '../../core/canvas.js';
+import { cloneReferenceBoard, defaultReferenceBoard, normalizeReferenceBoard } from '../../core/reference-board.js';
 import { dedupePal } from '../../logic/quantize.js';
 import { defaultPalette, grayscalePalette, DEFAULT_ACTIVE } from '../../config/palette.js';
 import { saveDoc, getDoc } from '../../core/storage.js';
@@ -21,6 +22,7 @@ function record() {
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
     tilesetSeq: S.tilesetSeq, tilesets: S.tilesets.map(cloneTileset), // тайлсеты: id/индекс/bitmap/имя/порядок/группы
     layers: S.layers.map((L) => cloneLayer(L)),
+    referenceBoard: cloneReferenceBoard(S.referenceBoard),
     bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
     folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })), palette: S.palette.map((p) => p.slice()), active: S.active.slice(), colorMode: S.colorMode || 'rgba',
     preview: c.toDataURL('image/png'), order: Date.now(), updated: Date.now() };
@@ -39,9 +41,10 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   S.folderSeq = S.folders.reduce((m, f) => Math.max(m, f.id), rec.folderSeq || 0); S.palette = dedupePal(rec.palette); S.active = (rec.active || S.palette[0]).slice();
   S.bg = rec.bg ? { color: rec.bg.color ? rec.bg.color.slice() : null, visible: rec.bg.visible !== false } : { color: null, visible: true }; S.bgSel = false;
   S.shading = { colors: [], on: false, open: false, picking: false };
+  S.referenceBoard = normalizeReferenceBoard(rec.referenceBoard);
   S.docName = rec.name; S.colorMode = rec.colorMode || 'rgba'; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null;
-  dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); }
+  dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('fit'); bus.emit('reference'); }
 
 function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder = null;
   S.W = w; S.H = h; S.layerSeq = 1; S.folderSeq = 0; S.layers = [newLayer(t('layer.name') + ' 1', w, h)]; S.folders = []; S.cur = 0; S.marked.clear();
@@ -49,6 +52,7 @@ function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder
   S.colorMode = colorMode; S.palette = colorMode === 'grayscale' ? grayscalePalette() : defaultPalette();
   S.active = colorMode === 'grayscale' ? S.palette[S.palette.length - 1].slice() : S.palette[DEFAULT_ACTIVE].slice(); S.docName = name || t('gallery.untitled');
   S.shading = { colors: [], on: false, open: false, picking: false };
+  S.referenceBoard = defaultReferenceBoard(); bus.emit('reference');
   S.bg = { color: null, visible: true }; S.bgSel = false;
   S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null; }
 
