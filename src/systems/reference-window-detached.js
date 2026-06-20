@@ -25,9 +25,9 @@ function detachedScript() {
   document.getElementById('flip').onclick = () => opener && opener.__pxhReferenceFlip && opener.__pxhReferenceFlip();
   file.onchange = (e) => { read(e.target.files || []); e.target.value = ''; };
   cv.addEventListener('wheel', (e) => { if (!has) return; e.preventDefault(); const old = view.z, nz = Math.max(0.05, Math.min(40, old * (e.deltaY < 0 ? 1.12 : 1 / 1.12))); view.x = e.clientX - (e.clientX - view.x) * (nz / old); view.y = e.clientY - (e.clientY - view.y) * (nz / old); view.z = nz; render(); }, { passive: false });
-  cv.addEventListener('pointerdown', (e) => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} drag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: view.x, oy: view.y, moved: false, pick: e.button === 0 }; });
-  cv.addEventListener('pointermove', (e) => { if (!drag || drag.id !== e.pointerId) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 3) drag.moved = true; view.x = drag.ox + dx; view.y = drag.oy + dy; render(); });
-  cv.addEventListener('pointerup', (e) => { if (!drag || drag.id !== e.pointerId) return; const d = drag; drag = null; if (d.pick && !d.moved) pick(e); });
+  cv.addEventListener('pointerdown', (e) => { if (![0, 2].includes(e.button)) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} drag = { id: e.pointerId, kind: e.button === 2 ? 'pan' : 'pick', x: e.clientX, y: e.clientY, ox: view.x, oy: view.y, moved: false }; });
+  cv.addEventListener('pointermove', (e) => { if (!drag || drag.id !== e.pointerId) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 3) drag.moved = true; if (drag.kind === 'pan') { view.x = drag.ox + dx; view.y = drag.oy + dy; render(); } });
+  cv.addEventListener('pointerup', (e) => { if (!drag || drag.id !== e.pointerId) return; const d = drag; drag = null; if (d.kind === 'pick' && !d.moved) pick(e); });
   cv.addEventListener('contextmenu', (e) => e.preventDefault());
   window.addEventListener('dragover', (e) => e.preventDefault()); window.addEventListener('drop', fileDrop); resize();
 }

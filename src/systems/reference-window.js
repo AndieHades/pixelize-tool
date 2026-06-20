@@ -39,18 +39,14 @@ function bounds() {
   for (const it of items) { x0 = Math.min(x0, it.x); y0 = Math.min(y0, it.y); x1 = Math.max(x1, it.x + it.w); y1 = Math.max(y1, it.y + it.h); }
   return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
 }
-function fitBoard() { const bd = bounds(); if (!bd) return;
-  const b = board(), s = refSize(), pad = 24;
+function fitBoard() { const bd = bounds(), b = board(), s = refSize(), pad = 24; if (!bd) return;
   b.view.z = Math.max(0.05, Math.min(40, Math.min((s.w - pad) / bd.w, (s.h - pad) / bd.h)));
-  b.view.x = (s.w - bd.w * b.view.z) / 2 - bd.x * b.view.z;
-  b.view.y = (s.h - bd.h * b.view.z) / 2 - bd.y * b.view.z;
+  b.view.x = (s.w - bd.w * b.view.z) / 2 - bd.x * b.view.z; b.view.y = (s.h - bd.h * b.view.z) / 2 - bd.y * b.view.z;
 }
 function placeNext(w, h) { const b = board(), s = refSize(), gap = 12 / Math.max(0.05, b.view.z || 1);
   if (!b.items.length) return { x: 0, y: 0 };
   const bd = bounds(), x = bd.x + bd.w + gap, y = bd.y;
-  const right = b.view.x + (x + w) * b.view.z;
-  if (right <= s.w - 8) return { x, y };
-  return { x: bd.x, y: bd.y + bd.h + gap };
+  return b.view.x + (x + w) * b.view.z <= s.w - 8 ? { x, y } : { x: bd.x, y: bd.y + bd.h + gap };
 }
 
 export function refRender() { if (!refOn) return; const cv = rcv(), s = refSize(), dpr = window.devicePixelRatio || 1;
@@ -72,8 +68,7 @@ function snapshotCanvas() { const bd = bounds(); if (!bd) return null;
   for (const it of board().items) { const rec = ensureImage(it); if (rec.ready) x.drawImage(rec.img, it.x - bd.x, it.y - bd.y, it.w, it.h); }
   return c;
 }
-function refDataUrl() { const c = snapshotCanvas(); return c ? c.toDataURL('image/png') : null; }
-function syncDetachedImage() { syncDetached(refDataUrl()); syncRefButton(); }
+function refDataUrl() { const c = snapshotCanvas(); return c ? c.toDataURL('image/png') : null; } function syncDetachedImage() { syncDetached(refDataUrl()); syncRefButton(); }
 
 function toggleRef(on, emit = true) {
   refOn = on === undefined ? !refOn : !!on; board().open = refOn || detachedOpen();
@@ -87,24 +82,30 @@ function hit(e) { const p = world(e), items = board().items;
   for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (p.x >= it.x && p.y >= it.y && p.x <= it.x + it.w && p.y <= it.y + it.h) return it; }
   return null;
 }
-function pointerDown(e) { if (![0, 1, 2].includes(e.button || 0)) return; const item = hit(e), p = pt(e), b = board(), id = e.pointerId ?? 1;
+function pointerDown(e) { if (![0, 2].includes(e.button || 0)) return; const item = hit(e), p = pt(e), b = board(), id = e.pointerId ?? 1;
   if (e.button === 2 && item) return;
   e.preventDefault(); try { rcv().setPointerCapture(e.pointerId); } catch (err) {}
-  if (e.button === 1 || e.button === 2) drag = { id, kind: 'pan', x: p.x, y: p.y, ox: b.view.x, oy: b.view.y };
-  else if (item) { const ids = selectedSet(b);
-    if (e.ctrlKey || e.metaKey) { if (ids.has(item.id)) ids.delete(item.id); else ids.add(item.id); setSelected(b, ids); }
-    else if (!ids.has(item.id)) setSelected(b, [item.id]);
-    const moving = selectedItems(b); if (moving.length && selectedSet(b).has(item.id)) { bringFrontIds(b, moving.map((it) => it.id)); drag = { id, kind: 'items', x: p.x, y: p.y, items: moving.map((it) => ({ it, x: it.x, y: it.y })) }; } }
+  if (e.button === 2) drag = { id, kind: 'pan', x: p.x, y: p.y, ox: b.view.x, oy: b.view.y };
+  else if (item) { const ids = selectedSet(b), add = e.ctrlKey || e.metaKey, wasSelected = ids.has(item.id);
+    if (add) { if (wasSelected) ids.delete(item.id); else ids.add(item.id); setSelected(b, ids); }
+    else if (!wasSelected) setSelected(b, [item.id]);
+    const moving = selectedItems(b), after = selectedSet(b);
+    if (moving.length && after.has(item.id)) { bringFrontIds(b, moving.map((it) => it.id));
+      drag = { id, kind: 'items', x: p.x, y: p.y, moved: false, clickId: item.id, collapse: !add && wasSelected && after.size > 1, items: moving.map((it) => ({ it, x: it.x, y: it.y })) }; } }
   else { if (!e.ctrlKey && !e.metaKey) setSelected(b, []);
     drag = { id, kind: 'box', x: p.x, y: p.y, px: p.x, py: p.y, moved: false, mode: e.ctrlKey || e.metaKey ? 'add' : 'replace', base: [...selectedSet(b)] }; }
   changed();
 }
 function pointerMove(e) { if (!drag || drag.id !== (e.pointerId ?? 1)) return; const p = pt(e), dx = p.x - drag.x, dy = p.y - drag.y, b = board();
-  e.preventDefault(); if (drag.kind === 'items') drag.items.forEach((m) => { m.it.x = m.x + dx / b.view.z; m.it.y = m.y + dy / b.view.z; });
+  e.preventDefault(); if (drag.kind === 'items') { drag.moved = drag.moved || Math.hypot(dx, dy) > 3;
+    if (drag.moved) drag.items.forEach((m) => { m.it.x = m.x + dx / b.view.z; m.it.y = m.y + dy / b.view.z; }); }
   else if (drag.kind === 'box') { drag.px = p.x; drag.py = p.y; drag.moved = drag.moved || Math.hypot(dx, dy) > 3; if (drag.moved) updateBoxSelection(b, drag); }
   else { b.view.x = drag.ox + dx; b.view.y = drag.oy + dy; } changed();
 }
-function pointerUp(e) { if (drag && drag.id === (e.pointerId ?? 1)) { const d = drag; if (d.kind === 'box' && !d.moved && d.mode === 'add') setSelected(board(), d.base); drag = null; refRender(); emitReference(); } }
+function pointerUp(e) { if (!drag || drag.id !== (e.pointerId ?? 1)) return; const d = drag;
+  if (d.kind === 'box' && !d.moved && d.mode === 'add') setSelected(board(), d.base); if (d.kind === 'items' && !d.moved && d.collapse) setSelected(board(), [d.clickId]);
+  drag = null; refRender(); emitReference();
+}
 function wheel(e) { if (!board().items.length) return; e.preventDefault(); const b = board(), p = pt(e), old = b.view.z;
   const nz = Math.max(0.05, Math.min(40, old * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
   b.view.x = p.x - (p.x - b.view.x) * (nz / old); b.view.y = p.y - (p.y - b.view.y) * (nz / old); b.view.z = nz; changed();
@@ -144,8 +145,7 @@ function loadRefFile(f, opts) { const r = new window.FileReader();
 
 function syncFromState() { if (localEmit) return; S.referenceBoard = normalizeReferenceBoard(S.referenceBoard); pruneCache(); board().items.forEach(ensureImage);
   refOn = !!board().open && !detachedOpen(); $('refwin').classList.toggle('on', refOn); syncRefButton(); refRender(); syncDetachedImage(); }
-const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
-const inRefWindow = (target) => target && target.nodeType && $('refwin').contains(target);
+const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable); const inRefWindow = (target) => target && target.nodeType && $('refwin').contains(target);
 function clearSelection() { const b = board(); if (!selectedSet(b).size) return; setSelected(b, []); changed(); }
 
 export function mount() {

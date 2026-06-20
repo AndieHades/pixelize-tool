@@ -1389,6 +1389,15 @@ await ta('reference: drop image into reference window and drag outside detaches 
     S.referenceBoard.items[0].x = 10; S.referenceBoard.items[0].y = 10;
     S.referenceBoard.items[1].x = 40; S.referenceBoard.items[1].y = 10; ref.refRender();
     const center = (it) => ({ x: S.referenceBoard.view.x + (it.x + it.w / 2) * S.referenceBoard.view.z, y: S.referenceBoard.view.y + (it.y + it.h / 2) * S.referenceBoard.view.z });
+    const view0 = { ...S.referenceBoard.view };
+    cv.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 150, clientY: 90 }));
+    window.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 158, clientY: 96 }));
+    window.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 158, clientY: 96 }));
+    assert.deepEqual(S.referenceBoard.view, view0);
+    cv.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 150, clientY: 90 }));
+    window.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 2, clientX: 158, clientY: 96 }));
+    window.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 158, clientY: 96 }));
+    assert.notDeepEqual(S.referenceBoard.view, view0); S.referenceBoard.view = view0;
     cv.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     window.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 160, clientY: 100 }));
     window.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 160, clientY: 100 }));
@@ -1399,6 +1408,11 @@ await ta('reference: drop image into reference window and drag outside detaches 
     window.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: c1.x + 10, clientY: c1.y }));
     window.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: c1.x + 10, clientY: c1.y }));
     assert.notEqual(first.x, fx); assert.notEqual(second.x, sx2);
+    const c2single = center(second);
+    cv.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: c2single.x, clientY: c2single.y }));
+    window.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: c2single.x, clientY: c2single.y }));
+    assert.deepEqual(S.referenceBoard.selected, [second.id]);
+    S.referenceBoard.selected = [first.id, second.id];
     const fw = first.w, fh = first.h; document.getElementById('ref-rot').click();
     assert.equal(first.w, fh); assert.equal(first.h, fw);
     window.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 300, clientY: 300 }));
