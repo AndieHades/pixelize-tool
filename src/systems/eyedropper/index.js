@@ -8,6 +8,7 @@ import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $ } from '../../core/dom.js';
+import { setTool } from '../../core/tools.js';
 import { rgb, rgbToHex } from '../../logic/color.js';
 import { eventKey } from '../../logic/key-code.js';
 import { HOLD_PICK_MS, DRAG_THRESHOLD, TAP_MAX_MS } from '../../config/timings.js';
@@ -57,12 +58,16 @@ function onDown(e) {
   picking = true; found = c; swallowClick = true; e.preventDefault(); e.stopImmediatePropagation(); showPreview(e.clientX, e.clientY); } // перехватываем у инструмента/свотча
 
 function onUp(e) { clearHold(); if (!picking) return; picking = false;
+  const pickVia = via;
   if (via !== 'touch') { e.preventDefault(); e.stopImmediatePropagation(); } // btn/alt/sticky — гасим клик; touch — даём gestures завершить трекинг
   if (e.button === 2) swallowClick = false;                                  // ПКМ не даёт обычный click — не глотаем следующий UI-клик
   if (via === 'btn') btnPicked = true;                                       // цвет взят во время удержания bb-pick — не считаем это коротким кликом
-  if (found) { actions.run('color.setActive', found); if (addOnPick) actions.run('palette.addRgb', found); } // прозрачный пиксель (null) активный цвет не меняет
+  const picked = !!found;
+  if (picked) { actions.run('color.setActive', found); if (addOnPick) actions.run('palette.addRgb', found); setTool('pencil'); } // прозрачный пиксель (null) активный цвет/инструмент не меняет
   addOnPick = false;
-  if (via === 'touch') setArmed(false); else preview(e.clientX, e.clientY); } // долгое нажатие — разовый выбор: после отпускания выключаем
+  if (picked && pickVia !== 'alt') setArmed(false);
+  else if (pickVia === 'touch') setArmed(false);
+  else preview(e.clientX, e.clientY); } // долгое нажатие — разовый выбор: после отпускания выключаем
 
 // короткий клик по bb-pick (ПК) → залипающая пипетка до смены инструмента;
 // удержание (тач) → разовый сеанс (наведение пером = размер кисти, касание = цвет)

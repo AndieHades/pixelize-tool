@@ -686,6 +686,16 @@ t('eyedropper: Alt+ПКМ по холсту добавляет цвет в па�
   window.dispatchEvent(new window.KeyboardEvent('keyup', { code: 'AltLeft', bubbles: true })); undo();
   assert.ok(S.palette.some((c) => c[0] === 9 && c[1] === 8 && c[2] === 7)); assert.deepEqual(S.active, [9, 8, 7]);
 });
+t('eyedropper: после выбора цвета ластик переключается на Brush', () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.tool = 'eraser'; S.active = [1, 1, 1];
+  S.layers[0].grid[2][2] = [9, 8, 7, 255]; const undo = overCv();
+  window.dispatchEvent(new window.KeyboardEvent('keydown', { code: 'AltLeft', bubbles: true }));
+  const cv = document.getElementById('cv');
+  cv.dispatchEvent(new window.MouseEvent('pointerdown', { clientX: 2, clientY: 2, button: 0, bubbles: true }));
+  cv.dispatchEvent(new window.MouseEvent('pointerup', { clientX: 2, clientY: 2, button: 0, bubbles: true }));
+  cv.dispatchEvent(new window.MouseEvent('click', { clientX: 2, clientY: 2, button: 0, bubbles: true }));
+  window.dispatchEvent(new window.KeyboardEvent('keyup', { code: 'AltLeft', bubbles: true })); undo();
+  assert.deepEqual(S.active, [9, 8, 7]); assert.equal(S.tool, 'pencil');
+});
 t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
