@@ -114,7 +114,7 @@
 | `logic/psd.js` | чтение PSD послойно (raw + RLE): пиксели, видимость, группы, эффекты | ✅ | roadmap §5 |
 | `logic/psd-effects.js` | разбор lfx2 → эффекты PixelHeart (best-effort) | ✅ | (импорт) |
 | `styles/animations.css` | анимации UI (нажатие, выбор, драг) — единое место | ✅ | [theming.md](theming.md) |
-| `systems/animation/*` | таймлайн кадров (точка расширения) | 🔲 | [architecture.md](architecture.md) |
+| `systems/animation/*` | отдельный Animator dock: кадры, таймлайны, playback, onion-skin, GIF import и экспорт | 🔲 | [animation.md](animation.md) |
 
 ## Конфигурация (`src/config/`)
 
