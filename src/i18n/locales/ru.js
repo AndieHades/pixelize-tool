@@ -4,7 +4,7 @@ export const ru = {
   // верхняя панель и инструменты (tooltips)
   'tool.gallery': 'Галерея', 'tool.new': 'Новый документ (N)', 'tool.import': 'Импорт картинки (Ctrl+O)',
   'tool.exportMenu': 'Экспорт', 'tool.preview': 'Превью (1:1)', 'tool.reference': 'Референс',
-  'tool.fit': 'Вписать (0)', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
+  'tool.fit': 'Вписать (0)', 'tool.realSize': '1:1 - Реальный размер', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
   'tool.pencil': 'Карандаш (B)', 'tool.eraser': 'Ластик (E)', 'tool.fill': 'Заливка (F)',
   'tool.pick': 'Пипетка (Alt)', 'tool.pickShort': 'Пипетка', 'tool.line': 'Линия (U)',
   'tool.lineStraight': 'Линия (U)',
@@ -69,7 +69,7 @@ export const ru = {
   'btn.glow': 'Добавить свечение', 'btn.insertAsIs': 'Вставить как есть', 'btn.resetPanels': 'Сбросить панели',
   'btn.fromImage': 'Палитра из изображения', 'btn.export': 'Экспорт',
   // коррекция
-  'adj.dodge': 'Осветлить', 'adj.burn': 'Затемнить', 'adj.colorize': 'В активный цвет',
+  'adj.dodge': 'Dodge', 'adj.burn': 'Burn', 'adj.colorize': 'Colorize', 'adj.mono': 'Monochrome',
   // меню слоя
   'menu.rename': 'Переименовать…', 'menu.dupLayer': 'Дублировать слой', 'menu.newLayer': 'Новый слой (Ctrl+N)', 'menu.group': 'В папку', 'menu.mergeLayers': 'Слить отмеченные (Ctrl+E)', 'menu.deselect': 'Отменить выделение', 'menu.selectAll': 'Выбрать всё на слое',
   'menu.invert': 'Инверсия выделения', 'menu.fill': 'Залить', 'menu.clearSimple': 'Очистить',

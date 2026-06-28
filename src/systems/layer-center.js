@@ -34,7 +34,7 @@ export function fitLayerShortSide() {
   const L = S.layers[S.cur]; if (L.lock) return;
   const b = boundsWithExt(L.grid, L.ext); if (!b) { toast(t('toast.layerEmpty')); return; }
   const sw = b.maxx - b.minx + 1, sh = b.maxy - b.miny + 1, target = Math.min(S.W, S.H);
-  const k = target / Math.max(sw, sh), nw = Math.max(1, Math.round(sw * k)), nh = Math.max(1, Math.round(sh * k));
+  const k = target / Math.min(sw, sh), nw = Math.max(1, Math.round(sw * k)), nh = Math.max(1, Math.round(sh * k));
   const ox = Math.round((S.W - nw) / 2), oy = Math.round((S.H - nh) / 2);
   if (sw === nw && sh === nh && b.minx === ox && b.miny === oy && !L.ext.size) { toast(t('toast.fitShortSide')); return; }
   const grid = blank(S.W, S.H), ext = new Map();

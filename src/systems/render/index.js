@@ -68,6 +68,12 @@ export function fitView() {
   render();
 }
 
+export function realSizeView() {
+  const cw = cv.clientWidth, chh = cv.clientHeight;
+  S.view.zoom = 1; S.view.ox = Math.round((cw - S.W) / 2); S.view.oy = Math.round((chh - S.H) / 2);
+  render();
+}
+
 function zoomTo(nextZoom) { const cw = cv.clientWidth / 2, chh = cv.clientHeight / 2;
   const wx = (cw - S.view.ox) / S.view.zoom, wy = (chh - S.view.oy) / S.view.zoom;
   S.view.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextZoom));
@@ -86,5 +92,6 @@ bus.on('render', render);
 bus.on('fit', fitView);
 window.addEventListener('resize', fitView);
 actions.register('view.fit', fitView);
+actions.register('view.realSize', realSizeView);
 actions.register('zoom.in', () => zoomStep(1));
 actions.register('zoom.out', () => zoomStep(-1));

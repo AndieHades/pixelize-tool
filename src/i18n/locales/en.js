@@ -2,7 +2,7 @@
 export const en = {
   'tool.gallery': 'Gallery', 'tool.new': 'New document (N)', 'tool.import': 'Import image (Ctrl+O)',
   'tool.exportMenu': 'Export', 'tool.preview': 'Preview (1:1)', 'tool.reference': 'Reference',
-  'tool.fit': 'Fit (0)', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
+  'tool.fit': 'Fit (0)', 'tool.realSize': '1:1 - Real Size', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
   'tool.pencil': 'Pencil (B)', 'tool.eraser': 'Eraser (E)', 'tool.fill': 'Fill (F)',
   'tool.pick': 'Eyedropper (Alt)', 'tool.pickShort': 'Eyedropper', 'tool.line': 'Line (U)',
   'tool.lineStraight': 'Line (U)',
@@ -67,7 +67,7 @@ export const en = {
   'btn.done': 'Done', 'btn.addPalette': 'Add to palette', 'btn.replaceColor': 'Replace color', 'btn.outline': 'Outline', 'btn.shadow': 'Create shadow',
   'btn.glow': 'Add glow', 'btn.insertAsIs': 'Insert as is', 'btn.resetPanels': 'Reset panels',
   'btn.fromImage': 'Palette from image', 'btn.export': 'Export',
-  'adj.dodge': 'Dodge', 'adj.burn': 'Burn', 'adj.colorize': 'To active color',
+  'adj.dodge': 'Dodge', 'adj.burn': 'Burn', 'adj.colorize': 'Colorize', 'adj.mono': 'Monochrome',
   'menu.rename': 'Rename…', 'menu.dupLayer': 'Duplicate layer', 'menu.newLayer': 'New layer (Ctrl+N)', 'menu.group': 'Group into folder', 'menu.mergeLayers': 'Merge checked layers (Ctrl+E)', 'menu.deselect': 'Deselect', 'menu.selectAll': 'Select all on layer',
   'menu.invert': 'Invert selection', 'menu.fill': 'Fill', 'menu.clearSimple': 'Clear',
   'menu.clear': 'Clear layer', 'menu.bgClear': 'Clear (transparent)',

@@ -25,9 +25,13 @@ export const ICONS = {
   rotate90: '<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg>',
   center: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>',
   centerFit: '<svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2"/><path d="M8.5 12h7M12 8.5v7"/><path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4"/></svg>',
-  zoomFit: '<svg viewBox="0 0 24 24"><path d="M9 4.5H7A2.5 2.5 0 0 0 4.5 7v2M15 4.5h2A2.5 2.5 0 0 1 19.5 7v2M9 19.5H7A2.5 2.5 0 0 1 4.5 17v-2M15 19.5h2a2.5 2.5 0 0 0 2.5-2.5v-2"/></svg>',
+  zoomReal: '<svg viewBox="0 0 24 24"><text x="12" y="14.5" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none">1:1</text></svg>',
   zoomIn: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M10.5 7.5v6M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
   zoomOut: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
+  adjDodge: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',
+  adjBurn: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor" stroke="none"/><path d="M12 6.5v11"/></svg>',
+  adjColorize: '<svg viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z"/><path d="M8.5 16.5h7" stroke-dasharray="2 2"/></svg>',
+  adjMono: '<svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M12 5v14" stroke-dasharray="2 2"/><path d="M12 5h4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-4z" fill="currentColor" stroke="none"/></svg>',
 };
 
 export const BRUSH_MODES = [
@@ -64,7 +68,13 @@ export const CENTER_MODES = [
   { mode: 'fitShortSide', icon: 'centerFit', key: 'side.centerFit', action: 'layer.fitShortSide' },
 ];
 export const ZOOM_MODES = [
-  { mode: 'fit', icon: 'zoomFit', key: 'tool.fit', action: 'view.fit' },
+  { mode: 'fit', icon: 'zoomReal', key: 'tool.realSize', action: 'view.realSize' },
   { mode: 'in', icon: 'zoomIn', key: 'tool.zoomIn', action: 'zoom.in' },
   { mode: 'out', icon: 'zoomOut', key: 'tool.zoomOut', action: 'zoom.out' },
+];
+export const ADJUST_MODES = [
+  { mode: 'dodge', icon: 'adjDodge', key: 'adj.dodge' },
+  { mode: 'burn', icon: 'adjBurn', key: 'adj.burn' },
+  { mode: 'colorize', icon: 'adjColorize', key: 'adj.colorize' },
+  { mode: 'mono', icon: 'adjMono', key: 'adj.mono' },
 ];

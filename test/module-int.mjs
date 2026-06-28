@@ -89,6 +89,7 @@ const sfloat = await import('../src/systems/selection/float.js');
 await import('../src/systems/freehand/input.js');
 const fhpath = await import('../src/systems/freehand/path.js');
 const tf = await import('../src/systems/transform/index.js');
+const tdrag = await import('../src/systems/transform/drag.js');
 const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
 const lops = await import('../src/systems/layers/ops.js');
@@ -238,6 +239,13 @@ t('render: zoom in/out идут чётким шагом 50%', () => { reset4();
   assert.ok(Math.abs((300 - S.view.oy) / S.view.zoom - wy) < 1e-9);
   actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
   S.view = { zoom: 4.59, ox: 120, oy: 80 }; actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
+});
+t('render: real size ставит масштаб 1:1 и центрирует холст', () => { reset4();
+  const cv = document.getElementById('cv');
+  Object.defineProperty(cv, 'clientWidth', { configurable: true, value: 800 });
+  Object.defineProperty(cv, 'clientHeight', { configurable: true, value: 600 });
+  S.view = { zoom: 8, ox: 120, oy: 80 }; actions.run('view.realSize');
+  assert.equal(S.view.zoom, 1); assert.equal(S.view.ox, 398); assert.equal(S.view.oy, 298);
 });
 t('cursor: предпросмотр отпечатка рисуется в real/circle без падений', () => { reset4();
   S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; render.render();
@@ -409,12 +417,16 @@ t('center: объект встаёт в центр холста', () => { resetW
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[4][4], [1, 1, 1, 255]); assert.equal(S.layers[0].grid[1][1], null); });
 t('center: с выделением — в центр выделения', () => { resetWH(10, 10); S.layers[0].grid[0][0] = [2, 2, 2, 255]; S.sel = { x0: 4, y0: 4, x1: 5, y1: 5 }; S.selMask = null; cache.dirtyAll();
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[5][5], [2, 2, 2, 255]); S.sel = null; });
-t('center: fit short side вписывает слой в меньшую сторону холста', () => { resetWH(10, 6);
+t('center: fit short side уменьшает слой до упора по меньшей стороне холста', () => { resetWH(10, 6);
+  const d = new Uint8ClampedArray(20 * 12 * 4); for (let i = 0; i < 20 * 12; i++) { d[i * 4] = 9; d[i * 4 + 3] = 255; }
+  doc.addImageLayerTop(20, 12, d, 'wide'); actions.run('layer.fitShortSide');
+  const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
+  assert.deepEqual(L.grid[0][0], [9, 0, 0, 255]); assert.deepEqual(L.grid[5][9], [9, 0, 0, 255]); });
+t('center: fit short side широкого слоя заполняет меньшую сторону без поля', () => { resetWH(10, 6);
   const d = new Uint8ClampedArray(12 * 4 * 4); for (let i = 0; i < 12 * 4; i++) { d[i * 4] = 9; d[i * 4 + 3] = 255; }
   doc.addImageLayerTop(12, 4, d, 'wide'); actions.run('layer.fitShortSide');
-  const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
-  assert.deepEqual(L.grid[2][2], [9, 0, 0, 255]); assert.deepEqual(L.grid[3][7], [9, 0, 0, 255]);
-  assert.equal(L.grid[1][2], null); assert.equal(L.grid[2][8], null); });
+  const L = S.layers[S.cur]; assert.ok(L.ext.size > 0);
+  assert.deepEqual(L.grid[0][0], [9, 0, 0, 255]); assert.deepEqual(L.grid[5][9], [9, 0, 0, 255]); });
 t('center: fit short side увеличивает маленький слой до меньшей стороны холста', () => { resetWH(10, 6);
   S.layers[0].grid[0][0] = [5, 5, 5, 255]; S.layers[0].grid[1][1] = [7, 7, 7, 255];
   actions.run('layer.fitShortSide'); const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
@@ -539,18 +551,26 @@ t('bc: настройка эффекта открывается повторно
   document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
   document.getElementById('bc-apply').click(); assert.equal(eff.params.brightness, 50);
   history.doUndo(); assert.equal(S.layers[0].effects[0].params.brightness, 10); });
-t('adjust: Dodge/Burn/Colorize постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
+t('adjust: Dodge/Burn/Colorize/Monochrome постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
   S.layers[0].grid[0][0] = [200, 0, 0, 255]; S.adjMode = 'dodge'; history.snapshot(); adjust.adjustCell(0, 0);
   assert.ok(S.layers[0].grid[0][0][0] > 200 && S.layers[0].grid[0][0][1] > 0 && S.layers[0].grid[0][0][2] > 0);
   S.layers[0].grid[0][1] = [200, 100, 50, 255]; S.adjMode = 'burn'; history.snapshot(); adjust.adjustCell(1, 0);
   assert.ok(S.layers[0].grid[0][1][0] < 200 && S.layers[0].grid[0][1][1] < 100 && S.layers[0].grid[0][1][2] < 50);
   S.layers[0].grid[1][0] = [10, 20, 30, 255]; S.adjMode = 'colorize'; history.snapshot(); adjust.adjustCell(0, 1);
   assert.deepEqual(S.layers[0].grid[1][0], [110, 20, 30, 255]);
+  S.layers[0].grid[1][1] = [240, 60, 20, 255]; S.adjMode = 'mono'; S.adjAmt = 100; history.snapshot(); adjust.adjustCell(1, 1);
+  assert.equal(S.layers[0].grid[1][1][0], S.layers[0].grid[1][1][1]);
+  assert.equal(S.layers[0].grid[1][1][1], S.layers[0].grid[1][1][2]);
   S.undoStack.length = 0; S.redoStack.length = 0;
 });
-t('adjust: выбор режима включает кисть-коррекцию', () => { adjust.mount(); S.tool = 'pencil';
-  document.querySelector('#adj-modes [data-m="burn"]').click();
+t('adjust: выбор режима включает кисть-коррекцию и окно силы', () => { tb.mount(); adjust.mount(); S.tool = 'pencil'; S.adjMode = 'dodge'; S.adjAmt = 8;
+  document.getElementById('t-adjust').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.equal(document.querySelectorAll('#adjust-choice [data-adjust-mode]').length, 4);
+  document.querySelector('#adjust-choice [data-adjust-mode="burn"]').click();
   assert.equal(S.tool, 'adjust'); assert.equal(S.adjMode, 'burn');
+  assert.ok(document.getElementById('adjpop').classList.contains('on'));
+  assert.equal(document.getElementById('adj-amtv').textContent, '8%');
+  assert.equal(document.getElementById('t-adjust').title, i18n.t('adj.burn'));
 });
 
 t('selection: fillSelection заливает рамку', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.active = [5, 6, 7];
@@ -1682,7 +1702,7 @@ t('toolbars: ЛКМ кисти выбирает инструмент, ПКМ о�
   assert.equal(opened, 'eraser');
 });
 t('toolbars: повторный ЛКМ активного инструмента возвращает кисть', () => { tb.mount(); resetWH(8, 8);
-  for (const [tool, id] of [['eraser', 't-eraser'], ['fill', 't-fill'], ['adjust', 't-adjust'], ['lasso', 't-lasso']]) {
+  for (const [tool, id] of [['eraser', 't-eraser'], ['fill', 't-fill'], ['lasso', 't-lasso']]) {
     setTool(tool); document.getElementById(id).click(); assert.equal(S.tool, 'pencil');
   }
   setTool('pencil'); document.getElementById('t-shape').click();
@@ -1739,10 +1759,11 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
 });
 t('toolbars: Zoom свернут в одну кнопку с последним выбранным действием', () => { tb.mount(); resetWH(8, 8);
   document.getElementById('zoom').click();
-  assert.equal(document.getElementById('zoom').title, i18n.t('tool.fit'));
+  assert.equal(document.getElementById('zoom').title, i18n.t('tool.realSize'));
   document.getElementById('zoom').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
   assert.equal(document.querySelectorAll('#zoom-choice [data-zoom-mode]').length, 3);
+  assert.equal(document.querySelector('#zoom-choice [data-zoom-mode="fit"]').textContent, '1:1');
   document.querySelector('#zoom-choice [data-zoom-mode="in"]').click();
   assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
   assert.equal(document.getElementById('zoom').title, i18n.t('tool.zoomIn'));
@@ -2229,6 +2250,18 @@ t('transform: ЛКМ вне рамки завершает трансформац
   actions.run('transform.enter'); assert.ok(S.rotMode); // вошли в свободную трансформацию
   input.down({ pointerType: 'mouse', button: 0, clientX: -100, clientY: -100, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
   assert.equal(S.rotMode, null); }); // клик вне рамки применил и закрыл
+t('transform: угол Free Transform масштабирует при протяжке к центру', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
+  for (let y = 2; y <= 5; y++) for (let x = 2; x <= 5; x++) S.layers[0].grid[y][x] = [1, 1, 1, 255];
+  cache.dirtyAll(); actions.run('transform.enter');
+  const pe = (x, y) => ({ clientX: x * S.view.zoom, clientY: y * S.view.zoom, shiftKey: false });
+  tdrag.rotGrab({ e: pe(2, 2) }); tdrag.rotDrag(pe(3, 3), () => {});
+  assert.ok(S.rotMode.sx < 1); assert.ok(S.rotMode.sy < 1); assert.ok(Math.abs(S.rotMode.ang) < 1e-6); tf.exitRotMode(false); });
+t('transform: боковая ручка умеет поворачивать без изменения масштаба', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
+  for (let y = 2; y <= 5; y++) for (let x = 2; x <= 5; x++) S.layers[0].grid[y][x] = [1, 1, 1, 255];
+  cache.dirtyAll(); actions.run('transform.enter');
+  const pe = (x, y) => ({ clientX: x * S.view.zoom, clientY: y * S.view.zoom, shiftKey: false });
+  tdrag.rotGrab({ e: pe(6, 4) }); tdrag.rotDrag(pe(4, 6), () => {});
+  assert.ok(Math.abs(S.rotMode.ang - Math.PI / 2) < 1e-6); assert.equal(S.rotMode.sx, 1); assert.equal(S.rotMode.sy, 1); tf.exitRotMode(false); });
 t('transform: Ctrl+T с Selection трансформирует фрагмент и гасит выделение', () => { resetWH(8, 8);
   S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[5][5] = [1, 1, 1, 255];
   S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null; actions.run('transform.enter');
