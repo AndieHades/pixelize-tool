@@ -16,6 +16,7 @@
     .pal-act { margin: 4px -8px -8px; padding: 6px 24px 7px 8px; border-radius: 0 0 var(--r-2xl) var(--r-2xl); }
     .pal-act button:not(.on), .pal-act button:not(.on):active, .pal-act button:not(.on):focus { background: transparent; transform: none; }
     .pal-act #tsg-btn:not(.on), .pal-act #tsg-btn:not(.on):active, .pal-act #tsg-btn:not(.on):focus { background: transparent; transform: none; }
+    .pal-act button:disabled { opacity: .35; pointer-events: none; }
     #palrsz { position: absolute; right: 1px; bottom: 1px; width: 20px; height: 20px;
       cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }

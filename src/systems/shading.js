@@ -5,6 +5,7 @@ import * as bus from '../core/bus.js';
 import * as actions from '../core/actions.js';
 import { $, t, toast } from '../core/dom.js';
 import { floatingWindow } from '../core/floating-window.js';
+import { setTool } from '../core/tools.js';
 import { rgb, rgbToHex, eqc } from '../logic/color.js';
 
 export const SHADING_MAX = 6;
@@ -135,6 +136,15 @@ export function enablePick() {
   toast(t('toast.shadingPickColors'));
 }
 
+export function activateTool(colors = []) {
+  if (active()) { disable(); return true; }
+  const next = clean(colors);
+  if (next.length < 2) return false;
+  setTool('pencil');
+  setRamp(next);
+  return true;
+}
+
 export function mount() {
   $('shade-title').textContent = t('shade.title');
   floatingWindow($('shade-pop'), { grip: $('shade-head'), handle: $('shade-rsz'), storeKey: 'shadewin', minW: 160, minH: 70,
@@ -152,4 +162,5 @@ export function mount() {
   actions.register('shading.disable', disable);
   actions.register('shading.pickColors', enablePick);
   actions.register('shading.reverse', reverse);
+  actions.register('tool.shading', activateTool);
 }

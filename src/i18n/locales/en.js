@@ -100,7 +100,7 @@ export const en = {
   'gallery.folderName': 'Project',
   'gallery.files': '{n} files',
   'time.now': 'just now', 'time.min': 'min', 'time.hour': 'h', 'time.yesterday': 'yesterday', 'time.days': 'd',
-  'palette.menu': 'Palettes', 'palette.namePlaceholder': 'Palette name', 'palette.addActiveTitle': 'Add color',
+  'palette.menu': 'Palettes', 'palette.namePlaceholder': 'Palette name', 'palette.defaultName': 'Palette {n}', 'palette.addActiveTitle': 'Add color',
   'palette.new': 'New palette', 'palette.fromCanvas': 'Palette from canvas', 'palette.presets': 'Palette presets', 'palette.used': 'Show used colors',
   'palette.dropTitle': 'Palette from image · {n}', 'palette.dropAdd': 'Add to current', 'palette.dropNew': 'Create new',
   'shade.title': 'Shading', 'shade.pickColors': 'Pick colors', 'tool.brushShading': 'Shading brush',

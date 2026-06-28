@@ -32,6 +32,7 @@ function rangeIdx(from, to, max = Infinity) {
   return out;
 }
 const colorsFromIdx = (idxs) => idxs.map((i) => S.palette[i].slice(0, 3));
+export const selectedPaletteColors = () => { validSel(); return colorsFromIdx([...palSel]); };
 function setPaletteSelection(idxs, anchor = idxs[0]) { palSel = new Set(idxs); palAnchorIdx = anchor ?? -1; rebuild(); }
 function setShadingFromSelection(idxs) { const cols = colorsFromIdx(idxs); palSel = new Set(); palAnchorIdx = -1; actions.run('shading.setRamp', cols); }
 function markMoving(idxs, on) { const set = new Set(idxs);

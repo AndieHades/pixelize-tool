@@ -9,7 +9,7 @@ import { rgb, rgbToHex, hexToRgb, eqc } from '../logic/color.js';
 import { sortPalette } from '../logic/palette-sort.js';
 import { setTool } from '../core/tools.js';
 import { effVis } from '../core/layers.js';
-import { initPaletteSelect, wireSwatch, clearPaletteSelection, validSel } from './palette-select.js';
+import { initPaletteSelect, wireSwatch, clearPaletteSelection, selectedPaletteColors, validSel } from './palette-select.js';
 import { attachReorder } from '../core/reorder-drag.js';
 
 let showUsed = false;
@@ -17,6 +17,11 @@ let showUsed = false;
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
 const colorKey = (c) => c ? c[0] + ',' + c[1] + ',' + c[2] : '';
 const inShadeRamp = (c) => S.shading && S.shading.picking && S.shading.colors && S.shading.colors.some((x) => eqc(x, c));
+function syncShadingButton() {
+  const btn = $('pal-shading'); if (!btn) return;
+  const on = !!(S.shading && S.shading.on), canStart = selectedPaletteColors().length > 1;
+  btn.classList.toggle('on', on); btn.disabled = !on && !canStart;
+}
 
 function usedColorKeys() { const keys = new Set();
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i]; if (!L || !effVis(i) || L.opacity <= 0) continue;
@@ -78,17 +83,22 @@ export function buildPalette() {
     S.palette.push(S.active.slice()); buildPalette(); toast(t('toast.colorAdded')); });
   add.addEventListener('contextmenu', (e) => { e.preventDefault(); actions.run('color.pick'); });
   box.appendChild(add);
+  syncShadingButton();
 }
+
+function toggleShading() { actions.run('tool.shading', selectedPaletteColors()); }
 
 export function mount() {
   initPaletteSelect({ rebuild: buildPalette, setActive: setActiveColor });
+  $('pal-shading').onclick = toggleShading;
   $('pal-used').addEventListener('click', () => { showUsed = !showUsed; $('pal-used').classList.toggle('on', showUsed); buildPalette(); });
   bus.on('palette', () => { buildPalette(); refreshActive(); });
   bus.on('render', refreshUsed); // живое обновление «использованных» цветов прямо во время рисования
+  bus.on('shading', syncShadingButton);
   bus.on('tool', (id) => { if (id !== 'pencil') clearPaletteSelection(); });
   bus.on('locale', buildPalette);
   wirePalActReorder();
-  refreshActive(); buildPalette();
+  refreshActive(); buildPalette(); syncShadingButton();
 }
 
 // перенос иконок тулбара палитры зажатым ПКМ/долгим тапом (как в тулбаре тайлов)

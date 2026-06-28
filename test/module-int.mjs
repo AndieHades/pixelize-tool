@@ -899,6 +899,20 @@ await ta('palette: кнопка Shading выбирает ramp без залип�
   assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
   await new Promise((r) => setTimeout(r)); // сбросить отложенный palSquelch до следующего теста
 });
+t('palette: кнопка Shading требует мультивыбор и переключает режим', () => {
+  shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
+  const btn = document.getElementById('pal-shading');
+  assert.equal(btn.disabled, true); btn.click(); assert.equal(S.shading.on, false);
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(btn.disabled, true);
+  sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
+  sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  assert.equal(btn.disabled, false); assert.ok(!btn.classList.contains('on'));
+  btn.click(); assert.deepEqual(S.shading.colors, [[1, 1, 1], [3, 3, 3]]);
+  assert.equal(S.shading.on, true); assert.equal(S.tool, 'pencil'); assert.ok(btn.classList.contains('on'));
+  btn.click(); assert.equal(S.shading.on, false); assert.equal(btn.disabled, true); assert.ok(!btn.classList.contains('on'));
+});
 t('shading: максимум 6 цветов и клик по линейке разворачивает направление', () => {
   shading.setRamp([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]);
   assert.equal(S.shading.colors.length, 6);
@@ -1464,10 +1478,19 @@ t('palette-manager: монтируется и сохраняет палитру'
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]);
   assert.equal(document.getElementById('pal-from-img'), null);
-  assert.equal(document.querySelectorAll('#pal-act > button').length, 7);
+  assert.equal(document.querySelectorAll('#pal-act > button').length, 8);
   document.getElementById('pal-presets').click(); assert.equal(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
+});
+t('palette-manager: пустое имя сохраняется как следующий Palette NN', () => {
+  localStorage.setItem('palettes', JSON.stringify({ 'Palette 01': [[9, 9, 9]] }));
+  S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount(); document.getElementById('pal-save-open').click();
+  assert.equal(document.getElementById('pal-name').value, 'Palette 02');
+  document.getElementById('pal-name').value = ''; document.getElementById('pal-save').click();
+  const saved = JSON.parse(localStorage.getItem('palettes'));
+  assert.deepEqual(saved['Palette 02'], [[1, 2, 3], [4, 5, 6]]);
+  assert.equal(document.getElementById('pal-name').value, 'Palette 03');
 });
 t('palette-manager: пустая палитра не сохраняется', () => { localStorage.setItem('palettes', JSON.stringify({ keep: [[9, 9, 9]] }));
   S.palette = []; palMgr.mount(); document.getElementById('pal-name').value = 'empty'; document.getElementById('pal-save').click();

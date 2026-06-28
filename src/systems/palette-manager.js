@@ -30,6 +30,14 @@ function cleanPalette(arr) { const seen = new Set(), out = [];
   return out;
 }
 
+function defaultPaletteName(st = palStore()) {
+  const used = new Set(Object.keys(st));
+  for (let i = 1; ; i++) {
+    const name = t('palette.defaultName', { n: String(i).padStart(2, '0') });
+    if (!used.has(name)) return name.slice(0, 20);
+  }
+}
+
 function loadPalette(arr, name) { S.palette = cleanPalette(arr); if (S.palette.length) S.active = S.palette[0].slice();
   bus.emit('palette'); bus.emit('render'); dialog().close(); if (name) toast(t('toast.paletteLoaded', { name })); }
 function replaceFromImage(pal) { loadPalette(pal); toast(t('toast.paletteFromImg', { n: pal.length })); }
@@ -110,7 +118,7 @@ function dropPalette(e) {
   paletteFromImageFile(f, 'ask', { x: e.clientX, y: e.clientY });
 }
 
-function openPaletteWindow() { const d = dialog(); d.name.value = ''; palListUI(); d.setSaveVisible(true); d.open(); }
+function openPaletteWindow() { const d = dialog(); d.name.value = defaultPaletteName(); palListUI(); d.setSaveVisible(true); d.open(); }
 function openPresetMenu() { const d = dialog(); d.name.value = ''; palListUI(); d.setSaveVisible(false); d.open(); }
 function newPalette() { S.palette = []; bus.emit('palette'); bus.emit('render'); toast(t('palette.new')); }
 function createFromCanvas() { const pal = paletteFromCanvas();
@@ -125,8 +133,8 @@ export function mount() {
   $('pal-save-open').onclick = openPaletteWindow;
   $('pal-presets').onclick = openPresetMenu;
   dialog().save.onclick = () => { if (!S.palette.length) { toast(t('toast.paletteEmpty')); return; }
-    const nm = (dialog().name.value.trim() || t('label.palette')).slice(0, 20);
-    const s2 = palStore(); s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
+    const s2 = palStore(), nm = (dialog().name.value.trim() || defaultPaletteName(s2)).slice(0, 20);
+    s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); dialog().name.value = defaultPaletteName(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
   bus.on('locale', () => { dialog().refresh(); palListUI(); });
   const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
   $('pal-file').onclick = () => palImg.click();
