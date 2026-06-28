@@ -1,10 +1,10 @@
 /* --- библиотека кистей (панель в стиле слоёв) --- */
-#brush-pop { position: fixed; display: none; z-index: 31; width: 304px; max-width: calc(100vw - 20px); overflow: hidden;
+#brush-pop { --brush-tile-min: 64px; --brush-default-cols: 6; position: fixed; display: none; z-index: 31; width: 304px; max-width: calc(100vw - 20px); overflow: hidden;
   box-sizing: border-box; top: calc(env(safe-area-inset-top, 0px) + 70px); left: 50%; transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); }
 #brush-pop.on { display: block; animation: pop .18s ease-out; }
-#brush-body { padding: 8px; }
-#brush-list { overflow-y: auto; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px;
+#brush-body { padding: var(--gap); }
+#brush-list { overflow-y: auto; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--brush-tile-min), 1fr)); gap: var(--gap);
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - 120px); }
 /* плитка кисти — как иконка переносного тулбара */
 .btile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 5px; border-radius: var(--r-xl);

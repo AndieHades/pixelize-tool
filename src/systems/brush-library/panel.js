@@ -18,6 +18,14 @@ import { createFromSelection } from './from-selection.js';
 import { mountSettings, syncSettings, openSettings } from './settings.js';
 
 let mode = 'pencil';
+const cssNum = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
+function resetBrushWindow() {
+  const pop = $('brush-pop'), body = $('brush-body'), list = $('brush-list');
+  const ps = window.getComputedStyle(pop), bs = window.getComputedStyle(body), ls = window.getComputedStyle(list);
+  const cols = cssNum(ps.getPropertyValue('--brush-default-cols'), 6), cell = cssNum(ps.getPropertyValue('--brush-tile-min'), 64);
+  const gap = cssNum(ls.columnGap || ls.gap, 8), w = cols * cell + (cols - 1) * gap + cssNum(bs.paddingLeft) + cssNum(bs.paddingRight) + cssNum(ps.borderLeftWidth, 1) + cssNum(ps.borderRightWidth, 1);
+  pop.style.width = Math.min(window.innerWidth - 12, w) + 'px'; pop.style.height = '';
+}
 function rerender() { renderBrushes(); syncSettings(); }
 // выбор кисти: нестандартная встаёт в натуральный размер (отпечаток = вид в палитре)
 function selectBrush(b) { setStampBrush(mode, b); if (brushHasShape(b)) { S.brushes[mode].size = BP_SMAX; bus.emit('brushlib'); bus.emit('render'); } }
@@ -57,7 +65,7 @@ export function mount() {
   bindList({ rerender, pick, settings, menu: openBrushMenu, rename, mode: () => mode });
   mountSettings(() => mode, { dup, del, rename: (id) => renameById(id) });
   floatingWindow($('brush-pop'), { grip: $('brush-head'), handle: $('brush-rsz'), storeKey: 'brushwin', minW: 240, minH: 220,
-    onClose: () => $('brush-pop').classList.remove('on') });
+    onClose: () => $('brush-pop').classList.remove('on'), onHeaderDblClick: resetBrushWindow });
   $('brush-add').addEventListener('click', (e) => { const r = e.currentTarget.getBoundingClientRect(); showMenuAt($('brush-plus'), r.left, r.bottom); });
   const closePlus = () => $('brush-plus').classList.remove('on');
   $('brush-from-sel').onclick = () => { closePlus(); createFromSelection(); };

@@ -9,7 +9,7 @@ import { clamp, clamp01, clamp255, clampRound, evalNumericField, isNumericLitera
 import { floodRegion } from '../src/logic/flood.js';
 import { parsePsdEffects } from '../src/logic/psd-effects.js';
 import { sampleGrid } from '../src/logic/sample.js';
-import { medianCut, nearest, paletteFromGrid, dedupePal, exactPaletteFromRgba, samplesFromRgba } from '../src/logic/quantize.js';
+import { medianCut, nearest, paletteFromGrid, dedupePal, exactPaletteFromRgba, samplesFromRgba, sourcePaletteFromSamples } from '../src/logic/quantize.js';
 import { despeckle, cropEmpty } from '../src/logic/cleanup.js';
 import { rotSprite } from '../src/logic/rotsprite.js';
 import { computeGlow } from '../src/logic/glow.js';
@@ -174,6 +174,12 @@ t('quantize: medianCut поглощает редкие переходные то
   const pal = medianCut(cols, 16);
   assert.ok(pal.some((c) => c[1] > c[0] + 50), 'зелёный должен остаться');
   assert.equal(pal.filter((c) => c[0] > 180).length, 1, 'AA-крем поглощён основным кремом');
+});
+t('quantize: source palette fills the limit with real sample colors', () => {
+  const cols = [];
+  for (let r = 0; r < 8; r++) for (let g = 0; g < 8; g++) cols.push([r * 32, g * 32, (r * 17 + g * 13) % 256]);
+  const source = new Set(cols.map((c) => c.join(','))), pal = sourcePaletteFromSamples(cols, 48);
+  assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
 });
 t('quantize: paletteFromGrid по частоте', () => {
   const g = [[[1, 1, 1, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], null]];

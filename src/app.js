@@ -115,6 +115,20 @@ function resizeSidebar(w, h) {
   bar.style.minHeight = minH + 'px';
   bar.style.maxHeight = Math.max(minH, Math.min(window.innerHeight - 12, h)) + 'px';
 }
+function paletteChromeHeight() {
+  const bar = $('palbar'), pal = $('pal'), cs = window.getComputedStyle(bar);
+  return [...bar.children].filter((el) => el !== pal && window.getComputedStyle(el).position !== 'absolute')
+    .reduce((sum, el) => sum + el.getBoundingClientRect().height, px(cs.borderTopWidth, 1) + px(cs.borderBottomWidth, 1));
+}
+function resizePaletteWindow(w, h) {
+  $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px';
+  $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h - paletteChromeHeight())) + 'px';
+}
+function resetPaletteWindow() {
+  const bar = $('palbar'), pal = $('pal'), cs = window.getComputedStyle(bar);
+  const cols = px(cs.getPropertyValue('--pal-default-cols'), 6), cell = px(cs.getPropertyValue('--pal-cell'), 34), pad = px(cs.getPropertyValue('--pal-pad'), 8);
+  bar.style.width = Math.min(window.innerWidth - 12, cols * cell + pad * 2 + px(cs.borderLeftWidth, 1) + px(cs.borderRightWidth, 1)) + 'px'; pal.style.height = '';
+}
 
 export function start() {
   detect(); applyTheme(); refreshColors();
@@ -124,7 +138,8 @@ export function start() {
 
   floatingWindow($('palbar'), { grip: $('palgrip'), handle: $('palrsz'), storeKey: 'palwin', clampBottom: 50,
     onClose: () => $('palbar').classList.add('closed'), // крестик прячет палитру; вернуть — кружком цвета
-    onResize: (w, h) => { $('palbar').style.width = Math.max(130, Math.min(innerWidth - 12, w)) + 'px'; $('pal').style.height = Math.max(38, Math.min(innerHeight * 0.6, h)) + 'px'; } });
+    onHeaderDblClick: resetPaletteWindow,
+    onResize: resizePaletteWindow });
   resizeSidebar(px(window.getComputedStyle($('sidebar')).width, 50), sidebarMinHeight(50));
   floatingWindow($('sidebar'), { grip: $('sb-grip'), handle: $('sb-rsz'), storeKey: 'sbwin', minW: 38, clampRight: 46, clampBottom: 60,
     onResize: resizeSidebar }); // сайдбар — в общем порядке: последний тронутый сверху (без alwaysOnTop)

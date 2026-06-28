@@ -7,6 +7,7 @@ const DROP_COST = 2;   // порог цены ошибки (usage·d²/пикс�
 // анти-алиасные переходы того же тона близко, уникальный тон (зелёные глаза) далеко
 const chromaD2 = (a, b) => { const rg = (a[0] - a[1]) - (b[0] - b[1]), gb = (a[1] - a[2]) - (b[1] - b[2]),
   l = (a[0] + a[1] + a[2] - b[0] - b[1] - b[2]) / 3; return 4 * (rg * rg + gb * gb) + l * l; };
+const keyOf = (c) => c[0] + ',' + c[1] + ',' + c[2];
 
 // выкинуть цвета, чьё исчезновение почти не видно: мало пикселей и есть близкая
 // замена. Съедает хвост анти-алиасных переходов, не трогая редкие уникальные тона.
@@ -42,6 +43,38 @@ export function medianCut(cols, n) {
 }
 
 export const nearest = (c, pal) => { let best = pal[0], bd = Infinity; for (const p of pal) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } } return best; };
+
+function sourceEntries(cols) { const m = new Map();
+  for (const c of cols) { const k = (c[0] >> CUBE_SHIFT) + ',' + (c[1] >> CUBE_SHIFT) + ',' + (c[2] >> CUBE_SHIFT);
+    const e = m.get(k); if (e) e.n++; else m.set(k, { c: [c[0], c[1], c[2]], n: 1 }); }
+  return [...m.values()];
+}
+const bounds = (b) => { const mn = [255, 255, 255], mx = [0, 0, 0];
+  for (const e of b) for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], e.c[k]); mx[k] = Math.max(mx[k], e.c[k]); }
+  return [mn, mx];
+};
+function boxColor(b) { const avg = [0, 0, 0]; let total = 0;
+  for (const e of b) { total += e.n; for (let k = 0; k < 3; k++) avg[k] += e.c[k] * e.n; }
+  const center = avg.map((v) => Math.round(v / total)); let best = b[0], bd = Infinity;
+  for (const e of b) { const d = chromaD2(e.c, center); if (d < bd || (d === bd && e.n > best.n)) { bd = d; best = e; } }
+  return best.c;
+}
+export function sourcePaletteFromSamples(cols, n) {
+  const entries = sourceEntries(cols); if (entries.length <= n) return entries.map((e) => e.c);
+  let bx = [entries];
+  while (bx.length < n) { let bi = -1, bv = -1;
+    bx.forEach((b, i) => { if (b.length < 2) return; const [mn, mx] = bounds(b), v = (mx[0] - mn[0]) + (mx[1] - mn[1]) + (mx[2] - mn[2]); if (v > bv) { bv = v; bi = i; } });
+    if (bi < 0) break; const b = bx[bi], [mn, mx] = bounds(b); let ch = 0;
+    if (mx[1] - mn[1] > mx[ch] - mn[ch]) ch = 1; if (mx[2] - mn[2] > mx[ch] - mn[ch]) ch = 2;
+    b.sort((p, q) => p.c[ch] - q.c[ch]); const total = b.reduce((s, e) => s + e.n, 0); let acc = 0, mid = 1;
+    for (; mid < b.length - 1; mid++) { acc += b[mid - 1].n; if (acc >= total / 2) break; }
+    bx.splice(bi, 1, b.slice(0, mid), b.slice(mid));
+  }
+  const seen = new Set(), out = [];
+  for (const c of bx.map(boxColor)) { const k = keyOf(c); if (!seen.has(k)) { seen.add(k); out.push(c); } }
+  for (const e of entries.sort((a, b) => b.n - a.n)) { if (out.length >= n) break; const k = keyOf(e.c); if (!seen.has(k)) { seen.add(k); out.push(e.c); } }
+  return out;
+}
 
 export function paletteFromGrid(g, cap = 32) { const m = new Map();
   for (const row of g) for (const c of row) { if (!c) continue;

@@ -35,7 +35,7 @@ function freeSpot(el) { const r = el.getBoundingClientRect(), w = r.width, h = r
 
 export function floatingWindow(el, opts = {}) {
   if (el.__fw) return; el.__fw = true; // идемпотентно: окно делается перетаскиваемым один раз
-  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, avoidOverlap = true, alwaysOnTop = false, resizeEdges = false, onResize, onClose } = opts;
+  const { grip = el, handle, storeKey, minW = 120, minH = 80, clampRight = 70, clampBottom = 50, avoidOverlap = true, alwaysOnTop = false, resizeEdges = false, onResize, onClose, onHeaderDblClick } = opts;
   el.__fwAlwaysOnTop = alwaysOnTop;
   let placed = false; // есть ли осмысленная позиция (восстановлена / выбрана пользователем / переставлена)
   const place = (l, t) => {
@@ -58,6 +58,11 @@ export function floatingWindow(el, opts = {}) {
   // крестик закрытия в шапке (общий для всех окон): прячет окно / зовёт onClose
   const xb = el.querySelector('.win-x');
   if (xb) xb.addEventListener('click', (e) => { e.stopPropagation(); if (onClose) onClose(); else el.classList.remove('on'); });
+  if (onHeaderDblClick) grip.addEventListener('dblclick', (e) => {
+    if (e.target.closest(interactive)) return;
+    e.preventDefault(); e.stopPropagation(); closePopovers(); bringToFront(el, alwaysOnTop);
+    onHeaderDblClick(e); placed = true; save();
+  });
 
   el.addEventListener('pointerdown', () => bringToFront(el, alwaysOnTop), true); // любой тык по окну — наверх стопки
 

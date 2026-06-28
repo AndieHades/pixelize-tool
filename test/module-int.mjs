@@ -1180,6 +1180,15 @@ await ta('floating-window: drag из прокручиваемого тела н�
     assert.equal(win.style.left, '50px'); // за грип (шапку) окно по-прежнему переносится
   } finally { win.remove(); }
 });
+t('floating-window: header double-click runs the panel reset callback', () => {
+  const win = document.createElement('div'), head = document.createElement('div');
+  let called = 0; win.appendChild(head); document.body.appendChild(win);
+  try {
+    floatingWindow(win, { grip: head, avoidOverlap: false, onHeaderDblClick: () => { called++; win.style.width = '321px'; } });
+    head.dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true, button: 0 }));
+    assert.equal(called, 1); assert.equal(win.style.width, '321px');
+  } finally { win.remove(); }
+});
 t('gallery: режим галереи сохраняет открытые окна редактора', () => {
   const ids = ['lay-pop', 'brush-pop', 'adjpop', 'prevwin'];
   ids.forEach((id) => document.getElementById(id).classList.add('on'));
@@ -1601,6 +1610,13 @@ t('palette-manager: палитра из файла ограничивается 
   for (let i = 0; i < 150; i++) { d[i * 4] = i; d[i * 4 + 1] = 150 - i; d[i * 4 + 2] = (i * 3) % 255; d[i * 4 + 3] = 255; }
   assert.ok(palMgr.paletteFromImageData(d, 128).length <= 128);
 });
+t('palette-manager: image overflow palette uses requested source colors', () => {
+  const d = new Uint8ClampedArray(72 * 4), source = new Set();
+  for (let i = 0; i < 72; i++) { const c = [(i % 8) * 32, Math.floor(i / 8) * 28, (i * 19) % 256], o = i * 4;
+    source.add(c.join(',')); d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255; }
+  const pal = palMgr.paletteFromImageData(d, 48);
+  assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
+});
 t('palette-manager: палитра с холста берёт видимые цвета', () => { resetWH(3, 3);
   S.layers[0].grid[0][0] = [1, 2, 3, 255]; S.layers[0].grid[1][1] = [7, 8, 9, 255];
   S.layers.push({ name: 'hidden', grid: blank(3, 3), opacity: 1, visible: false, fid: null, clip: false, ext: new Map(), effects: [] });
@@ -1613,9 +1629,10 @@ t('palette-manager: canvas palette is sorted into Apollo-like ramps', () => { re
   assert.deepEqual(palMgr.paletteFromCanvas(), [[23, 32, 56], [37, 86, 46], [200, 120, 50], [20, 20, 20]]);
 });
 t('palette-manager: canvas palette is quantized to 48 significant colors', () => { resetWH(64, 1);
-  for (let x = 0; x < 64; x++) S.layers[0].grid[0][x] = [(x * 4) % 256, (40 + x * 3) % 256, (120 + x * 5) % 256, 255];
+  for (let x = 0; x < 64; x++) S.layers[0].grid[0][x] = [(x % 8) * 32, Math.floor(x / 8) * 32, (x * 17) % 256, 255];
   cache.dirtyAll(); const pal = palMgr.paletteFromCanvas();
-  assert.ok(pal.length <= 48); assert.ok(pal.length < 64);
+  const source = new Set(S.layers[0].grid[0].map((c) => c.slice(0, 3).join(',')));
+  assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
 });
 
 t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
@@ -2475,6 +2492,30 @@ t('layers-ui: окно слоёв растягивается за левый к�
   edge.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 60, clientY: 120 }));
   edge.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 60, clientY: 120 }));
   assert.equal(pop.style.left, '60px'); assert.equal(pop.style.width, '312px'); assert.equal(document.getElementById('lay-list').style.maxHeight, 'none');
+});
+t('layers-ui: header double-click expands the list within the viewport', () => {
+  resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  for (let i = 0; i < 12; i++) lops.doAddLayer(); layList();
+  const oldH = window.innerHeight, oldW = window.innerWidth;
+  const pop = document.getElementById('lay-pop'), list = document.getElementById('lay-list');
+  try {
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 360 });
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
+    pop.style.left = '280px'; pop.style.top = '260px'; pop.style.width = '272px'; pop.style.height = '220px';
+    pop.getBoundingClientRect = () => ({ left: 280, top: 260, width: 272, height: 220, right: 552, bottom: 480 });
+    for (const [id, h] of [['lay-head', 42], ['lay-act-top', 42], ['lay-act-bottom', 42]]) {
+      document.getElementById(id).getBoundingClientRect = () => ({ left: 0, top: 0, width: 272, height: h, right: 272, bottom: h });
+    }
+    document.querySelector('.lay-ops').getBoundingClientRect = () => ({ left: 0, top: 0, width: 272, height: 48, right: 272, bottom: 48 });
+    Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 720 });
+    document.getElementById('lay-head').dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true, button: 0 }));
+    const h = parseFloat(pop.style.height), t0 = parseFloat(pop.style.top);
+    assert.ok(h <= window.innerHeight - 8); assert.ok(t0 >= 4); assert.ok(t0 + h <= window.innerHeight - 4);
+    assert.equal(list.style.maxHeight, 'none');
+  } finally {
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: oldH });
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: oldW });
+  }
 });
 t('layers-ui: папка показывает количество слоёв, пустая без счётчика', () => { resetWH(4, 4); const mk = (name, fid) => ({ name, fid, grid: blank(4, 4), opacity: 1, visible: true, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('a', 1), mk('b', 1), mk('top', null)];

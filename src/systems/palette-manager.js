@@ -7,7 +7,7 @@ import { paintStack } from '../core/composite.js';
 import { compositeAt } from '../core/layer-cache.js';
 import { makeCanvas } from '../core/canvas.js';
 import { rgb, eqc } from '../logic/color.js';
-import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
+import { exactPaletteFromRgba, samplesFromRgba, sourcePaletteFromSamples } from '../logic/quantize.js';
 import { sortPalette } from '../logic/palette-sort.js';
 import { defaultPalette } from '../config/palette.js';
 import { initPaletteCreateChoice, refreshPaletteCreateChoice } from './palette-create-choice.js';
@@ -72,7 +72,7 @@ export function paletteFromImageData(data, limit = EXACT_LIMIT) {
   const exact = exactPaletteFromRgba(data, limit);
   if (!exact.overflow) return exact.colors.slice(0, limit);
   const samples = samplesFromRgba(data);
-  return samples.length ? medianCut(samples, limit === EXACT_LIMIT ? QUANT_COLORS : limit) : [];
+  return samples.length ? sourcePaletteFromSamples(samples, limit === EXACT_LIMIT ? QUANT_COLORS : limit) : [];
 }
 
 function readImagePalette(im, limit = EXACT_LIMIT) {
@@ -97,7 +97,7 @@ export function paletteFromCanvas() {
   const pal = paletteFromImageData(x.getImageData(0, 0, S.W, S.H).data, CANVAS_PALETTE_LIMIT);
   if (pal.length) return sortPalette(pal);
   const fallback = fallbackCanvasPalette();
-  return sortPalette(fallback.length > CANVAS_PALETTE_LIMIT ? medianCut(fallback, CANVAS_PALETTE_LIMIT) : fallback);
+  return sortPalette(fallback.length > CANVAS_PALETTE_LIMIT ? sourcePaletteFromSamples(fallback, CANVAS_PALETTE_LIMIT) : fallback);
 }
 
 function showDropChoice(pal, pt) {
