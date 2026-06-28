@@ -40,7 +40,7 @@ export async function mount() {
   $('docsbtn').onclick = show;
   actions.register('gallery.hide', hide); // конвертер/импорт после «Применить» уводят с галереи в редактор
   actions.register('gallery.importDrop', fromFile); // drop картинки в галерею → новый проект (через Pixelize)
-  bus.on('snapshot', autosave); bus.on('layers', autosave); bus.on('reference', autosave);
+  bus.on('snapshot', autosave); bus.on('layers', autosave); bus.on('reference', autosave); bus.on('grid', autosave);
   try { const docs = (await listAll()).filter((d) => d.kind !== 'folder'); // последнюю работу грузим под галереей (для «продолжить»)
     if (docs.length) { const last = docs.sort((a, b) => b.updated - a.updated)[0]; await openWork(last.id); } } catch (e) {}
   show(); // на старте всегда открываем галерею, что бы ни случилось при чтении

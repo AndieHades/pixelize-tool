@@ -8,13 +8,14 @@ import { setTool } from '../core/tools.js';
 import { longPress } from '../core/long-press.js';
 import { saveBrushPrefs } from '../core/brush-prefs.js';
 import { ensureSymmetryDefaults } from '../core/layers.js';
-import { ICONS, BRUSH_MODES, LINE_MODES, SHAPE_MODES, SYM_MODES, SYM_TOOLS, FLIP_MODES, ZOOM_MODES } from '../config/toolbar.js';
+import { ICONS, BRUSH_MODES, LINE_MODES, SHAPE_MODES, SYM_MODES, SYM_TOOLS, FLIP_MODES, CENTER_MODES, ZOOM_MODES } from '../config/toolbar.js';
 
 const TOOLS = ['pencil', 'eraser', 'fill', 'select', 'lasso', 'move', 'adjust'];
 let lastBrushMode = 'normal';
 let lastShapeMode = { kind: 'shape', tool: 'rect', fill: false };
 let lastSymChoice = { kind: 'flag', flag: 'sym' };
 let lastFlipMode = 'h';
+let lastCenterMode = 'center';
 let lastZoomMode = 'fit';
 
 function setButtonIcon(btn, mode) {
@@ -36,6 +37,7 @@ function currentSymMode() {
     ? (SYM_TOOLS.find((m) => m.mode === lastSymChoice.mode) || { icon: 'symV', key: 'side.symmetry' })
     : (SYM_MODES.find((m) => m.flag === lastSymChoice.flag) || { icon: 'symV', key: 'side.symmetry' }); }
 function currentFlipMode() { return FLIP_MODES.find((m) => m.mode === lastFlipMode) || FLIP_MODES[0]; }
+function currentCenterMode() { return CENTER_MODES.find((m) => m.mode === lastCenterMode) || CENTER_MODES[0]; }
 function currentZoomMode() { return ZOOM_MODES.find((m) => m.mode === lastZoomMode) || ZOOM_MODES[0]; }
 
 function syncChoiceMenus() {
@@ -49,6 +51,7 @@ function syncChoiceMenus() {
     if (b.dataset.symTool) b.classList.toggle('on', (S.symLines && S.symLines.mode) === b.dataset.symTool);
   }
   const flip = $('flip-choice'); if (flip) for (const b of flip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.flipMode === lastFlipMode);
+  const center = $('center-choice'); if (center) for (const b of center.querySelectorAll('button')) b.classList.toggle('on', b.dataset.centerMode === lastCenterMode);
   const zoom = $('zoom-choice'); if (zoom) for (const b of zoom.querySelectorAll('button')) b.classList.toggle('on', b.dataset.zoomMode === lastZoomMode);
 }
 
@@ -57,6 +60,7 @@ function syncModeButtons() {
   setButtonIcon($('t-shape'), currentShapeMode());
   setButtonIcon($('sym'), currentSymMode());
   setButtonIcon($('flip-h'), currentFlipMode());
+  setButtonIcon($('center'), currentCenterMode());
   setButtonIcon($('zoom'), currentZoomMode());
   const sym = $('sym'); if (sym) sym.classList.toggle('on', isSymmetryModeActive());
   syncChoiceMenus();
@@ -96,6 +100,11 @@ function buildToolChoices() {
     for (const m of FLIP_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.flipMode = m.mode;
       b.onclick = () => { lastFlipMode = m.mode; syncModeButtons(); actions.run(m.action); };
       flip.appendChild(b); } }
+  const center = $('center-choice');
+  if (center && !center.dataset.ready) { center.dataset.ready = '1';
+    for (const m of CENTER_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.centerMode = m.mode;
+      b.onclick = () => { lastCenterMode = m.mode; syncModeButtons(); actions.run(m.action); };
+      center.appendChild(b); } }
   const zoom = $('zoom-choice');
   if (zoom && !zoom.dataset.ready) { zoom.dataset.ready = '1';
     for (const m of ZOOM_MODES) { const b = choiceButton(m.icon, m.key); b.dataset.zoomMode = m.mode;
@@ -203,7 +212,8 @@ export function mount() {
   $('flip-h').onclick = () => { const m = currentFlipMode(); actions.run(m.action); };
   $('flip-h').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('flip-choice', e.currentTarget); });
   $('img-settings').onclick = () => actions.run('effect.bc', null, null, { scope: S.bgSel ? 'canvas' : 'layer' }); // фон → весь документ, слой/папка → к выбранному
-  $('center').onclick = () => actions.run('layer.center');
+  $('center').onclick = () => { const m = currentCenterMode(); actions.run(m.action); };
+  $('center').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('center-choice', e.currentTarget); });
 
   $('zoom').onclick = () => { const m = currentZoomMode(); actions.run(m.action); };
   $('zoom').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('zoom-choice', e.currentTarget); });

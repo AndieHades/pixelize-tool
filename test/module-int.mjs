@@ -409,6 +409,12 @@ t('center: объект встаёт в центр холста', () => { resetW
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[4][4], [1, 1, 1, 255]); assert.equal(S.layers[0].grid[1][1], null); });
 t('center: с выделением — в центр выделения', () => { resetWH(10, 10); S.layers[0].grid[0][0] = [2, 2, 2, 255]; S.sel = { x0: 4, y0: 4, x1: 5, y1: 5 }; S.selMask = null; cache.dirtyAll();
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[5][5], [2, 2, 2, 255]); S.sel = null; });
+t('center: fit short side вписывает слой в меньшую сторону холста', () => { resetWH(10, 6);
+  const d = new Uint8ClampedArray(12 * 4 * 4); for (let i = 0; i < 12 * 4; i++) { d[i * 4] = 9; d[i * 4 + 3] = 255; }
+  doc.addImageLayerTop(12, 4, d, 'wide'); actions.run('layer.fitShortSide');
+  const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
+  assert.deepEqual(L.grid[2][2], [9, 0, 0, 255]); assert.deepEqual(L.grid[3][7], [9, 0, 0, 255]);
+  assert.equal(L.grid[1][2], null); assert.equal(L.grid[2][8], null); });
 t('trim: расширяет холст до пикселей за краем (включая скрытые)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].visible = false; S.layers[0].ext.set('6,6', [1, 1, 1, 255]); trimCanvas();
   assert.equal(S.W, 7); assert.equal(S.H, 7); assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.layers[0].visible = true; });
@@ -1133,6 +1139,15 @@ t('gallery: плюс открывает диалог нового холста',
   assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
 });
+await ta('gallery-doc: состояние сетки сохраняется вместе с документом', async () => {
+  galDoc.newWork(8, 8, 'grid-on'); const id = galDoc.curWorkId();
+  S.grid = { w: 8, h: 4, color: '#ff00ff', opacity: 55, visible: true, preview: false, link: false };
+  await galDoc.saveCurrent();
+  galDoc.newWork(4, 4, 'grid-off'); assert.equal(S.grid.visible, false);
+  await galDoc.openWork(id);
+  assert.equal(S.grid.visible, true); assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 4);
+  assert.equal(S.grid.color, '#ff00ff'); assert.equal(S.grid.opacity, 55); assert.equal(S.grid.link, false);
+});
 await ta('gallery: drag без gap — исходник затемнён, призрак без подписей, точка вставки', async () => {
   const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
   grid.innerHTML = ''; back.style.display = 'none';
@@ -1492,6 +1507,14 @@ t('palette-manager: пустое имя сохраняется как следу
   assert.deepEqual(saved['Palette 02'], [[1, 2, 3], [4, 5, 6]]);
   assert.equal(document.getElementById('pal-name').value, 'Palette 03');
 });
+t('palette-manager: Apollo 46 всегда есть во встроенных пресетах', () => {
+  localStorage.removeItem('palettes'); S.palette = [[1, 1, 1]]; palMgr.mount(); document.getElementById('pal-presets').click();
+  const row = document.querySelector('#pal-list .prow');
+  assert.equal(row.querySelector('.pname').textContent, 'Apollo 46');
+  assert.equal(row.querySelector('.prow-del'), null);
+  row.querySelector('.pswatches').click();
+  assert.equal(S.palette.length, 46); assert.deepEqual(S.palette[0], [23, 32, 56]); assert.deepEqual(S.palette.at(-1), [235, 237, 233]);
+});
 t('palette-manager: пустая палитра не сохраняется', () => { localStorage.setItem('palettes', JSON.stringify({ keep: [[9, 9, 9]] }));
   S.palette = []; palMgr.mount(); document.getElementById('pal-name').value = 'empty'; document.getElementById('pal-save').click();
   assert.deepEqual(JSON.parse(localStorage.getItem('palettes')), { keep: [[9, 9, 9]] });
@@ -1697,6 +1720,14 @@ t('toolbars: Zoom свернут в одну кнопку с последним 
   document.querySelector('#zoom-choice [data-zoom-mode="in"]').click();
   assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
   assert.equal(document.getElementById('zoom').title, i18n.t('tool.zoomIn'));
+});
+t('toolbars: Center открывает два режима и запоминает последний', () => { tb.mount(); resetWH(8, 8);
+  document.getElementById('center').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.ok(document.getElementById('center-choice').classList.contains('on'));
+  assert.equal(document.querySelectorAll('#center-choice [data-center-mode]').length, 2);
+  document.querySelector('#center-choice [data-center-mode="fitShortSide"]').click();
+  assert.ok(document.getElementById('center-choice').classList.contains('on'));
+  assert.equal(document.getElementById('center').title, i18n.t('side.centerFit'));
 });
 t('grid: отдельного попапа нет, action переключает видимость сетки', () => { gridSys.mount(); resetWH(8, 8);
   assert.equal(document.getElementById('grid-btn'), null); assert.equal(document.getElementById('grid-pop'), null);
@@ -2119,6 +2150,10 @@ t('input: ЛКМ по выделению двигает только рамку'
 t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
+  assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
+t('selection-input: Shift тянет квадратную рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+  S.layers[0].grid[4][4] = [1, 1, 1, 255];
+  const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 2, e: { shiftKey: true } }); h.up({});
   assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
 
 t('selection-input: пустая рамка не создаётся', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
