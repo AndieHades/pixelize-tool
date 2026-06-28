@@ -135,6 +135,7 @@ function activateSymTool(mode) {
 
 const hasSymmetryAxes = () => !!(S.sym || S.symH || S.symD1 || S.symD2);
 const isSymmetryModeActive = () => S.symEnabled !== false && !!(hasSymmetryAxes() || (S.symLines && S.symLines.mode));
+const shapeToolActive = () => S.tool === 'line' || S.tool === 'rect' || S.tool === 'ellipse';
 
 function suspendSymmetryMode() {
   S.symEnabled = false;
@@ -154,7 +155,7 @@ function syncToolButtons() {
   if (S.tool === 'line') lastShapeMode = { kind: 'line', mode: S.lineMode || 'line' };
   else if (S.tool === 'rect' || S.tool === 'ellipse') lastShapeMode = { kind: 'shape', tool: S.tool, fill: !!S.fillShape[S.tool] };
   for (const id of TOOLS) { const b = $('t-' + id); if (b) b.classList.toggle('on', S.tool === id); }
-  const shapeOn = S.tool === 'line' || S.tool === 'rect' || S.tool === 'ellipse';
+  const shapeOn = shapeToolActive();
   const shapeBtn = $('t-shape'); if (shapeBtn) shapeBtn.classList.toggle('on', shapeOn);
   $('t-select').classList.toggle('on', !S.rotMode && (S.tool === 'select' || !!S.sel));
   $('t-move').classList.toggle('on', !!S.rotMode);
@@ -170,9 +171,14 @@ function toggleSym(flag) { const m = SYM_MODES.find((x) => x.flag === flag); if 
   ensureSymmetryDefaults();
   S.symEnabled = true;
   S[flag] = !S[flag]; syncModeButtons(); bus.emit('render'); bus.emit('layers'); toast(t(S[flag] ? m.onKey : m.offKey)); }
-// повторное нажатие активной кнопки выделения — снять выделение и выйти из режима
-const selOff = () => { if (S.sel) actions.run('select.none'); setTool('pencil'); };
-const brushClick = (tool) => { if (tool === 'pencil') activateBrushMode(lastBrushMode); else { actions.run('shading.disable'); setTool(tool); } };
+const activateDefaultBrush = () => activateBrushMode('normal');
+const selOff = () => { if (S.sel) actions.run('select.none'); activateDefaultBrush(); };
+const brushClick = (tool) => {
+  if (tool === 'pencil') activateBrushMode(lastBrushMode);
+  else if (S.tool === tool) activateDefaultBrush();
+  else { actions.run('shading.disable'); setTool(tool); }
+};
+const moveClick = () => { if (S.rotMode) { actions.run('transform.apply'); activateDefaultBrush(); } else actions.run('transform.enter'); };
 
 export function mount() {
   buildToolChoices();
@@ -180,13 +186,13 @@ export function mount() {
   $('t-eraser').onclick = () => brushClick('eraser');
   longPress($('t-pencil'), () => actions.run('ui.brushLibrary', 'pencil')); // ПКМ/долгое нажатие — галерея кистей
   longPress($('t-eraser'), () => actions.run('ui.brushLibrary', 'eraser'));
-  $('t-shape').onclick = () => activateShapeMode();
+  $('t-shape').onclick = () => (shapeToolActive() ? activateDefaultBrush() : activateShapeMode());
   $('t-shape').addEventListener('contextmenu', (e) => { e.preventDefault(); showToolChoice('shape-choice', e.currentTarget); });
-  $('t-move').onclick = () => actions.run(S.rotMode ? 'transform.apply' : 'transform.enter'); // повторное нажатие — применить и выключить
+  $('t-move').onclick = moveClick; // повторное нажатие — применить и выключить
   $('t-select').onclick = () => ((S.tool === 'select' || S.sel) ? selOff() : setTool('select'));
   $('t-lasso').onclick = () => (S.tool === 'lasso' ? selOff() : setTool('lasso'));
-  $('t-fill').onclick = () => actions.run('tool.fill');
-  $('t-adjust').onclick = () => setTool('adjust');
+  $('t-fill').onclick = () => (S.tool === 'fill' ? activateDefaultBrush() : actions.run('tool.fill'));
+  $('t-adjust').onclick = () => (S.tool === 'adjust' ? activateDefaultBrush() : setTool('adjust'));
   $('t-adjust').addEventListener('contextmenu', (e) => { e.preventDefault(); setTool('adjust'); $('adjpop').classList.add('on'); });
 
   $('sym').onclick = activateLastSymChoice;
