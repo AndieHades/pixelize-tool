@@ -29,7 +29,8 @@ export function mount() {
   mountActionBars();
   $('lay-op').addEventListener('pointerdown', () => snapshot());
   $('lay-op').addEventListener('input', () => { const ref = activeOpacityRef(); if (!ref) return; // прозрачность активной строки: слой/папка/эффект/настройка
-    ref.opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(ref.opacity * 100) + '%'; bus.emit('render'); });
+    ref.opacity = +$('lay-op').value / 100; $('lay-opv').textContent = Math.round(ref.opacity * 100) + '%';
+    bus.emit('render'); bus.emit('layers'); });
   floatingWindow($('lay-pop'), { grip: $('lay-head'), handle: $('lay-rsz'), storeKey: 'laywin', minW: 240, minH: 220, resizeEdges: true,
     onClose: () => { $('lay-pop').classList.remove('on'); $('layers').classList.remove('on'); },
     onResize: (w, h) => { $('lay-pop').style.width = Math.max(240, Math.min(vw() - 12, w)) + 'px';

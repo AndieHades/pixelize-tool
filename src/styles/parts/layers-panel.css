@@ -51,9 +51,9 @@
     .symlock .slash { display: none; }
     .symlock.off { color: var(--txt2); opacity: .5; }
     .symlock.off .slash { display: block; }
-    .lay-ops { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); }
-    .lay-ops label { color: var(--txt2); font-size: var(--type-system); flex: none; }
-    .lay-ops b { min-width: 42px; text-align: right; font-size: var(--type-label); }
+    .lay-ops { display: grid; grid-template-columns: 46px minmax(64px, 1fr); align-items: center; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); }
+    .lay-ops input { min-width: 0; width: 100%; }
+    .lay-ops b { min-width: 46px; color: var(--txt2); text-align: left; font-size: var(--type-system); font-variant-numeric: tabular-nums; }
     .lay-act { display: flex; justify-content: space-around; padding: 6px 4px; border-top: 1px solid var(--line); }
     .lay-act.lay-act-top { border-top: 0; border-bottom: 1px solid var(--line); }
     .lay-act button { width: var(--btn-sm); height: var(--btn-sm); color: var(--txt2); }
