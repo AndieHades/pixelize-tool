@@ -11,15 +11,16 @@ import { exactPaletteFromRgba, samplesFromRgba, sourcePaletteFromSamples } from 
 import { sortPalette } from '../logic/palette-sort.js';
 import { defaultPalette } from '../config/palette.js';
 import { initPaletteCreateChoice, refreshPaletteCreateChoice } from './palette-create-choice.js';
+import { allFolderPalettes, isPaletteImageFile, savePaletteToFolder } from '../core/palette-files.js';
 
 const STORE = 'palettes';
 const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
 const FILE_PALETTE_LIMIT = 128, CANVAS_PALETTE_LIMIT = 48;
 const palStore = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
 const saveStore = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
-const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
+const isImageFile = isPaletteImageFile;
 const hasFileTransfer = (dt) => dt && Array.from(dt.types || []).includes('Files');
-let dlg = null;
+let dlg = null, folderCache = [];
 
 function dialog() { if (dlg) return dlg;
   dlg = createLibraryDialog({ overlayId: 'pal-ovl', sheetId: 'pal-sheet', titleKey: 'dialog.palettes',
@@ -41,7 +42,8 @@ function defaultPaletteName(st = palStore()) {
   }
 }
 
-const builtInPalettes = () => [{ name: t('palette.apollo'), colors: defaultPalette() }];
+const builtInPalettes = () => [{ name: t('palette.apollo'), colors: defaultPalette() }, ...folderCache];
+function refreshFolderCache() { allFolderPalettes().then((p) => { folderCache = p; if (dlg) palListUI(); }); }
 
 function loadPalette(arr, name) { S.palette = cleanPalette(arr); if (S.palette.length) S.active = S.palette[0].slice();
   bus.emit('palette'); bus.emit('render'); dialog().close(); if (name) toast(t('toast.paletteLoaded', { name })); }
@@ -145,10 +147,12 @@ export function mount() {
   $('pal-presets').onclick = openPresetMenu;
   dialog().save.onclick = () => { if (!S.palette.length) { toast(t('toast.paletteEmpty')); return; }
     const s2 = palStore(), nm = (dialog().name.value.trim() || defaultPaletteName(s2)).slice(0, 20);
-    s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); dialog().name.value = defaultPaletteName(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
+    s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); savePaletteToFolder(nm, S.palette).then(refreshFolderCache);
+    dialog().name.value = defaultPaletteName(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
   bus.on('locale', () => { dialog().refresh(); palListUI(); refreshPaletteCreateChoice(); });
   const stopPaletteDrag = (e) => { if (hasFileTransfer(e.dataTransfer)) { e.preventDefault(); e.stopPropagation(); } };
   $('palbar').addEventListener('dragenter', stopPaletteDrag);
   $('palbar').addEventListener('dragover', stopPaletteDrag);
   $('palbar').addEventListener('drop', dropPalette);
+  refreshFolderCache();
 }

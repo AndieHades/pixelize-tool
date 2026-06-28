@@ -13,6 +13,7 @@ import { CURSOR } from '../config/cursor.js';
 import { loadBrushPrefs } from './brush-prefs.js';
 import { cloneGrid, blank } from '../logic/raster.js';
 import { cloneTilemap } from '../logic/tilemap-data.js';
+import { cloneTextSource } from '../logic/text-model.js';
 import { TILE_FLAGS_DEFAULT, TILE_GRID_DEFAULT, TILE_GRID_SIZES } from '../config/tileset.js';
 import { defaultReferenceBoard } from './reference-board.js';
 import { t } from '../i18n/index.js';
@@ -29,7 +30,8 @@ export const cloneLayer = (L, overrides = {}) => ({
   name: L.name, opacity: L.opacity, visible: L.visible, fid: L.fid,
   clip: !!L.clip, lock: !!L.lock, alphaLock: !!L.alphaLock, reference: !!L.reference, symLock: !!L.symLock,
   ext: new Map(L.ext), grid: cloneGrid(L.grid), effects: cloneFx(L.effects),
-  kind: L.kind || 'pixel', tilemap: L.tilemap ? cloneTilemap(L.tilemap) : undefined,
+  kind: L.kind || 'pixel', text: L.text ? cloneTextSource(L.text) : undefined,
+  tilemap: L.tilemap ? cloneTilemap(L.tilemap) : undefined,
   tilemapSettings: L.tilemapSettings ? { ...L.tilemapSettings } : undefined, ...overrides,
 });
 

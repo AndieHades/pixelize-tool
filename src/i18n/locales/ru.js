@@ -6,6 +6,7 @@ export const ru = {
   'tool.exportMenu': 'Экспорт', 'tool.preview': 'Превью (1:1)', 'tool.reference': 'Референс',
   'tool.fit': 'Вписать (0)', 'tool.realSize': '1:1 - Реальный размер', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
   'tool.pencil': 'Карандаш (B)', 'tool.eraser': 'Ластик (E)', 'tool.fill': 'Заливка (F)',
+  'tool.text': 'Текст (Shift+T)',
   'tool.pick': 'Пипетка (Alt)', 'tool.pickShort': 'Пипетка', 'tool.line': 'Линия (U)',
   'tool.lineStraight': 'Линия (U)',
   'tool.lineContour': 'Контур (U)',
@@ -17,6 +18,7 @@ export const ru = {
   'brush.settings': 'Настройки кисти', 'brush.size': 'Размер', 'brush.spacing': 'Расстояние', 'brush.scatter': 'Разброс',
   'brush.modeSingle': 'Штамп', 'brush.modeScatter': 'Разброс', 'brush.modeFlow': 'Поток', 'brush.testHint': 'Рисуй здесь для проверки',
   'brush.round': 'Круглая', 'brush.square': 'Квадратная', 'brush.dither': 'Дизеринг',
+  'font.library': 'Шрифты', 'font.add': 'Добавить шрифт', 'font.rename': 'Новое имя шрифта',
   'toast.selectAreaFirst': 'Сначала выдели область', 'toast.selectionEmpty': 'Выделение пустое', 'toast.brushCreated': 'Кисть создана: {name}',
   'tool.rect': 'Прямоугольник (K)', 'tool.rectFill': 'Залитый прямоугольник (K)',
   'tool.ellipse': 'Эллипс (Q)', 'tool.ellipseFill': 'Залитый эллипс (Q)',
@@ -82,7 +84,7 @@ export const ru = {
   'menu.ungroup': 'Расформировать папку',
   'menu.dupFolder': 'Дублировать папку', 'menu.clearLayer': 'Очистить слой', 'menu.clearFolder': 'Очистить папку', 'menu.transformFolder': 'Трансформировать папку…',
   'menu.deleteLayer': 'Удалить слой', 'menu.deleteFolder': 'Удалить папку',
-  'layer.name': 'Слой', 'folder.name': 'Папка', 'layer.imageName': 'Картинка', 'layer.pasteName': 'Вставка', 'layer.copySuffix': 'копия', 'layer.background': 'Фон', // имена по умолчанию для новых слоёв/папок
+  'layer.name': 'Слой', 'folder.name': 'Папка', 'layer.imageName': 'Картинка', 'layer.pasteName': 'Вставка', 'layer.textName': 'Текст', 'layer.copySuffix': 'копия', 'layer.background': 'Фон', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Тема', 'ui.language': 'Язык', 'ui.settings': 'Настройки', 'ui.lightTheme': 'Светлая тема',
   'brsz.key': 'Клавиша размера кисти', 'brsz.dir': 'Направление изменения', 'brsz.sens': 'Чувствительность', 'brsz.press': 'Нажмите клавишу…',
   'brsz.both': 'Обе оси', 'brsz.horizontal': 'Горизонталь', 'brsz.vertical': 'Вертикаль', 'brsz.low': 'Низкая', 'brsz.medium': 'Средняя', 'brsz.high': 'Высокая',
@@ -220,6 +222,7 @@ export const ru = {
   'toast.savedAs': 'Сохранено: {name}',
   'toast.inserted': 'Вставлено {w}×{h}',
   'toast.brushImported': 'Кисть импортирована: {name}', 'toast.brushImportFail': 'Не удалось прочитать файл кисти',
+  'toast.fontImported': 'Шрифт добавлен: {name}', 'toast.fontImportFail': 'Не удалось прочитать файл шрифта', 'toast.textCreated': 'Текстовый слой создан',
   'toast.imgImported': 'Картинка добавлена сверху', 'toast.psdImported': 'PSD импортирован: {n} слоёв', 'toast.psdSomeFx': 'PSD импортирован (часть эффектов пропущена)',
   'toast.selectedColorN': 'Выделено: {n} пикс. — крась, тащи или жми заливку',
   'toast.importReady': 'Готово: {w}×{h} — рисуй!',

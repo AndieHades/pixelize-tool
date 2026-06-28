@@ -17,6 +17,7 @@
 | `config/brush-resize.js` | Brush Size Modifier: `BRUSH_RESIZE` (Hot Key/чувствительность/направление), `SENS_PRESETS`, `DIRECTIONS` |
 | `config/eyedropper.js` | Пипетка: `EYEDROPPER.key` — Hot Key по умолчанию (Alt), переназначается в настройках |
 | `config/quickshape.js` | QuickShape: `QUICKSHAPE.holdMs` — задержка удержания до выравнивания формы |
+| `config/text.js` | Text Tool: встроенные шрифты, дефолт текста, ограничения файлов импорта |
 
 Хоткеи — тоже данные, но живут со своей системой: `systems/keyboard/keymap.js`
 (см. [keymap.md](keymap.md)). Строки UI — в локалях ([i18n.md](i18n.md)),

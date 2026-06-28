@@ -1,5 +1,3 @@
-// Точка входа приложения: поднимает все системы (импорт регистрирует их
-// действия/обработчики и самоподписки на шину), монтирует UI, инициализирует.
 import { S } from './core/state.js';
 import * as bus from './core/bus.js';
 import { $ } from './core/dom.js';
@@ -8,8 +6,6 @@ import { fitView } from './systems/render/index.js';
 import { detect, applyDom } from './i18n/index.js';
 import { applyTheme } from './styles/theme.js';
 import { refreshColors } from './styles/canvas-colors.js';
-
-// системы с UI-монтированием
 import * as palette from './systems/palette.js';
 import * as brushBar from './systems/brush-bar.js';
 import * as brushResize from './systems/brush-resize.js';
@@ -20,6 +16,7 @@ import * as tile from './systems/tile.js';
 import * as symmetryLines from './systems/symmetry-lines.js';
 import * as layersUI from './systems/layers/index.js';
 import * as brushLibrary from './systems/brush-library/index.js';
+import * as fontLibrary from './systems/font-library/index.js';
 import * as importSys from './systems/import/index.js';
 import * as importEditor from './systems/import/editor.js';
 import * as exportSys from './systems/export/index.js';
@@ -51,8 +48,7 @@ import * as tilemapOverlay from './systems/tilemap-overlay.js';
 import * as tilesetMode from './systems/tileset-mode/index.js';
 import * as tileFromLayer from './systems/tile-from-layer.js';
 import * as tilesetManager from './systems/tileset-manager.js';
-
-// системы-эффекты без mount: импорт регистрирует инструменты/действия/тулы
+import * as textTool from './systems/text-tool/index.js';
 import './systems/draw/tools.js';
 import './systems/move-tool.js';
 import './systems/selection/input.js';
@@ -68,15 +64,13 @@ import './systems/recolor.js';
 import './systems/free-rotate.js';
 import { mount as mountKeyboard } from './systems/keyboard/index.js';
 import * as xMirror from './systems/x-mirror.js';
-
-// tile-системы без mount: импорт регистрирует инструменты/действия
 import './systems/tile-brush/index.js';
 import './systems/tile-selection/index.js';
 import './systems/tile-variants.js';
 import './systems/tilemap-export.js';
 import './systems/tilemap-paint/index.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapDialog, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, fontLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapDialog, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager, textTool];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {
@@ -147,10 +141,6 @@ export function start() {
   for (const id of ['selbar', 'cropbar', 'rotbar']) {
     const bar = $(id); if (bar) floatingWindow(bar, { grip: bar.querySelector('.crop-head') || bar, storeKey: 'action-' + id, minW: 120, minH: 44, clampBottom: 64, avoidOverlap: false });
   }
-
-  // ЕДИНО: любой модальный диалог (.ovl .sheet) — перетаскиваемое окно за заголовок.
-  // Уже подключённые окна (конвертер/экспорт) пропускаются идемпотентным floatingWindow.
-  // Новые диалоги достаточно сверстать как <div class="ovl"><div class="sheet"><h3>…
   for (const win of document.querySelectorAll('.ovl .sheet, .ovl .new-panel, .ovl .tilemap-panel')) floatingWindow(win, { grip: win.querySelector('.new-head, .tilemap-head, .pop-head, h3') || win, storeKey: win.id ? 'win-' + win.id : undefined });
 
   for (const id of ['ovl', 'new-ovl', 'ren-ovl', 'tools-ovl']) $(id).addEventListener('click', (e) => {
@@ -158,7 +148,7 @@ export function start() {
     if (e.target.id === id && Date.now() - openedAt > 500) el.classList.remove('on');
   }); // рабочие модальные окна не закрываем по фону — только крестиком/явной кнопкой
   document.addEventListener('pointerdown', (e) => { // контекстные меню закрываются кликом мимо (это не окна)
-    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'brush-plus', 'brush-menu', 'brush-choice', 'shape-choice', 'sym-choice', 'flip-choice', 'center-choice', 'zoom-choice', 'pal-new-choice']) {
+    for (const id of ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'rowctx', 'tctx', 'brush-plus', 'brush-menu', 'font-menu', 'brush-choice', 'shape-choice', 'sym-choice', 'flip-choice', 'center-choice', 'zoom-choice', 'pal-new-choice']) {
       const m = $(id); if (m && m.classList.contains('on') && !m.contains(e.target)) m.classList.remove('on');
     } }, true);
   $('ovlclose').onclick = () => $('ovl').classList.remove('on');

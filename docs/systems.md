@@ -31,6 +31,11 @@
 | `core/drag-ghost.js` | `dragGhost(el)` — клон-призрак под курсором (плитки, слои) | ✅ | (новое) |
 | `core/reorder-drag.js` | `attachReorder` — перестановка кнопок (как цвета палитры) | ✅ | (новое) |
 | `core/env.js` | `isDesktop()` — тип управления (мышь vs тач) | ✅ | (новое) |
+| `core/app-folders.js` | читает/пишет пользовательские папки приложения через File System Access | ✅ | (текст/ассеты) |
+| `core/font-store.js` | регистрирует встроенные/папочные/импортированные шрифты | ✅ | (текст) |
+| `core/palette-files.js` | читает палитры-картинки и сохраняет PNG-полосы 32×32 | ✅ | (палитры) |
+| `core/text-layer.js` | растеризует текстовый слой в пиксельную сетку | ✅ | (текст) |
+| `core/text-prefs.js` | хранит последние настройки текстового инструмента | ✅ | (текст) |
 
 ## logic/ — чистые вычисления (без DOM и state)
 
@@ -52,6 +57,7 @@
 | `logic/quickshape.js` | распознаёт форму штриха (line/rect/ellipse) по точкам или null | ✅ | (QuickShape) |
 | `logic/symmetry.js` | SymmetryOperationMapper: маска/точка/дельта → оригинал + зеркальные копии по осям | ✅ | (симметрия) |
 | `logic/brush-cursor.js` | маска отпечатка следующего штампа (кисть в натуральном размере или квадрат) + поворот | ✅ | (Real Brush Cursor) |
+| `logic/text-model.js` | нормализует и двигает модель текста без DOM/state | ✅ | (текст) |
 
 ## systems/ — оркестрация (один процесс; связь через state+bus)
 
@@ -77,6 +83,8 @@
 | `systems/input/*` | разбирает указатель и тач-жесты, диспетчеризует в обработчики | ✅ | 07-input |
 | `systems/palette.js` | показывает палитру и выбирает цвет | ✅ | 08-palette |
 | `systems/recolor.js` | заменяет цвет по всему документу | ✅ | 08-palette |
+| `systems/font-library/*` | показывает библиотеку шрифтов и импортирует пользовательские файлы | ✅ | (текст) |
+| `systems/text-tool/*` | создаёт, редактирует и двигает текстовые слои | ✅ | (текст) |
 | `systems/import/*` | импорт в редактор: кнопка Import (Photo/File/Pixelize), конвертер, вставка PSD папкой | ✅ | 10-import |
 | `systems/export/*` | единый Export: Scope→ExportDocument→Mode→Format→Save (PNG/PSD, склейка/слои/раздельно, Trim, скрытые слои) | ✅ | 11-export |
 | `systems/transform/*` | свободно трансформирует слой/выделение синей рамкой (перенос/масштаб/поворот; при симметрии — зеркально, `rotBuildCellsSym`) | ✅ | 12-app |
@@ -88,7 +96,7 @@
 | `systems/pen-button.js` | кнопка стилуса (barrel/«ластик») переключает кисть ↔ ластик | ✅ | (новое) |
 | `systems/preview-window.js` | показывает превью 1:1 | ✅ | 12-app |
 | `systems/reference-window.js` | показывает окно референса (пипетка по нему — Eyedropper System) | ✅ | 12-app |
-| `systems/palette-manager.js` | сохраняет/грузит палитры | ✅ | 12-app |
+| `systems/palette-manager.js` | сохраняет/грузит палитры, включая папочные PNG-пресеты | ✅ | 12-app |
 | `systems/tint-shade/*` | окно Tint & Shade: шкалы тинтов/шейдов + гармонии от базового цвета, выбор → палитра | ✅ | (новое) |
 | `systems/toolbars.js` | кнопки панелей: инструменты/тогглы/эффекты/экспорт | ✅ | 12-app |
 | `systems/keyboard/*` | сопоставляет комбо с действиями (data-driven, rebind) | ✅ | 12-app |
@@ -132,6 +140,7 @@
 | `config/eyedropper.js` | Hot Key пипетки по умолчанию (`EYEDROPPER` — Alt, переназначается) | ✅ |
 | `config/quickshape.js` | задержка удержания QuickShape (`QUICKSHAPE.holdMs`) | ✅ |
 | `config/cursor.js` | Cursor Preview Mode: режимы (`CURSOR_MODES` real/circle), дефолт (`CURSOR`), инструменты курсора (`CURSOR_TOOLS`) | ✅ |
+| `config/text.js` | встроенные шрифты, дефолты текста и ограничения импорта | ✅ |
 
 Подробности — [config.md](config.md). Хоткеи — `systems/keyboard/keymap.js`.
 

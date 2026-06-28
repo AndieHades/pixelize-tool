@@ -49,6 +49,13 @@
 | `alphaBounds(data,W,H)` | охват непрозрачных пикселей RGBA-буфера (Trim/экспорт; учитывает запечённые эффекты) |
 | `symmetrizeGrid(g,v,h)` | зеркалит опорную половину по осям |
 
+## `logic/text-model.js` — текстовые слои (чистый)
+
+`normalizeTextSource(src, defaults?)` — каноническая модель текста.
+`moveTextSource(src,dx,dy)` — сдвиг прямоугольника текста в клетках.
+`cloneTextSource(src)` — копия для истории/дубликата слоя.
+`isTextLayer(layer)` — проверка слоя перед текстовыми операциями.
+
 ## `logic/flood.js` — области заливки (чистый)
 
 `floodRegion(grid,x,y,canVisit?)` — клетки связной области на произвольной сетке; `canVisit(x,y)` ограничивает обход, например выделением-маской.
@@ -80,6 +87,11 @@
 | `core/numeric-field.js` → `setNumericField` / `numericFieldValue` / `commitNumericField` | DOM-обвязка для числовых полей с мини-математикой (`+8`, `*2`, `/2`) | размеры нового холста, кроп, сетка |
 | `core/grid.js` → `ensureGrid` / `gridCellW` / `gridCellH` / `setGridVisible` | нормализация состояния обычной Grid-сетки и единая смена видимости | Canvas size, render overlay, совместимый `grid.open` |
 | `core/canvas-bounds.js` → `canvasContentBounds` | границы содержимого холста с учётом `ext` и эффектов слоёв/папок | Trim и кнопка Trim внутри Canvas size |
+| `core/app-folders.js` → `readAppFiles(kind)` / `writeAppFile(kind,name,file)` | папки `fonts`/`palettes`: File System Access + сохранённый handle | библиотека шрифтов, пресеты палитр |
+| `core/font-store.js` → `loadFonts()` / `importFontFile(file)` | единый список шрифтов: встроенные, папочные, импортированные через приложение | текстовый инструмент, библиотека шрифтов |
+| `core/palette-files.js` → `allFolderPalettes()` / `savePaletteToFolder(name,colors)` | PNG-палитры из папки и сохранение полосы с клетками 32×32 | менеджер палитр |
+| `core/text-layer.js` → `makeTextLayer(opts)` / `updateTextLayerGrid(layer)` | текстовый слой → пиксельная сетка с кешем растра | текстовый инструмент, история/рендер |
+| `core/text-prefs.js` → `loadTextPrefs()` / `saveTextPrefs(prefs)` | последние выбранные шрифт/размер/цвет текста | библиотека шрифтов |
 
 > На время миграции часть этих помощников ещё живёт в `js/00-util.js`
 > (классическая сборка). Канон — версии в `src/`. При портировании системы

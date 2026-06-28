@@ -3,6 +3,7 @@
 import { S, blank, newLayer } from './state.js';
 import * as bus from './bus.js';
 import { parseKey, gridBounds } from '../logic/raster.js';
+import { isTextLayer, moveTextSource } from '../logic/text-model.js';
 import { effectReach } from '../logic/layer-effects.js';
 import { folderChain } from './layers.js';
 import { dirtyAll, markDirty } from './layer-cache.js';
@@ -32,7 +33,8 @@ export function expandCanvas(pl, pt, pr, pb) {
     const ne = new Map(); // запасные пиксели за краем: сдвигаем и впитываем попавшие в холст
     for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx + pl, ay = ky + pt;
       if (ax >= 0 && ay >= 0 && ax < S.W && ay < S.H) out[ay][ax] = c; else ne.set(ax + ',' + ay, c); }
-    L.grid = out; L.ext = ne; if (isTilemap(L)) { remapToCanvas(L, -pl, -pt, S.W, S.H); rasterLayer(i); } }
+    L.grid = out; L.ext = ne; if (isTextLayer(L)) L.text = moveTextSource(L.text, pl, pt);
+    if (isTilemap(L)) { remapToCanvas(L, -pl, -pt, S.W, S.H); rasterLayer(i); } }
   S.view.ox -= pl * S.view.zoom; S.view.oy -= pt * S.view.zoom;
   S.sel = null; bus.emit('selection'); dirtyAll();
 }
@@ -74,7 +76,8 @@ export function applyCropRect(x0, y0, x1, y1) {
       if (nx2 >= 0 && ny2 >= 0 && nx2 < nw && ny2 < nh) out[ny2][nx2] = c; else ne.set(nx2 + ',' + ny2, c); }
     for (const [k, c] of L.ext) { const [kx, ky] = parseKey(k), ax = kx - x0, ay = ky - y0;
       if (ax >= 0 && ay >= 0 && ax < nw && ay < nh) { if (!out[ay][ax]) out[ay][ax] = c; } else ne.set(ax + ',' + ay, c); }
-    L.grid = out; L.ext = ne; if (isTilemap(L)) remapToCanvas(L, x0, y0, nw, nh); }
+    L.grid = out; L.ext = ne; if (isTextLayer(L)) L.text = moveTextSource(L.text, -x0, -y0);
+    if (isTilemap(L)) remapToCanvas(L, x0, y0, nw, nh); }
   S.W = nw; S.H = nh; keepCanvasScreenSize(oldW, oldH, nw, nh); S.sel = null;
   S.layers.forEach((L, i) => { if (isTilemap(L)) rasterLayer(i); });
   bus.emit('selection'); dirtyAll(); bus.emitDoc();
@@ -110,7 +113,7 @@ export function shiftLayerGrid(L, dx, dy, wrap = false) { const ng = blank(S.W, 
     if (nx >= 0 && ny >= 0 && nx < S.W && ny < S.H) ng[ny][nx] = c; else ne.set(nx + ',' + ny, c); };
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) { const c = L.grid[y][x]; if (c) put(x, y, c.slice()); }
   for (const [k, c] of L.ext) { const [px, py] = parseKey(k); put(px, py, c.slice()); }
-  L.grid = ng; L.ext = ne; }
+  L.grid = ng; L.ext = ne; if (isTextLayer(L)) L.text = moveTextSource(L.text, dx, dy); }
 
 // очистить текущий слой; false — если уже пуст
 export function clearLayer() {

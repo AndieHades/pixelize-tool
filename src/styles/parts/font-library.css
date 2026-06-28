@@ -1,0 +1,24 @@
+#font-pop { --font-tile-min: 70px; --font-default-cols: 4; position: fixed; display: none; z-index: 31; width: 320px; max-width: calc(100vw - 20px); overflow: hidden;
+  box-sizing: border-box; top: calc(env(safe-area-inset-top, 0px) + 82px); left: 54%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--win-radius); box-shadow: var(--win-shadow); }
+#font-pop.on { display: block; animation: pop .18s ease-out; }
+#font-body { padding: var(--gap); }
+#font-list { overflow-y: auto; min-height: 92px; max-height: calc(100vh - env(safe-area-inset-top, 0px) - 180px);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--font-tile-min), 1fr)); gap: var(--gap); }
+.ftile { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 5px; border-radius: var(--r-xl);
+  background: var(--row); color: var(--txt2); cursor: pointer; -webkit-user-select: none; user-select: none; }
+.ftile.on { background: var(--accent); color: var(--on-accent); }
+.ftile b { width: 100%; aspect-ratio: 1; display: grid; place-items: center; border-radius: var(--r-md);
+  background: var(--surface); color: var(--txt); font-size: var(--type-app-title); line-height: 1; }
+.ftile.on b { color: var(--on-accent); background: color-mix(in srgb, var(--accent) 64%, var(--surface)); }
+.ftile span { max-width: 100%; font-size: var(--type-caption); font-weight: var(--fw-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.font-controls { display: grid; grid-template-columns: auto minmax(70px, 1fr) 46px var(--btn-xs); align-items: center; gap: 9px; padding: 8px 16px 10px; border-top: 1px solid var(--line); }
+.font-controls span, .font-controls b { color: var(--txt2); font-size: var(--type-system); font-variant-numeric: tabular-nums; }
+.font-controls input { min-width: 0; width: 100%; }
+#font-color { width: var(--btn-xs); height: var(--btn-xs); border-radius: 50%; border: 2px solid var(--marker); box-shadow: 0 0 0 1px var(--line); }
+#font-rsz { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; color: var(--txt2); cursor: nwse-resize; }
+#font-rsz svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#text-editor { position: fixed; display: none; z-index: 920; min-width: 24px; min-height: 18px; padding: 2px 4px; outline: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--panel-solid) 82%, transparent); color: var(--txt); font-family: var(--font-mono);
+  font-size: var(--type-body); line-height: 1.2; white-space: pre; caret-color: var(--accent); border-radius: var(--r-xs); }
+#text-editor.on { display: block; }

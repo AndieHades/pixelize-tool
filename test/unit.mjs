@@ -26,6 +26,7 @@ import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke, stampIcon } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
+import { normalizeTextPrefs, normalizeTextSource, moveTextSource } from '../src/logic/text-model.js';
 import { sortGalleryItems, reorderedIds } from '../src/logic/gallery-grid.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
@@ -122,6 +123,22 @@ t('cloneLayer: копирует все поля, overrides перекрываю�
   assert.equal(c.opacity, 0.5); assert.equal(c.fid, 7); assert.equal(c.clip, true); assert.equal(c.alphaLock, true); assert.equal(c.symLock, true);
   assert.notEqual(c.ext, L.ext); assert.notEqual(c.grid, L.grid);
   c.grid[0][0][0] = 50; assert.equal(L.grid[0][0][0], 1);
+});
+t('text-model: prefs нормализуются и размер зажимается', () => {
+  assert.deepEqual(normalizeTextPrefs({ fontId: 'f', size: 999, color: '#AABBCC' }), { fontId: 'f', size: 128, color: '#aabbcc' });
+  assert.equal(normalizeTextPrefs({ size: -1, color: 'bad' }).size, 4);
+});
+t('text-model: источник текста двигается без мутации оригинала', () => {
+  const src = normalizeTextSource({ value: 'Hi', box: { x: 2, y: 3, w: 20, h: 10 } });
+  const moved = moveTextSource(src, 5, -1);
+  assert.deepEqual([src.box.x, src.box.y], [2, 3]);
+  assert.deepEqual([moved.box.x, moved.box.y], [7, 2]);
+});
+t('cloneLayer: копирует источник текстового слоя', () => {
+  const L = { name: 'T', kind: 'text', opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false,
+    reference: false, ext: new Map(), grid: blank(4, 4), effects: [], text: { value: 'A', box: { x: 1, y: 2, w: 3, h: 4 } } };
+  const c = cloneLayer(L);
+  c.text.box.x = 9; assert.equal(L.text.box.x, 1);
 });
 t('sample: сетка из картинки', () => {
   const data = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255]);

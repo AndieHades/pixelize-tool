@@ -4,6 +4,7 @@ export const en = {
   'tool.exportMenu': 'Export', 'tool.preview': 'Preview (1:1)', 'tool.reference': 'Reference',
   'tool.fit': 'Fit (0)', 'tool.realSize': '1:1 - Real Size', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
   'tool.pencil': 'Pencil (B)', 'tool.eraser': 'Eraser (E)', 'tool.fill': 'Fill (F)',
+  'tool.text': 'Text (Shift+T)',
   'tool.pick': 'Eyedropper (Alt)', 'tool.pickShort': 'Eyedropper', 'tool.line': 'Line (U)',
   'tool.lineStraight': 'Line (U)',
   'tool.lineContour': 'Contour (U)',
@@ -16,6 +17,7 @@ export const en = {
   'brush.settings': 'Brush settings', 'brush.size': 'Size', 'brush.spacing': 'Spacing', 'brush.scatter': 'Scatter',
   'brush.modeSingle': 'Stamp', 'brush.modeScatter': 'Scatter', 'brush.modeFlow': 'Flow', 'brush.testHint': 'Draw here to test the brush',
   'brush.round': 'Round', 'brush.square': 'Square', 'brush.dither': 'Dithering',
+  'font.library': 'Fonts', 'font.add': 'Add font', 'font.rename': 'New font name',
   'toast.selectAreaFirst': 'Select an area first', 'toast.selectionEmpty': 'Selection is empty', 'toast.brushCreated': 'Brush created: {name}',
   'tool.ellipse': 'Ellipse (Q)', 'tool.ellipseFill': 'Filled ellipse (Q)',
   'tool.move': 'Free transform (Ctrl+T)', 'tool.adjust': 'Adjust brush',
@@ -79,7 +81,7 @@ export const en = {
   'menu.ungroup': 'Ungroup folder',
   'menu.dupFolder': 'Duplicate folder', 'menu.clearLayer': 'Clear layer', 'menu.clearFolder': 'Clear folder', 'menu.transformFolder': 'Transform folder…',
   'menu.deleteLayer': 'Delete layer', 'menu.deleteFolder': 'Delete folder',
-  'layer.name': 'Layer', 'folder.name': 'Folder', 'layer.imageName': 'Image', 'layer.pasteName': 'Pasted', 'layer.copySuffix': 'copy', 'layer.background': 'Background', // имена по умолчанию для новых слоёв/папок
+  'layer.name': 'Layer', 'folder.name': 'Folder', 'layer.imageName': 'Image', 'layer.pasteName': 'Pasted', 'layer.textName': 'Text', 'layer.copySuffix': 'copy', 'layer.background': 'Background', // имена по умолчанию для новых слоёв/папок
   'ui.theme': 'Theme', 'ui.language': 'Language', 'ui.settings': 'Settings', 'ui.lightTheme': 'Light theme',
   'brsz.key': 'Brush size key', 'brsz.dir': 'Resize direction', 'brsz.sens': 'Resize sensitivity', 'brsz.press': 'Press a key…',
   'brsz.both': 'Both', 'brsz.horizontal': 'Horizontal', 'brsz.vertical': 'Vertical', 'brsz.low': 'Low', 'brsz.medium': 'Medium', 'brsz.high': 'High',
@@ -218,6 +220,7 @@ export const en = {
   'toast.savedAs': 'Saved: {name}',
   'toast.inserted': 'Inserted {w}×{h}',
   'toast.brushImported': 'Brush imported: {name}', 'toast.brushImportFail': 'Could not read brush file',
+  'toast.fontImported': 'Font added: {name}', 'toast.fontImportFail': 'Could not read font file', 'toast.textCreated': 'Text layer created',
   'toast.imgImported': 'Image imported on top', 'toast.psdImported': 'PSD imported: {n} layers', 'toast.psdSomeFx': 'PSD imported (some effects skipped)',
   'toast.selectedColorN': 'Selected: {n} px — paint, drag or fill',
   'toast.importReady': 'Done: {w}×{h} — draw!',

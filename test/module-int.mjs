@@ -20,6 +20,7 @@ const io = await import('../src/core/io.js');
 const history = await import('../src/core/history.js');
 const bus = await import('../src/core/bus.js');
 const doc = await import('../src/core/document.js');
+const textLayer = await import('../src/core/text-layer.js');
 const render = await import('../src/systems/render/index.js');
 const actions = await import('../src/core/actions.js');
 const kbd = await import('../src/systems/keyboard/index.js');
@@ -92,6 +93,8 @@ const tf = await import('../src/systems/transform/index.js');
 const tdrag = await import('../src/systems/transform/drag.js');
 const layers = await import('../src/systems/layers/index.js');
 const { layList } = await import('../src/systems/layers/list.js');
+const fontLib = await import('../src/systems/font-library/index.js');
+const textTool = await import('../src/systems/text-tool/index.js');
 const lops = await import('../src/systems/layers/ops.js');
 const fxdrag = await import('../src/systems/layers/fx-drag.js');
 const i18n = await import('../src/i18n/index.js');
@@ -186,6 +189,28 @@ t('document: expandCanvas растит холст и сдвигает пиксе
   doc.expandCanvas(1, 1, 0, 0); // +1 слева, +1 сверху
   assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
+});
+t('text-layer: создаёт редактируемый слой с растровым кешем', () => {
+  resetWH(32, 16);
+  const L = textLayer.makeTextLayer('Text', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 1, y: 1 });
+  assert.equal(L.kind, 'text'); assert.equal(L.text.value, 'Hi');
+  assert.ok(L.grid.some((row) => row.some(Boolean)));
+});
+t('text-tool: action creates editable text layer on canvas click', () => {
+  resetWH(32, 16); fontLib.mount(); textTool.mount();
+  actions.run('tool.text');
+  assert.equal(S.tool, 'text'); assert.ok(document.getElementById('font-pop').classList.contains('on'));
+  toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
+  const L = S.layers[S.cur];
+  assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [2, 3]);
+  const ed = document.getElementById('text-editor'); ed.innerText = 'OK'; ed.dispatchEvent(new window.Event('blur'));
+  assert.equal(L.text.value, 'OK');
+});
+t('document: сдвиг текстового слоя двигает источник текста', () => {
+  resetWH(32, 16);
+  const L = textLayer.makeTextLayer('Text', S.W, S.H, {}, { x: 2, y: 3 });
+  doc.shiftLayerGrid(L, 4, -1);
+  assert.deepEqual([L.text.box.x, L.text.box.y], [6, 2]);
 });
 t('document: crop-расширение обновляет клетки Tilemap', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
