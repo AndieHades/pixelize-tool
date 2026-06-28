@@ -8,12 +8,13 @@ import { compositeAt } from '../core/layer-cache.js';
 import { makeCanvas } from '../core/canvas.js';
 import { rgb, eqc } from '../logic/color.js';
 import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
+import { sortPalette } from '../logic/palette-sort.js';
 import { defaultPalette } from '../config/palette.js';
 import { initPaletteCreateChoice, refreshPaletteCreateChoice } from './palette-create-choice.js';
 
 const STORE = 'palettes';
 const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
-const FILE_PALETTE_LIMIT = 128;
+const FILE_PALETTE_LIMIT = 128, CANVAS_PALETTE_LIMIT = 48;
 const palStore = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
 const saveStore = (o) => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) {} };
 const isImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
@@ -93,8 +94,10 @@ function fallbackCanvasPalette() { const seen = new Set(), pal = [];
 export function paletteFromCanvas() {
   const c = makeCanvas(S.W, S.H);
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false; paintStack(x, false);
-  const exact = exactPaletteFromRgba(x.getImageData(0, 0, S.W, S.H).data);
-  return exact.colors.length ? exact.colors : fallbackCanvasPalette();
+  const pal = paletteFromImageData(x.getImageData(0, 0, S.W, S.H).data, CANVAS_PALETTE_LIMIT);
+  if (pal.length) return sortPalette(pal);
+  const fallback = fallbackCanvasPalette();
+  return sortPalette(fallback.length > CANVAS_PALETTE_LIMIT ? medianCut(fallback, CANVAS_PALETTE_LIMIT) : fallback);
 }
 
 function showDropChoice(pal, pt) {

@@ -25,7 +25,7 @@ export const ICONS = {
   rotate90: '<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-7-7"/><path d="M9.8 2.6L12.4 5l-2.6 2.4"/></svg>',
   center: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>',
   centerFit: '<svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2"/><path d="M8.5 12h7M12 8.5v7"/><path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4"/></svg>',
-  zoomReal: '<svg viewBox="0 0 24 24"><text x="12" y="14.5" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none">1:1</text></svg>',
+  zoomReal: '<svg viewBox="0 0 24 24"><text x="12" y="15.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="currentColor" stroke="none">1:1</text></svg>',
   zoomIn: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M10.5 7.5v6M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
   zoomOut: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M7.5 10.5h6"/><path d="M15.2 15.2 20 20"/></svg>',
   adjDodge: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',

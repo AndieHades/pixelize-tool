@@ -9,7 +9,8 @@
       button svg { width: 24px; height: 24px; }
       #activewrap { width: 38px; height: 38px; margin-left: 10px; }
       #sidebar button { width: 44px; height: 44px; }
-      .sw { width: 36px; height: 36px; }
+      #palbar { --pal-cell: 36px; }
+      #pal .sw { width: 100%; height: auto; }
     }
     @media (max-width: 520px) {
       #tb-right, #tb-left { overflow-x: auto; scrollbar-width: none; }

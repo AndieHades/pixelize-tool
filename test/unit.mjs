@@ -241,10 +241,11 @@ t('tint-shade: каждая шкала гармонии — база + 4 тин�
   for (const s of scales) { assert.equal(s.tints.length, 5); assert.equal(s.shades.length, 5); assert.deepEqual(s.tints[0], s.base); }
 });
 
-t('palette-sort: тон группами (коричневый не лезет к зелёным), серые впереди, внутри светлое→тёмное', () => {
-  const gray = [128, 128, 128], brown = [139, 90, 43], gLight = [168, 208, 141], gDark = [78, 107, 58];
-  const out = sortPalette([gDark, brown, gLight, gray]);
-  assert.deepEqual(out, [gray, brown, gLight, gDark]); // серый, затем коричневый (тон ~30), затем зелёные (тон ~95) светлый→тёмный
+t('palette-sort: Apollo groups blue, green, warm, violet, then grays', () => {
+  const grayD = [20, 20, 20], grayL = [210, 210, 210], blueD = [23, 32, 56], blueL = [79, 143, 186];
+  const green = [37, 86, 46], brown = [139, 90, 43], pink = [198, 81, 151];
+  const out = sortPalette([grayL, brown, blueL, green, grayD, blueD, pink]);
+  assert.deepEqual(out, [blueD, blueL, green, brown, pink, grayD, grayL]);
 });
 
 // --- выделение: растеризация контура и операции над масками ---

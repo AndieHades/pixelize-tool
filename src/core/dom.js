@@ -32,8 +32,9 @@ function raiseMenu(m) {
 let menuCloseBound = false;
 function bindMenuClose() { if (menuCloseBound) return; menuCloseBound = true;
   const closeIfOutside = (e) => { if (!inOpenMenu(e.target)) closeMenus(); };
+  const closeContextIfOutside = (e) => { if (!e.defaultPrevented) closeIfOutside(e); };
   document.addEventListener('pointerdown', closeIfOutside, true);
-  document.addEventListener('contextmenu', closeIfOutside, true);
+  document.addEventListener('contextmenu', closeContextIfOutside);
   document.addEventListener('ui-close-popovers', () => closeMenus(), true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); }, true);
 }

@@ -13,10 +13,12 @@ import { initPaletteSelect, wireSwatch, clearPaletteSelection, selectedPaletteCo
 import { attachReorder } from '../core/reorder-drag.js';
 
 let showUsed = false;
+const COLOR_TOOLS = new Set(['pencil', 'fill', 'line', 'rect', 'ellipse']);
 
 export const refreshActive = () => { $('active').style.background = rgb(S.active); };
 const colorKey = (c) => c ? c[0] + ',' + c[1] + ',' + c[2] : '';
 const inShadeRamp = (c) => S.shading && S.shading.picking && S.shading.colors && S.shading.colors.some((x) => eqc(x, c));
+const keepsColorTool = () => COLOR_TOOLS.has(S.tool) || (S.tool === 'adjust' && S.adjMode === 'colorize');
 function syncShadingButton() {
   const btn = $('pal-shading'); if (!btn) return;
   const on = !!(S.shading && S.shading.on), canStart = selectedPaletteColors().length > 1;
@@ -51,7 +53,7 @@ function addRgbColor(c, notify = false) {
 export function setActiveColor(c, pickTool = true) {
   S.active = c.slice(); refreshActive();
   bus.emit('color-sync'); buildPalette();
-  if (pickTool) setTool('pencil');
+  if (pickTool && !keepsColorTool()) setTool('pencil');
 }
 
 export function addColor(hex) { const c = hexToRgb(hex); addRgbColor(c); setActiveColor(c); }

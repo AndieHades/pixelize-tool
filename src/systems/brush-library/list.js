@@ -37,7 +37,7 @@ export function renderBrushes() {
     tile.addEventListener('pointerdown', (e) => { if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY }; });
     tile.addEventListener('pointerup', (e) => { if (e.button !== 2 || !rightDown) return;
       const moved = Math.hypot(e.clientX - rightDown.x, e.clientY - rightDown.y) > DRAG_THRESHOLD; rightDown = null;
-      if (!moved && Date.now() >= squelchUntil && cb.menu) cb.menu(b, e); });
+      if (!moved && Date.now() >= squelchUntil && cb.menu) { if (cb.pick) cb.pick(b); cb.menu(b, e); } });
     tile.addEventListener('click', () => { if (Date.now() < squelchUntil) return; cb.pick(b); });
     tile.addEventListener('dblclick', (e) => { e.preventDefault(); if (Date.now() >= squelchUntil) cb.settings(b); });
     tile.addEventListener('contextmenu', (e) => e.preventDefault());

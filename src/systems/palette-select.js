@@ -24,7 +24,8 @@ const swEl = (i) => $('pal').querySelector(`.sw[data-i="${i}"]`);
 const squelch = () => { palSquelch = true; setTimeout(() => { palSquelch = false; }, 0); }; // погасить click после жеста
 
 function selectionForIdx(idx) { validSel(); return palSel.has(idx) && palSel.size ? [...palSel] : [idx]; }
-function openCtx(x, y, idx) { ctxIdx = idx; ctxIdxs = selectionForIdx(idx); showMenuAt($('ctx'), x, y, true); }
+function openCtx(x, y, idx) { ctxIdx = idx; ctxIdxs = selectionForIdx(idx);
+  const c = S.palette[idx]; if (c) setActive(c, false); showMenuAt($('ctx'), x, y, true); }
 
 function rangeIdx(from, to, max = Infinity) {
   const out = [], step = to >= from ? 1 : -1;

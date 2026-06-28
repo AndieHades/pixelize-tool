@@ -813,7 +813,19 @@ t('palette: used обновляется в реальном времени по 
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 1); // отметился сразу по render
   document.getElementById('pal-used').click();
 });
-t('palette: setActiveColor меняет активный', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
+t('palette: setActiveColor changes the active color', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
+t('palette: changing color keeps painting color tools active', () => {
+  for (const tool of ['pencil', 'fill', 'line', 'rect', 'ellipse']) {
+    S.tool = tool; S.adjMode = 'dodge'; pal.setActiveColor([30, 40, 50]);
+    assert.deepEqual(S.active, [30, 40, 50]); assert.equal(S.tool, tool);
+  }
+  S.tool = 'adjust'; S.adjMode = 'colorize'; pal.setActiveColor([50, 60, 70]);
+  assert.deepEqual(S.active, [50, 60, 70]); assert.equal(S.tool, 'adjust'); assert.equal(S.adjMode, 'colorize');
+});
+t('palette: changing color returns non-coloring tools to Brush', () => {
+  for (const tool of ['select', 'lasso', 'move', 'eraser']) { S.tool = tool; pal.setActiveColor([70, 80, 90]); assert.equal(S.tool, 'pencil'); }
+  S.tool = 'adjust'; S.adjMode = 'dodge'; pal.setActiveColor([90, 100, 110]); assert.equal(S.tool, 'pencil');
+});
 await ta('palette: ЛКМ-протяжка переставляет цвет без выделения (без gap)', async () => {
   shading.mount(); shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
@@ -853,17 +865,20 @@ t('palette: Shift+клик — диапазон от активного/якор
   sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3); // якорь 0 → 0..2
 });
-t('palette: ПКМ меню удаляет выделенный shift-диапазон цветов', () => {
+t('palette: right-click menu deletes the selected shift color range', () => {
   shading.clear(); S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; S.active = [1, 1, 1]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // активный = якорь [1,1,1]
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // Active color is the range anchor.
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // диапазон 1..3
+  sw[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // Range 1..3.
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
   try {
     document.elementFromPoint = () => sw[2];
     sw[2].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 0 }));
+    assert.deepEqual(S.active, [2, 2, 2]);
+    sw[2].dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 10, clientY: 0 }));
+    assert.ok(document.getElementById('ctx').classList.contains('on'));
     document.querySelector('#ctx [data-act="delete"]').click();
     assert.deepEqual(S.palette, [[0, 0, 0], [4, 4, 4]]);
     assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
@@ -1038,21 +1053,29 @@ t('brush-library: иконки остаются читаемыми при мал
     assert.ok(on > 900);
   } finally { proto.getContext = orig; brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
 });
-t('brush-library: ПКМ по кисти открывает меню, двойной клик — настройки', () => {
-  const old = brushData.lib.brushes; let opened = null, menuBrush = null;
+t('brush-library: right-click selects a brush and keeps its menu open', () => {
+  const old = brushData.lib.brushes; let opened = null, menuBrush = null, picked = null;
   try {
     brushData.lib.brushes = [{ id: 'ctxb', name: 'Ctx Brush', order: 0, source: 'base', shape: 'shape',
       cov: { w: 1, h: 1, data: new Uint8Array([255]) }, grain: null, params: {} }];
-    brushList.bindList({ mode: () => 'pencil', pick() {}, settings: (b) => { opened = b; }, menu: (b) => { menuBrush = b; }, rename() {}, rerender() {} });
+    brushList.bindList({ mode: () => 'pencil', pick: (b) => { picked = b; }, settings: (b) => { opened = b; },
+      menu: (b, e) => { menuBrush = b; showMenuAt(document.getElementById('brush-menu'), e.clientX, e.clientY, true); },
+      rename() {}, rerender() {} });
     brushList.renderBrushes();
     const tile = document.querySelector('#brush-list .btile');
     tile.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
     tile.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    assert.equal(picked && picked.id, 'ctxb');
     assert.equal(menuBrush && menuBrush.id, 'ctxb');
     assert.equal(opened, null);
+    tile.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 10, clientY: 10 }));
+    assert.ok(document.getElementById('brush-menu').classList.contains('on'));
     tile.dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
     assert.equal(opened && opened.id, 'ctxb');
-  } finally { brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
+  } finally {
+    brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = '';
+    document.getElementById('brush-menu').classList.remove('on');
+  }
 });
 t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');
@@ -1583,6 +1606,16 @@ t('palette-manager: палитра с холста берёт видимые ц�
   S.layers.push({ name: 'hidden', grid: blank(3, 3), opacity: 1, visible: false, fid: null, clip: false, ext: new Map(), effects: [] });
   S.layers[1].grid[2][2] = [80, 90, 100, 255]; cache.dirtyAll();
   assert.deepEqual(palMgr.paletteFromCanvas(), [[1, 2, 3], [7, 8, 9]]);
+});
+t('palette-manager: canvas palette is sorted into Apollo-like ramps', () => { resetWH(4, 1);
+  S.layers[0].grid[0][0] = [200, 120, 50, 255]; S.layers[0].grid[0][1] = [23, 32, 56, 255];
+  S.layers[0].grid[0][2] = [20, 20, 20, 255]; S.layers[0].grid[0][3] = [37, 86, 46, 255]; cache.dirtyAll();
+  assert.deepEqual(palMgr.paletteFromCanvas(), [[23, 32, 56], [37, 86, 46], [200, 120, 50], [20, 20, 20]]);
+});
+t('palette-manager: canvas palette is quantized to 48 significant colors', () => { resetWH(64, 1);
+  for (let x = 0; x < 64; x++) S.layers[0].grid[0][x] = [(x * 4) % 256, (40 + x * 3) % 256, (120 + x * 5) % 256, 255];
+  cache.dirtyAll(); const pal = palMgr.paletteFromCanvas();
+  assert.ok(pal.length <= 48); assert.ok(pal.length < 64);
 });
 
 t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {

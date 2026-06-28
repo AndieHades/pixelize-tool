@@ -1,26 +1,27 @@
 /* Плавающая палитра, свотчи и кнопки действий палитры. */
 
     /* ---- плавающее окно палитры ---- */
-    #palbar { position: fixed; left: 50%; transform: translateX(-50%);
+    #palbar { --pal-cell: var(--btn-sm); --pal-pad: var(--gap); position: fixed; left: 50%; transform: translateX(-50%);
       bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); z-index: 12;
-      width: min(92vw, 560px); display: flex; flex-direction: column;
+      width: min(92vw, calc(var(--pal-cell) * 6 + var(--pal-pad) * 2 + 2px)); display: flex; flex-direction: column;
       background: var(--panel); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border: 1px solid var(--line); border-radius: var(--win-radius); padding: 0 8px 8px;
+      border: 1px solid var(--line); border-radius: var(--win-radius); padding: 0;
       box-shadow: var(--win-shadow); }
     #palbar.closed { display: none; } /* палитру можно закрыть крестиком; открыть снова — кружком цвета */
     #palgrip { flex: none; -webkit-user-select: none; user-select: none; } /* остальное — общий .pop-head */
     #palgrip:active { cursor: grabbing; }
-    #pal { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: center; gap: 0;
-      padding: 2px; overflow-y: auto; min-height: 38px; scrollbar-width: none; }
+    #pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--pal-cell), 1fr));
+      align-content: flex-start; align-items: start; gap: 0; padding: var(--pal-pad); overflow-y: auto;
+      min-height: calc(var(--pal-cell) + var(--pal-pad) * 2); scrollbar-width: none; }
     #pal::-webkit-scrollbar { display: none; }
-    .pal-act { margin: 4px -8px -8px; padding: 6px 24px 7px 8px; border-radius: 0 0 var(--r-2xl) var(--r-2xl); }
+    .pal-act { margin: 0; padding: 6px 24px 7px 8px; border-radius: 0 0 var(--r-2xl) var(--r-2xl); }
     .pal-act button:not(.on), .pal-act button:not(.on):active, .pal-act button:not(.on):focus { background: transparent; transform: none; }
     .pal-act #tsg-btn:not(.on), .pal-act #tsg-btn:not(.on):active, .pal-act #tsg-btn:not(.on):focus { background: transparent; transform: none; }
     .pal-act button:disabled { opacity: .35; pointer-events: none; }
     #palrsz { position: absolute; right: 1px; bottom: 1px; width: 20px; height: 20px;
       cursor: nwse-resize; touch-action: none; color: var(--txt2); display: grid; place-items: center; }
     #palrsz svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
-    .sw { position: relative; width: 30px; height: 30px; border-radius: 0; }
+    .sw { position: relative; width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; }
     .sw.on { box-shadow: inset 0 0 0 2px var(--marker); border-color: transparent; }
     .sw.pal-sel { box-shadow: inset 0 0 0 2px var(--accent); }
     .sw.pal-sel.on { box-shadow: inset 0 0 0 2px var(--marker), inset 0 0 0 4px var(--accent); }
