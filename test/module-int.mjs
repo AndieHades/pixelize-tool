@@ -2060,6 +2060,16 @@ t('input: ПКМ пан холста работает и с инструмент
   input.move({ pointerType: 'mouse', button: 2, clientX: 140, clientY: 100 });
   assert.equal(S.view.ox, 40); // правая кнопка сдвинула холст, а не «съелась» move-инструментом
   input.up({ pointerType: 'mouse', button: 2, pointerId: 1 }); });
+t('input: LMB outside canvas pans, inside still draws', () => { resetWH(8, 8); S.tool = 'pencil'; S.active = [4, 5, 6]; S.stabOn = false;
+  const undo = overCv(10);
+  input.down({ pointerType: 'mouse', button: 0, clientX: 90, clientY: 20, pointerId: 1 });
+  input.move({ pointerType: 'mouse', button: 0, clientX: 121, clientY: 25 });
+  assert.equal(S.view.ox, 31); assert.equal(S.view.oy, 5);
+  input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
+  S.view = { zoom: 10, ox: 0, oy: 0 };
+  input.down({ pointerType: 'mouse', button: 0, clientX: 20, clientY: 20, pointerId: 2 });
+  input.up({ pointerType: 'mouse', button: 0, pointerId: 2 }); undo();
+  assert.equal(S.view.ox, 0); assert.deepEqual(S.layers[0].grid[2][2], [4, 5, 6, 255]); });
 t('input: ЛКМ вне выделения снимает его у любого инструмента', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   const undo = overCv(); input.down({ pointerType: 'mouse', button: 0, clientX: 6, clientY: 6, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
   assert.equal(S.sel, null); assert.equal(S.layers[0].grid[6][6], null); });

@@ -17,6 +17,12 @@ const cv = () => $('cv');
 export const toGrid = (e) => gridAt(e.clientX, e.clientY);
 const activeMode = () => (S.cropMode ? modeHandler('crop') : S.rotMode ? modeHandler('transform') : null);
 const capture = (id) => { try { cv().setPointerCapture(id); } catch (e) {} };
+const inWorkArea = (gx, gy) => (S.tile && S.tile.on)
+  ? gx >= -S.W && gy >= -S.H && gx < 2 * S.W && gy < 2 * S.H
+  : gx >= 0 && gy >= 0 && gx < S.W && gy < S.H;
+const startPan = (e) => {
+  rdrag = { x: e.clientX, y: e.clientY, ox: S.view.ox, oy: S.view.oy, moved: false, btn: e.button };
+};
 
 let rdrag = null, drawing = false, stabPt = null, activeGlobal = null;
 function smooth(e) { if (!S.stabOn) return [e.clientX, e.clientY];
@@ -25,10 +31,11 @@ function smooth(e) { if (!S.stabOn) return [e.clientX, e.clientY];
 
 export function down(e) { if (e.pointerId != null) capture(e.pointerId);
   if (e.pointerType === 'mouse' && e.button === 2 && S.rotMode) { bus.emit('transform-menu', e); return; }
-  if (e.pointerType === 'mouse' && (e.button === 1 || e.button === 2) && !S.cropMode && !S.rotMode) {
-    rdrag = { x: e.clientX, y: e.clientY, ox: S.view.ox, oy: S.view.oy, moved: false, btn: e.button }; return; }
-  if (e.pointerType === 'mouse' && e.button && !(S.cropMode && e.button === 2)) return;
   const [gx, gy] = toGrid(e);
+  if (e.pointerType === 'mouse' && !S.cropMode && !S.rotMode
+      && (e.button === 1 || e.button === 2 || (e.button === 0 && !inWorkArea(gx, gy)))) {
+    startPan(e); return; }
+  if (e.pointerType === 'mouse' && e.button && !(S.cropMode && e.button === 2)) return;
   stabPt = { x: e.clientX, y: e.clientY };
   const m = activeMode(); if (m) { m.down({ gx, gy, e }); drawing = true; return; }
   for (const gh of globalHandlers()) if (gh.down && gh.down({ gx, gy, e })) { activeGlobal = gh; drawing = true; return; }
@@ -37,8 +44,8 @@ export function down(e) { if (e.pointerId != null) capture(e.pointerId);
 }
 
 export function move(e) {
-  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); const tile = S.tile && S.tile.on; // в Tile Mode курсор виден над всем блоком 3×3
-    const over = tile ? (hx >= -S.W && hy >= -S.H && hx < 2 * S.W && hy < 2 * S.H) : (hx >= 0 && hy >= 0 && hx < S.W && hy < S.H);
+  if (e.pointerType !== 'touch') { const [hx, hy] = toGrid(e); // в Tile Mode курсор виден над всем блоком 3×3
+    const over = inWorkArea(hx, hy);
     S.hoverPx = over ? [hx, hy] : null;
     // под кистью прячем нативный crosshair — наводку рисует Brush Cursor Renderer (прицел + отпечаток)
     let cur = over ? (S.eyedrop.active || CURSOR_TOOLS.includes(S.tool) ? 'none' : 'crosshair') : 'default'; // инструмент может подсказать курсор (ручки выделения и т.п.)
