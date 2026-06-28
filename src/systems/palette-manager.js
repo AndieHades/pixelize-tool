@@ -9,6 +9,7 @@ import { makeCanvas } from '../core/canvas.js';
 import { rgb, eqc } from '../logic/color.js';
 import { medianCut, exactPaletteFromRgba, samplesFromRgba } from '../logic/quantize.js';
 import { defaultPalette } from '../config/palette.js';
+import { initPaletteCreateChoice, refreshPaletteCreateChoice } from './palette-create-choice.js';
 
 const STORE = 'palettes';
 const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
@@ -133,18 +134,16 @@ function createFromCanvas() { const pal = paletteFromCanvas();
 
 export function mount() {
   dialog();
-  $('pal-new').onclick = newPalette;
-  $('pal-canvas').onclick = createFromCanvas;
+  const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
+  palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    paletteFromImageFile(f, 'replace', null, FILE_PALETTE_LIMIT); };
+  initPaletteCreateChoice({ blank: newPalette, image: () => palImg.click(), canvas: createFromCanvas });
   $('pal-save-open').onclick = openPaletteWindow;
   $('pal-presets').onclick = openPresetMenu;
   dialog().save.onclick = () => { if (!S.palette.length) { toast(t('toast.paletteEmpty')); return; }
     const s2 = palStore(), nm = (dialog().name.value.trim() || defaultPaletteName(s2)).slice(0, 20);
     s2[nm] = S.palette.map((c) => [c[0], c[1], c[2]]); saveStore(s2); dialog().name.value = defaultPaletteName(s2); palListUI(); toast(t('toast.paletteSaved', { name: nm })); };
-  bus.on('locale', () => { dialog().refresh(); palListUI(); });
-  const palImg = document.createElement('input'); palImg.type = 'file'; palImg.accept = 'image/*';
-  $('pal-file').onclick = () => palImg.click();
-  palImg.onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    paletteFromImageFile(f, 'replace', null, FILE_PALETTE_LIMIT); };
+  bus.on('locale', () => { dialog().refresh(); palListUI(); refreshPaletteCreateChoice(); });
   const stopPaletteDrag = (e) => { if (hasFileTransfer(e.dataTransfer)) { e.preventDefault(); e.stopPropagation(); } };
   $('palbar').addEventListener('dragenter', stopPaletteDrag);
   $('palbar').addEventListener('dragover', stopPaletteDrag);

@@ -1012,16 +1012,19 @@ t('brush-library: иконки остаются читаемыми при мал
     assert.ok(on > 900);
   } finally { proto.getContext = orig; brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
 });
-t('brush-library: ПКМ по кисти открывает настройки', () => {
-  const old = brushData.lib.brushes; let opened = null;
+t('brush-library: ПКМ по кисти открывает меню, двойной клик — настройки', () => {
+  const old = brushData.lib.brushes; let opened = null, menuBrush = null;
   try {
     brushData.lib.brushes = [{ id: 'ctxb', name: 'Ctx Brush', order: 0, source: 'base', shape: 'shape',
       cov: { w: 1, h: 1, data: new Uint8Array([255]) }, grain: null, params: {} }];
-    brushList.bindList({ mode: () => 'pencil', pick() {}, settings: (b) => { opened = b; }, rename() {}, rerender() {} });
+    brushList.bindList({ mode: () => 'pencil', pick() {}, settings: (b) => { opened = b; }, menu: (b) => { menuBrush = b; }, rename() {}, rerender() {} });
     brushList.renderBrushes();
     const tile = document.querySelector('#brush-list .btile');
     tile.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
     tile.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    assert.equal(menuBrush && menuBrush.id, 'ctxb');
+    assert.equal(opened, null);
+    tile.dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
     assert.equal(opened && opened.id, 'ctxb');
   } finally { brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = ''; }
 });
@@ -1489,14 +1492,22 @@ await ta('reference: drop image into reference window and drag outside detaches 
   } finally { window.removeEventListener('drop', onDrop); globalThis.Image = OldImage; window.Image = OldWinImage; }
 });
 
-t('palette-manager: монтируется и сохраняет палитру', () => { S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
+t('palette-manager: монтируется и сохраняет палитру', () => { localStorage.removeItem('paletteCreateMode'); S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
   document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]);
   assert.equal(document.getElementById('pal-from-img'), null);
-  assert.equal(document.querySelectorAll('#pal-act > button').length, 8);
+  assert.equal(document.querySelectorAll('#pal-act > button').length, 6);
+  assert.equal(document.querySelectorAll('#pal-new-choice button').length, 3);
   document.getElementById('pal-presets').click(); assert.equal(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
+});
+t('palette-manager: новая палитра запоминает последний режим', () => { localStorage.removeItem('paletteCreateMode'); resetWH(2, 2);
+  S.layers[0].grid[0][0] = [9, 8, 7, 255]; cache.dirtyAll(); palMgr.mount();
+  document.querySelector('#pal-new-choice [data-pal-create="canvas"]').click();
+  assert.deepEqual(S.palette, [[9, 8, 7]]);
+  S.palette = [[1, 1, 1]]; document.getElementById('pal-new').click();
+  assert.deepEqual(S.palette, [[9, 8, 7]]);
 });
 t('palette-manager: пустое имя сохраняется как следующий Palette NN', () => {
   localStorage.setItem('palettes', JSON.stringify({ 'Palette 01': [[9, 9, 9]] }));

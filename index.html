@@ -62,6 +62,7 @@
   <div id="flip-choice" class="tool-choice"></div>
   <div id="center-choice" class="tool-choice"></div>
   <div id="zoom-choice" class="tool-choice"></div>
+  <div id="pal-new-choice" class="tool-choice"></div>
 
   <div id="tools-ovl" class="ovl"><div class="sheet">
     <h3 data-i18n="dialog.panels"></h3>
@@ -184,8 +185,6 @@
     <div id="pal"></div>
     <div id="pal-act" class="lay-act pal-act">
       <button id="pal-new" data-i18n-title="palette.new"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-      <button id="pal-file" data-i18n-title="btn.fromImage"><svg viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="14" rx="2"/><path d="M8 14l2.7-3 3.2 3.8 1.6-1.8 3 3.5"/><circle cx="8.5" cy="8.8" r="1.2"/></svg></button>
-      <button id="pal-canvas" data-i18n-title="palette.fromCanvas"><svg viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="14" rx="2"/><path d="M8 9h8M8 13h5"/><path d="M15.5 15.5l3.2 3.2M18.5 15.5l-3.2 3.2"/></svg></button>
       <button id="pal-save-open" data-i18n-title="btn.save"><svg viewBox="0 0 24 24"><path d="M5 4.5h12l2 2v13H5z"/><path d="M8 4.5v6h8v-6"/><path d="M8 16.5h8"/></svg></button>
       <button id="pal-presets" data-i18n-title="palette.presets"><svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="5.5" height="5.5" rx="1.2"/><rect x="14" y="4.5" width="5.5" height="5.5" rx="1.2"/><rect x="4.5" y="14" width="5.5" height="5.5" rx="1.2"/><rect x="14" y="14" width="5.5" height="5.5" rx="1.2"/></svg></button>
       <button id="pal-shading" data-i18n-title="tool.brushShading"><svg viewBox="0 0 24 24"><path d="M5 17.5c2.2-6.8 7.5-11.2 14-12"/><path d="M5 17.5h14"/><path d="M8 14.5h3.2M11 11.5h3.2M14 8.5h3.2"/></svg></button>
@@ -327,6 +326,12 @@
     <button id="brush-from-sel" data-i18n="brush.fromSelection"></button>
     <button id="brush-import" data-i18n="brush.import"></button>
     <button id="brush-export" data-i18n="brush.exportLib"></button>
+  </div>
+  <div id="brush-menu" class="menu">
+    <button data-act="settings" data-i18n="brush.settings"></button>
+    <button data-act="rename" data-i18n="menu.rename"></button>
+    <button data-act="duplicate" data-i18n="menu.duplicate"></button>
+    <button data-act="delete" data-i18n="menu.delete"></button>
   </div>
   <div id="brush-settings" class="toolpop">
     <div class="bp-head" id="brush-set-head"><span class="bp-title" id="bs-name" data-i18n="brush.settings"></span>

@@ -34,10 +34,19 @@ function exportAll() { const text = packSet(t('brush.library'), allBrushes());
   saveFile(new Blob([text], { type: 'application/json' }), 'brushes.phbrush', 'application/json', t('brush.packDesc')); }
 
 const pick = (b) => { selectBrush(b); rerender(); }; // ЛКМ — выбор (натуральный размер для нестандартных)
-const settings = (b) => { setStampBrush(mode, b); rerender(); openSettings(); }; // клик по активной / долгое нажатие — настройки
+const settings = (b) => { setStampBrush(mode, b); rerender(); openSettings(); }; // двойной клик или меню — настройки
 const dup = (b) => dupBrush(b).then(rerender);
 const del = (b) => delBrush(b.id).then(rerender);
 const rename = (b, name) => renameBrush(b, name).then(rerender);
+let menuBrush = null;
+function openBrushMenu(b, e) { menuBrush = b; showMenuAt($('brush-menu'), e.clientX, e.clientY, true); }
+function runBrushMenu(act) {
+  const b = menuBrush; $('brush-menu').classList.remove('on'); if (!b) return;
+  if (act === 'settings') settings(b);
+  else if (act === 'rename') renameById(b.id);
+  else if (act === 'duplicate') dup(b);
+  else if (act === 'delete') del(b);
+}
 
 const opened = () => $('brush-pop').classList.contains('on');
 async function open(which) { mode = which; await ensureLib(); $('brush-pop').classList.add('on'); rerender(); }
@@ -45,7 +54,7 @@ export function toggle(which) { const p = $('brush-pop');
   if (opened() && which === mode) p.classList.remove('on'); else open(which); }
 
 export function mount() {
-  bindList({ rerender, pick, settings, rename, mode: () => mode });
+  bindList({ rerender, pick, settings, menu: openBrushMenu, rename, mode: () => mode });
   mountSettings(() => mode, { dup, del, rename: (id) => renameById(id) });
   floatingWindow($('brush-pop'), { grip: $('brush-head'), handle: $('brush-rsz'), storeKey: 'brushwin', minW: 240, minH: 220,
     onClose: () => $('brush-pop').classList.remove('on') });
@@ -54,6 +63,7 @@ export function mount() {
   $('brush-from-sel').onclick = () => { closePlus(); createFromSelection(); };
   $('brush-import').onclick = () => { closePlus(); importBrush(); };
   $('brush-export').onclick = () => { closePlus(); exportAll(); };
+  $('brush-menu').onclick = (e) => { const b = e.target.closest('button'); if (b) runBrushMenu(b.dataset.act); };
   document.addEventListener('pointerdown', (e) => { if (!$('brush-plus').contains(e.target)) closePlus(); }, true);
   bus.on('locale', () => { if (opened()) rerender(); });
   bus.on('brushlib', () => { if (opened()) rerender(); });

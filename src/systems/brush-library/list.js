@@ -1,6 +1,6 @@
 // Сетка кистей: плитки-квадратики с оригинальным видом кончика (штамп) —
-// как переносной тулбар с иконками. ЛКМ — выбор; клик по уже выбранной —
-// настройки; долгое нажатие / ПКМ-перетаскивание — перестановка плиток.
+// как переносной тулбар с иконками. ЛКМ — выбор; двойной клик — настройки;
+// ПКМ без движения — меню, долгое нажатие / ПКМ-перетаскивание — перестановка.
 import { S } from '../../core/state.js';
 import { $ } from '../../core/dom.js';
 import { lib, allBrushes, setOrder } from './data.js';
@@ -37,8 +37,9 @@ export function renderBrushes() {
     tile.addEventListener('pointerdown', (e) => { if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY }; });
     tile.addEventListener('pointerup', (e) => { if (e.button !== 2 || !rightDown) return;
       const moved = Math.hypot(e.clientX - rightDown.x, e.clientY - rightDown.y) > DRAG_THRESHOLD; rightDown = null;
-      if (!moved && Date.now() >= squelchUntil) cb.settings(b); });
-    tile.addEventListener('click', () => { if (Date.now() < squelchUntil) return; if (b.id === active) cb.settings(b); else cb.pick(b); });
+      if (!moved && Date.now() >= squelchUntil && cb.menu) cb.menu(b, e); });
+    tile.addEventListener('click', () => { if (Date.now() < squelchUntil) return; cb.pick(b); });
+    tile.addEventListener('dblclick', (e) => { e.preventDefault(); if (Date.now() >= squelchUntil) cb.settings(b); });
     tile.addEventListener('contextmenu', (e) => e.preventDefault());
     attachReorder(tile, { dropSel: '#brush-list', itemSel: '.btile', save: persist, squelch });
     host.appendChild(tile);
