@@ -24,15 +24,17 @@ export async function copyText(t) {
 const MENU_IDS = ['ctx', 'lctx', 'cctx', 'sctx', 'trctx', 'fxctx', 'impmenu', 'setmenu', 'tctx', 'rowctx', 'brush-plus', 'brush-menu', 'brush-choice', 'shape-choice', 'sym-choice', 'flip-choice', 'center-choice', 'zoom-choice', 'pal-new-choice', 'tile-menu', 'tile-cctx', 'ref-ctx'];
 const menus = () => MENU_IDS.map($).filter(Boolean);
 export function closeMenus(except = null) { for (const m of menus()) if (m !== except) m.classList.remove('on'); }
+const inOpenMenu = (target) => menus().some((m) => m.classList.contains('on') && m.contains(target));
 function raiseMenu(m) {
   const cssZ = +(window.getComputedStyle(m).zIndex || 0);
   m.style.zIndex = Math.max(cssZ || 0, nextFloatingZ()) + '';
 }
 let menuCloseBound = false;
 function bindMenuClose() { if (menuCloseBound) return; menuCloseBound = true;
-  document.addEventListener('pointerdown', (e) => {
-    if (!menus().some((m) => m.classList.contains('on') && m.contains(e.target))) closeMenus();
-  }, true);
+  const closeIfOutside = (e) => { if (!inOpenMenu(e.target)) closeMenus(); };
+  document.addEventListener('pointerdown', closeIfOutside, true);
+  document.addEventListener('contextmenu', closeIfOutside, true);
+  document.addEventListener('ui-close-popovers', () => closeMenus(), true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); }, true);
 }
 function showMenu(m) { bindMenuClose(); closeMenus(m); raiseMenu(m); m.style.visibility = 'hidden'; m.classList.add('on'); }

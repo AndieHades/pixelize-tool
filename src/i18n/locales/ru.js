@@ -32,7 +32,7 @@ export const ru = {
   'side.stab': 'Стабилизация штриха (T)', 'side.outline': 'Обводка контуром (O)', 'side.transformCanvas': 'Transform Canvas',
   'side.flipH': 'Отразить по горизонтали (H)',
   'side.flipV': 'Отразить по вертикали (V)', 'side.rotate': 'Повернуть 90° (R)', 'side.mono': 'Монохром',
-  'side.bc': 'Яркость/контраст', 'side.imageSettings': 'Настройки', 'side.crop': 'Canvas size (C)', 'side.trim': 'Trim', 'side.center': 'Центрировать', 'side.centerFit': 'Вписать в меньшую сторону холста',
+  'side.bc': 'Яркость/контраст', 'side.imageSettings': 'Настройки', 'side.crop': 'Canvas size (C)', 'side.trim': 'Trim', 'side.center': 'Центрировать', 'side.centerFit': 'Подогнать',
   // заголовки диалогов и попапов
   'dialog.newCanvas': 'Новый холст', 'dialog.export': 'Экспорт', 'dialog.palettes': 'Палитры', 'dialog.import': 'Импорт в пиксель-арт',
   'export.scope': 'Что', 'export.selected': 'Выделенное', 'export.folder': 'Папка', 'export.project': 'Проект', 'export.mode': 'Как', 'export.flattened': 'Склеить', 'export.layered': 'Со слоями', 'export.separateFiles': 'Раздельно', 'export.separate': 'Раздельно', 'export.top': 'Верхний уровень', 'export.leaves': 'Все слои',

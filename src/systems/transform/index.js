@@ -12,6 +12,7 @@ import { selectedLayerTargets } from '../../core/targets.js';
 import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
 import { paintCanvas } from '../../core/canvas.js';
+import { setTool } from '../../core/tools.js';
 import { rotBuildCellsSym, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.js';
 
@@ -141,7 +142,7 @@ export function mount() {
     else if (e.key === 'Escape') { e.preventDefault(); exitRotMode(false); } });
 }
 
-actions.register('transform.enter', () => { if (S.sel || S.selFloat) { enterSelectionRotMode(); return; } enterRotMode(activeTargets()); });
+actions.register('transform.enter', () => { if (S.sel || S.selFloat) { if (S.tool === 'lasso') setTool('pencil'); enterSelectionRotMode(); return; } enterRotMode(activeTargets()); });
 actions.register('transform.enterTargets', (targets) => enterRotMode(targets));
 actions.register('transform.cancel', () => exitRotMode(false));
 actions.register('transform.apply', () => exitRotMode(true)); // повторное нажатие кнопки трансформации — применить и выключить

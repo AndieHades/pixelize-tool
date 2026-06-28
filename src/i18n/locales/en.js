@@ -29,7 +29,7 @@ export const en = {
   'side.stab': 'Stroke stabilization (T)', 'side.outline': 'Outline (O)', 'side.transformCanvas': 'Transform Canvas',
   'side.flipH': 'Flip horizontally (H)',
   'side.flipV': 'Flip vertically (V)', 'side.rotate': 'Rotate 90° (R)', 'side.mono': 'Monochrome',
-  'side.bc': 'Brightness/contrast', 'side.imageSettings': 'Settings', 'side.crop': 'Canvas size (C)', 'side.trim': 'Trim', 'side.center': 'Center', 'side.centerFit': 'Fit to canvas short side',
+  'side.bc': 'Brightness/contrast', 'side.imageSettings': 'Settings', 'side.crop': 'Canvas size (C)', 'side.trim': 'Trim', 'side.center': 'Center', 'side.centerFit': 'Fit',
   'dialog.newCanvas': 'New canvas', 'dialog.export': 'Export', 'dialog.palettes': 'Palettes', 'dialog.import': 'Import to pixel art',
   // export: four independent parameters + options
   'export.scope': 'What', 'export.selected': 'Selected', 'export.folder': 'Folder', 'export.project': 'Project',

@@ -415,6 +415,12 @@ t('center: fit short side вписывает слой в меньшую стор
   const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
   assert.deepEqual(L.grid[2][2], [9, 0, 0, 255]); assert.deepEqual(L.grid[3][7], [9, 0, 0, 255]);
   assert.equal(L.grid[1][2], null); assert.equal(L.grid[2][8], null); });
+t('center: fit short side увеличивает маленький слой до меньшей стороны холста', () => { resetWH(10, 6);
+  S.layers[0].grid[0][0] = [5, 5, 5, 255]; S.layers[0].grid[1][1] = [7, 7, 7, 255];
+  actions.run('layer.fitShortSide'); const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
+  assert.deepEqual(L.grid[0][2], [5, 5, 5, 255]); assert.deepEqual(L.grid[2][4], [5, 5, 5, 255]);
+  assert.deepEqual(L.grid[3][5], [7, 7, 7, 255]); assert.deepEqual(L.grid[5][7], [7, 7, 7, 255]);
+  assert.equal(L.grid[0][5], null); assert.equal(L.grid[5][4], null); });
 t('trim: расширяет холст до пикселей за краем (включая скрытые)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].visible = false; S.layers[0].ext.set('6,6', [1, 1, 1, 255]); trimCanvas();
   assert.equal(S.W, 7); assert.equal(S.H, 7); assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.layers[0].visible = true; });
@@ -1034,6 +1040,15 @@ t('menus: контекстное меню выше активной панели
   other.classList.add('on'); showMenuAt(menu, 120, 120);
   assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
   assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
+});
+t('menus: плашки закрываются кликом снаружи, ПКМ снаружи и началом drag', () => {
+  const menu = document.getElementById('pal-new-choice'); showMenuAt(menu, 120, 120);
+  document.body.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+  assert.ok(!menu.classList.contains('on'));
+  showMenuAt(menu, 120, 120); document.body.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, button: 2 }));
+  assert.ok(!menu.classList.contains('on'));
+  showMenuAt(menu, 120, 120); document.dispatchEvent(new window.CustomEvent('ui-close-popovers'));
+  assert.ok(!menu.classList.contains('on'));
 });
 t('menus: tool-choice открывается снаружи панели тулбара', () => {
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
@@ -2222,6 +2237,10 @@ t('transform: Ctrl+T с Selection трансформирует фрагмент 
   S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
   assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
+t('transform: Ctrl+T с Selection из лассо выключает режим лассо', () => { resetWH(8, 8);
+  S.tool = 'lasso'; S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
+  actions.run('transform.enter'); assert.ok(S.rotMode && S.rotMode.selection); assert.equal(S.tool, 'pencil');
+  tf.exitRotMode(false); });
 t('transform: выделение на выбранной папке двигает содержимое всех её слоёв', () => { resetWH(6, 6);
   S.layers = [
     { name: 'outside', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },

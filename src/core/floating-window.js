@@ -5,6 +5,7 @@ const allWins = new Set(); // все плавающие окна — чтобы 
 const NORMAL_Z_BASE = 30, NORMAL_Z_MAX = 860, TOOLBAR_Z = 900;
 let zTop = NORMAL_Z_BASE; // общий счётчик: окно, за которое взялись, поднимается над остальными
 const TOPBAR = 58;         // не залезаем под верхнюю панель
+const closePopovers = () => document.dispatchEvent(new window.CustomEvent('ui-close-popovers'));
 const hostFor = (el) => el.closest('.ovl') || el;
 const shown = (e) => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const s = window.getComputedStyle(n);
   if (s.display === 'none' || s.visibility === 'hidden') return false; } return true; };
@@ -82,6 +83,7 @@ export function floatingWindow(el, opts = {}) {
   let d = null;
   el.addEventListener('pointerdown', (e) => {
     if (e.button > 0 || d || !canDragFrom(e.target)) return;
+    closePopovers();
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
     bringToFront(el, alwaysOnTop); const r = el.getBoundingClientRect(); d = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; });
   el.addEventListener('pointermove', (e) => { if (d && e.pointerId === d.id) { e.preventDefault(); place(e.clientX - d.dx, e.clientY - d.dy); } });
@@ -107,6 +109,7 @@ export function floatingWindow(el, opts = {}) {
   const resizeEnd = () => { if (rz) { rz = null; placed = true; save(); } };
   const attachResize = (node, dir) => {
     node.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); try { node.setPointerCapture(e.pointerId); } catch (err) {}
+      closePopovers();
       bringToFront(el, alwaysOnTop);
       const r = el.getBoundingClientRect(); rz = { dir, left: r.left, top: r.top, right: r.right, bottom: r.bottom, w: r.width, h: r.height, x: e.clientX, y: e.clientY }; });
     node.addEventListener('pointermove', resizeMove); node.addEventListener('pointerup', resizeEnd); node.addEventListener('pointercancel', resizeEnd);
