@@ -117,7 +117,7 @@ function startDraft(gx, gy) {
   const cur = S.layers[S.cur], ed = setEditorText(''), source = draftSource(gx, gy), fid = cur ? cur.fid : null;
   edit = { layer: createText(source, fid), source, fid, draft: true };
   if (!edit.layer) { edit = null; return; }
-  ed.classList.add('on'); placeEditor(); focusEditor(ed);
+  ed.classList.add('on'); placeEditor(); focusEditor(ed); setTimeout(() => edit && focusEditor(ed), 0);
 }
 
 function finishDrag() {
@@ -129,6 +129,7 @@ function finishDrag() {
 
 const handler = {
   down({ gx, gy, e }) {
+    e?.preventDefault?.();
     if (edit) commitEdit(true);
     const i = hitText(gx, gy);
     if (i >= 0) { selectLayer(i); if (e && e.detail >= 2) { startEdit(S.layers[i]); return; }
@@ -154,7 +155,7 @@ export function mount() {
   textBtn().onclick = activateText;
   bus.on('before-tool-change', () => commitEdit(true));
   bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('overlay', drawFrame); bus.on('layers', refreshFonts); bus.on('layers', rasterizeAlphaLocked);
-  $('text-editor').addEventListener('blur', () => commitEdit(true));
+  $('text-editor').addEventListener('blur', () => { if (edit?.draft && !editorText().trim() && S.tool === 'text') setTimeout(() => edit && focusEditor($('text-editor')), 0); else commitEdit(true); });
   $('text-editor').addEventListener('input', liveEdit);
   $('text-editor').addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); }

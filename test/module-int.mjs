@@ -263,11 +263,14 @@ t('text-tool: new text uses active color but picker uses selected text color', (
   assert.deepEqual(S.active, [0, 255, 0]);
   actions.run('color.pick'); document.getElementById('colpop').classList.remove('on');
 });
-t('text-tool: empty draft does not create a layer', () => {
+t('text-tool: empty live draft survives blur and Escape removes it', () => {
   resetWH(32, 16); mountTextUi(); actions.run('tool.text');
   const before = S.layers.length;
   toolHandler('text').down({ gx: 4, gy: 5, e: { detail: 1 } });
+  assert.equal(S.layers.length, before + 1);
   document.getElementById('text-editor').dispatchEvent(new window.Event('blur'));
+  assert.equal(S.layers.length, before + 1);
+  document.getElementById('text-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   assert.equal(S.layers.length, before);
 });
 t('text-tool: clearing existing text deletes its layer', () => {
