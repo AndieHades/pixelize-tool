@@ -149,6 +149,7 @@ function mountTextUi() {
 function commitEditor(value, key = 'Enter') {
   const ed = document.getElementById('text-editor');
   ed.textContent = value; ed.innerText = value;
+  ed.dispatchEvent(new window.Event('input', { bubbles: true }));
   ed.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
   return ed;
 }
@@ -228,15 +229,19 @@ t("module-int case 013", () => {
   assert.equal(L.kind, 'text'); assert.equal(L.text.value, 'Hi');
   assert.ok(L.grid.some((row) => row.some(Boolean)));
 });
-t('text-tool: creates layer only after Enter and names it from text', () => {
+t('text-tool: creates live layer on click and names it from text', () => {
   resetWH(32, 16); mountTextUi();
   actions.run('tool.text');
   assert.equal(S.tool, 'text'); assert.ok(document.getElementById('font-pop').classList.contains('on'));
   const before = S.layers.length;
   toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
-  assert.equal(S.layers.length, before);
+  assert.equal(S.layers.length, before + 1);
   assert.ok(document.getElementById('text-editor').classList.contains('on'));
   assert.equal(document.activeElement, document.getElementById('text-editor'));
+  assert.equal(S.layers[S.cur].kind, 'text'); assert.equal(S.layers[S.cur].text.value, '');
+  const ed = document.getElementById('text-editor'); ed.textContent = 'Live'; ed.innerText = 'Live';
+  ed.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(S.layers[S.cur].text.value, 'Live'); assert.equal(S.layers[S.cur].name, 'Live');
   commitEditor('Hello world');
   const L = S.layers[S.cur];
   assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [2, 3]);

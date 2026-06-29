@@ -38,15 +38,21 @@ function selectLayer(i) {
   bus.emit('layers');
 }
 
-function createText() {
+function createText(src, fid = null) {
   if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return null; }
   snapshot();
-  const src = { ...edit.source, ...loadTextPrefs(), value: editorText() };
-  const L = makeTextLayer(textLayerName(src.value, fallbackName()), S.W, S.H, src, edit.source.box);
-  const cur = S.layers[S.cur]; L.fid = edit.fid ?? (cur ? cur.fid : null);
+  const L = makeTextLayer(textLayerName(src.value, fallbackName()), S.W, S.H, src, src.box);
+  const cur = S.layers[S.cur]; L.fid = fid ?? (cur ? cur.fid : null);
   const at = cur ? S.cur + 1 : S.layers.length;
   S.layers.splice(at, 0, L); selectLayer(at); dirtyAll(); bus.emitDoc(); toast(t('toast.textCreated'));
   return L;
+}
+
+function removeLayer(layer) {
+  const idx = S.layers.indexOf(layer);
+  if (idx < 0) return;
+  S.layers.splice(idx, 1); S.marked.clear(); dirtyAll();
+  if (S.layers.length) { S.cur = Math.max(0, Math.min(idx, S.layers.length - 1)); S.bgSel = false; } else { S.cur = 0; S.bgSel = true; }
 }
 
 function editorText() { const ed = $('text-editor'); return (ed.innerText ?? ed.textContent).replace(/\n$/, ''); }
@@ -81,18 +87,21 @@ function commitEdit(save = true) {
   if (!edit) return;
   const { layer, original } = edit, ed = $('text-editor');
   const value = editorText();
-  if (save && layer && !value.trim()) {
-    const idx = S.layers.indexOf(layer);
-    if (idx >= 0) {
-      S.layers.splice(idx, 1); S.marked.clear(); dirtyAll();
-      if (S.layers.length) { S.cur = Math.max(0, Math.min(idx, S.layers.length - 1)); S.bgSel = false; } else { S.cur = 0; S.bgSel = true; }
-    }
-  } else if (save && layer) {
+  if (save && layer && !value.trim()) removeLayer(layer);
+  else if (save && layer) {
     layer.text.value = value; layer.name = textLayerName(value, layer.name);
     updateTextLayerGrid(layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(layer));
-  } else if (save && value.trim()) createText();
+  } else if (save && value.trim()) createText({ ...edit.source, ...loadTextPrefs(), value }, edit.fid);
+  else if (!save && edit.draft) removeLayer(layer);
   else if (!save && layer) { layer.text = original; updateTextLayerGrid(layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(layer)); }
   edit = null; ed.classList.remove('on'); ed.blur(); bus.emit('layers'); bus.emit('render');
+}
+
+function liveEdit() {
+  if (!edit?.layer) return;
+  edit.layer.text.value = editorText(); edit.layer.name = textLayerName(edit.layer.text.value, edit.layer.name);
+  updateTextLayerGrid(edit.layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(edit.layer));
+  bus.emit('layers'); bus.emit('render');
 }
 
 function startEdit(L = activeText()) {
@@ -105,8 +114,9 @@ function startEdit(L = activeText()) {
 
 function startDraft(gx, gy) {
   if (edit) commitEdit(true);
-  const cur = S.layers[S.cur], ed = setEditorText('');
-  edit = { layer: null, source: draftSource(gx, gy), fid: cur ? cur.fid : null };
+  const cur = S.layers[S.cur], ed = setEditorText(''), source = draftSource(gx, gy), fid = cur ? cur.fid : null;
+  edit = { layer: createText(source, fid), source, fid, draft: true };
+  if (!edit.layer) { edit = null; return; }
   ed.classList.add('on'); placeEditor(); focusEditor(ed);
 }
 
@@ -145,6 +155,7 @@ export function mount() {
   bus.on('before-tool-change', () => commitEdit(true));
   bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('overlay', drawFrame); bus.on('layers', refreshFonts); bus.on('layers', rasterizeAlphaLocked);
   $('text-editor').addEventListener('blur', () => commitEdit(true));
+  $('text-editor').addEventListener('input', liveEdit);
   $('text-editor').addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(true); }
