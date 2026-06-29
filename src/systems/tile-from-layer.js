@@ -7,6 +7,7 @@ import { snapshot } from '../core/history.js';
 import { $, toast, t } from '../core/dom.js';
 import { addTileUnique, createTileset, getTileset } from '../core/tileset.js';
 import { isTilemap, gridTileSize, tilesetForSize, rasterLayer } from '../core/tilemap.js';
+import { rasterizeTextLayer } from '../core/text-layer.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { blank } from '../logic/raster.js';
 import { localeValues } from '../i18n/index.js';
@@ -35,7 +36,7 @@ export function fromLayer() {
   if (!L || isTilemap(L)) { toast(t('toast.needPixelLayer')); return; }
   const { w: tw, h: th } = gridTileSize();
   const ts = tilesetForSize(tw, th);
-  snapshot(); let added = 0, lastId = null;
+  snapshot(); rasterizeTextLayer(L, S.W, S.H); let added = 0, lastId = null;
   for (let cy = 0; cy * th < S.H; cy++) for (let cx = 0; cx * tw < S.W; cx++) {
     const g = block(L.grid, cx, cy, tw, th); if (!g) continue;
     const r = addTileUnique(ts, g); lastId = r.tile.id; if (r.added) added++; // одинаковые тайлы не дублируются
@@ -82,6 +83,7 @@ export function convertToTile(opts = {}) {
   const ts = convertTileset(opts, tw, th);
   if (opts.snapshot !== false) snapshot();
   if (opts.resizeCanvas) resizeCanvasForTiles(tw, th);
+  rasterizeTextLayer(L, S.W, S.H);
   const mapW = Math.ceil(S.W / tw), mapH = Math.ceil(S.H / th), cells = new Array(mapW * mapH).fill(null);
   for (let cy = 0; cy < mapH; cy++) for (let cx = 0; cx < mapW; cx++) {
     const g = block(L.grid, cx, cy, tw, th); if (!g) continue;

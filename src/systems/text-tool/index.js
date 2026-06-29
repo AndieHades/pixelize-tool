@@ -3,19 +3,25 @@ import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $, t, toast } from '../../core/dom.js';
 import { setTool } from '../../core/tools.js';
-import { registerTool } from '../../core/canvas-handlers.js';
+import { registerGlobal, registerTool } from '../../core/canvas-handlers.js';
 import { snapshot } from '../../core/history.js';
 import { shiftLayerGrid } from '../../core/document.js';
 import { markDirty, dirtyAll } from '../../core/layer-cache.js';
 import { makeTextLayer, updateTextLayerGrid } from '../../core/text-layer.js';
+import { rasterizeMatchingText } from '../../core/text-rasterize.js';
 import { loadTextPrefs } from '../../core/text-prefs.js';
 import { loadFonts, fontById } from '../../core/font-store.js';
+import { TEXT_BOX } from '../../config/text.js';
+import { cloneTextSource, normalizeTextSource, textLayerName } from '../../logic/text-model.js';
+import { lineAdvance } from '../../logic/text-layout.js';
+import { configureFrame, drawFrame, frameHandler } from './frame.js';
 
-let drag = null, edit = null, fonts = [];
+let drag = null, edit = null, fonts = [], mounted = false;
 const cv = () => $('cv');
 const textBtn = () => $('t-text');
-const layerName = () => t('layer.textName') + ' ' + (S.layerSeq++);
+const fallbackName = () => t('layer.textName') + ' ' + (S.layerSeq++);
 const activeText = () => S.layers[S.cur] && S.layers[S.cur].kind === 'text' ? S.layers[S.cur] : null;
+const frameSource = () => (edit ? (edit.layer ? edit.layer.text : edit.source) : activeText()?.text);
 
 async function refreshFonts() { fonts = await loadFonts(); }
 
@@ -32,46 +38,71 @@ function selectLayer(i) {
   bus.emit('layers');
 }
 
-function createText(gx, gy) {
+function createText() {
   if (S.layers.length >= MAX_LAYERS) { toast(t('toast.maxLayers')); return null; }
   snapshot();
-  const L = makeTextLayer(layerName(), S.W, S.H, loadTextPrefs(), { x: gx, y: gy });
-  const cur = S.layers[S.cur]; L.fid = cur ? cur.fid : null;
+  const src = { ...edit.source, ...loadTextPrefs(), value: editorText() };
+  const L = makeTextLayer(textLayerName(src.value, fallbackName()), S.W, S.H, src, edit.source.box);
+  const cur = S.layers[S.cur]; L.fid = edit.fid ?? (cur ? cur.fid : null);
   const at = cur ? S.cur + 1 : S.layers.length;
   S.layers.splice(at, 0, L); selectLayer(at); dirtyAll(); bus.emitDoc(); toast(t('toast.textCreated'));
   return L;
 }
 
 function editorText() { const ed = $('text-editor'); return (ed.innerText ?? ed.textContent).replace(/\n$/, ''); }
+function setEditorText(value) { const ed = $('text-editor'); ed.textContent = value; ed.innerText = value; return ed; }
+function draftSource(gx, gy) {
+  return normalizeTextSource({ ...loadTextPrefs(), value: '', box: { ...TEXT_BOX, x: gx, y: gy } });
+}
 function placeEditor() {
   if (!edit) return;
-  const L = edit.layer, ed = $('text-editor'), r = cv().getBoundingClientRect(), z = S.view.zoom, b = L.text.box;
-  const f = fontById(L.text.fontId, fonts);
-  ed.style.left = r.left + S.view.ox + b.x * z + 'px';
-  ed.style.top = r.top + S.view.oy + b.y * z + 'px';
+  const src = edit.layer ? edit.layer.text : edit.source, ed = $('text-editor'), r = cv().getBoundingClientRect(), z = S.view.zoom, b = src.box;
+  const tr = src.transform, f = fontById(src.fontId, fonts);
+  ed.style.left = r.left + S.view.ox + (b.x + b.w / 2 + tr.x) * z + 'px';
+  ed.style.top = r.top + S.view.oy + (b.y + b.h / 2 + tr.y) * z + 'px';
   ed.style.width = Math.max(24, b.w * z) + 'px';
   ed.style.minHeight = Math.max(18, b.h * z) + 'px';
-  ed.style.fontSize = Math.max(10, L.text.size * z) + 'px';
-  ed.style.lineHeight = Math.max(12, L.text.size * L.text.lineHeight * z) + 'px';
-  ed.style.fontFamily = f.family; ed.style.color = L.text.color;
+  ed.style.fontSize = Math.max(10, src.size * z) + 'px';
+  ed.style.lineHeight = Math.max(12, lineAdvance(src) * z) + 'px';
+  ed.style.fontFamily = f.family; ed.style.color = src.color;
+  ed.style.letterSpacing = src.letterSpacing * z + 'px';
+  ed.style.textTransform = src.uppercase ? 'uppercase' : 'none';
+  ed.style.transform = `translate(-50%, -50%) rotate(${tr.rotation}rad) scale(${tr.scaleX}, ${tr.scaleY})`;
 }
 
 function commitEdit(save = true) {
   if (!edit) return;
   const { layer, original } = edit, ed = $('text-editor');
-  if (save) layer.text.value = editorText(); else layer.text = original;
-  updateTextLayerGrid(layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(layer));
+  const value = editorText();
+  if (save && layer && !value.trim()) {
+    const idx = S.layers.indexOf(layer);
+    if (idx >= 0) {
+      S.layers.splice(idx, 1); S.marked.clear(); dirtyAll();
+      if (S.layers.length) { S.cur = Math.max(0, Math.min(idx, S.layers.length - 1)); S.bgSel = false; } else { S.cur = 0; S.bgSel = true; }
+    }
+  } else if (save && layer) {
+    layer.text.value = value; layer.name = textLayerName(value, layer.name);
+    updateTextLayerGrid(layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(layer));
+  } else if (save && value.trim()) createText();
+  else if (!save && layer) { layer.text = original; updateTextLayerGrid(layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(layer)); }
   edit = null; ed.classList.remove('on'); ed.blur(); bus.emit('layers'); bus.emit('render');
 }
 
 function startEdit(L = activeText()) {
   if (!L || L.lock) return false;
   if (edit) commitEdit(true);
-  snapshot(); edit = { layer: L, original: JSON.parse(JSON.stringify(L.text)) };
-  const ed = $('text-editor'); ed.textContent = L.text.value || '';
+  snapshot(); edit = { layer: L, original: cloneTextSource(L.text) };
+  const ed = setEditorText(L.text.value || '');
   ed.classList.add('on'); placeEditor(); ed.focus();
   const range = document.createRange(); range.selectNodeContents(ed); const sel = window.getSelection();
   sel.removeAllRanges(); sel.addRange(range); return true;
+}
+
+function startDraft(gx, gy) {
+  if (edit) commitEdit(true);
+  const cur = S.layers[S.cur], ed = setEditorText('');
+  edit = { layer: null, source: draftSource(gx, gy), fid: cur ? cur.fid : null };
+  ed.classList.add('on'); placeEditor(); ed.focus();
 }
 
 function finishDrag() {
@@ -87,7 +118,7 @@ const handler = {
     const i = hitText(gx, gy);
     if (i >= 0) { selectLayer(i); if (e && e.detail >= 2) { startEdit(S.layers[i]); return; }
       drag = { idx: i, sx: gx, sy: gy, dx: 0, dy: 0 }; return; }
-    const L = createText(gx, gy); if (L) startEdit(L);
+    startDraft(gx, gy);
   },
   move({ gx, gy }) { if (!drag) return; drag.dx = gx - drag.sx; drag.dy = gy - drag.sy; S.moveDrag = { ...drag, idxs: [drag.idx] }; bus.emit('render'); },
   up() { finishDrag(); },
@@ -96,15 +127,23 @@ const handler = {
 
 function activateText() { if (S.tool === 'text') setTool('pencil'); else { setTool('text'); actions.run('ui.fontLibrary', true); } }
 function syncButton() { const b = textBtn(); if (b) b.classList.toggle('on', S.tool === 'text'); }
+function rasterizeAlphaLocked() { rasterizeMatchingText((L) => !!L.alphaLock, { emit: true }); }
 
 export function mount() {
   refreshFonts(); registerTool('text', handler);
+  configureFrame({ source: frameSource, layer: () => edit ? edit.layer : activeText(), fonts: () => fonts, place: placeEditor, editing: () => !!edit });
+  if (mounted) { syncButton(); return; }
+  mounted = true; registerGlobal(frameHandler);
   actions.register('tool.text', activateText);
   actions.register('text.editLayer', (i = S.cur) => { if (S.layers[i]?.kind === 'text') { selectLayer(i); return startEdit(S.layers[i]); } return false; });
   textBtn().onclick = activateText;
-  bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('layers', refreshFonts);
+  bus.on('before-tool-change', () => commitEdit(true));
+  bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('overlay', drawFrame); bus.on('layers', refreshFonts); bus.on('layers', rasterizeAlphaLocked);
   $('text-editor').addEventListener('blur', () => commitEdit(true));
-  $('text-editor').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); } });
+  $('text-editor').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(true); }
+  });
   $('lay-list').addEventListener('dblclick', (e) => { const r = e.target.closest('.lrow[data-li]'); if (r) actions.run('text.editLayer', +r.dataset.li); });
   syncButton();
 }

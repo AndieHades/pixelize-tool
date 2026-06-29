@@ -1,4 +1,3 @@
-// Список слоёв/папок: миниатюры, видимость, выделение, метка Tile Layer, переименование; свайпы/драг/меню — отдельные модули.
 import { S } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
@@ -29,6 +28,7 @@ const ALPHA_IC = '<svg viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" heig
 const REF_IC = '<svg viewBox="0 0 24 24"><path d="M6 4.5h12v15l-6-3.5-6 3.5z"/><path d="M9 8.5h6M9 12h4"/></svg>';
 const SYM_IC = '<svg viewBox="0 0 24 24"><path d="M12 4v16" stroke-dasharray="2.5 2.5"/><path d="M8.5 8.5L5 12l3.5 3.5M15.5 8.5L19 12l-3.5 3.5"/><path class="slash" d="M4 4l16 16"/></svg>';
 const TILE_IC = '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg>';
+const TEXT_IC = '<b>T</b>';
 export let layDragSquelch = false;
 export const setSquelch = (v) => { layDragSquelch = v; };
 
@@ -42,11 +42,7 @@ export function startInlineRename(span, ref) {
   inlineRename(span, ref.name, (v) => { if (v) { snapshot(); ref.name = v; } layList(); });
 }
 
-// тап по имени уже активной строки → переименование (как в Finder: выбрал, затем
-// тап по имени). wasActive снимаем на pointerdown — до того как dragRow сделает
-// строку активной, иначе первый тап по неактивной строке сразу бы переименовывал.
 function nameSpan(text, isActive, ref) { const nm = document.createElement('span'); nm.className = 'lname'; nm.textContent = text;
-  // тап по имени неактивной строки всплывает (строка выберется), по имени активной — переименование
   nameRenameGesture(nm, { isActive: () => !!(isActive && isActive()), rename: () => startInlineRename(nm, ref) });
   return nm; }
 
@@ -56,7 +52,6 @@ function folderCountSpan(f) {
   const c = document.createElement('span'); c.className = 'fcount'; c.textContent = n; return c; // разделитель '· ' — в CSS (.fcount::before)
 }
 
-// глаз видимости: переключает мягко (без ре-рендера списка) и НЕ выбирает слой
 function wireVis(vis, obj) {
   vis.addEventListener('pointerdown', (e) => e.stopPropagation());
   vis.addEventListener('click', (e) => { e.stopPropagation(); snapshot(); obj.visible = !obj.visible; vis.classList.toggle('off', !obj.visible); bus.emit('visibility'); bus.emit('render'); });
@@ -85,7 +80,7 @@ function folderRow(f, depth) {
     if (ev.shiftKey && selectRange(fr)) { layList(); return; } // shift-клик — диапазон от активной строки до этой папки
     if (ev.ctrlKey || ev.metaKey) { if (S.markedFolders.has(f.id)) { S.markedFolders.delete(f.id); if (S.selFolder === f.id) S.selFolder = S.markedFolders.size ? [...S.markedFolders][0] : null; }
       else S.markedFolders.add(f.id); layList(); return; } // ctrl-добавление не делает папку активной — primary не меняется
-    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); }); // тап — только эта папка активна
+    S.selFolder = f.id; S.markedFolders = new Set([f.id]); S.marked.clear(); S.fxSel.clear(); S.fxCur = null; layList(); });
   menuGesture(fr, (x, y) => openLctx(x, y, 'folder', f), '.lname'); dragRow(fr, { kind: 'folder', fid: f.id }); return fr;
 }
 
@@ -96,8 +91,6 @@ function containsActive(f) {
   return S.selFolder != null && S.selFolder !== f.id && folderChain(S.selFolder).some((x) => x.id === f.id);
 }
 
-// ЛКМ+Ctrl — поштучный тумблер слоя, не сбрасывая выбранные папки/эффекты:
-// общий набор может смешивать слои, папки и настройки (как в палитре)
 function toggleLayerSelect(i) {
   if (S.bgSel) { S.bgSel = false; S.cur = i; S.marked.clear(); S.markedFolders.clear(); S.selFolder = null; S.fxCur = null; layList(); return; } // фон вне мультивыбора — ctrl поверх активного фона = одиночный выбор
   if (S.selFolder == null && !S.fxCur) {
@@ -109,8 +102,6 @@ function toggleLayerSelect(i) {
 }
 
 function layerRow(L, i, depth) {
-  // активный слой ярко-синий, только если не выбрана папка и не выделен эффект
-  // (тогда ярко-синий — у строки эффекта); двух активных строк быть не может
   const isCurPrim = i === S.cur && !S.selFolder && !S.fxCur && !S.bgSel;
   const row = document.createElement('div'); row.className = 'lrow' + (isCurPrim ? ' on' : S.marked.has(i) ? ' marked' : '') + (L.clip ? ' clip' : '') + (L.kind === 'tilemap' ? ' tmap' : '');
   row.dataset.li = i; row.style.marginLeft = depth * INDENT + 'px';
@@ -120,6 +111,8 @@ function layerRow(L, i, depth) {
   row.append(thumbFor(i), nm); // миниатюра + имя
   if (L.kind === 'tilemap') { const tl = document.createElement('button'); tl.className = 'eye ltile'; tl.innerHTML = TILE_IC; tl.title = t('menu.convertLayer'); // клик запекает Tilemap обратно в обычный слой
     tl.addEventListener('pointerdown', (e) => e.stopPropagation()); tl.addEventListener('click', (ev) => { ev.stopPropagation(); actions.run('tile.bakeConvert', i); }); row.append(tl); }
+  if (L.kind === 'text') { const tx = document.createElement('button'); tx.className = 'eye ltext'; tx.innerHTML = TEXT_IC; tx.title = t('tool.text');
+    tx.addEventListener('pointerdown', (e) => e.stopPropagation()); tx.addEventListener('click', (ev) => { ev.stopPropagation(); actions.run('text.editLayer', i); }); row.append(tx); }
   if (S.sym || S.symH || S.symD1 || S.symD2) { const sy = document.createElement('button'); sy.className = 'eye lsym' + (L.symLock ? ' off' : ''); sy.innerHTML = SYM_IC; // симметрия на слое (можно выключить)
     sy.addEventListener('pointerdown', (e) => e.stopPropagation());
     sy.addEventListener('click', (ev) => { ev.stopPropagation(); snapshot(); L.symLock = !L.symLock; sy.classList.toggle('off', L.symLock); bus.emit('render'); }); row.append(sy); }

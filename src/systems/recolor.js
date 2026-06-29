@@ -7,13 +7,14 @@ import { snapshot } from '../core/history.js';
 import { eqc } from '../logic/color.js';
 import { dirtyAll } from '../core/layer-cache.js';
 import { toast, t } from '../core/dom.js';
+import { rasterizeMatchingText } from '../core/text-rasterize.js';
 
 const fromList = (from) => (Array.isArray(from && from[0]) ? from : [from]).filter(Boolean).map((c) => c.slice(0, 3));
 
 export function recolorAll(from, to) {
   const sources = fromList(from), target = to.slice(0, 3);
   if (!sources.length) return;
-  snapshot(); let n = 0;
+  snapshot(); rasterizeMatchingText(() => true); let n = 0;
   for (const L of S.layers) { const g = L.grid;
     for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (g[y][x] && sources.some((f) => eqc(g[y][x], f))) { g[y][x] = target.slice(); n++; }
     for (const [k, c] of L.ext) if (sources.some((f) => eqc(c, f))) L.ext.set(k, target.slice()); }

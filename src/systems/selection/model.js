@@ -12,6 +12,7 @@ import { selectedLayerTargets } from '../../core/targets.js';
 import { inMask } from '../../core/selection.js';
 import { snapshot } from '../../core/history.js';
 import { markDirty } from '../../core/layer-cache.js';
+import { rasterizeTextTargets } from '../../core/text-rasterize.js';
 import { toast, t } from '../../core/dom.js';
 import { setTool } from '../../core/tools.js';
 import { commitFloat } from './float.js';
@@ -78,14 +79,14 @@ export function fragFromSel() { if (!S.layers[S.cur]) return []; commitFloat(); 
 
 export function deleteSelContent() { commitFloat(); const targets = selectedLayerTargets(); let any = false;
   for (const L of targets) for (let y = S.sel.y0; y <= S.sel.y1 && !any; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) if (L.grid[y][x] && inMask(x, y)) { any = true; break; }
-  if (!any) return false; snapshot();
+  if (!any) return false; snapshot(); rasterizeTextTargets(targets);
   for (const L of targets) { let dirty = false;
     for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) if (inMask(x, y) && L.grid[y][x]) { L.grid[y][x] = null; dirty = true; }
     if (dirty) { const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }
   }
   bus.emit('render'); bus.emit('layers'); return true; }
 
-export function fillSelection() { if (!S.sel || !S.layers[S.cur]) return; commitFloat(); snapshot(); const g = G(); let nn = 0;
+export function fillSelection() { if (!S.sel || !S.layers[S.cur]) return; commitFloat(); snapshot(); rasterizeTextTargets([S.layers[S.cur]]); const g = G(); let nn = 0;
   for (let y = S.sel.y0; y <= S.sel.y1; y++) for (let x = S.sel.x0; x <= S.sel.x1; x++) { if (!inMask(x, y)) continue; g[y][x] = [S.active[0], S.active[1], S.active[2], 255]; nn++; }
   if (nn) actions.run('color.used', S.active);
   markDirty(S.cur); bus.emit('render'); bus.emit('layers'); toast(t('toast.filledN', { n: nn })); }

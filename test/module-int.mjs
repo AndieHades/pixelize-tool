@@ -138,6 +138,17 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 const ta = async (name, fn) => { await fn(); n++; console.log('  ok   ' + name); };
+let textUiMounted = false;
+function mountTextUi() {
+  if (!textUiMounted) { fontLib.mount(); textTool.mount(); textUiMounted = true; }
+  else textTool.mount();
+}
+function commitEditor(value, key = 'Enter') {
+  const ed = document.getElementById('text-editor');
+  ed.textContent = value; ed.innerText = value;
+  ed.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
+  return ed;
+}
 
 // общий проект для экспорта: папка G со слоями b,c + одиночный слой a (низ→верх)
 function exportProject() { resetWH(6, 6);
@@ -196,21 +207,83 @@ t('text-layer: создаёт редактируемый слой с растр�
   assert.equal(L.kind, 'text'); assert.equal(L.text.value, 'Hi');
   assert.ok(L.grid.some((row) => row.some(Boolean)));
 });
-t('text-tool: action creates editable text layer on canvas click', () => {
-  resetWH(32, 16); fontLib.mount(); textTool.mount();
+t('text-tool: creates layer only after Enter and names it from text', () => {
+  resetWH(32, 16); mountTextUi();
   actions.run('tool.text');
   assert.equal(S.tool, 'text'); assert.ok(document.getElementById('font-pop').classList.contains('on'));
+  const before = S.layers.length;
   toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
+  assert.equal(S.layers.length, before);
+  assert.ok(document.getElementById('text-editor').classList.contains('on'));
+  commitEditor('Hello world');
   const L = S.layers[S.cur];
   assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [2, 3]);
-  const ed = document.getElementById('text-editor'); ed.innerText = 'OK'; ed.dispatchEvent(new window.Event('blur'));
-  assert.equal(L.text.value, 'OK');
+  assert.equal(L.name, 'Hello'); assert.equal(L.text.value, 'Hello world');
+});
+t('text-tool: empty draft does not create a layer', () => {
+  resetWH(32, 16); mountTextUi(); actions.run('tool.text');
+  const before = S.layers.length;
+  toolHandler('text').down({ gx: 4, gy: 5, e: { detail: 1 } });
+  document.getElementById('text-editor').dispatchEvent(new window.Event('blur'));
+  assert.equal(S.layers.length, before);
+});
+t('text-tool: clearing existing text deletes its layer', () => {
+  resetWH(32, 16); mountTextUi();
+  const L = textLayer.makeTextLayer('Hello', S.W, S.H, { value: 'Hello', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [L]; S.cur = 0; actions.run('text.editLayer', 0);
+  const ed = document.getElementById('text-editor'); ed.innerText = ''; ed.dispatchEvent(new window.Event('blur'));
+  assert.equal(S.layers.length, 0); assert.equal(S.bgSel, true);
 });
 t('document: сдвиг текстового слоя двигает источник текста', () => {
   resetWH(32, 16);
   const L = textLayer.makeTextLayer('Text', S.W, S.H, {}, { x: 2, y: 3 });
   doc.shiftLayerGrid(L, 4, -1);
   assert.deepEqual([L.text.box.x, L.text.box.y], [6, 2]);
+});
+t('text-layer: pixel actions rasterize but Move keeps live text', () => {
+  resetWH(32, 16); S.active = [9, 8, 7];
+  const L = textLayer.makeTextLayer('Hi', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [L]; S.cur = 0; stamp(1, 1);
+  assert.equal(S.layers[0].kind, 'pixel'); assert.equal(S.layers[0].text, undefined);
+  resetWH(32, 16); const T = textLayer.makeTextLayer('Hi', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [T]; S.cur = 0; S.tool = 'move';
+  const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 4, gy: 2, e: {} }); h.up({});
+  assert.equal(T.kind, 'text'); assert.deepEqual([T.text.box.x, T.text.box.y], [6, 5]);
+});
+t('text-layer: alpha lock and tilemap conversion rasterize text', () => {
+  resetWH(16, 16); mountTextUi();
+  const L = textLayer.makeTextLayer('Hi', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 1, y: 1 });
+  S.layers = [L]; S.cur = 0; L.alphaLock = true; bus.emit('layers');
+  assert.equal(L.kind, 'pixel'); assert.equal(L.text, undefined);
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  const T = textLayer.makeTextLayer('Hi', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 0, y: 0 });
+  S.layers = [T]; S.cur = 0; tfl.convertToTile({ tileW: 4, tileH: 4, newTileset: true });
+  assert.equal(T.kind, 'tilemap'); assert.equal(T.text, undefined);
+});
+t('text-layer: Free Transform keeps text editable', () => {
+  resetWH(32, 16);
+  const L = textLayer.makeTextLayer('Hi', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [L]; S.cur = 0; tf.enterRotMode(L);
+  S.rotMode.tx = 3; S.rotMode.ty = 2; S.rotMode.sx = 2; S.rotMode.sy = 1.5; S.rotMode.ang = Math.PI / 4; S.rotMode.changed = true;
+  tf.exitRotMode(true);
+  assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [5, 5]);
+  assert.equal(L.text.transform.scaleX, 2); assert.equal(L.text.transform.scaleY, 1.5);
+  assert.equal(L.text.transform.rotation, Math.PI / 4);
+});
+t('text-ui: T icon, frame handles and font controls affect live text', () => {
+  resetWH(64, 24); mountTextUi(); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+  const L = textLayer.makeTextLayer('Hello', S.W, S.H, { value: 'Hello', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [L]; S.cur = 0; layList(); assert.ok(document.querySelector('#lay-list .ltext'));
+  actions.run('tool.text'); document.getElementById('font-pop').classList.add('on'); bus.emit('layer-active');
+  const gh = globalHandlers().find((h) => h.hover?.({ gx: 2, gy: 8 }) === 'ew-resize');
+  assert.ok(gh); gh.down({ gx: 2, gy: 8 }); gh.move({ gx: 12, gy: 8 }); gh.up({});
+  assert.deepEqual([L.text.box.x, L.text.box.w], [12, 86]);
+  document.getElementById('font-upper').click(); assert.equal(L.text.uppercase, true); assert.equal(L.text.value, 'Hello');
+  document.getElementById('font-align-center').click(); assert.equal(L.text.align, 'center');
+  document.getElementById('font-letter').value = '3'; document.getElementById('font-letter').dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('font-line').value = '7'; document.getElementById('font-line').dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(L.text.letterSpacing, 3); assert.equal(L.text.lineSpacing, 7);
+  textLayer.rasterizeTextLayer(L, S.W, S.H); layList(); assert.equal(document.querySelector('#lay-list .ltext'), null);
 });
 t('document: crop-расширение обновляет клетки Tilemap', () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;

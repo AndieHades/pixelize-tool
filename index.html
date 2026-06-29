@@ -337,8 +337,17 @@
     </div>
     <div id="font-body"><div id="font-list"></div></div>
     <div class="font-controls">
-      <span data-i18n="label.size"></span><input id="font-size" type="range" min="4" max="128" step="1" value="16" />
-      <b id="font-sizev">16 px</b><button id="font-color" data-i18n-title="label.color"></button>
+      <label class="font-range"><span data-i18n="label.size"></span><input id="font-size" type="range" min="4" max="128" step="1" value="16" /><b id="font-sizev">16 px</b></label>
+      <label class="font-range"><span data-i18n="font.letterSpacing"></span><input id="font-letter" type="range" min="-8" max="32" step="1" value="0" /><b id="font-letterv">0 px</b></label>
+      <label class="font-range"><span data-i18n="font.lineSpacing"></span><input id="font-line" type="range" min="-8" max="64" step="1" value="2" /><b id="font-linev">2 px</b></label>
+    </div>
+    <div class="font-tools">
+      <button id="font-color" data-i18n-title="label.color"></button>
+      <button id="font-upper" data-i18n-title="font.uppercase"><b>TT</b></button>
+      <button id="font-align-left" data-align="left" data-i18n-title="font.alignLeft"><svg viewBox="0 0 24 24"><path d="M5 6h12M5 10h8M5 14h12M5 18h8"/></svg></button>
+      <button id="font-align-center" data-align="center" data-i18n-title="font.alignCenter"><svg viewBox="0 0 24 24"><path d="M6 6h12M8 10h8M6 14h12M8 18h8"/></svg></button>
+      <button id="font-align-right" data-align="right" data-i18n-title="font.alignRight"><svg viewBox="0 0 24 24"><path d="M7 6h12M11 10h8M7 14h12M11 18h8"/></svg></button>
+      <button id="font-stretch" data-i18n-title="font.stretch"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><path d="M7 11h10M5 11l2-2v4l-2-2zM19 11l-2-2v4l2-2z"/></svg></button>
     </div>
     <div id="font-rsz" data-i18n-title="ui.resizePanel"><svg viewBox="0 0 24 24"><path d="M19 13l-6 6M19 17.5L16.5 20"/></svg></div>
   </div>

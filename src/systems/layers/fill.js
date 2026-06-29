@@ -6,12 +6,13 @@ import * as actions from '../../core/actions.js';
 import { snapshot } from '../../core/history.js';
 import { rgbToHex } from '../../logic/color.js';
 import { dirtyAll, markDirty } from '../../core/layer-cache.js';
+import { rasterizeTextTargets } from '../../core/text-rasterize.js';
 import { folderLayers } from './helpers.js';
 
 export function fillLayerRefs(layers, color) {
   const ts = layers.filter((L) => S.layers.includes(L));
   if (!ts.length || !Array.isArray(color) || color.length < 3) return false;
-  snapshot(); const a = [color[0], color[1], color[2], 255];
+  snapshot(); rasterizeTextTargets(ts); const a = [color[0], color[1], color[2], 255];
   for (const L of ts) {
     let hasContent = false;
     for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {

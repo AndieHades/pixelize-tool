@@ -13,6 +13,8 @@ import { boundsWithExt } from '../../logic/raster.js';
 import { fxPreview } from '../../core/effects-render.js';
 import { paintCanvas } from '../../core/canvas.js';
 import { setTool } from '../../core/tools.js';
+import { updateTextLayerGrid } from '../../core/text-layer.js';
+import { isTextLayer, transformTextSource } from '../../logic/text-model.js';
 import { rotBuildCellsSym, rotHasChanges, rotRestoreState } from './math.js';
 import { rotGrab, rotDrag, rotHover, drawTransformFrame, rotHit } from './drag.js';
 
@@ -86,7 +88,9 @@ function applyRotMode(m) { let res = null, per = [];
   if (!res) { toast(t('toast.transformEmpty')); return false; }
   if (m.selection) return applySelectionRotMode(m, per);
   snapshot();
-  for (const { s, r } of per) { const L = s.L; if (!S.layers.includes(L)) continue; const g = blank(S.W, S.H);
+  for (const { s, r } of per) { const L = s.L; if (!S.layers.includes(L)) continue;
+    if (isTextLayer(L)) { L.text = transformTextSource(L.text, m); updateTextLayerGrid(L, S.W, S.H); markDirty(s.idx); continue; }
+    const g = blank(S.W, S.H);
     const ext = new Map();
     if (r) for (const [x, y, c] of r.cells) { if (x >= 0 && y >= 0 && x < S.W && y < S.H) g[y][x] = c.slice(); else ext.set(x + ',' + y, c.slice()); }
     L.grid = g; L.ext = ext; const idx = S.layers.indexOf(L); if (idx >= 0) markDirty(idx); }

@@ -4,13 +4,16 @@ import * as actions from '../../core/actions.js';
 import { $, showMenuAt, t, toast } from '../../core/dom.js';
 import { floatingWindow } from '../../core/floating-window.js';
 import { snapshot } from '../../core/history.js';
+import { makeCanvas } from '../../core/canvas.js';
 import { markDirty } from '../../core/layer-cache.js';
 import { updateTextLayerGrid } from '../../core/text-layer.js';
-import { loadFonts, importFontFile, renameFont, deleteFont } from '../../core/font-store.js';
+import { loadFonts, fontById, importFontFile, renameFont, deleteFont } from '../../core/font-store.js';
 import { loadTextPrefs, saveTextPrefs } from '../../core/text-prefs.js';
-import { TEXT_IMPORT, TEXT_SIZE } from '../../config/text.js';
+import { TEXT_IMPORT, TEXT_LETTER_SPACING, TEXT_LINE_SPACING, TEXT_SIZE, TEXT_STRETCH } from '../../config/text.js';
+import { clamp } from '../../logic/math.js';
+import { maxLineWidth } from '../../logic/text-layout.js';
 
-let fonts = [], prefs = loadTextPrefs(), menuFont = null, live = false;
+let fonts = [], prefs = loadTextPrefs(), menuFont = null, live = null;
 const activeText = () => S.layers[S.cur] && S.layers[S.cur].kind === 'text' ? S.layers[S.cur] : null;
 const current = () => activeText()?.text || prefs;
 const opened = () => $('font-pop').classList.contains('on');
@@ -27,11 +30,43 @@ function applyPatch(patch, hist = true) {
   syncControls(); renderFonts();
 }
 
+function applyTextPatch(patch) {
+  const L = activeText(); if (!L) return;
+  snapshot(); L.text = { ...L.text, ...patch };
+  updateTextLayerGrid(L, S.W, S.H, fonts); markDirty(S.cur);
+  bus.emit('layers'); bus.emit('render'); syncControls();
+}
+
+function textWidth(src) {
+  const ctx = makeCanvas(1, 1).getContext('2d'), f = fontById(src.fontId, fonts);
+  ctx.font = `${src.size}px ${f.family}`;
+  return maxLineWidth(src, (line) => ctx.measureText(line).width);
+}
+
+function stretchText() {
+  const L = activeText(); if (!L) return;
+  const sx = clamp(L.text.box.w / textWidth(L.text), TEXT_STRETCH.minScale, TEXT_STRETCH.maxScale);
+  applyTextPatch({ transform: { ...L.text.transform, scaleX: sx } });
+}
+
+function syncRange(id, value, conf) {
+  $(id).min = conf.min; $(id).max = conf.max; $(id).step = conf.step; $(id).value = value;
+  $(id + 'v').textContent = value + ' px';
+}
+
 function syncControls() {
-  const src = current();
-  $('font-size').min = TEXT_SIZE.min; $('font-size').max = TEXT_SIZE.max; $('font-size').step = TEXT_SIZE.step;
-  $('font-size').value = src.size; $('font-sizev').textContent = src.size + ' px';
+  const src = current(), L = activeText();
+  syncRange('font-size', src.size, TEXT_SIZE);
+  syncRange('font-letter', src.letterSpacing, TEXT_LETTER_SPACING);
+  syncRange('font-line', src.lineSpacing, TEXT_LINE_SPACING);
   $('font-color').style.background = src.color;
+  for (const b of document.querySelectorAll('.font-tools button:not(#font-color)')) b.disabled = !L;
+  for (const b of document.querySelectorAll('.font-tools button[data-align]')) b.classList.toggle('on', !!L && L.text.align === b.dataset.align);
+  const upper = $('font-upper');
+  if (upper) {
+    upper.disabled = !L;
+    upper.classList.toggle('on', !!L && L.text.uppercase);
+  }
 }
 
 function tile(f) {
@@ -75,14 +110,26 @@ function menuAct(act) {
 
 function open(force = false) { if (force) $('font-pop').classList.add('on'); else $('font-pop').classList.toggle('on'); refresh(); }
 
+function bindRange(id, key) {
+  $(id).addEventListener('pointerdown', () => { live = null; });
+  $(id).addEventListener('input', () => {
+    if (activeText() && live !== id) { snapshot(); live = id; }
+    applyPatch({ [key]: +$(id).value }, false);
+  });
+  $(id).addEventListener('change', () => { live = null; });
+}
+
 export function mount() {
   floatingWindow($('font-pop'), { grip: $('font-head'), handle: $('font-rsz'), storeKey: 'fontwin', minW: 250, minH: 180,
     onClose: () => $('font-pop').classList.remove('on') });
   $('font-add').onclick = pickFont;
-  $('font-size').addEventListener('pointerdown', () => { live = false; });
-  $('font-size').addEventListener('input', () => { if (!live) { snapshot(); live = true; } applyPatch({ size: +$('font-size').value }, false); });
-  $('font-size').addEventListener('change', () => { live = false; });
+  bindRange('font-size', 'size');
+  bindRange('font-letter', 'letterSpacing');
+  bindRange('font-line', 'lineSpacing');
   $('font-color').onclick = () => { snapshot(); actions.run('color.for', current().color, (hex) => applyPatch({ color: hex }, false)); };
+  $('font-upper').onclick = () => { const L = activeText(); if (L) applyTextPatch({ uppercase: !L.text.uppercase }); };
+  for (const b of document.querySelectorAll('.font-tools button[data-align]')) b.onclick = () => applyTextPatch({ align: b.dataset.align });
+  $('font-stretch').onclick = stretchText;
   $('font-menu').onclick = (e) => { const b = e.target.closest('button'); if (b) menuAct(b.dataset.act); };
   $('font-pop').addEventListener('dragover', (e) => { e.preventDefault(); });
   $('font-pop').addEventListener('drop', async (e) => { e.preventDefault(); for (const f of e.dataTransfer.files) try { await importFontFile(f); } catch (err) {} refresh(); });

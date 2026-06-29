@@ -53,8 +53,16 @@
 
 `normalizeTextSource(src, defaults?)` — каноническая модель текста.
 `moveTextSource(src,dx,dy)` — сдвиг прямоугольника текста в клетках.
+`transformTextSource(src,tr)` — применить перенос/масштаб/поворот Free Transform к живому тексту.
+`textLayerName(value,fallback?)` — имя слоя из введённого текста.
 `cloneTextSource(src)` — копия для истории/дубликата слоя.
 `isTextLayer(layer)` — проверка слоя перед текстовыми операциями.
+
+## `logic/text-layout.js` — раскладка текста (чистый)
+
+`displayText(src)` / `displayLines(src)` — отображаемая строка с учётом `uppercase`.
+`lineAdvance(src)` — шаг строки в пикселях.
+`lineWidth(src,line,measure)` / `maxLineWidth(src,measure)` — ширина с учётом межбуквенного интервала.
 
 ## `logic/flood.js` — области заливки (чистый)
 
@@ -91,6 +99,7 @@
 | `core/font-store.js` → `loadFonts()` / `importFontFile(file)` | единый список шрифтов: встроенные, папочные, импортированные через приложение | текстовый инструмент, библиотека шрифтов |
 | `core/palette-files.js` → `allFolderPalettes()` / `savePaletteToFolder(name,colors)` | PNG-палитры из папки и сохранение полосы с клетками 32×32 | менеджер палитр |
 | `core/text-layer.js` → `makeTextLayer(opts)` / `updateTextLayerGrid(layer)` | текстовый слой → пиксельная сетка с кешем растра | текстовый инструмент, история/рендер |
+| `core/text-rasterize.js` → `rasterizeActiveText()` / `rasterizeTextTargets(targets)` / `rasterizeMatchingText(predicate)` | единая растризация живого текста перед пиксельными действиями | рисование, выделение, recolor, tilemap |
 | `core/text-prefs.js` → `loadTextPrefs()` / `saveTextPrefs(prefs)` | последние выбранные шрифт/размер/цвет текста | библиотека шрифтов |
 
 > На время миграции часть этих помощников ещё живёт в `js/00-util.js`

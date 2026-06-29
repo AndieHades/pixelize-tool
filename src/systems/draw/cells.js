@@ -6,6 +6,7 @@ import { symmetryConfig } from '../../core/layers.js';
 import { mirrorPoints } from '../../logic/symmetry.js';
 import { inSel } from '../../core/selection.js';
 import { markDirty } from '../../core/layer-cache.js';
+import { rasterizeActiveText } from '../../core/text-rasterize.js';
 import { strokeSeen } from './seen.js';
 
 // Tile Mode: координата заворачивается по модулю холста → рисование по любому из
@@ -15,6 +16,7 @@ const wrapC = (v, n) => ((v % n) + n) % n;
 export function setCell(x, y, c) {
   if (S.tile && S.tile.on) { x = wrapC(x, S.W); y = wrapC(y, S.H); }
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return; // выделение работает как маска
+  rasterizeActiveText();
   const L = S.layers[S.cur]; if (L.lock) return; // замок: слой нельзя трогать
   const g = G(); const put = (px, py) => { if (L.alphaLock && !g[py][px]) return; g[py][px] = c ? c.slice() : null; }; // альфа-замок: только по существующим
   for (const [px, py] of mirrorPoints(x, y, S.W, S.H, false, false, symmetryConfig())) if (inSel(px, py)) put(px, py);
@@ -24,6 +26,7 @@ export function setCell(x, y, c) {
 export function paintCell(x, y, erase) { // кисть с прозрачностью и альфа-смешиванием
   if (S.tile && S.tile.on) { x = wrapC(x, S.W); y = wrapC(y, S.H); }
   if (x < 0 || y < 0 || x >= S.W || y >= S.H || !inSel(x, y)) return;
+  rasterizeActiveText();
   const L = S.layers[S.cur]; if (L.lock) return; // замок: слой нельзя трогать
   const br = S.brushes[erase ? 'eraser' : 'pencil'], o = br.op, g = G(), key = y * S.W + x;
   const dst = g[y][x];

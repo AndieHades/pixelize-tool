@@ -43,6 +43,7 @@
     .fcount::before { content: '· '; } /* декоративный разделитель счётчика слоёв папки — в стилях, не в JS */
     .eye { width: 30px; height: 24px; color: var(--txt2); flex: none; }
     .eye svg { width: var(--ico-lg); height: var(--ico-lg); }
+    .ltext b { font-size: var(--type-label); font-weight: var(--fw-heading); line-height: 1; }
     .eye.off { opacity: .4; }
     .eye .slash { display: none; }
     .eye.off .slash { display: block; }

@@ -18,6 +18,8 @@ export const en = {
   'brush.modeSingle': 'Stamp', 'brush.modeScatter': 'Scatter', 'brush.modeFlow': 'Flow', 'brush.testHint': 'Draw here to test the brush',
   'brush.round': 'Round', 'brush.square': 'Square', 'brush.dither': 'Dithering',
   'font.library': 'Fonts', 'font.add': 'Add font', 'font.rename': 'New font name',
+  'font.alignLeft': 'Align left', 'font.alignCenter': 'Align center', 'font.alignRight': 'Align right', 'font.stretch': 'Stretch to frame',
+  'font.uppercase': 'Uppercase text', 'font.letterSpacing': 'Letters', 'font.lineSpacing': 'Lines',
   'toast.selectAreaFirst': 'Select an area first', 'toast.selectionEmpty': 'Selection is empty', 'toast.brushCreated': 'Brush created: {name}',
   'tool.ellipse': 'Ellipse (Q)', 'tool.ellipseFill': 'Filled ellipse (Q)',
   'tool.move': 'Free transform (Ctrl+T)', 'tool.adjust': 'Adjust brush',

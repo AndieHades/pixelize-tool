@@ -26,7 +26,8 @@ import { importAbr } from '../src/core/brush-import/abr.js';
 import { previewStroke, stampIcon } from '../src/logic/brush-preview.js';
 import { footprintMask, footprintRotation } from '../src/logic/brush-cursor.js';
 import { keyName, eventKey } from '../src/logic/key-code.js';
-import { normalizeTextPrefs, normalizeTextSource, moveTextSource } from '../src/logic/text-model.js';
+import { normalizeTextPrefs, normalizeTextSource, moveTextSource, transformTextSource, textLayerName } from '../src/logic/text-model.js';
+import { displayText, lineAdvance, maxLineWidth } from '../src/logic/text-layout.js';
 import { sortGalleryItems, reorderedIds } from '../src/logic/gallery-grid.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
@@ -125,14 +126,34 @@ t('cloneLayer: копирует все поля, overrides перекрываю�
   c.grid[0][0][0] = 50; assert.equal(L.grid[0][0][0], 1);
 });
 t('text-model: prefs нормализуются и размер зажимается', () => {
-  assert.deepEqual(normalizeTextPrefs({ fontId: 'f', size: 999, color: '#AABBCC' }), { fontId: 'f', size: 128, color: '#aabbcc' });
+  assert.deepEqual(normalizeTextPrefs({ fontId: 'f', size: 999, color: '#AABBCC' }),
+    { fontId: 'f', size: 128, color: '#aabbcc', letterSpacing: 0, lineSpacing: 2, uppercase: false });
   assert.equal(normalizeTextPrefs({ size: -1, color: 'bad' }).size, 4);
+  assert.equal(normalizeTextPrefs({ letterSpacing: 99, lineSpacing: -99, uppercase: true }).letterSpacing, 32);
+  assert.equal(normalizeTextPrefs({ letterSpacing: 99, lineSpacing: -99, uppercase: true }).lineSpacing, -8);
 });
 t('text-model: источник текста двигается без мутации оригинала', () => {
   const src = normalizeTextSource({ value: 'Hi', box: { x: 2, y: 3, w: 20, h: 10 } });
   const moved = moveTextSource(src, 5, -1);
   assert.deepEqual([src.box.x, src.box.y], [2, 3]);
   assert.deepEqual([moved.box.x, moved.box.y], [7, 2]);
+});
+t('text-model: transform меняет рамку и вид текста без растра', () => {
+  const src = normalizeTextSource({ value: 'Hi', box: { x: 2, y: 3, w: 20, h: 10 } });
+  const out = transformTextSource(src, { tx: 4, ty: -1, sx: 2, sy: 0.5, ang: 0.25 });
+  assert.deepEqual([out.box.x, out.box.y, out.box.w, out.box.h], [6, 2, 20, 10]);
+  assert.deepEqual([out.transform.scaleX, out.transform.scaleY, out.transform.rotation], [2, 0.5, 0.25]);
+});
+t('text-model: имя слоя берется из введенного слова', () => {
+  assert.equal(textLayerName('  Hello world  ', 'Text 1'), 'Hello');
+  assert.equal(textLayerName('', 'Text 1'), 'Text 1');
+});
+t('text-layout: uppercase не портит исходную строку', () => {
+  const src = normalizeTextSource({ value: 'Hello', uppercase: true, size: 10, lineSpacing: 3, letterSpacing: 2 });
+  assert.equal(src.value, 'Hello');
+  assert.equal(displayText(src), 'HELLO');
+  assert.equal(lineAdvance(src), 13);
+  assert.equal(maxLineWidth(src, (s) => s.length * 4), 28);
 });
 t('cloneLayer: копирует источник текстового слоя', () => {
   const L = { name: 'T', kind: 'text', opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false,

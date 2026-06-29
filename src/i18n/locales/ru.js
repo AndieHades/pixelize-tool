@@ -19,6 +19,8 @@ export const ru = {
   'brush.modeSingle': 'Штамп', 'brush.modeScatter': 'Разброс', 'brush.modeFlow': 'Поток', 'brush.testHint': 'Рисуй здесь для проверки',
   'brush.round': 'Круглая', 'brush.square': 'Квадратная', 'brush.dither': 'Дизеринг',
   'font.library': 'Шрифты', 'font.add': 'Добавить шрифт', 'font.rename': 'Новое имя шрифта',
+  'font.alignLeft': 'Текст влево', 'font.alignCenter': 'Текст по центру', 'font.alignRight': 'Текст вправо', 'font.stretch': 'Растянуть по рамке',
+  'font.uppercase': 'Все буквы заглавные', 'font.letterSpacing': 'Буквы', 'font.lineSpacing': 'Строки',
   'toast.selectAreaFirst': 'Сначала выдели область', 'toast.selectionEmpty': 'Выделение пустое', 'toast.brushCreated': 'Кисть создана: {name}',
   'tool.rect': 'Прямоугольник (K)', 'tool.rectFill': 'Залитый прямоугольник (K)',
   'tool.ellipse': 'Эллипс (Q)', 'tool.ellipseFill': 'Залитый эллипс (Q)',

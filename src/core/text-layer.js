@@ -4,9 +4,24 @@ import { TEXT_DEFAULT, TEXT_BOX } from '../config/text.js';
 import { fontById } from './font-store.js';
 import { hexToRgb } from '../logic/color.js';
 import { cloneTextSource, normalizeTextPrefs, normalizeTextSource, isTextLayer } from '../logic/text-model.js';
+import { displayLines, lineAdvance, lineWidth } from '../logic/text-layout.js';
 
 const alpha = (v) => v > 7;
-const textLines = (v) => String(v || '').split(/\r?\n/);
+
+function lineX(src, line, left, measure) {
+  const w = lineWidth(src, line, measure);
+  if (src.align === 'right') return left + src.box.w - w;
+  if (src.align === 'center') return left + (src.box.w - w) / 2;
+  return left;
+}
+
+function drawLine(ctx, src, line, x, y) {
+  let px = x;
+  for (const ch of [...line]) {
+    ctx.fillText(ch, px, y);
+    px += ctx.measureText(ch).width + src.letterSpacing;
+  }
+}
 
 function textToGrid(text, W, H, fonts) {
   const src = normalizeTextSource(text), grid = blank(W, H);
@@ -15,14 +30,20 @@ function textToGrid(text, W, H, fonts) {
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = src.color;
   ctx.textBaseline = 'top';
-  ctx.textAlign = src.align;
+  ctx.textAlign = 'left';
   ctx.font = `${src.size}px ${font.family}`;
-  const x = src.align === 'right' ? src.box.x + src.box.w : src.align === 'center' ? src.box.x + src.box.w / 2 : src.box.x;
-  let y = src.box.y, any = false;
-  for (const line of textLines(src.value)) {
-    ctx.fillText(line, x, y);
-    y += Math.max(1, Math.round(src.size * src.lineHeight));
+  ctx.save();
+  const left = -src.box.w / 2, top = -src.box.h / 2;
+  ctx.translate(src.box.x + src.box.w / 2 + src.transform.x, src.box.y + src.box.h / 2 + src.transform.y);
+  ctx.rotate(src.transform.rotation);
+  ctx.scale(src.transform.scaleX, src.transform.scaleY);
+  const measure = (line) => ctx.measureText(line).width;
+  let y = top, any = false;
+  for (const line of displayLines(src)) {
+    drawLine(ctx, src, line, lineX(src, line, left, measure), y);
+    y += lineAdvance(src);
   }
+  ctx.restore();
   const data = ctx.getImageData(0, 0, W, H).data, [r, g, b] = hexToRgb(src.color);
   for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
     const o = (yy * W + xx) * 4, a = data[o + 3];
@@ -36,13 +57,13 @@ function fallbackGrid(src, W, H, color) {
   if (!src.value.trim()) return grid;
   const cw = Math.max(1, Math.round(src.size * 0.5)), ch = Math.max(1, src.size);
   let y = src.box.y;
-  for (const line of textLines(src.value)) {
+  for (const line of displayLines(src)) {
     let x = src.box.x;
     for (const chv of line) {
       if (chv !== ' ') paintGlyph(grid, W, H, x, y, cw, ch, color);
       x += cw + Math.round(src.letterSpacing);
     }
-    y += Math.max(1, Math.round(src.size * src.lineHeight));
+    y += lineAdvance(src);
   }
   return grid;
 }
@@ -78,5 +99,12 @@ export function updateTextLayerGrid(L, W, H, fonts) {
   L.text = cloneTextSource(L.text);
   L.grid = textToGrid(L.text, W, H, fonts);
   L.ext = new Map();
+  return true;
+}
+
+export function rasterizeTextLayer(L, W, H, fonts) {
+  if (!updateTextLayerGrid(L, W, H, fonts)) return false;
+  L.kind = 'pixel';
+  delete L.text;
   return true;
 }
