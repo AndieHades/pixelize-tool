@@ -8,12 +8,14 @@ import { dirtyAll } from './layer-cache.js';
 import { historyCap } from '../config/limits.js';
 import { cloneGrid } from '../logic/raster.js';
 import { cloneTileset } from '../logic/tileset-data.js';
+import { historyRef, syncHistoryFrame } from './animation.js';
 
 export { cloneGrid }; // канон — в logic/raster.js; реэкспорт для прежних импортов из истории
 
 function snapState() {
   return { cur: S.cur, W: S.W, H: S.H, folderSeq: S.folderSeq, folders: S.folders.map((f) => ({ ...f, effects: cloneFx(f.effects) })),
     bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
+    animRef: historyRef(),
     tilesetSeq: S.tilesetSeq, tilesets: S.tilesets.map(cloneTileset),
     layers: S.layers.map((L) => cloneLayer(L)) };
 }
@@ -28,6 +30,7 @@ export function restore(s) { S.W = s.W; S.H = s.H; S.layers = s.layers; S.folder
   S.bg = s.bg ? { color: s.bg.color ? s.bg.color.slice() : null, visible: s.bg.visible !== false } : { color: null, visible: true }; S.bgSel = false;
   S.cur = Math.min(s.cur, S.layers.length - 1); S.marked.clear(); S.fxSel.clear(); S.fxCur = null;
   S.fxDraft = null;
+  syncHistoryFrame(s.animRef);
   dirtyAll(); bus.emitDoc(); }
 
 // перехватчики undo: системы (напр. трансформация/живой preview попапа) могут

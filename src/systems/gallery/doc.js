@@ -11,6 +11,7 @@ import { dedupePal } from '../../logic/quantize.js';
 import { defaultPalette, grayscalePalette, DEFAULT_ACTIVE } from '../../config/palette.js';
 import { saveDoc, getDoc } from '../../core/storage.js';
 import { ensureGrid } from '../../core/grid.js';
+import { cloneAnimator, loadFrame, saveActiveFrame } from '../../core/animation.js';
 import { t } from '../../i18n/index.js';
 import { uid } from './store.js';
 
@@ -18,11 +19,13 @@ let curId = null, curFolder = null, saveT = null;
 export const curWorkId = () => curId;
 
 function record() {
+  saveActiveFrame();
   const c = makeCanvas(S.W, S.H); compositeLayers(c.getContext('2d'));
   return { id: curId, kind: 'doc', folder: curFolder, name: S.docName || t('gallery.untitled'), W: S.W, H: S.H,
     layerSeq: S.layerSeq, folderSeq: S.folderSeq,
     tilesetSeq: S.tilesetSeq, tilesets: S.tilesets.map(cloneTileset), // тайлсеты: id/индекс/bitmap/имя/порядок/группы
     layers: S.layers.map((L) => cloneLayer(L)),
+    animator: cloneAnimator(),
     referenceBoard: cloneReferenceBoard(S.referenceBoard),
     grid: { ...ensureGrid() },
     bg: { color: S.bg.color ? S.bg.color.slice() : null, visible: S.bg.visible !== false },
@@ -45,8 +48,10 @@ function applyRec(rec) { S.W = rec.W; S.H = rec.H; S.layerSeq = rec.layerSeq || 
   S.grid = rec.grid ? { ...rec.grid } : {}; ensureGrid();
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.referenceBoard = normalizeReferenceBoard(rec.referenceBoard);
+  S.animator = rec.animator ? cloneAnimator(rec.animator) : null;
   S.docName = rec.name; S.colorMode = rec.colorMode || 'rgba'; S.cur = 0; S.marked.clear(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null;
+  if (S.animator) loadFrame(S.animator.liveFrameId || S.animator.timelines[0].selectedFrameId, { emit: false });
   dirtyAll(); bus.emit('palette'); bus.emit('layers'); bus.emit('selection'); bus.emit('grid'); bus.emit('fit'); bus.emit('reference'); }
 
 function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder = null;
@@ -58,6 +63,7 @@ function blankWork(w, h, name, colorMode = 'rgba') { curId = uid('d'); curFolder
   S.grid = {}; ensureGrid();
   S.referenceBoard = defaultReferenceBoard(); bus.emit('reference');
   S.bg = { color: null, visible: true }; S.bgSel = false;
+  S.animator = null;
   S.undoStack.length = 0; S.redoStack.length = 0; S.sel = S.selMask = S.selFloat = S.cropMode = S.rotMode = S.fxDraft = null; }
 
 export function newWork(w, h, name, bg = null, colorMode = 'rgba') { blankWork(w, h, name, colorMode);

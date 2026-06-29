@@ -1,7 +1,7 @@
 // English locale. Keys mirror ru.js — keep them in sync.
 export const en = {
   'tool.gallery': 'Gallery', 'tool.new': 'New document (N)', 'tool.import': 'Import image (Ctrl+O)',
-  'tool.exportMenu': 'Export', 'tool.preview': 'Preview (1:1)', 'tool.reference': 'Reference',
+  'tool.exportMenu': 'Export', 'tool.preview': 'Preview (1:1)', 'tool.reference': 'Reference', 'tool.animation': 'Animator',
   'tool.fit': 'Fit (0)', 'tool.realSize': '1:1 - Real Size', 'tool.zoomIn': 'Zoom in (+)', 'tool.zoomOut': 'Zoom out (−)',
   'tool.pencil': 'Pencil (B)', 'tool.eraser': 'Eraser (E)', 'tool.fill': 'Fill (F)',
   'tool.text': 'Text (Shift+T)',
@@ -231,6 +231,14 @@ export const en = {
   'toast.canvasSize': 'Canvas: {w}×{h}',
   'toast.recoloredN': 'Recolored: {n} px',
   'toast.exported': 'Exported files: {n}', 'toast.exportEmpty': 'Nothing to export',
+  'animation.title': 'Animator', 'animation.fps': 'FPS', 'animation.play': 'Play', 'animation.pause': 'Pause',
+  'animation.addFrame': 'Add frame', 'animation.addTimeline': 'Add timeline', 'animation.renameTimeline': 'Rename timeline',
+  'animation.renamePrompt': 'New timeline name', 'animation.timelineName': 'Timeline {n}', 'animation.frameName': 'Frame {n}',
+  'animation.mode.once': 'Once', 'animation.mode.loop': 'Loop', 'animation.mode.pingpong': 'Ping-pong',
+  'animation.exportSheet': 'Export sprite sheet', 'animation.duplicateFrame': 'Duplicate frame', 'animation.insertBefore': 'Insert before',
+  'animation.insertAfter': 'Insert after', 'animation.setDuration': 'Duration', 'animation.durationPrompt': 'Frame duration, ms',
+  'animation.deleteFrame': 'Delete frame', 'animation.ms': '{n} ms',
+  'toast.animationLastFrame': 'This is the last frame', 'toast.animationExported': 'Animation exported',
   'menu.copyHex': 'Copy HEX', 'menu.shading': 'Shading', 'menu.replace': 'Replace color…', 'menu.selectColor': 'Select all pixels', 'menu.deleteColor': 'Remove from palette',
   // Tileset / Tilemap
   'tool.tilebrush': 'Tile brush',

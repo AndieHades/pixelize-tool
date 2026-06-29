@@ -44,6 +44,9 @@
   --btn: 40px;            /* главная иконочная кнопка (тулбар) */
   --btn-sm: 34px;         /* вторичная action-кнопка (выбор инструмента, действия слоёв/цвета) */
   --btn-xs: 32px;         /* кнопка в шапке окна */
+  --anim-dock-w: 820px;
+  --anim-thumb: 56px;
+  --anim-strip-h: 94px;
   --gal-grid-pad-x: clamp(14px, 3vw, 40px);
   --gal-grid-pad-top: 10px;
   --gal-grid-pad-bottom: 16px;

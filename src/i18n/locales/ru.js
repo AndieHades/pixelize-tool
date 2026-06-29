@@ -3,7 +3,7 @@
 export const ru = {
   // верхняя панель и инструменты (tooltips)
   'tool.gallery': 'Галерея', 'tool.new': 'Новый документ (N)', 'tool.import': 'Импорт картинки (Ctrl+O)',
-  'tool.exportMenu': 'Экспорт', 'tool.preview': 'Превью (1:1)', 'tool.reference': 'Референс',
+  'tool.exportMenu': 'Экспорт', 'tool.preview': 'Превью (1:1)', 'tool.reference': 'Референс', 'tool.animation': 'Анимация',
   'tool.fit': 'Вписать (0)', 'tool.realSize': '1:1 - Реальный размер', 'tool.zoomIn': 'Приблизить (+)', 'tool.zoomOut': 'Отдалить (−)',
   'tool.pencil': 'Карандаш (B)', 'tool.eraser': 'Ластик (E)', 'tool.fill': 'Заливка (F)',
   'tool.text': 'Текст (Shift+T)',
@@ -232,6 +232,14 @@ export const ru = {
   'toast.sizeRange': 'Размеры от 2 до {max}',
   'toast.canvasSize': 'Холст: {w}×{h}',
   'toast.recoloredN': 'Перекрашено: {n} пикс.', 'toast.exported': 'Экспортировано файлов: {n}', 'toast.exportEmpty': 'Нечего экспортировать',
+  'animation.title': 'Анимация', 'animation.fps': 'Кадр/с', 'animation.play': 'Запуск', 'animation.pause': 'Пауза',
+  'animation.addFrame': 'Добавить кадр', 'animation.addTimeline': 'Добавить таймлайн', 'animation.renameTimeline': 'Переименовать таймлайн',
+  'animation.renamePrompt': 'Новое имя таймлайна', 'animation.timelineName': 'Таймлайн {n}', 'animation.frameName': 'Кадр {n}',
+  'animation.mode.once': 'Один раз', 'animation.mode.loop': 'Цикл', 'animation.mode.pingpong': 'Туда-обратно',
+  'animation.exportSheet': 'Экспорт листа спрайтов', 'animation.duplicateFrame': 'Дублировать кадр', 'animation.insertBefore': 'Вставить до',
+  'animation.insertAfter': 'Вставить после', 'animation.setDuration': 'Длительность', 'animation.durationPrompt': 'Длительность кадра, мс',
+  'animation.deleteFrame': 'Удалить кадр', 'animation.ms': '{n} мс',
+  'toast.animationLastFrame': 'Это последний кадр', 'toast.animationExported': 'Анимация экспортирована',
   'menu.copyHex': 'Копировать HEX', 'menu.shading': 'Тонирование', 'menu.replace': 'Заменить цвет…', 'menu.selectColor': 'Выбрать все пиксели', 'menu.deleteColor': 'Удалить из палитры',
   // Tileset / Tilemap
   'tool.tilebrush': 'Кисть тайлов',

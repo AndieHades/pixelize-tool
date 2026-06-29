@@ -49,6 +49,7 @@ import * as tilesetMode from './systems/tileset-mode/index.js';
 import * as tileFromLayer from './systems/tile-from-layer.js';
 import * as tilesetManager from './systems/tileset-manager.js';
 import * as textTool from './systems/text-tool/index.js';
+import * as animation from './systems/animation/index.js';
 import './systems/draw/tools.js';
 import './systems/move-tool.js';
 import './systems/selection/input.js';
@@ -70,7 +71,7 @@ import './systems/tile-variants.js';
 import './systems/tilemap-export.js';
 import './systems/tilemap-paint/index.js';
 
-const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, fontLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapDialog, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager, textTool];
+const MOUNTS = [palette, brushBar, brushResize, colorPicker, toolbars, grid, symmetryLines, layersUI, brushLibrary, fontLibrary, importSys, importEditor, exportSys, palManager, shading, tintShade, preview, reference, animation, input, crop, transform, effects, bc, adjust, gallery, newCanvas, settings, panels, selBar, lasso, eyedropper, penButton, status, toolpops, xMirror, tile, tilePalette, tilemapDialog, tilemapCreate, tilemapOverlay, tilesetMode, tileFromLayer, tilesetManager, textTool];
 
 const px = (v, fallback = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
 function sidebarMetrics() {

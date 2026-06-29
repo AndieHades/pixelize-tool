@@ -61,6 +61,7 @@ const prev = await import('../src/systems/preview-window.js');
 const ref = await import('../src/systems/reference-window.js');
 const gallery = await import('../src/systems/gallery/index.js');
 const galDoc = await import('../src/systems/gallery/doc.js');
+const anim = await import('../src/core/animation.js');
 const newCanvas = await import('../src/systems/new-canvas.js');
 const { attachDrag: attachGalleryDrag } = await import('../src/systems/gallery/drag.js');
 const { makeDropGap } = await import('../src/core/drop-gap.js');
@@ -124,6 +125,7 @@ const resetWH = (w, h) => { S.W = w; S.H = h; S.cur = 0; S.folders = []; S.marke
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; S.placeTile = null;
+  S.animator = null;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; cache.dirtyAll(); };
 
 const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null;
@@ -133,6 +135,7 @@ const reset4 = () => { S.W = 4; S.H = 4; S.cur = 0; S.folders = []; S.marked = n
   S.shading = { colors: [], on: false, open: false, picking: false };
   S.lineStart = S.linePrev = S.linePath = null; S.lineMode = 'line'; S.shapeTool = 'rect'; S.fillShape = { rect: false, ellipse: false }; S.stroke = false;
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; S.placeTile = null;
+  S.animator = null;
   S.brushes.pencil.size = 1; S.brushes.pencil.op = 1;
   cache.dirtyAll(); };
 
@@ -200,6 +203,24 @@ t("module-int case 012", () => { reset4();
   doc.expandCanvas(1, 1, 0, 0);
   assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
+});
+t("module-int animation case 001", () => { reset4();
+  S.layers[0].grid[0][0] = [1, 2, 3, 255]; anim.ensureAnimator();
+  const first = anim.activeFrameId(), copy = anim.duplicateFrame();
+  S.layers[0].grid[0][0] = [9, 9, 9, 255]; anim.selectFrame(first);
+  assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3, 255]);
+  anim.selectFrame(copy); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
+});
+t("module-int animation case 002", () => { reset4();
+  anim.ensureAnimator(); const first = anim.activeFrameId(), copy = anim.duplicateFrame();
+  S.layers[0].visible = false; anim.selectFrame(first); assert.equal(S.layers[0].visible, true);
+  anim.selectFrame(copy); assert.equal(S.layers[0].visible, false);
+});
+t("module-int animation case 003", () => { reset4();
+  S.layers[0].grid[0][0] = [1, 1, 1, 255]; anim.ensureAnimator(); const first = anim.activeFrameId();
+  const copy = anim.duplicateFrame(); S.layers[0].grid[0][0] = [2, 2, 2, 255]; anim.selectFrame(first);
+  doc.expandCanvas(1, 0, 0, 0); anim.selectFrame(copy);
+  assert.equal(S.W, 5); assert.deepEqual(S.layers[0].grid[0][1], [2, 2, 2, 255]);
 });
 t("module-int case 013", () => {
   resetWH(32, 16);

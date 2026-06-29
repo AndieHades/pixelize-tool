@@ -29,6 +29,7 @@ import { keyName, eventKey } from '../src/logic/key-code.js';
 import { normalizeTextPrefs, normalizeTextSource, moveTextSource, transformTextSource, textLayerName } from '../src/logic/text-model.js';
 import { displayText, lineAdvance, maxLineWidth } from '../src/logic/text-layout.js';
 import { sortGalleryItems, reorderedIds } from '../src/logic/gallery-grid.js';
+import { makeAnimator, makeFrameMeta, makeTimeline, removeFrameId, reorderFrameIds } from '../src/logic/animation-data.js';
 import { packSet, unpackSet } from '../src/core/brush-pack.js';
 import { brushMode, stampSize, planDab, brushHasShape } from '../src/logic/brush-stamp.js';
 import { recognizeShape } from '../src/logic/quickshape.js';
@@ -509,6 +510,21 @@ t("unit case 088", () => {
   assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'f1', 'a']);
 });
 
+t("unit animation case 001", () => {
+  const anim = makeAnimator({ layers: [], folders: [], bg: {}, cur: 0, layerSeq: 1, folderSeq: 0 });
+  assert.equal(anim.timelines.length, 1); assert.equal(anim.timelines[0].frameIds.length, 1);
+  assert.equal(anim.activeTimelineId, anim.timelines[0].id);
+});
+t("unit animation case 002", () => {
+  const anim = { frameSeq: 0, timelineSeq: 0 };
+  const a = makeFrameMeta(anim), b = makeFrameMeta(anim), c = makeFrameMeta(anim);
+  const tl = makeTimeline(anim, [a.id, b.id, c.id]);
+  assert.equal(reorderFrameIds(tl, [c.id, a.id, b.id]), true);
+  tl.selectedFrameId = a.id; assert.equal(removeFrameId(tl, a.id), b.id);
+  assert.deepEqual(tl.frameIds, [c.id, b.id]);
+});
+
+// --- Symmetry mapper ---
 t("unit case 089", () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);
   assert.ok(m.has('1,2') && m.has('6,2')); assert.equal(m.size, 2); });
 t("unit case 090", () => { const m = expandMask(new Set(['1,2']), 8, 8, false, true);

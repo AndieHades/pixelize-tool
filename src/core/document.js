@@ -11,6 +11,7 @@ import { snapshot } from './history.js';
 import { toast, t } from './dom.js';
 import { MAX_SIZE, ZOOM_MIN, ZOOM_MAX } from '../config/limits.js';
 import { isTilemap, rasterLayer, remapToCanvas } from './tilemap.js';
+import { expandStoredFrames, cropStoredFrames } from './animation-canvas.js';
 
 function keepCanvasScreenSize(oldW, oldH, newW, newH) {
   const z0 = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number.isFinite(S.view.zoom) ? S.view.zoom : ZOOM_MIN));
@@ -25,6 +26,7 @@ function keepCanvasScreenSize(oldW, oldH, newW, newH) {
 // добавить пустые ряды/колонки по краям (во все слои); рисунок визуально на месте
 export function expandCanvas(pl, pt, pr, pb) {
   if (!(pl || pt || pr || pb)) return;
+  const oldW = S.W, oldH = S.H;
   S.W += pl + pr; S.H += pt + pb;
   for (let i = 0; i < S.layers.length; i++) { const L = S.layers[i], g = L.grid, out = [];
     for (let y = 0; y < S.H; y++) { const row = new Array(S.W).fill(null);
@@ -36,6 +38,7 @@ export function expandCanvas(pl, pt, pr, pb) {
     L.grid = out; L.ext = ne; if (isTextLayer(L)) L.text = moveTextSource(L.text, pl, pt);
     if (isTilemap(L)) { remapToCanvas(L, -pl, -pt, S.W, S.H); rasterLayer(i); } }
   S.view.ox -= pl * S.view.zoom; S.view.oy -= pt * S.view.zoom;
+  expandStoredFrames(pl, pt, oldW, oldH, S.W, S.H);
   S.sel = null; bus.emit('selection'); dirtyAll();
 }
 
@@ -79,6 +82,7 @@ export function applyCropRect(x0, y0, x1, y1) {
     L.grid = out; L.ext = ne; if (isTextLayer(L)) L.text = moveTextSource(L.text, -x0, -y0);
     if (isTilemap(L)) remapToCanvas(L, x0, y0, nw, nh); }
   S.W = nw; S.H = nh; keepCanvasScreenSize(oldW, oldH, nw, nh); S.sel = null;
+  cropStoredFrames(x0, y0, oldW, oldH, nw, nh);
   S.layers.forEach((L, i) => { if (isTilemap(L)) rasterLayer(i); });
   bus.emit('selection'); dirtyAll(); bus.emitDoc();
   toast(t('toast.canvasSize', { w: S.W, h: S.H }));
