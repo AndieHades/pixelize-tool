@@ -3,9 +3,6 @@ import { deleteAppFile, readAppFiles, writeAppFile } from './app-folders.js';
 import { exactPaletteFromRgba, sourcePaletteFromSamples, samplesFromRgba } from '../logic/quantize.js';
 
 const CELL = 32, LIMIT = 128;
-const FOLDER_PALETTE_URLS = typeof import.meta.glob === 'function'
-  ? import.meta.glob('../app-folders/palettes/*.{png,jpg,jpeg,gif,webp,bmp,avif}', { query: '?url', import: 'default', eager: true })
-  : {};
 
 const cleanName = (path) => (path.split('/').pop() || 'Palette').replace(/\.[^.]+$/, '').slice(0, 40);
 const color = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -36,17 +33,22 @@ export function filePalette(file) {
   return imagePalette(url).finally(() => URL.revokeObjectURL(url));
 }
 
+async function bundledPaletteUrls() {
+  try { return (await import('./palette-folder-glob.js')).FOLDER_PALETTE_URLS || {}; } catch (e) { return {}; }
+}
+
 export async function folderPalettes() {
   const out = [];
-  for (const [path, url] of Object.entries(FOLDER_PALETTE_URLS)) {
+  for (const [path, url] of Object.entries(await bundledPaletteUrls())) {
     try { const colors = await imagePalette(url); if (colors.length) out.push({ name: cleanName(path), colors, folder: true, removable: false }); } catch (e) {}
   }
   return out;
 }
 
 export async function runtimeFolderPalettes() {
-  const out = [];
-  for (const f of await readAppFiles('palettes', isPaletteImageFile)) {
+  const out = []; let files = [];
+  try { files = await readAppFiles('palettes', isPaletteImageFile); } catch (e) {}
+  for (const f of files) {
     try { const colors = await filePalette(f); if (colors.length) out.push({ name: cleanName(f.name), colors, folder: true, removable: true, fileName: f.name }); } catch (e) {}
   }
   return out;
