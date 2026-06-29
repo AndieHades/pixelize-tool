@@ -146,13 +146,16 @@ function mountTextUi() {
   if (!textUiMounted) { fontLib.mount(); textTool.mount(); textUiMounted = true; }
   else textTool.mount();
 }
-function commitEditor(value, key = 'Enter') {
+function commitEditor(value, key = 'blur') {
   const ed = document.getElementById('text-editor');
   ed.textContent = value; ed.innerText = value;
   ed.dispatchEvent(new window.Event('input', { bubbles: true }));
-  ed.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
+  if (key === 'blur') ed.dispatchEvent(new window.Event('blur'));
+  else ed.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
   return ed;
 }
+const hasPixels = (L) => L.grid.some((row) => row.some(Boolean));
+const outsideBoxPixels = (L, b) => L.grid.some((row, y) => row.some((p, x) => p && (x < b.x || y < b.y || x >= b.x + b.w || y >= b.y + b.h)));
 
 
 function exportProject() { resetWH(6, 6);
@@ -229,6 +232,12 @@ t("module-int case 013", () => {
   assert.equal(L.kind, 'text'); assert.equal(L.text.value, 'Hi');
   assert.ok(L.grid.some((row) => row.some(Boolean)));
 });
+t('text-layer: alignment renders inside the text frame', () => {
+  resetWH(64, 24);
+  const L = textLayer.makeTextLayer('Clip', S.W, S.H, { value: 'Long centered text', size: 8, color: '#ffffff', align: 'center' }, { x: 10, y: 4 });
+  L.text.box.w = 18; L.text.box.h = 10; textLayer.updateTextLayerGrid(L, S.W, S.H);
+  assert.ok(hasPixels(L)); assert.equal(outsideBoxPixels(L, L.text.box), false);
+});
 t('text-tool: creates live layer on click and names it from text', () => {
   resetWH(32, 16); mountTextUi();
   actions.run('tool.text');
@@ -242,16 +251,53 @@ t('text-tool: creates live layer on click and names it from text', () => {
   const ed = document.getElementById('text-editor'); ed.textContent = 'Live'; ed.innerText = 'Live';
   ed.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.layers[S.cur].text.value, 'Live'); assert.equal(S.layers[S.cur].name, 'Live');
-  commitEditor('Hello world');
+  assert.equal(hasPixels(S.layers[S.cur]), false);
+  commitEditor('Hello world', 'blur');
   const L = S.layers[S.cur];
   assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [2, 3]);
   assert.equal(L.name, 'Hello'); assert.equal(L.text.value, 'Hello world');
+  assert.ok(hasPixels(L));
+});
+t('text-tool: single click on text layer edits it instead of creating another layer', () => {
+  resetWH(32, 16); mountTextUi();
+  const L = textLayer.makeTextLayer('Hello', S.W, S.H, { value: 'Hello', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  S.layers = [L]; S.cur = 0; actions.run('tool.text');
+  toolHandler('text').down({ gx: 3, gy: 4, e: { detail: 1, clientX: 0, clientY: 0, preventDefault() {} } });
+  const ed = document.getElementById('text-editor');
+  assert.equal(S.layers.length, 1); assert.equal(document.activeElement, ed); assert.equal(ed.textContent, 'Hello');
+  assert.equal(hasPixels(S.layers[0]), false);
+  commitEditor('Edited', 'blur');
+  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].text.value, 'Edited'); assert.ok(hasPixels(S.layers[0]));
+});
+t('text-tool: Enter keeps editing and outside click commits without new layer', () => {
+  resetWH(32, 16); mountTextUi(); actions.run('tool.text');
+  toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1, preventDefault() {} } });
+  const ed = document.getElementById('text-editor'); ed.textContent = 'Line 1'; ed.innerText = 'Line 1';
+  ed.dispatchEvent(new window.Event('input', { bubbles: true }));
+  ed.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  assert.equal(ed.classList.contains('on'), true); assert.equal(hasPixels(S.layers[S.cur]), false);
+  const before = S.layers.length;
+  ed.textContent = 'Line 1\nLine 2'; ed.innerText = 'Line 1\nLine 2';
+  ed.dispatchEvent(new window.Event('input', { bubbles: true }));
+  document.getElementById('cv').dispatchEvent(new window.Event('pointerdown', { bubbles: true }));
+  ed.dispatchEvent(new window.Event('blur'));
+  toolHandler('text').down({ gx: 25, gy: 12, e: { detail: 1, preventDefault() {} } });
+  assert.equal(S.layers.length, before); assert.equal(S.layers[S.cur].text.value, 'Line 1\nLine 2');
+  assert.equal(ed.classList.contains('on'), false); assert.ok(hasPixels(S.layers[S.cur])); assert.notEqual(S.tool, 'text');
+});
+ta('text-tool: changing active layer exits text mode', async () => {
+  resetWH(32, 16); mountTextUi();
+  const A = textLayer.makeTextLayer('A', S.W, S.H, { value: 'A', size: 8, color: '#ffffff' }, { x: 2, y: 3 });
+  const B = textLayer.makeTextLayer('B', S.W, S.H, { value: 'B', size: 8, color: '#ffffff' }, { x: 10, y: 3 });
+  S.layers = [A, B]; S.cur = 0; actions.run('tool.text');
+  S.cur = 1; bus.emit('layer-active'); await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.notEqual(S.tool, 'text');
 });
 t('text-tool: new text uses active color but picker uses selected text color', () => {
   resetWH(32, 16); mountTextUi();
   S.active = [18, 52, 86]; actions.run('tool.text');
   toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
-  commitEditor('Blue');
+  commitEditor('Blue', 'blur');
   assert.equal(S.layers[S.cur].text.color, '#123456');
   const A = textLayer.makeTextLayer('A', S.W, S.H, { value: 'A', color: '#112233' }, { x: 1, y: 1 });
   const B = textLayer.makeTextLayer('B', S.W, S.H, { value: 'B', color: '#aa5500' }, { x: 6, y: 1 });
@@ -263,15 +309,13 @@ t('text-tool: new text uses active color but picker uses selected text color', (
   assert.deepEqual(S.active, [0, 255, 0]);
   actions.run('color.pick'); document.getElementById('colpop').classList.remove('on');
 });
-t('text-tool: empty live draft survives blur and Escape removes it', () => {
+t('text-tool: empty live draft is removed on outside exit', () => {
   resetWH(32, 16); mountTextUi(); actions.run('tool.text');
   const before = S.layers.length;
   toolHandler('text').down({ gx: 4, gy: 5, e: { detail: 1 } });
   assert.equal(S.layers.length, before + 1);
-  document.getElementById('text-editor').dispatchEvent(new window.Event('blur'));
-  assert.equal(S.layers.length, before + 1);
-  document.getElementById('text-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  assert.equal(S.layers.length, before);
+  toolHandler('text').down({ gx: 20, gy: 10, e: { detail: 1, preventDefault() {} } });
+  assert.equal(S.layers.length, before); assert.notEqual(S.tool, 'text');
 });
 t('text-tool: clearing existing text deletes its layer', () => {
   resetWH(32, 16); mountTextUi();
@@ -324,6 +368,9 @@ t('text-ui: T icon, frame handles and font controls affect live text', () => {
   const gh = globalHandlers().find((h) => h.hover?.({ gx: 2, gy: 8 }) === 'ew-resize');
   assert.ok(gh); gh.down({ gx: 2, gy: 8 }); gh.move({ gx: 12, gy: 8 }); gh.up({});
   assert.deepEqual([L.text.box.x, L.text.box.w], [12, 86]);
+  const cr = globalHandlers().find((h) => h.hover?.({ gx: 98, gy: 35 }) === 'nwse-resize');
+  assert.ok(cr); cr.down({ gx: 98, gy: 35 }); cr.move({ gx: 104, gy: 42 }); cr.up({});
+  assert.deepEqual([L.text.box.w, L.text.box.h], [92, 39]);
   document.getElementById('font-upper').click(); assert.equal(L.text.uppercase, true); assert.equal(L.text.value, 'Hello');
   document.getElementById('font-align-center').click(); assert.equal(L.text.align, 'center');
   document.getElementById('font-letter').value = '3'; document.getElementById('font-letter').dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -1207,6 +1254,7 @@ t('brush-library: right-click selects a brush and keeps its menu open', () => {
       rename() {}, rerender() {} });
     brushList.renderBrushes();
     const tile = document.querySelector('#brush-list .btile');
+    assert.equal(tile.title, 'Ctx Brush'); assert.equal(tile.querySelector('.bname'), null);
     tile.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
     tile.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
     assert.equal(picked && picked.id, 'ctxb');
@@ -1220,6 +1268,13 @@ t('brush-library: right-click selects a brush and keeps its menu open', () => {
     brushData.lib.brushes = old; document.getElementById('brush-list').innerHTML = '';
     document.getElementById('brush-menu').classList.remove('on');
   }
+});
+ta('font-library: font tiles are icon-only with tooltips', async () => {
+  resetWH(32, 16); mountTextUi(); actions.run('tool.text');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const tile = document.querySelector('#font-list .ftile');
+  assert.ok(tile); assert.ok(tile.title); assert.equal(tile.querySelector('b').textContent, 'Ta');
+  assert.equal(tile.querySelector('span'), null);
 });
 t("module-int case 156", () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');

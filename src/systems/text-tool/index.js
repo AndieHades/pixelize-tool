@@ -1,11 +1,10 @@
-import { S, MAX_LAYERS } from '../../core/state.js';
+import { S, MAX_LAYERS, blank } from '../../core/state.js';
 import * as bus from '../../core/bus.js';
 import * as actions from '../../core/actions.js';
 import { $, t, toast } from '../../core/dom.js';
 import { setTool } from '../../core/tools.js';
 import { registerGlobal, registerTool } from '../../core/canvas-handlers.js';
 import { snapshot } from '../../core/history.js';
-import { shiftLayerGrid } from '../../core/document.js';
 import { markDirty, dirtyAll } from '../../core/layer-cache.js';
 import { makeTextLayer, updateTextLayerGrid } from '../../core/text-layer.js';
 import { rasterizeMatchingText } from '../../core/text-rasterize.js';
@@ -14,9 +13,11 @@ import { loadFonts, fontById } from '../../core/font-store.js';
 import { TEXT_BOX } from '../../config/text.js';
 import { cloneTextSource, normalizeTextSource, textLayerName } from '../../logic/text-model.js';
 import { lineAdvance } from '../../logic/text-layout.js';
+import { fitBoxToEditor } from './box-fit.js';
+import { focusEditor, focusEditorAt } from './editor-focus.js';
 import { configureFrame, drawFrame, frameHandler } from './frame.js';
 
-let drag = null, edit = null, fonts = [], mounted = false;
+let edit = null, fonts = [], mounted = false, skipCanvasDown = false, canvasDownWhileEditing = false, seenLayer = S.cur;
 const cv = () => $('cv');
 const textBtn = () => $('t-text');
 const fallbackName = () => t('layer.textName') + ' ' + (S.layerSeq++);
@@ -57,13 +58,7 @@ function removeLayer(layer) {
 
 function editorText() { const ed = $('text-editor'); return (ed.innerText ?? ed.textContent).replace(/\n$/, ''); }
 function setEditorText(value) { const ed = $('text-editor'); ed.textContent = value; ed.innerText = value; return ed; }
-function focusEditor(ed, select = false) {
-  try { ed.focus({ preventScroll: true }); } catch (e) { ed.focus(); }
-  const sel = window.getSelection(); if (!sel) return;
-  const range = document.createRange(); range.selectNodeContents(ed);
-  if (!select) range.collapse(false);
-  sel.removeAllRanges(); sel.addRange(range);
-}
+function hideEditGrid(layer) { layer.grid = blank(S.W, S.H); layer.ext = new Map(); markDirty(S.layers.indexOf(layer)); bus.emit('render'); }
 function draftSource(gx, gy) {
   return normalizeTextSource({ ...loadTextPrefs(), value: '', box: { ...TEXT_BOX, x: gx, y: gy } });
 }
@@ -79,6 +74,7 @@ function placeEditor() {
   ed.style.lineHeight = Math.max(12, lineAdvance(src) * z) + 'px';
   ed.style.fontFamily = f.family; ed.style.color = src.color;
   ed.style.letterSpacing = src.letterSpacing * z + 'px';
+  ed.style.textAlign = src.align;
   ed.style.textTransform = src.uppercase ? 'uppercase' : 'none';
   ed.style.transform = `translate(-50%, -50%) rotate(${tr.rotation}rad) scale(${tr.scaleX}, ${tr.scaleY})`;
 }
@@ -97,19 +93,35 @@ function commitEdit(save = true) {
   edit = null; ed.classList.remove('on'); ed.blur(); bus.emit('layers'); bus.emit('render');
 }
 
+function commitFromBlur() { if (!edit) return;
+  if (canvasDownWhileEditing) { skipCanvasDown = true; setTimeout(() => { skipCanvasDown = false; }, 0); }
+  commitEdit(true); exitTextMode(); }
+function armCanvasBlurGuard() { canvasDownWhileEditing = !!edit; setTimeout(() => { canvasDownWhileEditing = false; }, 0); }
+function exitTextMode() { if (S.tool === 'text') setTool('pencil'); }
+
+function watchLayerActive() {
+  const cur = S.cur;
+  setTimeout(() => {
+    if (cur !== S.cur) return;
+    const changed = cur !== seenLayer; seenLayer = cur;
+    if (!changed || S.tool !== 'text' || (edit && S.layers[cur] === edit.layer)) return;
+    if (edit) commitEdit(true); exitTextMode();
+  }, 0);
+}
+
 function liveEdit() {
   if (!edit?.layer) return;
   edit.layer.text.value = editorText(); edit.layer.name = textLayerName(edit.layer.text.value, edit.layer.name);
-  updateTextLayerGrid(edit.layer, S.W, S.H, fonts); markDirty(S.layers.indexOf(edit.layer));
+  fitBoxToEditor(edit.layer.text, $('text-editor'), S.view.zoom); placeEditor();
   bus.emit('layers'); bus.emit('render');
 }
 
-function startEdit(L = activeText()) {
+function startEdit(L = activeText(), e = null) {
   if (!L || L.lock) return false;
   if (edit) commitEdit(true);
-  snapshot(); edit = { layer: L, original: cloneTextSource(L.text) };
+  snapshot(); edit = { layer: L, original: cloneTextSource(L.text) }; hideEditGrid(L);
   const ed = setEditorText(L.text.value || '');
-  ed.classList.add('on'); placeEditor(); focusEditor(ed, true); return true;
+  ed.classList.add('on'); placeEditor(); if (!focusEditorAt(ed, e?.clientX, e?.clientY)) focusEditor(ed, !e); return true;
 }
 
 function startDraft(gx, gy) {
@@ -120,28 +132,21 @@ function startDraft(gx, gy) {
   ed.classList.add('on'); placeEditor(); focusEditor(ed); setTimeout(() => edit && focusEditor(ed), 0);
 }
 
-function finishDrag() {
-  if (!drag) return;
-  const { idx, dx, dy } = drag; S.moveDrag = null; drag = null;
-  if (!dx && !dy) { bus.emit('render'); return; }
-  snapshot(); shiftLayerGrid(S.layers[idx], dx, dy); markDirty(idx); bus.emit('layers'); bus.emit('render');
-}
-
 const handler = {
   down({ gx, gy, e }) {
     e?.preventDefault?.();
-    if (edit) commitEdit(true);
+    canvasDownWhileEditing = false;
+    if (skipCanvasDown) { skipCanvasDown = false; return; }
+    if (edit) { commitEdit(true); exitTextMode(); return; }
     const i = hitText(gx, gy);
-    if (i >= 0) { selectLayer(i); if (e && e.detail >= 2) { startEdit(S.layers[i]); return; }
-      drag = { idx: i, sx: gx, sy: gy, dx: 0, dy: 0 }; return; }
+    if (i >= 0) { selectLayer(i); startEdit(S.layers[i], e); return; }
+    if (activeText()) { exitTextMode(); return; }
     startDraft(gx, gy);
   },
-  move({ gx, gy }) { if (!drag) return; drag.dx = gx - drag.sx; drag.dy = gy - drag.sy; S.moveDrag = { ...drag, idxs: [drag.idx] }; bus.emit('render'); },
-  up() { finishDrag(); },
-  hover({ gx, gy }) { return hitText(gx, gy) >= 0 ? 'move' : 'text'; },
+  hover() { return 'text'; },
 };
 
-function activateText() { if (S.tool === 'text') setTool('pencil'); else { setTool('text'); actions.run('ui.fontLibrary', true); } }
+function activateText() { if (S.tool === 'text') setTool('pencil'); else { seenLayer = S.cur; setTool('text'); actions.run('ui.fontLibrary', true); } }
 function syncButton() { const b = textBtn(); if (b) b.classList.toggle('on', S.tool === 'text'); }
 function rasterizeAlphaLocked() { rasterizeMatchingText((L) => !!L.alphaLock, { emit: true }); }
 
@@ -154,13 +159,11 @@ export function mount() {
   actions.register('text.editLayer', (i = S.cur) => { if (S.layers[i]?.kind === 'text') { selectLayer(i); return startEdit(S.layers[i]); } return false; });
   textBtn().onclick = activateText;
   bus.on('before-tool-change', () => commitEdit(true));
-  bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('overlay', drawFrame); bus.on('layers', refreshFonts); bus.on('layers', rasterizeAlphaLocked);
-  $('text-editor').addEventListener('blur', () => { if (edit?.draft && !editorText().trim() && S.tool === 'text') setTimeout(() => edit && focusEditor($('text-editor')), 0); else commitEdit(true); });
+  bus.on('tool', syncButton); bus.on('render', placeEditor); bus.on('overlay', drawFrame); bus.on('layers', refreshFonts); bus.on('layers', rasterizeAlphaLocked); bus.on('layer-active', watchLayerActive);
+  cv().addEventListener('pointerdown', armCanvasBlurGuard, true);
+  $('text-editor').addEventListener('blur', commitFromBlur);
   $('text-editor').addEventListener('input', liveEdit);
-  $('text-editor').addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); }
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(true); }
-  });
+  $('text-editor').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); commitEdit(false); } });
   $('lay-list').addEventListener('dblclick', (e) => { const r = e.target.closest('.lrow[data-li]'); if (r) actions.run('text.editLayer', +r.dataset.li); });
   syncButton();
 }

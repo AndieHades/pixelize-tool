@@ -37,6 +37,7 @@ function textToGrid(text, W, H, fonts) {
   ctx.translate(src.box.x + src.box.w / 2 + src.transform.x, src.box.y + src.box.h / 2 + src.transform.y);
   ctx.rotate(src.transform.rotation);
   ctx.scale(src.transform.scaleX, src.transform.scaleY);
+  ctx.beginPath(); ctx.rect(left, top, src.box.w, src.box.h); ctx.clip();
   const measure = (line) => ctx.measureText(line).width;
   let y = top, any = false;
   for (const line of displayLines(src)) {
@@ -56,11 +57,15 @@ function fallbackGrid(src, W, H, color) {
   const grid = blank(W, H);
   if (!src.value.trim()) return grid;
   const cw = Math.max(1, Math.round(src.size * 0.5)), ch = Math.max(1, src.size);
+  const measure = (line) => {
+    const chars = [...String(line || ' ')];
+    return chars.length * cw + Math.max(0, chars.length - 1) * Math.round(src.letterSpacing);
+  };
   let y = src.box.y;
   for (const line of displayLines(src)) {
-    let x = src.box.x;
+    let x = Math.round(lineX(src, line, src.box.x, measure));
     for (const chv of line) {
-      if (chv !== ' ') paintGlyph(grid, W, H, x, y, cw, ch, color);
+      if (chv !== ' ') paintGlyph(grid, W, H, x, y, cw, ch, color, src.box);
       x += cw + Math.round(src.letterSpacing);
     }
     y += lineAdvance(src);
@@ -68,11 +73,13 @@ function fallbackGrid(src, W, H, color) {
   return grid;
 }
 
-function paintGlyph(grid, W, H, x0, y0, w, h, color) {
+function paintGlyph(grid, W, H, x0, y0, w, h, color, box) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (x && x !== w - 1 && y && y !== h - 1 && x !== (w >> 1)) continue;
     const px = x0 + x, py = y0 + y;
-    if (px >= 0 && py >= 0 && px < W && py < H) grid[py][px] = color.slice();
+    const insideCanvas = px >= 0 && py >= 0 && px < W && py < H;
+    const insideBox = px >= box.x && py >= box.y && px < box.x + box.w && py < box.y + box.h;
+    if (insideCanvas && insideBox) grid[py][px] = color.slice();
   }
 }
 

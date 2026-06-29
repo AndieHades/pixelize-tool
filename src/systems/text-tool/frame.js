@@ -28,7 +28,7 @@ export function drawFrame({ ctx, ox, oy, z }) {
   ctx.save(); ctx.lineWidth = 1.4; ctx.strokeStyle = C.accent; ctx.setLineDash([5, 3]);
   ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
   ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = C.accent;
-  for (const [a, b] of [[p[0], p[3]], [p[1], p[2]]]) ctx.fillRect((a.x + b.x) / 2 - 3, (a.y + b.y) / 2 - 8, 6, 16);
+  for (const q of p) ctx.fillRect(q.x - 4, q.y - 4, 8, 8);
   ctx.restore();
 }
 
@@ -42,19 +42,31 @@ function frameHit(gx, gy) {
   const src = sourceFn();
   if (!src || S.tool !== 'text' || S.rotMode) return null;
   const q = localPoint(src, gx, gy), b = src.box, tol = Math.max(1, 8 / S.view.zoom);
-  if (q.y < -tol || q.y > b.h + tol) return null;
-  if (Math.abs(q.x) <= tol) return 'left';
-  if (Math.abs(q.x - b.w) <= tol) return 'right';
+  const l = Math.abs(q.x) <= tol, r = Math.abs(q.x - b.w) <= tol, t = Math.abs(q.y) <= tol, bot = Math.abs(q.y - b.h) <= tol;
+  if (q.x < -tol || q.x > b.w + tol || q.y < -tol || q.y > b.h + tol) return null;
+  if ((l || r) && (t || bot)) return (t ? 't' : 'b') + (l ? 'l' : 'r');
+  if (l) return 'l'; if (r) return 'r'; if (t) return 't'; if (bot) return 'b';
   return null;
 }
 
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
 function applyBoxDrag(gx, gy) {
   const { src, layer, box, side } = boxDrag, q = localPoint(src, gx, gy), next = { ...box };
-  if (side === 'left') { const d = Math.max(0, Math.min(box.w - 1, Math.round(q.x))); next.x = box.x + d; next.w = box.w - d; }
-  else next.w = Math.max(1, Math.round(q.x));
+  if (side.includes('l')) { const d = clamp(Math.round(q.x), 0, box.w - 1); next.x = box.x + d; next.w = box.w - d; }
+  if (side.includes('r')) next.w = Math.max(1, Math.round(q.x));
+  if (side.includes('t')) { const d = clamp(Math.round(q.y), 0, box.h - 1); next.y = box.y + d; next.h = box.h - d; }
+  if (side.includes('b')) next.h = Math.max(1, Math.round(q.y));
   src.box = next;
   if (layer) { updateTextLayerGrid(layer, S.W, S.H, fontsFn()); markDirty(S.layers.indexOf(layer)); }
   placeFn(); bus.emit('render'); if (layer) bus.emit('layers');
+}
+
+function cursor(hit) {
+  if (!hit) return null;
+  if (hit === 'tl' || hit === 'br') return 'nwse-resize';
+  if (hit === 'tr' || hit === 'bl') return 'nesw-resize';
+  return hit === 'l' || hit === 'r' ? 'ew-resize' : 'ns-resize';
 }
 
 export const frameHandler = {
@@ -68,5 +80,5 @@ export const frameHandler = {
   },
   move({ gx, gy }) { if (boxDrag) applyBoxDrag(gx, gy); },
   up() { boxDrag = null; },
-  hover({ gx, gy }) { return frameHit(gx, gy) ? 'ew-resize' : null; },
+  hover({ gx, gy }) { return cursor(frameHit(gx, gy)); },
 };

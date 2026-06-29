@@ -77,10 +77,10 @@ function syncControls() {
 
 function tile(f) {
   const b = document.createElement('button'); b.className = 'ftile'; b.dataset.id = f.id; b.title = f.name;
+  b.setAttribute('aria-label', f.name);
   b.classList.toggle('on', current().fontId === f.id);
-  const mark = document.createElement('b'); mark.textContent = 'T'; mark.style.fontFamily = f.family;
-  const nm = document.createElement('span'); nm.textContent = f.name;
-  b.append(mark, nm);
+  const mark = document.createElement('b'); mark.textContent = 'Ta'; mark.style.fontFamily = f.family;
+  b.append(mark);
   b.onclick = () => applyPatch({ fontId: f.id });
   b.oncontextmenu = (e) => { e.preventDefault(); if (f.builtin || f.folder) return; menuFont = f; showMenuAt($('font-menu'), e.clientX, e.clientY, true); };
   return b;
