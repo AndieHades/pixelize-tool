@@ -10,6 +10,7 @@ import { updateTextLayerGrid } from '../../core/text-layer.js';
 import { loadFonts, fontById, importFontFile, renameFont, deleteFont } from '../../core/font-store.js';
 import { loadTextPrefs, saveTextPrefs } from '../../core/text-prefs.js';
 import { TEXT_IMPORT, TEXT_LETTER_SPACING, TEXT_LINE_SPACING, TEXT_SIZE, TEXT_STRETCH } from '../../config/text.js';
+import { rgbToHex } from '../../logic/color.js';
 import { clamp } from '../../logic/math.js';
 import { maxLineWidth } from '../../logic/text-layout.js';
 
@@ -17,6 +18,11 @@ let fonts = [], prefs = loadTextPrefs(), menuFont = null, live = null;
 const activeText = () => S.layers[S.cur] && S.layers[S.cur].kind === 'text' ? S.layers[S.cur] : null;
 const current = () => activeText()?.text || prefs;
 const opened = () => $('font-pop').classList.contains('on');
+const activeHex = () => rgbToHex(S.active).toLowerCase();
+
+function syncPrefsColorFromActive() {
+  if (!activeText()) prefs = saveTextPrefs({ ...prefs, color: activeHex() });
+}
 
 function applyPatch(patch, hist = true) {
   const L = activeText();
@@ -108,7 +114,18 @@ function menuAct(act) {
   }
 }
 
-function open(force = false) { if (force) $('font-pop').classList.add('on'); else $('font-pop').classList.toggle('on'); refresh(); }
+function setColor(hex) { applyPatch({ color: hex }, false); }
+function openColor() { snapshot(); actions.run('color.for', current().color, setColor); }
+function syncOpenColor() {
+  if (activeText() && $('colpop').classList.contains('on') && !$('fx-edit').classList.contains('on')) actions.run('color.for', current().color, setColor);
+}
+
+function open(force = false) {
+  const pop = $('font-pop'), show = force || !pop.classList.contains('on');
+  pop.classList.toggle('on', show);
+  if (show) syncPrefsColorFromActive();
+  refresh();
+}
 
 function bindRange(id, key) {
   $(id).addEventListener('pointerdown', () => { live = null; });
@@ -126,14 +143,15 @@ export function mount() {
   bindRange('font-size', 'size');
   bindRange('font-letter', 'letterSpacing');
   bindRange('font-line', 'lineSpacing');
-  $('font-color').onclick = () => { snapshot(); actions.run('color.for', current().color, (hex) => applyPatch({ color: hex }, false)); };
+  $('font-color').onclick = openColor;
   $('font-upper').onclick = () => { const L = activeText(); if (L) applyTextPatch({ uppercase: !L.text.uppercase }); };
   for (const b of document.querySelectorAll('.font-tools button[data-align]')) b.onclick = () => applyTextPatch({ align: b.dataset.align });
   $('font-stretch').onclick = stretchText;
   $('font-menu').onclick = (e) => { const b = e.target.closest('button'); if (b) menuAct(b.dataset.act); };
   $('font-pop').addEventListener('dragover', (e) => { e.preventDefault(); });
   $('font-pop').addEventListener('drop', async (e) => { e.preventDefault(); for (const f of e.dataTransfer.files) try { await importFontFile(f); } catch (err) {} refresh(); });
-  bus.on('layer-active', () => { if (opened()) { syncControls(); renderFonts(); } });
+  bus.on('layer-active', () => { if (opened()) { syncPrefsColorFromActive(); syncControls(); renderFonts(); syncOpenColor(); } });
+  bus.on('palette', () => { if (opened()) { syncPrefsColorFromActive(); syncControls(); } });
   bus.on('locale', () => { if (opened()) renderFonts(); });
   actions.register('ui.fontLibrary', open);
   actions.register('text.applyPrefs', applyPatch);

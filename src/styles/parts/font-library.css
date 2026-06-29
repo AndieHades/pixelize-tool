@@ -4,7 +4,7 @@
 #font-pop.on { display: block; animation: pop .18s ease-out; }
 #font-body { padding: var(--gap); }
 #font-list { overflow-y: auto; min-height: 92px; max-height: calc(100vh - env(safe-area-inset-top, 0px) - 180px);
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--font-tile-min), 1fr)); gap: var(--gap); }
+  display: grid; grid-template-columns: repeat(auto-fill, var(--font-tile-min)); justify-content: start; align-content: start; gap: var(--gap); }
 .ftile { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 5px; border-radius: var(--r-xl);
   background: var(--row); color: var(--txt2); cursor: pointer; -webkit-user-select: none; user-select: none; }
 .ftile.on { background: var(--accent); color: var(--on-accent); }
@@ -17,7 +17,7 @@
 .font-range span, .font-range b { color: var(--txt2); font-size: var(--type-system); font-variant-numeric: tabular-nums; }
 .font-range input { min-width: 0; width: 100%; }
 #font-color { width: var(--btn-xs); height: var(--btn-xs); border-radius: 50%; border: 2px solid var(--marker); box-shadow: 0 0 0 1px var(--line); }
-.font-tools { display: grid; grid-template-columns: repeat(6, var(--btn)); gap: var(--gap); padding: 0 16px 12px; }
+.font-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); padding: 0 16px 12px; }
 .font-tools button { height: var(--btn); border-radius: var(--r-lg); background: var(--row); color: var(--txt2); }
 .font-tools button.on { background: var(--accent); color: var(--on-accent); }
 .font-tools button:disabled { opacity: .45; }

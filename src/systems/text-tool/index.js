@@ -51,6 +51,13 @@ function createText() {
 
 function editorText() { const ed = $('text-editor'); return (ed.innerText ?? ed.textContent).replace(/\n$/, ''); }
 function setEditorText(value) { const ed = $('text-editor'); ed.textContent = value; ed.innerText = value; return ed; }
+function focusEditor(ed, select = false) {
+  try { ed.focus({ preventScroll: true }); } catch (e) { ed.focus(); }
+  const sel = window.getSelection(); if (!sel) return;
+  const range = document.createRange(); range.selectNodeContents(ed);
+  if (!select) range.collapse(false);
+  sel.removeAllRanges(); sel.addRange(range);
+}
 function draftSource(gx, gy) {
   return normalizeTextSource({ ...loadTextPrefs(), value: '', box: { ...TEXT_BOX, x: gx, y: gy } });
 }
@@ -93,16 +100,14 @@ function startEdit(L = activeText()) {
   if (edit) commitEdit(true);
   snapshot(); edit = { layer: L, original: cloneTextSource(L.text) };
   const ed = setEditorText(L.text.value || '');
-  ed.classList.add('on'); placeEditor(); ed.focus();
-  const range = document.createRange(); range.selectNodeContents(ed); const sel = window.getSelection();
-  sel.removeAllRanges(); sel.addRange(range); return true;
+  ed.classList.add('on'); placeEditor(); focusEditor(ed, true); return true;
 }
 
 function startDraft(gx, gy) {
   if (edit) commitEdit(true);
   const cur = S.layers[S.cur], ed = setEditorText('');
   edit = { layer: null, source: draftSource(gx, gy), fid: cur ? cur.fid : null };
-  ed.classList.add('on'); placeEditor(); ed.focus();
+  ed.classList.add('on'); placeEditor(); focusEditor(ed);
 }
 
 function finishDrag() {

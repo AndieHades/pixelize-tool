@@ -236,10 +236,27 @@ t('text-tool: creates layer only after Enter and names it from text', () => {
   toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
   assert.equal(S.layers.length, before);
   assert.ok(document.getElementById('text-editor').classList.contains('on'));
+  assert.equal(document.activeElement, document.getElementById('text-editor'));
   commitEditor('Hello world');
   const L = S.layers[S.cur];
   assert.equal(L.kind, 'text'); assert.deepEqual([L.text.box.x, L.text.box.y], [2, 3]);
   assert.equal(L.name, 'Hello'); assert.equal(L.text.value, 'Hello world');
+});
+t('text-tool: new text uses active color but picker uses selected text color', () => {
+  resetWH(32, 16); mountTextUi();
+  S.active = [18, 52, 86]; actions.run('tool.text');
+  toolHandler('text').down({ gx: 2, gy: 3, e: { detail: 1 } });
+  commitEditor('Blue');
+  assert.equal(S.layers[S.cur].text.color, '#123456');
+  const A = textLayer.makeTextLayer('A', S.W, S.H, { value: 'A', color: '#112233' }, { x: 1, y: 1 });
+  const B = textLayer.makeTextLayer('B', S.W, S.H, { value: 'B', color: '#aa5500' }, { x: 6, y: 1 });
+  S.layers = [A, B]; S.cur = 1; S.active = [0, 255, 0]; bus.emit('layer-active');
+  document.getElementById('font-color').click();
+  assert.equal(document.getElementById('col-hex').value, '#AA5500');
+  S.cur = 0; bus.emit('layer-active');
+  assert.equal(document.getElementById('col-hex').value, '#112233');
+  assert.deepEqual(S.active, [0, 255, 0]);
+  actions.run('color.pick'); document.getElementById('colpop').classList.remove('on');
 });
 t('text-tool: empty draft does not create a layer', () => {
   resetWH(32, 16); mountTextUi(); actions.run('tool.text');
