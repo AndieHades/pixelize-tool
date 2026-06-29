@@ -55,6 +55,17 @@ export async function writeAppFile(kind, name, blob) {
   }
 }
 
+export async function deleteAppFile(kind, name) {
+  const dir = await appFolder(kind, true, false);
+  if (!dir || !dir.removeEntry) return false;
+  try {
+    await dir.removeEntry(name);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function readAppFiles(kind, accept) {
   const dir = await appFolder(kind, false, false);
   if (!dir || !dir.values) return [];

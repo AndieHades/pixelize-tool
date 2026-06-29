@@ -1,14 +1,15 @@
 import { makeCanvas } from './canvas.js';
-import { readAppFiles, writeAppFile } from './app-folders.js';
+import { deleteAppFile, readAppFiles, writeAppFile } from './app-folders.js';
 import { exactPaletteFromRgba, sourcePaletteFromSamples, samplesFromRgba } from '../logic/quantize.js';
 
 const CELL = 32, LIMIT = 128;
 const FOLDER_PALETTE_URLS = typeof import.meta.glob === 'function'
-  ? import.meta.glob('../app-folders/palettes/*.{png,jpg,jpeg,webp,bmp,avif}', { query: '?url', import: 'default', eager: true })
+  ? import.meta.glob('../app-folders/palettes/*.{png,jpg,jpeg,gif,webp,bmp,avif}', { query: '?url', import: 'default', eager: true })
   : {};
 
 const cleanName = (path) => (path.split('/').pop() || 'Palette').replace(/\.[^.]+$/, '').slice(0, 40);
 const color = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+export const paletteFileName = (name) => (cleanName(name) || 'palette') + '.png';
 export const isPaletteImageFile = (f) => f && (((f.type || '').startsWith('image/')) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name || ''));
 
 function paletteFromData(data, limit = LIMIT) {
@@ -38,7 +39,7 @@ export function filePalette(file) {
 export async function folderPalettes() {
   const out = [];
   for (const [path, url] of Object.entries(FOLDER_PALETTE_URLS)) {
-    try { const colors = await imagePalette(url); if (colors.length) out.push({ name: cleanName(path), colors, folder: true }); } catch (e) {}
+    try { const colors = await imagePalette(url); if (colors.length) out.push({ name: cleanName(path), colors, folder: true, removable: false }); } catch (e) {}
   }
   return out;
 }
@@ -46,13 +47,22 @@ export async function folderPalettes() {
 export async function runtimeFolderPalettes() {
   const out = [];
   for (const f of await readAppFiles('palettes', isPaletteImageFile)) {
-    try { const colors = await filePalette(f); if (colors.length) out.push({ name: cleanName(f.name), colors, folder: true }); } catch (e) {}
+    try { const colors = await filePalette(f); if (colors.length) out.push({ name: cleanName(f.name), colors, folder: true, removable: true, fileName: f.name }); } catch (e) {}
   }
   return out;
 }
 
+export function mergeFolderPalettes(bundled, runtime) {
+  const out = new Map();
+  for (const p of [...bundled, ...runtime]) {
+    const k = p.name.toLowerCase(), old = out.get(k);
+    if (!old || (!old.removable && p.removable)) out.set(k, p);
+  }
+  return [...out.values()];
+}
+
 export async function allFolderPalettes() {
-  return [...await folderPalettes(), ...await runtimeFolderPalettes()];
+  return mergeFolderPalettes(await folderPalettes(), await runtimeFolderPalettes());
 }
 
 export function paletteImageCanvas(colors, cell = CELL) {
@@ -68,5 +78,7 @@ export function paletteImageBlob(colors) {
 
 export async function savePaletteToFolder(name, colors) {
   const blob = await paletteImageBlob(colors);
-  return writeAppFile('palettes', (cleanName(name) || 'palette') + '.png', blob);
+  return writeAppFile('palettes', paletteFileName(name), blob);
 }
+
+export const deletePaletteFromFolder = (name) => deleteAppFile('palettes', name && /\.[^.]+$/.test(name) ? name : paletteFileName(name));

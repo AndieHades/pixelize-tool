@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import assert from 'node:assert/strict';
 import { saveDoc, getDoc, listDocs, removeDoc } from '../src/core/storage.js';
 import { saveBrush, listBrushes, removeBrush, saveSet, listSets, removeSet } from '../src/core/brush-store.js';
+import { mergeFolderPalettes, paletteFileName } from '../src/core/palette-files.js';
 
 const rec = { id: 'd1', name: 'Test', W: 4, H: 4, updated: 1,
   layers: [{ name: 'a', grid: [[null, [1, 2, 3, 255]]], ext: new Map([['9,9', [5, 5, 5, 255]]]) }] };
@@ -34,3 +35,10 @@ await removeBrush('b1'); await removeSet('s1');
 assert.equal((await listBrushes()).length, 0); assert.equal((await listSets()).length, 0);
 
 console.log("Brush store passed");
+
+assert.equal(paletteFileName('Lost Century.png'), 'Lost Century.png');
+const bundled = [{ name: 'Lost Century', colors: [[1, 1, 1]], removable: false }];
+const runtime = [{ name: 'lost century', colors: [[2, 2, 2]], removable: true, fileName: 'lost century.png' }];
+assert.deepEqual(mergeFolderPalettes(bundled, runtime), [runtime[0]]);
+
+console.log("Palette files passed");

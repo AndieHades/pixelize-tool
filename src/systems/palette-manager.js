@@ -11,7 +11,7 @@ import { exactPaletteFromRgba, samplesFromRgba, sourcePaletteFromSamples } from 
 import { sortPalette } from '../logic/palette-sort.js';
 import { defaultPalette } from '../config/palette.js';
 import { initPaletteCreateChoice, refreshPaletteCreateChoice } from './palette-create-choice.js';
-import { allFolderPalettes, isPaletteImageFile, savePaletteToFolder } from '../core/palette-files.js';
+import { allFolderPalettes, deletePaletteFromFolder, isPaletteImageFile, savePaletteToFolder } from '../core/palette-files.js';
 
 const STORE = 'palettes';
 const EXACT_LIMIT = 512, EXACT_MAX_PIXELS = 2_000_000, SAMPLE_MAX_SIDE = 220, QUANT_COLORS = 64;
@@ -42,7 +42,7 @@ function defaultPaletteName(st = palStore()) {
   }
 }
 
-const builtInPalettes = () => [{ name: t('palette.apollo'), colors: defaultPalette() }, ...folderCache];
+const builtInPalettes = () => [{ name: t('palette.apollo'), colors: defaultPalette(), removable: false }, ...folderCache];
 function refreshFolderCache() { allFolderPalettes().then((p) => { folderCache = p; if (dlg) palListUI(); }); }
 
 function loadPalette(arr, name) { S.palette = cleanPalette(arr); if (S.palette.length) S.active = S.palette[0].slice();
@@ -53,22 +53,28 @@ function addFromImage(pal) { let n = 0;
   bus.emit('palette'); bus.emit('render'); toast(t('toast.tsgAdded', { n }));
 }
 
-function appendPaletteRow(box, nm, pal, removable) { const row = document.createElement('div'); row.className = 'prow';
+function paletteEntries(st) { const byName = new Map();
+  for (const p of builtInPalettes()) byName.set(p.name, p);
+  for (const [nm, colors] of Object.entries(st)) { const p = byName.get(nm);
+    byName.set(nm, p && p.folder ? { ...p, removable: true } : { name: nm, colors, removable: true }); }
+  return [...byName.values()]; }
+function removePaletteEntry(entry) { const s2 = palStore(); delete s2[entry.name]; saveStore(s2);
+  deletePaletteFromFolder(entry.fileName || entry.name).then(refreshFolderCache); palListUI(); }
+function appendPaletteRow(box, entry) { const row = document.createElement('div'), nm = entry.name, pal = entry.colors; row.className = 'prow';
     const head = document.createElement('div'); head.className = 'prow-top'; // имя сверху + удаление
     const name = document.createElement('span'); name.className = 'pname'; name.textContent = nm;
     const del = document.createElement('button'); del.className = 'prow-del'; del.title = t('gallery.delete');
     del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-    del.onclick = (e) => { e.stopPropagation(); const s2 = palStore(); delete s2[nm]; saveStore(s2); palListUI(); };
-    head.append(name); if (removable) head.append(del);
+    del.onclick = (e) => { e.stopPropagation(); removePaletteEntry(entry); };
+    head.append(name); if (entry.removable) head.append(del);
     const sw = document.createElement('div'); sw.className = 'pswatches'; sw.title = t('btn.addPalette'); // вся палитра целиком, квадраты как в #pal; клик — загрузить
     pal.forEach((c) => { const i = document.createElement('i'); i.style.background = rgb(c); sw.appendChild(i); });
     sw.onclick = () => loadPalette(pal, nm);
     row.append(head, sw); box.appendChild(row); }
 function palListUI() { const box = dialog().list; box.innerHTML = '';
-  const st = palStore(), names = Object.keys(st), builtins = builtInPalettes();
-  if (!builtins.length && !names.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('palette.none') + '</p>'; return; }
-  for (const p of builtins) appendPaletteRow(box, p.name, p.colors, false);
-  for (const nm of names) appendPaletteRow(box, nm, st[nm], true); }
+  const entries = paletteEntries(palStore());
+  if (!entries.length) { box.innerHTML = '<p class="hint" style="margin:10px 2px">' + t('palette.none') + '</p>'; return; }
+  for (const p of entries) appendPaletteRow(box, p); }
 
 export function paletteFromImageData(data, limit = EXACT_LIMIT) {
   const exact = exactPaletteFromRgba(data, limit);
