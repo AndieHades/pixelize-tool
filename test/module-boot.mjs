@@ -1,5 +1,5 @@
-// Boot-тест модульной точки входа: грузим src/app.js в headless-DOM и проверяем,
-// что приложение поднимается без ошибок (палитра построена, системы смонтированы).
+
+
 import 'fake-indexeddb/auto';
 import assert from 'node:assert/strict';
 import { makeDom } from './harness.mjs';
@@ -15,15 +15,15 @@ globalThis.URL.revokeObjectURL = () => {};
 
 await import('../src/app.js');
 
-assert.ok(window.__app && window.__app.S, 'window.__app выставлен');
-assert.ok(document.querySelectorAll('#pal .sw:not(.plus)').length > 0, 'палитра построена');
-assert.ok(document.getElementById('active').style.background, 'активный цвет отрисован');
-assert.ok(document.getElementById('t-pencil').title.includes('(B)'), 'тултип локализован');
-assert.ok(document.getElementById('cropbar').__fw, 'панель crop перетаскиваемая');
-assert.ok(document.getElementById('selbar').__fw, 'панель selection перетаскиваемая');
-assert.ok(parseFloat(document.getElementById('sidebar').style.minHeight) >= 80, 'sidebar получил минимальную высоту');
+assert.ok(window.__app && window.__app.S, 'window.__app is exposed');
+assert.ok(document.querySelectorAll('#pal .sw:not(.plus)').length > 0, 'palette rendered');
+assert.ok(document.getElementById('active').style.background, 'active color rendered');
+assert.ok(document.getElementById('t-pencil').title.includes('(B)'), 'tooltip localized');
+assert.ok(document.getElementById('cropbar').__fw, 'crop panel is draggable');
+assert.ok(document.getElementById('selbar').__fw, 'selection panel is draggable');
+assert.ok(parseFloat(document.getElementById('sidebar').style.minHeight) >= 80, 'sidebar minimum height applied');
 const i18n = await import('../src/i18n/index.js');
-i18n.setLocale('en'); assert.ok(document.getElementById('t-pencil').title === 'Pencil (B)', 'смена языка применилась');
-i18n.setLocale('ru'); assert.ok(document.getElementById('t-pencil').title === 'Карандаш (B)', 'возврат языка');
-console.log('Boot-тест: приложение поднялось ✓');
-console.log(`  свотчей в палитре: ${document.querySelectorAll('#pal .sw:not(.plus)').length}`);
+i18n.setLocale('en'); assert.ok(document.getElementById('t-pencil').title === 'Pencil (B)', 'language change applied');
+i18n.setLocale('ru'); assert.ok(document.getElementById('t-pencil').title === i18n.t('tool.pencil'), 'language changed back');
+console.log("Boot test passed");
+console.log(`  palette swatches: ${document.querySelectorAll('#pal .sw:not(.plus)').length}`);

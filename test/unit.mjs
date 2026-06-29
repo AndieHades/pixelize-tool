@@ -1,5 +1,5 @@
-// Юнит-тесты модулей src/ — чистый node, без DOM. Валидируют слои и логику
-// по мере сборки новой архитектуры (приложение пока работает на js/*.js).
+
+
 import assert from 'node:assert/strict';
 import { S, MAX_LAYERS, blank, newLayer, cloneLayer, G } from '../src/core/state.js';
 import * as bus from '../src/core/bus.js';
@@ -48,50 +48,50 @@ import { en } from '../src/i18n/locales/en.js';
 
 let n = 0; const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
 
-t('state: дефолты документа', () => { assert.equal(S.W, 32); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(MAX_LAYERS, Infinity); });
-t('state: Pixel Perfect выключен по умолчанию', () => { assert.equal(FLAGS_DEFAULT.pixelPerfect, false); assert.equal(S.ppOn, false); });
+t("unit case 001", () => { assert.equal(S.W, 32); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(MAX_LAYERS, Infinity); });
+t("unit case 002", () => { assert.equal(FLAGS_DEFAULT.pixelPerfect, false); assert.equal(S.ppOn, false); });
 t('state: blank/newLayer', () => { const L = newLayer('x', 4, 3); assert.equal(L.grid.length, 3); assert.equal(L.grid[0].length, 4); assert.equal(L.grid[0][0], null); });
-t('state: G() — сетка текущего слоя', () => { assert.equal(G(), S.layers[S.cur].grid); });
+t("unit case 003", () => { assert.equal(G(), S.layers[S.cur].grid); });
 
-t('bus: on/emit синхронно', () => { let got = 0; const off = bus.on('ping', (v) => { got = v; }); bus.emit('ping', 7); assert.equal(got, 7); off(); bus.emit('ping', 9); assert.equal(got, 7); });
-t('bus: emitDoc шлёт layers и render', () => { const seen = []; const o1 = bus.on('layers', () => seen.push('l')); const o2 = bus.on('render', () => seen.push('r')); bus.emitDoc(); o1(); o2(); assert.deepEqual(seen, ['l', 'r']); });
+t("unit case 004", () => { let got = 0; const off = bus.on('ping', (v) => { got = v; }); bus.emit('ping', 7); assert.equal(got, 7); off(); bus.emit('ping', 9); assert.equal(got, 7); });
+t("unit case 005", () => { const seen = []; const o1 = bus.on('layers', () => seen.push('l')); const o2 = bus.on('render', () => seen.push('r')); bus.emitDoc(); o1(); o2(); assert.deepEqual(seen, ['l', 'r']); });
 
 t('color: hex↔rgb', () => { assert.deepEqual(hexToRgb('#ff7a18'), [255, 122, 24]); assert.equal(rgbToHex([255, 122, 24]), '#ff7a18'); assert.equal(rgb([1, 2, 3]), 'rgb(1,2,3)'); });
-t('color: eqc по RGB', () => { assert.ok(eqc([1, 2, 3], [1, 2, 3, 200])); assert.ok(!eqc([1, 2, 3], [1, 2, 4])); });
+t("unit case 006", () => { assert.ok(eqc([1, 2, 3], [1, 2, 3, 200])); assert.ok(!eqc([1, 2, 3], [1, 2, 4])); });
 t('color: hsv round-trip', () => { const [h, s, v] = rgbToHsv(255, 122, 24); assert.deepEqual(hsvToRgb(h, s, v), [255, 122, 24]); });
 
 t('raster: parseKey', () => { assert.deepEqual(parseKey('3,7'), [3, 7]); assert.deepEqual(parseKey('-2,40'), [-2, 40]); });
-t('raster: blendOver непрозрачный', () => { assert.deepEqual(blendOver([255, 0, 0], null, 1), [255, 0, 0, 255]); });
+t("unit case 007", () => { assert.deepEqual(blendOver([255, 0, 0], null, 1), [255, 0, 0, 255]); });
 t('raster: blendOver 50%', () => { assert.deepEqual(blendOver([255, 255, 255], [0, 0, 0, 255], 0.5), [128, 128, 128, 255]); });
-t('raster: mergeCells пусто', () => { assert.equal(mergeCells(null, null, 1), null); assert.deepEqual(mergeCells(null, [9, 9, 9, 255], 1), [9, 9, 9, 255]); });
+t("unit case 008", () => { assert.equal(mergeCells(null, null, 1), null); assert.deepEqual(mergeCells(null, [9, 9, 9, 255], 1), [9, 9, 9, 255]); });
 t('raster: gridBounds', () => { const g = blank(8, 8); assert.equal(gridBounds(g), null); g[2][5] = [1, 1, 1, 255]; assert.deepEqual(gridBounds(g), { minx: 5, miny: 2, maxx: 5, maxy: 2 }); });
-t('raster: alphaBounds (Trim по итоговым пикселям, в т.ч. запечённым эффектам)', () => {
-  const W = 4, H = 4, d = new Uint8Array(W * H * 4); assert.equal(alphaBounds(d, W, H), null); // всё прозрачно
+t("unit case 009", () => {
+  const W = 4, H = 4, d = new Uint8Array(W * H * 4); assert.equal(alphaBounds(d, W, H), null);
   const set = (x, y) => { d[(y * W + x) * 4 + 3] = 255; }; set(1, 2); set(3, 1);
   assert.deepEqual(alphaBounds(d, W, H), { minx: 1, miny: 1, maxx: 3, maxy: 2 }); });
-t('raster: boundsWithExt учитывает пиксели за краем', () => { const g = blank(4, 4); g[1][1] = [1, 1, 1, 255];
+t("unit case 010", () => { const g = blank(4, 4); g[1][1] = [1, 1, 1, 255];
   const ext = new Map([['-2,5', [2, 2, 2, 255]], ['6,0', [3, 3, 3, 255]]]);
   assert.deepEqual(boundsWithExt(g, ext), { minx: -2, miny: 0, maxx: 6, maxy: 5 });
   assert.equal(boundsWithExt(blank(2, 2), new Map()), null); });
-t('psd-effects: мусорный буфер не падает, эффектов нет', () => { const buf = new ArrayBuffer(32), dv = new DataView(buf), u8 = new Uint8Array(buf);
+t("unit case 011", () => { const buf = new ArrayBuffer(32), dv = new DataView(buf), u8 = new Uint8Array(buf);
   const r = parsePsdEffects(dv, u8, 0); assert.deepEqual(r.effects, []); assert.ok(Array.isArray(r.warnings)); });
-t('raster: rectFill заливает всю область', () => { const c = new Set(); rectFill(1, 1, 3, 2, (x, y) => c.add(x + ',' + y));
+t("unit case 012", () => { const c = new Set(); rectFill(1, 1, 3, 2, (x, y) => c.add(x + ',' + y));
   assert.equal(c.size, 6); assert.ok(c.has('2,1') && c.has('3,2')); });
-t('raster: ellipseEdges касается всех сторон бокса', () => { const c = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
+t("unit case 013", () => { const c = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
   let l = false, r = false, t2 = false, b = false;
   for (const k of c) { const [x, y] = parseKey(k); if (x === 0) l = true; if (x === 8) r = true; if (y === 0) t2 = true; if (y === 6) b = true;
     assert.ok(x >= 0 && x <= 8 && y >= 0 && y <= 6); }
   assert.ok(l && r && t2 && b); });
-t('raster: ellipseFill заполняет середину', () => { const c = new Set(); ellipseFill(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
+t("unit case 014", () => { const c = new Set(); ellipseFill(0, 0, 8, 6, (x, y) => c.add(x + ',' + y));
   assert.ok(c.has('4,3')); const edge = new Set(); ellipseEdges(0, 0, 8, 6, (x, y) => edge.add(x + ',' + y));
   assert.ok(c.size > edge.size); });
 t('raster: symmetrizeGrid', () => { const g = blank(8, 4); g[0][0] = [1, 2, 3, 255]; symmetrizeGrid(g, true, false); assert.deepEqual(g[0][7], [1, 2, 3, 255]); });
-t('flood: область останавливается на непрозрачном контуре', () => { const g = blank(5, 5), line = [1, 1, 1, 255];
+t("unit case 015", () => { const g = blank(5, 5), line = [1, 1, 1, 255];
   for (let y = 0; y < 5; y++) g[y][2] = line;
   const cells = floodRegion(g, 0, 0); assert.equal(cells.length, 10);
   assert.ok(cells.every(([x]) => x < 2)); });
 
-// --- логика импорта/поворота ---
+
 t('math: clamp/clamp01/clamp255/clampRound', () => {
   assert.equal(clamp(5, 0, 10), 5); assert.equal(clamp(-3, 0, 10), 0); assert.equal(clamp(20, 0, 10), 10);
   assert.equal(clamp01(1.4), 1); assert.equal(clamp01(-0.2), 0); assert.equal(clamp01(0.5), 0.5);
@@ -110,13 +110,13 @@ t('math: numeric-field expressions', () => {
   assert.equal(isNumericLiteral('+8'), false);
   assert.equal(Number.isNaN(evalNumericField('1/0', 0)), true);
 });
-t('cloneGrid: глубокая копия, клетки не делят ссылок', () => {
+t("unit case 016", () => {
   const g = [[[1, 2, 3, 255], null], [null, [4, 5, 6, 255]]];
   const c = cloneGrid(g);
   assert.deepEqual(c, g); assert.notEqual(c[0][0], g[0][0]);
-  c[0][0][0] = 99; assert.equal(g[0][0][0], 1); // правка копии не трогает оригинал
+  c[0][0][0] = 99; assert.equal(g[0][0][0], 1);
 });
-t('cloneLayer: копирует все поля, overrides перекрывают, grid/ext независимы', () => {
+t("unit case 017", () => {
   const L = { name: 'A', opacity: 0.5, visible: false, fid: 7, clip: true, lock: true, alphaLock: true,
     reference: true, symLock: true, ext: new Map([['1,1', [9, 9, 9, 255]]]), grid: [[[1, 2, 3, 255]]], effects: [] };
   const c = cloneLayer(L, { name: 'A copy', reference: false });
@@ -125,50 +125,50 @@ t('cloneLayer: копирует все поля, overrides перекрываю�
   assert.notEqual(c.ext, L.ext); assert.notEqual(c.grid, L.grid);
   c.grid[0][0][0] = 50; assert.equal(L.grid[0][0][0], 1);
 });
-t('text-model: prefs нормализуются и размер зажимается', () => {
+t("unit case 018", () => {
   assert.deepEqual(normalizeTextPrefs({ fontId: 'f', size: 999, color: '#AABBCC' }),
     { fontId: 'f', size: 128, color: '#aabbcc', letterSpacing: 0, lineSpacing: 2, uppercase: false });
   assert.equal(normalizeTextPrefs({ size: -1, color: 'bad' }).size, 4);
   assert.equal(normalizeTextPrefs({ letterSpacing: 99, lineSpacing: -99, uppercase: true }).letterSpacing, 32);
   assert.equal(normalizeTextPrefs({ letterSpacing: 99, lineSpacing: -99, uppercase: true }).lineSpacing, -8);
 });
-t('text-model: источник текста двигается без мутации оригинала', () => {
+t("unit case 019", () => {
   const src = normalizeTextSource({ value: 'Hi', box: { x: 2, y: 3, w: 20, h: 10 } });
   const moved = moveTextSource(src, 5, -1);
   assert.deepEqual([src.box.x, src.box.y], [2, 3]);
   assert.deepEqual([moved.box.x, moved.box.y], [7, 2]);
 });
-t('text-model: transform меняет рамку и вид текста без растра', () => {
+t("unit case 020", () => {
   const src = normalizeTextSource({ value: 'Hi', box: { x: 2, y: 3, w: 20, h: 10 } });
   const out = transformTextSource(src, { tx: 4, ty: -1, sx: 2, sy: 0.5, ang: 0.25 });
   assert.deepEqual([out.box.x, out.box.y, out.box.w, out.box.h], [6, 2, 20, 10]);
   assert.deepEqual([out.transform.scaleX, out.transform.scaleY, out.transform.rotation], [2, 0.5, 0.25]);
 });
-t('text-model: имя слоя берется из введенного слова', () => {
+t("unit case 021", () => {
   assert.equal(textLayerName('  Hello world  ', 'Text 1'), 'Hello');
   assert.equal(textLayerName('', 'Text 1'), 'Text 1');
 });
-t('text-layout: uppercase не портит исходную строку', () => {
+t("unit case 022", () => {
   const src = normalizeTextSource({ value: 'Hello', uppercase: true, size: 10, lineSpacing: 3, letterSpacing: 2 });
   assert.equal(src.value, 'Hello');
   assert.equal(displayText(src), 'HELLO');
   assert.equal(lineAdvance(src), 13);
   assert.equal(maxLineWidth(src, (s) => s.length * 4), 28);
 });
-t('cloneLayer: копирует источник текстового слоя', () => {
+t("unit case 023", () => {
   const L = { name: 'T', kind: 'text', opacity: 1, visible: true, fid: null, clip: false, lock: false, alphaLock: false,
     reference: false, ext: new Map(), grid: blank(4, 4), effects: [], text: { value: 'A', box: { x: 1, y: 2, w: 3, h: 4 } } };
   const c = cloneLayer(L);
   c.text.box.x = 9; assert.equal(L.text.box.x, 1);
 });
-t('sample: сетка из картинки', () => {
+t("unit case 024", () => {
   const data = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255]);
-  const r = sampleGrid({ w: 2, h: 2, ch: 4, data }, 1, 0); // bgTol=0 → ничего не считаем фоном
+  const r = sampleGrid({ w: 2, h: 2, ch: 4, data }, 1, 0);
   assert.equal(r.nx, 2); assert.equal(r.ny, 2); assert.equal(r.samples.length, 4);
   assert.deepEqual(r.grid[0][0], [10, 20, 30]);
 });
-t('sample: автосетка находит настоящий период, не гармонику', () => {
-  // 50×50 случайных клеток, апскейл 6× → 300×300; автодетект обязан дать 50×50
+t("unit case 025", () => {
+
   let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF) % 256;
   const cells = Array.from({ length: 50 }, () => Array.from({ length: 50 }, () => [rnd(), rnd(), rnd()]));
   const data = new Uint8ClampedArray(300 * 300 * 4);
@@ -177,14 +177,14 @@ t('sample: автосетка находит настоящий период, н
   const r = sampleGrid({ w: 300, h: 300, ch: 4, data }, 0, 0);
   assert.equal(r.nx, 50); assert.equal(r.ny, 50);
 });
-t('sample: «Детализация» выше натуральной не апскейлит (потолок 1:1)', () => {
-  // 51×128 исходник, cell<1 (ручная детализация > ширины) — клеток не больше пикселей
+t("unit case 026", () => {
+
   const data = new Uint8ClampedArray(51 * 128 * 4).fill(200);
   const r = sampleGrid({ w: 51, h: 128, ch: 4, data }, 51 / 120, 0); // detail=120 → cell≈0.425
   assert.equal(r.nx, 51); assert.equal(r.ny, 128);
 });
-t('sample: прозрачные пиксели → прозрачная клетка (вырез по альфе)', () => {
-  // 2×1: слева непрозрачный красный, справа полностью прозрачный
+t("unit case 027", () => {
+
   const data = new Uint8ClampedArray([200, 10, 10, 255, 0, 0, 0, 0]);
   const r = sampleGrid({ w: 2, h: 1, ch: 4, data }, 1, 0);
   assert.deepEqual(r.grid[0][0], [200, 10, 10]); assert.equal(r.grid[0][1], null);
@@ -193,25 +193,25 @@ t('quantize: medianCut/nearest', () => {
   const pal = medianCut([[0, 0, 0], [255, 255, 255]], 2);
   assert.equal(pal.length, 2); assert.deepEqual(nearest([20, 20, 20], pal), [0, 0, 0]);
 });
-t('quantize: medianCut сливает почти-дубли, бережёт редкий цвет', () => {
-  // тысяча почти одинаковых красных + один зелёный: зелёный остаётся, красные — один слот
+t("unit case 028", () => {
+
   const cols = [];
   for (let i = 0; i < 1000; i++) cols.push([200 + (i % 11), (i % 7), (i % 5)]);
   cols.push([0, 180, 0]);
   const pal = medianCut(cols, 8);
-  assert.ok(pal.some((c) => c[1] > 150), 'зелёный должен выжить');
+  assert.ok(pal.some((c) => c[1] > 150), 'green should survive');
   const reds = pal.filter((c) => c[0] > 150);
-  assert.equal(reds.length, 1, 'почти одинаковые красные — один цвет');
+  assert.equal(reds.length, 1, 'near-duplicate reds collapse to one color');
 });
-t('quantize: medianCut поглощает редкие переходные тона, бережёт уникальные', () => {
-  // крем ×500, чёрный ×500, редкий «анти-алиасный» крем ×5 (тот же тон, чуть темнее)
-  // и редкий зелёный ×5 (уникальный тон): AA-тон должен влиться в крем, зелёный — остаться
+t("unit case 029", () => {
+
+
   const cols = [];
   for (let i = 0; i < 500; i++) cols.push([240, 230, 220], [20, 20, 20]);
   for (let i = 0; i < 5; i++) cols.push([228, 216, 204], [40, 160, 50]);
   const pal = medianCut(cols, 16);
-  assert.ok(pal.some((c) => c[1] > c[0] + 50), 'зелёный должен остаться');
-  assert.equal(pal.filter((c) => c[0] > 180).length, 1, 'AA-крем поглощён основным кремом');
+  assert.ok(pal.some((c) => c[1] > c[0] + 50), 'green should remain');
+  assert.equal(pal.filter((c) => c[0] > 180).length, 1, 'AA cream merged into the base cream');
 });
 t('quantize: source palette fills the limit with real sample colors', () => {
   const cols = [];
@@ -219,67 +219,67 @@ t('quantize: source palette fills the limit with real sample colors', () => {
   const source = new Set(cols.map((c) => c.join(','))), pal = sourcePaletteFromSamples(cols, 48);
   assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
 });
-t('quantize: paletteFromGrid по частоте', () => {
+t("unit case 030", () => {
   const g = [[[1, 1, 1, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], null]];
   assert.deepEqual(paletteFromGrid(g)[0], [1, 1, 1]);
 });
-t('quantize: exactPaletteFromRgba сохраняет все цвета strip-палитры', () => {
+t("unit case 031", () => {
   const d = new Uint8ClampedArray(46 * 4);
   for (let i = 0; i < 46; i++) { d[i * 4] = i; d[i * 4 + 1] = 80 + i; d[i * 4 + 2] = 160 - i; d[i * 4 + 3] = 255; }
   const r = exactPaletteFromRgba(d, 64);
   assert.equal(r.overflow, false); assert.equal(r.colors.length, 46);
   assert.deepEqual(r.colors[0], [0, 80, 160]); assert.deepEqual(r.colors[45], [45, 125, 115]);
 });
-t('quantize: exactPaletteFromRgba сообщает переполнение, samplesFromRgba берёт непрозрачные', () => {
+t("unit case 032", () => {
   const d = new Uint8ClampedArray([1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 255]);
   assert.deepEqual(samplesFromRgba(d), [[1, 2, 3], [7, 8, 9]]);
   const r = exactPaletteFromRgba(d, 1); assert.equal(r.overflow, true); assert.equal(r.colors.length, 2);
 });
 t('quantize: dedupePal', () => { assert.deepEqual(dedupePal([[1, 1, 1], [1, 1, 1]]), [[1, 1, 1]]); assert.deepEqual(dedupePal([]), [[12, 12, 16]]); });
-t('cleanup: cropEmpty до контура', () => {
+t("unit case 033", () => {
   const g = [[null, null, null], [null, [9, 9, 9, 255], null], [null, null, null]];
   const c = cropEmpty(g); assert.equal(c.length, 1); assert.equal(c[0].length, 1); assert.deepEqual(c[0][0], [9, 9, 9, 255]);
 });
-t('cleanup: despeckle убирает одиночку', () => {
+t("unit case 034", () => {
   const g = [[null, null, null], [null, [9, 9, 9, 255], null], [null, null, null]];
   assert.equal(despeckle(g, 3, 3)[1][1], null);
 });
-t('glow: ореол вокруг пикселя непустой', () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(computeGlow(g, 8, 8, 3, 0.8).length > 0); });
-t('outline: кольцо включает соседа', () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(outlineRings(g, 8, 8, 1).some(([x, y]) => x === 4 && y === 3)); });
-t('bc: яркость поднимает значение', () => { const c = bcAdjust([100, 100, 100, 255], 50, 1); assert.equal(c[0], 150); assert.equal(c[3], 255); });
-t('bc: contrastFactor нейтрален при 0', () => { assert.ok(Math.abs(contrastFactor(0) - 1) < 1e-9); });
-t('adjustment: saturation -100 делает цвет серым без потери альфы', () => { const c = adjustColor([100, 50, 50, 128], { saturation: -100 });
+t("unit case 035", () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(computeGlow(g, 8, 8, 3, 0.8).length > 0); });
+t("unit case 036", () => { const g = blank(8, 8); g[4][4] = [1, 1, 1, 255]; assert.ok(outlineRings(g, 8, 8, 1).some(([x, y]) => x === 4 && y === 3)); });
+t("unit case 037", () => { const c = bcAdjust([100, 100, 100, 255], 50, 1); assert.equal(c[0], 150); assert.equal(c[3], 255); });
+t("unit case 038", () => { assert.ok(Math.abs(contrastFactor(0) - 1) < 1e-9); });
+t("unit case 039", () => { const c = adjustColor([100, 50, 50, 128], { saturation: -100 });
   assert.deepEqual(c, [100, 100, 100, 128]); });
-t('adjustment: hue сдвигает тон', () => { const c = adjustColor([255, 0, 0, 255], { hue: 120 });
+t("unit case 040", () => { const c = adjustColor([255, 0, 0, 255], { hue: 120 });
   assert.deepEqual(c, [0, 255, 0, 255]); });
-t('rotsprite: поворот не теряет контент', () => {
-  const src = new Int32Array([0, 0, 0, 0xff0000ff | 0]); // один непрозрачный пиксель 2×2
+t("unit case 041", () => {
+  const src = new Int32Array([0, 0, 0, 0xff0000ff | 0]);
   const r = rotSprite(src, 2, 2, 0, 1);
   assert.ok(r.w > 0 && r.h > 0); assert.ok(r.data.some((v) => v !== 0));
 });
 
 // --- Tint & Shade Generator ---
-t('tint-shade: тинты — ровно 5 цветов, первый = база', () => {
+t("unit case 042", () => {
   const ti = generateTints([100, 50, 20]);
   assert.equal(ti.length, 5); assert.deepEqual(ti[0], [100, 50, 20]);
 });
-t('tint-shade: тинт светлеет к белому по формуле', () => {
+t("unit case 043", () => {
   assert.deepEqual(generateTints([100, 50, 20])[1], [131, 91, 67]); // +20%: 100+(155*.2)=131 …
-  assert.deepEqual(generateTints([0, 0, 0])[4], [204, 204, 204]); // +80% от чёрного
+  assert.deepEqual(generateTints([0, 0, 0])[4], [204, 204, 204]);
 });
-t('tint-shade: шейды — ровно 5 цветов, темнеют к чёрному', () => {
+t("unit case 044", () => {
   const sh = generateShades([200, 100, 50]);
   assert.equal(sh.length, 5); assert.deepEqual(sh[0], [200, 100, 50]);
   assert.deepEqual(sh[4], [40, 20, 10]); // ×(1-.8)
 });
-t('tint-shade: число базовых цветов гармонии', () => {
+t("unit case 045", () => {
   const b = [200, 80, 60];
   assert.equal(generateHarmonyBaseColors(b, 'complementary').length, 1);
   assert.equal(generateHarmonyBaseColors(b, 'splitComplementary').length, 2);
   assert.equal(generateHarmonyBaseColors(b, 'analogous').length, 2);
   assert.equal(generateHarmonyBaseColors(b, 'triadic').length, 2);
 });
-t('tint-shade: каждая шкала гармонии — база + 4 тинта/шейда (по 5)', () => {
+t("unit case 046", () => {
   const scales = generateTintShadeScalesForHarmony([200, 80, 60], 'triadic');
   assert.equal(scales.length, 2);
   for (const s of scales) { assert.equal(s.tints.length, 5); assert.equal(s.shades.length, 5); assert.deepEqual(s.tints[0], s.base); }
@@ -292,77 +292,77 @@ t('palette-sort: Apollo groups blue, green, warm, violet, then grays', () => {
   assert.deepEqual(out, [blueD, blueL, green, brown, pink, grayD, grayL]);
 });
 
-// --- выделение: растеризация контура и операции над масками ---
-t('poly-mask: прямоугольный контур заполняет клетки внутри', () => {
+
+t("unit case 047", () => {
   const m = polygonToMask([[1, 1], [4, 1], [4, 4], [1, 4]], 8, 8);
   assert.ok(m.has('2,2') && m.has('3,3')); assert.ok(!m.has('0,0') && !m.has('5,5')); });
-t('poly-mask: вырожденный контур (<3 точек) даёт пустое множество', () => {
+t("unit case 048", () => {
   assert.equal(polygonToMask([[1, 1], [2, 2]], 8, 8).size, 0); });
-t('poly-mask: треугольник заполняется по even-odd', () => {
+t("unit case 049", () => {
   const m = polygonToMask([[0, 0], [6, 0], [0, 6]], 8, 8);
   assert.ok(m.has('1,1')); assert.ok(!m.has('5,5')); });
-t('poly-mask: клипуется границами холста', () => {
+t("unit case 050", () => {
   const m = polygonToMask([[-5, -5], [3, -5], [3, 3], [-5, 3]], 4, 4);
   for (const k of m) { const [x, y] = parseKey(k); assert.ok(x >= 0 && y >= 0 && x < 4 && y < 4); } });
-t('mask-ops: replace заменяет, не глядя на базу', () => {
+t("unit case 051", () => {
   const out = combineMask(new Set(['0,0']), new Set(['2,2']), 'replace');
   assert.ok(out.has('2,2') && !out.has('0,0')); });
-t('mask-ops: add объединяет', () => {
+t("unit case 052", () => {
   const out = combineMask(new Set(['0,0']), new Set(['2,2']), 'add');
   assert.ok(out.has('0,0') && out.has('2,2')); });
-t('mask-ops: subtract вычитает', () => {
+t("unit case 053", () => {
   const out = combineMask(new Set(['0,0', '1,1']), new Set(['1,1']), 'subtract');
   assert.ok(out.has('0,0') && !out.has('1,1')); });
-t('mask-ops: intersect оставляет общее', () => {
+t("unit case 054", () => {
   const out = combineMask(new Set(['0,0', '1,1']), new Set(['1,1', '2,2']), 'intersect');
   assert.ok(out.has('1,1') && !out.has('0,0') && !out.has('2,2')); });
-t('mask-ops: без базы возвращает копию новой области', () => {
+t("unit case 055", () => {
   const add = new Set(['3,3']); const out = combineMask(null, add, 'subtract');
   assert.ok(out.has('3,3') && out !== add); });
 
-// --- QuickShape: распознавание формы штриха ---
-t('quickshape: прямой штрих → line', () => { const pts = []; for (let i = 0; i <= 12; i++) pts.push([i, 0]);
+
+t("unit case 056", () => { const pts = []; for (let i = 0; i <= 12; i++) pts.push([i, 0]);
   const sh = recognizeShape(pts); assert.equal(sh && sh.type, 'line'); assert.deepEqual([sh.x0, sh.y0, sh.x1, sh.y1], [0, 0, 12, 0]); });
-t('quickshape: замкнутый прямоугольный штрих → rect по bounds', () => { const pts = [], add = (x, y) => pts.push([x, y]);
+t("unit case 057", () => { const pts = [], add = (x, y) => pts.push([x, y]);
   for (let x = 0; x <= 12; x++) add(x, 0); for (let y = 1; y <= 9; y++) add(12, y);
   for (let x = 11; x >= 0; x--) add(x, 9); for (let y = 8; y >= 0; y--) add(0, y);
   const sh = recognizeShape(pts); assert.equal(sh && sh.type, 'rect'); assert.deepEqual([sh.x0, sh.y0, sh.x1, sh.y1], [0, 0, 12, 9]); });
-t('quickshape: овальный штрих → ellipse', () => { const pts = [], cx = 10, cy = 7, rx = 10, ry = 6;
+t("unit case 058", () => { const pts = [], cx = 10, cy = 7, rx = 10, ry = 6;
   for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2; pts.push([Math.round(cx + rx * Math.cos(a)), Math.round(cy + ry * Math.sin(a))]); }
   assert.equal(recognizeShape(pts).type, 'ellipse'); });
-t('quickshape: круговой штрих → ellipse с равными сторонами', () => { const pts = [], c = 12, r = 9;
+t("unit case 059", () => { const pts = [], c = 12, r = 9;
   for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2; pts.push([Math.round(c + r * Math.cos(a)), Math.round(c + r * Math.sin(a))]); }
   const sh = recognizeShape(pts); assert.equal(sh.type, 'ellipse'); assert.equal(sh.x1 - sh.x0, sh.y1 - sh.y0); });
-t('quickshape: каракули и короткий штрих не распознаются (raw остаётся)', () => {
+t("unit case 060", () => {
   assert.equal(recognizeShape([[0, 0], [9, 1], [1, 8], [8, 2], [2, 9], [0, 4]]), null);
   assert.equal(recognizeShape([[0, 0], [1, 1]]), null); });
 
-// --- импорт кистей (brush-mask) ---
-t('brush-mask: круглый кончик 1×1 — одна клетка', () => { const m = maskRound(1); assert.deepEqual([m.w, m.h], [1, 1]); assert.equal(m.data[0], 1); });
-t('brush-mask: круглый кончик 5×5 — центр вкл, углы выкл', () => { const m = maskRound(5);
+
+t("unit case 061", () => { const m = maskRound(1); assert.deepEqual([m.w, m.h], [1, 1]); assert.equal(m.data[0], 1); });
+t("unit case 062", () => { const m = maskRound(5);
   assert.equal(m.data[2 * 5 + 2], 1); assert.equal(m.data[0], 0); assert.equal(m.data[4], 0); });
-t('brush-mask: точечный кончик (1×1 покрытие) → сплошной квадрат size×size', () => {
+t("unit case 063", () => {
   const m = coverageToMask({ w: 1, h: 1, data: new Uint8Array([254]) }, 4);
   assert.deepEqual([m.w, m.h], [4, 4]); assert.ok(m.data.every((v) => v === 1)); });
-t('brush-mask: сохраняет пропорции по большей стороне', () => {
-  const data = new Uint8Array(8 * 2).fill(255); // широкий кончик 8×2
+t("unit case 064", () => {
+  const data = new Uint8Array(8 * 2).fill(255);
   const m = coverageToMask({ w: 8, h: 2, data }, 8); assert.equal(Math.max(m.w, m.h), 8); assert.ok(m.h < m.w); });
-t('brush-mask: пустое покрытие → null', () => { assert.equal(coverageToMask({ w: 4, h: 4, data: new Uint8Array(16) }, 4), null); });
-t('brush-mask: дизер-тайл сводится к фундаментальному периоду (шахматка → 2×2)', () => {
+t("unit case 065", () => { assert.equal(coverageToMask({ w: 4, h: 4, data: new Uint8Array(16) }, 4), null); });
+t("unit case 066", () => {
   const d = new Uint8Array(64); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) d[y * 8 + x] = (x + y) % 2 ? 255 : 0;
   const tile = coverageToTile({ w: 8, h: 8, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
   assert.deepEqual([...tile.data], [0, 1, 1, 0]); });
-t('brush-mask: дизер 4×4 (.#../пусто) → период 2×2', () => {
+t("unit case 067", () => {
   const d = new Uint8Array([0, 255, 0, 255, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 0, 0]);
   const tile = coverageToTile({ w: 4, h: 4, data: d }); assert.deepEqual([tile.w, tile.h], [2, 2]);
   assert.deepEqual([...tile.data], [0, 1, 0, 0]); });
-t('brush-mask: вырожденный grain (всё вкл/выкл) → null', () => {
+t("unit case 068", () => {
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array([255, 255, 255, 255]) }), null);
   assert.equal(coverageToTile({ w: 2, h: 2, data: new Uint8Array(4) }), null); });
 
-// --- bplist (Brush.archive → параметры) ---
-t('bplist: распаковка NSKeyedArchiver → имя и параметры', () => {
-  // минимальный bplist00: обёртка {$top,$objects}; CF$UID индексируют $objects.
+
+t("unit case 069", () => {
+
   const str = (s) => Uint8Array.from([0x50 | s.length, ...[...s].map((c) => c.charCodeAt(0))]);
   const real = (v) => { const b = new Uint8Array(9); b[0] = 0x23; new DataView(b.buffer).setFloat64(1, v); return b; };
   const uid = (n) => Uint8Array.from([0x80, n]);
@@ -382,7 +382,7 @@ t('bplist: распаковка NSKeyedArchiver → имя и параметры
   assert.equal(a.name, 'Test'); assert.equal(a.plotSpacing, 1); assert.equal(a.plotJitter, 2.5);
 });
 
-await (async () => { // .abr v1: один семплированный кончик 2×2 (raw)
+await (async () => {
   const ab = new Uint8Array(48), dv = new DataView(ab.buffer); let q = 0;
   dv.setUint16(q, 1); q += 2; dv.setUint16(q, 1); q += 2; // version=1, count=1
   dv.setUint16(q, 2); q += 2; dv.setUint32(q, 38); q += 4; // type=sampled, len=38
@@ -393,10 +393,10 @@ await (async () => { // .abr v1: один семплированный конч�
   const list = await importAbr(ab.buffer);
   assert.equal(list.length, 1); assert.equal(list[0].source, 'abr');
   assert.deepEqual([list[0].cov.w, list[0].cov.h], [2, 2]);
-  n++; console.log('  ok   abr: v1 sampled tip → запись кисти');
+  n++; console.log("Test passed");
 })();
 
-t('brush-pack: round-trip набора кистей (маска Uint8Array)', () => {
+t("unit case 070", () => {
   const brushes = [{ name: 'Star', source: 'custom', shape: 'shape', baseSize: 6, params: { spacing: 1, jitter: 0 },
     cov: { w: 2, h: 2, data: new Uint8Array([0, 255, 200, 0]) }, grain: { w: 2, h: 2, data: new Uint8Array([1, 0, 0, 1]) } }];
   const out = unpackSet(packSet('Decor', brushes));
@@ -404,131 +404,130 @@ t('brush-pack: round-trip набора кистей (маска Uint8Array)', ()
   const b = out.brushes[0]; assert.equal(b.name, 'Star'); assert.equal(b.baseSize, 6); assert.equal(b.params.spacing, 1);
   assert.ok(b.cov.data instanceof Uint8Array); assert.deepEqual([...b.cov.data], [0, 255, 200, 0]); assert.deepEqual([...b.grain.data], [1, 0, 0, 1]);
 });
-t('brush-pack: чужой файл отвергается', () => { assert.throws(() => unpackSet('{"format":"other"}')); });
+t("unit case 071", () => { assert.throws(() => unpackSet('{"format":"other"}')); });
 
-t('brush-stamp: режим выводится по параметрам и переопределяется явно', () => {
+t("unit case 072", () => {
   assert.equal(brushMode({}), 'flow'); assert.equal(brushMode({ spacing: 1 }), 'single');
   assert.equal(brushMode({ jitter: 2 }), 'scatter'); assert.equal(brushMode({ mode: 'flow', jitter: 2 }), 'flow'); });
-t('brush-stamp: stampSize — натуральный для кисти из выделения, иначе слайдер', () => {
+t("unit case 073", () => {
   assert.equal(stampSize({ baseSize: 20 }, 8, 8), 20); assert.equal(stampSize({ baseSize: 20 }, 4, 8), 10); assert.equal(stampSize({}, 5, 8), 5); });
-t('brush-stamp: brushHasShape — нестандартные кисти (baseSize/форма), не базовые', () => {
-  assert.equal(brushHasShape({ baseSize: 8 }), true);            // из выделения
-  assert.equal(brushHasShape({ cov: { w: 12, h: 9 } }), true);  // импортированная форма
-  assert.equal(brushHasShape({ cov: { w: 1, h: 1 } }), false);  // базовый квадрат
-  assert.equal(brushHasShape({ cov: null }), false);            // базовый круг/дизер
+t("unit case 074", () => {
+  assert.equal(brushHasShape({ baseSize: 8 }), true);
+  assert.equal(brushHasShape({ cov: { w: 12, h: 9 } }), true);
+  assert.equal(brushHasShape({ cov: { w: 1, h: 1 } }), false);
+  assert.equal(brushHasShape({ cov: null }), false);
   assert.equal(brushHasShape(null), false);
 });
-t('brush-stamp: planDab — flow штампует всегда, single соблюдает spacing', () => {
+t("unit case 075", () => {
   assert.deepEqual(planDab({}, 4, { acc: 0 }, 3, 7), { cx: 3, cy: 7, size: 4 }); // flow
   const st = { acc: 0 }; const a = planDab({ mode: 'single', spacing: 1 }, 4, st, 0, 0); // gap=4
   assert.ok(a && a.cx === 0); assert.equal(planDab({ mode: 'single', spacing: 1 }, 4, st, 1, 0), null); });
 
-t('brush-preview: круглая кисть рисует непустой мазок в полосе', () => {
+t("unit case 076", () => {
   const pr = previewStroke({ cov: null, shape: 'round' }, 40, 16); let on = 0; for (const v of pr.data) on += v;
-  assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'мазок непустой');
+  assert.deepEqual([pr.w, pr.h], [40, 16]); assert.ok(on > 0, 'stroke is non-empty');
 });
-t('brush-preview: дизеринг в иконке совпадает с реальным footprint', () => {
+t("unit case 077", () => {
   const b = { cov: null, shape: 'round', grain: { w: 2, h: 2, data: new Uint8Array([0, 1, 1, 0]) } };
   const fp = footprintMask(b, 6, 64, 0, 0), ic = stampIcon(b, 10, 6, 0, 0);
   let fpn = 0, icn = 0; for (const v of fp.data) fpn += v; for (const v of ic.data) icn += v;
   assert.ok(fpn > 0 && fpn < fp.data.length); assert.equal(icn, fpn);
 });
 
-t('brush-cursor: без кисти — сплошной квадрат size×size', () => {
+t("unit case 078", () => {
   const m = footprintMask(null, 4, 64);
   assert.deepEqual([m.w, m.h], [4, 4]); let on = 0; for (const v of m.data) on += v; assert.equal(on, 16);
 });
-t('brush-cursor: круглая кисть — непустая маска отпечатка', () => {
+t("unit case 079", () => {
   const m = footprintMask({ cov: null, shape: 'round' }, 8, 64); let on = 0; for (const v of m.data) on += v;
   assert.ok(m.w === 8 && m.h === 8 && on > 0);
 });
-t('brush-cursor: dither/grain входит в маску отпечатка', () => {
+t("unit case 080", () => {
   const b = { cov: null, shape: 'round', grain: { w: 2, h: 2, data: new Uint8Array([0, 1, 1, 0]) } };
   const m = footprintMask(b, 8, 64, 0, 0), full = footprintMask({ cov: null, shape: 'round' }, 8, 64);
   let on = 0, all = 0; for (const v of m.data) on += v; for (const v of full.data) all += v;
   assert.ok(on > 0 && on < all);
 });
-t('brush-cursor: размер маски следует за натуральным размером кисти', () => {
+t("unit case 081", () => {
   const m = footprintMask({ cov: null, baseSize: 20 }, 64, 64); assert.equal(Math.max(m.w, m.h), 20);
 });
-t('brush-cursor: поворот по умолчанию 0, читается из params', () => {
+t("unit case 082", () => {
   assert.equal(footprintRotation(null), 0); assert.equal(footprintRotation({ params: {} }), 0);
   assert.equal(footprintRotation({ params: { rotation: 1.5 } }), 1.5);
 });
 
-t('key-code: физическая клавиша не зависит от раскладки (D работает в кириллице)', () => {
-  assert.equal(keyName('KeyD'), 'd'); // e.key был бы 'в' в русской раскладке — code стабилен
+t("unit case 083", () => {
+  assert.equal(keyName('KeyD'), 'd');
   assert.equal(keyName('Digit5'), '5'); assert.equal(keyName('BracketLeft'), '[');
   assert.equal(keyName('Delete'), 'delete'); assert.equal(keyName('F7'), null);
 });
-t('key-code: eventKey покрывает и буквы, и модификаторы по позиции', () => {
+t("unit case 084", () => {
   assert.equal(eventKey({ code: 'KeyD' }), 'd'); assert.equal(eventKey({ code: 'AltLeft' }), 'alt');
   assert.equal(eventKey({ code: 'ControlRight' }), 'control'); assert.equal(eventKey({ code: 'F7' }), null);
 });
 
-t('gallery-grid: папки и файлы в одном ряду, сортировка по order/updated', () => {
+t("unit case 085", () => {
   const items = [
     { id: 'old', kind: 'doc', name: 'Old', updated: 20 },
     { id: 'f1', kind: 'folder', name: 'Folder 1', order: 10 },
     { id: 'new', kind: 'doc', name: 'New', updated: 40 },
     { id: 'f2', kind: 'folder', name: 'Folder 2', order: 30 },
   ];
-  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['new', 'f2', 'old', 'f1']); // без выделения папок вперёд — общий порядок по rank
+  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['new', 'f2', 'old', 'f1']);
   assert.deepEqual(items.map((x) => x.id), ['old', 'f1', 'new', 'f2']);
 });
-t('gallery-grid: ручной order работ важнее свежего updated (перестановка не отскакивает)', () => {
-  // у работ есть order (доки создаются с order=Date.now()); перестановка двигает
-  // order, а автосейв бампает только updated — порядок должен держать order
+t("unit case 086", () => {
+
+
   const items = [
-    { id: 'a', kind: 'doc', name: 'A', order: 300, updated: 999 }, // только что отредактирован → свежий updated
+    { id: 'a', kind: 'doc', name: 'A', order: 300, updated: 999 },
     { id: 'b', kind: 'doc', name: 'B', order: 200, updated: 100 },
     { id: 'c', kind: 'doc', name: 'C', order: 100, updated: 50 },
   ];
-  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['a', 'b', 'c']); // по order, не по updated
+  assert.deepEqual(sortGalleryItems(items).map((x) => x.id), ['a', 'b', 'c']);
   const moved = [
-    { id: 'a', kind: 'doc', name: 'A', order: 150, updated: 999 }, // переставили A между C и B
+    { id: 'a', kind: 'doc', name: 'A', order: 150, updated: 999 },
     { id: 'b', kind: 'doc', name: 'B', order: 200, updated: 100 },
     { id: 'c', kind: 'doc', name: 'C', order: 100, updated: 50 },
   ];
-  assert.deepEqual(sortGalleryItems(moved).map((x) => x.id), ['b', 'a', 'c']); // новый order держится
+  assert.deepEqual(sortGalleryItems(moved).map((x) => x.id), ['b', 'a', 'c']);
 });
-t('gallery-grid: reorderedIds переставляет работу перед целью и в конец', () => {
+t("unit case 087", () => {
   const items = [
     { id: 'a', kind: 'doc', order: 300 }, { id: 'b', kind: 'doc', order: 200 }, { id: 'c', kind: 'doc', order: 100 },
   ];
-  assert.deepEqual(reorderedIds(items, ['a'], 'c'), ['b', 'a', 'c']); // 'a' встаёт перед 'c'
-  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'c', 'a']); // без цели → в конец
-  assert.equal(reorderedIds(items, ['zzz'], 'c'), null); // нечего двигать
+  assert.deepEqual(reorderedIds(items, ['a'], 'c'), ['b', 'a', 'c']);
+  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'c', 'a']);
+  assert.equal(reorderedIds(items, ['zzz'], 'c'), null);
 });
-t('gallery-grid: reorderedIds переставляет любую плитку среди всех (папки и файлы)', () => {
+t("unit case 088", () => {
   const items = [
     { id: 'f1', kind: 'folder', order: 50 }, { id: 'a', kind: 'doc', order: 300 }, { id: 'b', kind: 'doc', order: 200 },
   ];
-  // общий порядок по order desc: a(300), b(200), f1(50)
-  assert.deepEqual(reorderedIds(items, ['f1'], 'a'), ['f1', 'a', 'b']); // папку можно увести в начало, перед файлом a
-  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'f1', 'a']); // файл — в самый конец, мимо папки
+
+  assert.deepEqual(reorderedIds(items, ['f1'], 'a'), ['f1', 'a', 'b']);
+  assert.deepEqual(reorderedIds(items, ['a'], null), ['b', 'f1', 'a']);
 });
 
-// --- Symmetry mapper ---
-t('symmetry: expandMask зеркалит по X (лево-право)', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);
+t("unit case 089", () => { const m = expandMask(new Set(['1,2']), 8, 8, true, false);
   assert.ok(m.has('1,2') && m.has('6,2')); assert.equal(m.size, 2); });
-t('symmetry: expandMask зеркалит по Y (верх-низ)', () => { const m = expandMask(new Set(['1,2']), 8, 8, false, true);
+t("unit case 090", () => { const m = expandMask(new Set(['1,2']), 8, 8, false, true);
   assert.ok(m.has('1,2') && m.has('1,5')); });
-t('symmetry: двойная симметрия даёт 4 копии', () => { const m = expandMask(new Set(['1,2']), 8, 8, true, true);
+t("unit case 091", () => { const m = expandMask(new Set(['1,2']), 8, 8, true, true);
   assert.equal(m.size, 4); assert.ok(m.has('6,5')); });
-t('symmetry: диагональные оси зеркалят по 45 и -45 градусам', () => {
+t("unit case 092", () => {
   let m = expandMask(new Set(['1,3']), 6, 6, false, false, { d1: true });
   assert.ok(m.has('1,3') && m.has('3,1'));
   m = expandMask(new Set(['1,2']), 6, 6, false, false, { d2: true });
   assert.ok(m.has('1,2') && m.has('3,4'));
 });
-t('symmetry: без осей маска не меняется', () => { assert.deepEqual([...expandMask(new Set(['1,2']), 8, 8, false, false)], ['1,2']); });
-t('symmetry: mirrorDeltas инвертирует знак по активной оси', () => {
+t("unit case 093", () => { assert.deepEqual([...expandMask(new Set(['1,2']), 8, 8, false, false)], ['1,2']); });
+t("unit case 094", () => {
   assert.deepEqual(mirrorDeltas(3, 2, true, false), [[3, 2], [-3, 2]]);
   assert.deepEqual(mirrorDeltas(3, 2, false, true), [[3, 2], [3, -2]]);
   assert.deepEqual(mirrorDeltas(3, 2, true, true), [[3, 2], [-3, 2], [3, -2], [-3, -2]]); });
 
-// --- конфигурация ---
+
 const APOLLO_46 = [
   '#172038', '#253a5e', '#3c5e8b', '#4f8fba', '#73bed3', '#a4dddb',
   '#19332d', '#25562e', '#468232', '#75a743', '#a8ca58', '#d0da91',
@@ -539,67 +538,67 @@ const APOLLO_46 = [
   '#090a14', '#10141f', '#151d28', '#202e37', '#394a50', '#577277',
   '#819796', '#a8b5b2', '#c7cfcc', '#ebede9',
 ];
-t('config: limits разумны', () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });
-t('config: historyCap не растёт с площадью', () => { assert.ok(historyCap(100) >= historyCap(50000) && historyCap(50000) >= historyCap(200000)); });
-t('config: пресеты размеров валидны', () => { assert.ok(SIZE_PRESETS.length > 0); for (const p of SIZE_PRESETS) assert.ok(p.w > 0 && p.h > 0 && p.label); assert.ok(DEFAULT_DOC.w > 0 && DEFAULT_DOC.h > 0); });
-t('config: палитра по умолчанию', () => { const p = defaultPalette(); assert.deepEqual(DEFAULT_PALETTE_HEX, APOLLO_46);
+t("unit case 095", () => { assert.ok(MAX_LAYERS >= 1 && ZOOM_MAX > ZOOM_MIN); });
+t("unit case 096", () => { assert.ok(historyCap(100) >= historyCap(50000) && historyCap(50000) >= historyCap(200000)); });
+t("unit case 097", () => { assert.ok(SIZE_PRESETS.length > 0); for (const p of SIZE_PRESETS) assert.ok(p.w > 0 && p.h > 0 && p.label); assert.ok(DEFAULT_DOC.w > 0 && DEFAULT_DOC.h > 0); });
+t("unit case 098", () => { const p = defaultPalette(); assert.deepEqual(DEFAULT_PALETTE_HEX, APOLLO_46);
   assert.equal(DEFAULT_ACTIVE, 0); assert.equal(p.length, 46); assert.ok(DEFAULT_ACTIVE < p.length); assert.deepEqual(p[0], [23, 32, 56]); assert.deepEqual(p[p.length - 1], [235, 237, 233]); });
-t('config: S берёт дефолты из config', () => { assert.equal(S.palette.length, DEFAULT_PALETTE_HEX.length); assert.deepEqual(S.active, defaultPalette()[DEFAULT_ACTIVE]); });
+t("unit case 099", () => { assert.equal(S.palette.length, DEFAULT_PALETTE_HEX.length); assert.deepEqual(S.active, defaultPalette()[DEFAULT_ACTIVE]); });
 
-t('i18n: t() даёт строку ru по умолчанию', () => { assert.equal(tr('tool.pencil'), ru['tool.pencil']); assert.equal(tr('нет.такого'), 'нет.такого'); });
-t('i18n: ключи ru и en совпадают', () => { assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort()); });
+t("unit case 100", () => { assert.equal(tr('tool.pencil'), ru['tool.pencil']); assert.equal(tr('missing.key'), 'missing.key'); });
+t("unit case 101", () => { assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort()); });
 
 // --- Tileset / Tilemap ---
 const RED = [255, 0, 0, 255], GRN = [0, 255, 0, 255];
-// тайл 2×2: верхний-левый красный, верхний-правый зелёный (для проверки трансформаций)
+
 const sampleTile = () => [[RED.slice(), GRN.slice()], [null, null]];
-t('tile-transform: flipX зеркалит по горизонтали', () => {
+t("unit case 102", () => {
   const g = transformTile(sampleTile(), { flipX: true });
   assert.deepEqual(g[0][0], GRN); assert.deepEqual(g[0][1], RED); });
-t('tile-transform: flipY зеркалит по вертикали', () => {
+t("unit case 103", () => {
   const g = transformTile(sampleTile(), { flipY: true });
   assert.deepEqual(g[1][0], RED); assert.deepEqual(g[1][1], GRN); });
-t('tile-transform: rotate 90 двигает верх-лево вправо-верх', () => {
+t("unit case 104", () => {
   const g = transformTile(sampleTile(), { rotation: 90 });
   assert.deepEqual(g[0][1], RED); });
-t('tile-transform: diagonalFlip = транспонирование', () => {
+t("unit case 105", () => {
   const g = transformTile(sampleTile(), { diagonalFlip: true });
   assert.deepEqual(g[0][0], RED); assert.deepEqual(g[1][0], GRN); });
-t('tile-transform: не мутирует источник', () => {
+t("unit case 106", () => {
   const src = sampleTile(); transformTile(src, { flipX: true, rotation: 180 });
   assert.deepEqual(src[0][0], RED); });
-t('tile-transform: invTransformCoord обратен transformTile', () => {
-  const src = [[[0, 0, 0, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], [3, 3, 3, 255]]]; // 2×2 уникальные метки
+t("unit case 107", () => {
+  const src = [[[0, 0, 0, 255], [1, 1, 1, 255]], [[2, 2, 2, 255], [3, 3, 3, 255]]];
   for (const flags of [{ flipX: true }, { flipY: true }, { rotation: 90 }, { rotation: 270 }, { diagonalFlip: true }, { flipX: true, rotation: 90 }]) {
     const disp = transformTile(src, flags);
     for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
       const [sx, sy] = invTransformCoord(dx, dy, 2, flags);
-      assert.deepEqual(disp[dy][dx], src[sy][sx]); // отображаемый пиксель = источник по обратной координате
+      assert.deepEqual(disp[dy][dx], src[sy][sx]);
     }
   }
 });
-t('tilemap-raster: клетки укладываются по пиксельным смещениям', () => {
+t("unit case 108", () => {
   const tile = [[RED.slice()]]; // 1×1
   const tm = { mapW: 2, mapH: 1, cells: [{ tileId: 1 }, null] };
   const grid = rasterTilemap(tm, 1, 1, (id) => (id === 1 ? tile : null));
   assert.deepEqual(grid[0][0], RED); assert.equal(grid[0][1], null); });
-t('tileset: tileId стабилен при удалении соседа', () => {
+t("unit case 109", () => {
   const ts = { id: 1, tileW: 2, tileH: 2, tiles: [], groups: [], tileSeq: 0 };
   const a = addTile(ts), b = addTile(ts), c = addTile(ts);
   deleteTile(ts, b.id);
   assert.equal(getTile(ts, a.id).id, a.id); assert.equal(getTile(ts, c.id).id, c.id);
   assert.equal(getTile(ts, b.id), null); });
-t('tileset: duplicate даёт новый id рядом', () => {
+t("unit case 110", () => {
   const ts = { id: 1, tileW: 2, tileH: 2, tiles: [], groups: [], tileSeq: 0 };
   const a = addTile(ts), d = duplicateTile(ts, a.id);
   assert.notEqual(d.id, a.id); assert.equal(ts.tiles.indexOf(d), ts.tiles.indexOf(a) + 1); });
-t('tilemap-data: cloneTilemap не делит ссылки на клетки', () => {
+t("unit case 111", () => {
   const tm = { tilesetId: 1, mapW: 1, mapH: 1, cells: [{ tileId: 5, flipX: true }] };
   const c = cloneTilemap(tm); c.cells[0].tileId = 9;
   assert.equal(tm.cells[0].tileId, 5); assert.equal(tm.cells[0].flipX, true); });
-t('tileset-data: cloneTileset копирует сетки тайлов', () => {
+t("unit case 112", () => {
   const ts = { id: 1, name: 'a', tileW: 1, tileH: 1, tileSeq: 1, tiles: [{ id: 1, name: '', weight: 10, grid: [[RED.slice()]] }], groups: [] };
   const cl = cloneTileset(ts); cl.tiles[0].grid[0][0][0] = 0;
   assert.equal(ts.tiles[0].grid[0][0][0], 255); });
 
-console.log(`\nВсе ${n} юнит-тестов прошли ✓`);
+console.log(`\nAll ${n} unit tests passed`);

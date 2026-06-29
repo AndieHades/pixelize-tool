@@ -7,7 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "node test/unit.mjs && node test/storage.mjs && node test/module-int.mjs && node test/module-boot.mjs"
+    "test": "node test/no-cyrillic.mjs && node test/unit.mjs && node test/storage.mjs && node test/module-int.mjs && node test/module-boot.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

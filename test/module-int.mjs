@@ -1,16 +1,16 @@
-// Интеграционные тесты сервисов core/, которым нужен DOM (canvas). Поднимаем
-// jsdom-глобали и импортируем модули напрямую — проверяем по мере портирования,
-// не дожидаясь сборки всего приложения.
+
+
+
 import 'fake-indexeddb/auto';
 import assert from 'node:assert/strict';
 import { makeDom } from './harness.mjs';
 
 const { window } = makeDom();
-// аккуратно прокидываем jsdom-глобали в node (часть из них — read-only геттеры)
+
 for (const k of ['document', 'requestAnimationFrame', 'cancelAnimationFrame', 'matchMedia', 'HTMLCanvasElement', 'Blob', 'File', 'Image', 'localStorage', 'window']) {
   try { Object.defineProperty(globalThis, k, { value: k === 'window' ? window : window[k], configurable: true, writable: true }); } catch (e) {}
 }
-globalThis.URL.createObjectURL = () => 'blob:stub'; // нодовский URL не принимает jsdom-Blob
+globalThis.URL.createObjectURL = () => 'blob:stub';
 globalThis.URL.revokeObjectURL = () => {};
 
 const { S, blank, BP_SMAX, newEffect, cloneFx } = await import('../src/core/state.js');
@@ -150,7 +150,7 @@ function commitEditor(value, key = 'Enter') {
   return ed;
 }
 
-// общий проект для экспорта: папка G со слоями b,c + одиночный слой a (низ→верх)
+
 function exportProject() { resetWH(6, 6);
   S.layers = [
     { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
@@ -161,47 +161,47 @@ function exportProject() { resetWH(6, 6);
   S.cur = 0; S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null; cache.dirtyAll();
 }
 
-// маленький документ с одним непустым пикселем
+
 S.W = 4; S.H = 4; S.cur = 0; S.folders = [];
 S.layers = [{ name: 'a', grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] }];
 S.layers[0].grid[1][2] = [10, 20, 30, 255];
 cache.dirtyAll();
 
-t('layerCanvas: кеш слоя в canvas W×H', () => { const c = cache.layerCanvas(0); assert.equal(c.width, 4); assert.equal(c.height, 4); });
-t('compositeAt: цвет точки по слоям', () => { assert.deepEqual(cache.compositeAt(2, 1), [10, 20, 30]); assert.equal(cache.compositeAt(0, 0), null); });
-t('compositeLayers: рисует видимые слои', () => { let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); assert.ok(drew >= 1); });
-t('compositeLayers: скрытый слой пропускается', () => { S.layers[0].visible = false; cache.dirtyAll(); let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); S.layers[0].visible = true; assert.equal(drew, 0); });
-t('layerExtCanvas: запас за краем пакуется в canvas со смещением', () => { reset4();
+t("module-int case 001", () => { const c = cache.layerCanvas(0); assert.equal(c.width, 4); assert.equal(c.height, 4); });
+t("module-int case 002", () => { assert.deepEqual(cache.compositeAt(2, 1), [10, 20, 30]); assert.equal(cache.compositeAt(0, 0), null); });
+t("module-int case 003", () => { let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); assert.ok(drew >= 1); });
+t("module-int case 004", () => { S.layers[0].visible = false; cache.dirtyAll(); let drew = 0; cache.compositeLayers({ globalAlpha: 1, drawImage() { drew++; } }); S.layers[0].visible = true; assert.equal(drew, 0); });
+t("module-int case 005", () => { reset4();
   S.layers[0].ext = new Map([['-2,1', [9, 8, 7, 255]]]); cache.dirtyAll();
   const ex = cache.layerExtCanvas(0); assert.ok(ex); assert.equal(ex.ox, -2); assert.equal(ex.oy, 1);
   assert.equal(ex.canvas.width, 1); assert.equal(ex.canvas.height, 1);
   S.layers[0].ext = new Map(); cache.dirtyAll(); assert.equal(cache.layerExtCanvas(0), null); });
-t('io.gridToCanvas: фрагмент → canvas', () => { const c = io.gridToCanvas(S.layers[0].grid, 0, 0, 4, 4); assert.equal(c.width, 4); assert.equal(c.height, 4); });
+t("module-int case 006", () => { const c = io.gridToCanvas(S.layers[0].grid, 0, 0, 4, 4); assert.equal(c.width, 4); assert.equal(c.height, 4); });
 
-t('history: snapshot/undo откатывает', () => {
+t("module-int case 007", () => {
   history.snapshot(); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   history.doUndo(); assert.equal(S.layers[0].grid[0][0], null);
 });
-t('history: redo возвращает', () => { history.doRedo(); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); history.doUndo(); });
-t('history: snapshot шлёт событие', () => { let hit = 0; const off = bus.on('snapshot', () => hit++); history.snapshot(); off(); assert.equal(hit, 1); });
-t('history: undoGuard перехватывает отмену', () => {
+t("module-int case 008", () => { history.doRedo(); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); history.doUndo(); });
+t("module-int case 009", () => { let hit = 0; const off = bus.on('snapshot', () => hit++); history.snapshot(); off(); assert.equal(hit, 1); });
+t("module-int case 010", () => {
   let guarded = 0; history.setUndoGuard(() => { guarded++; return true; });
   history.snapshot(); S.layers[0].grid[1][1] = [1, 1, 1, 255]; history.doUndo();
   history.setUndoGuard(null);
-  assert.equal(guarded, 1); assert.deepEqual(S.layers[0].grid[1][1], [1, 1, 1, 255]); // не откатилось — перехвачено
+  assert.equal(guarded, 1); assert.deepEqual(S.layers[0].grid[1][1], [1, 1, 1, 255]);
 });
-t('history: undo сначала снимает активное выделение', () => { reset4(); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 011", () => { reset4(); S.undoStack.length = 0; S.redoStack.length = 0;
   S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.layers[0].grid[0][0] = [3, 3, 3, 255]; history.snapshot();
   S.layers[0].grid[0][0] = [9, 9, 9, 255]; history.doUndo();
   assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]); assert.equal(S.undoStack.length, 1); });
 
-t('document: expandCanvas растит холст и сдвигает пиксель', () => { reset4();
+t("module-int case 012", () => { reset4();
   S.layers[0].grid[1][1] = [5, 5, 5, 255];
-  doc.expandCanvas(1, 1, 0, 0); // +1 слева, +1 сверху
+  doc.expandCanvas(1, 1, 0, 0);
   assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [5, 5, 5, 255]);
 });
-t('text-layer: создаёт редактируемый слой с растровым кешем', () => {
+t("module-int case 013", () => {
   resetWH(32, 16);
   const L = textLayer.makeTextLayer('Text', S.W, S.H, { value: 'Hi', size: 8, color: '#ffffff' }, { x: 1, y: 1 });
   assert.equal(L.kind, 'text'); assert.equal(L.text.value, 'Hi');
@@ -234,7 +234,7 @@ t('text-tool: clearing existing text deletes its layer', () => {
   const ed = document.getElementById('text-editor'); ed.innerText = ''; ed.dispatchEvent(new window.Event('blur'));
   assert.equal(S.layers.length, 0); assert.equal(S.bgSel, true);
 });
-t('document: сдвиг текстового слоя двигает источник текста', () => {
+t("module-int case 014", () => {
   resetWH(32, 16);
   const L = textLayer.makeTextLayer('Text', S.W, S.H, {}, { x: 2, y: 3 });
   doc.shiftLayerGrid(L, 4, -1);
@@ -285,7 +285,7 @@ t('text-ui: T icon, frame handles and font controls affect live text', () => {
   assert.equal(L.text.letterSpacing, 3); assert.equal(L.text.lineSpacing, 7);
   textLayer.rasterizeTextLayer(L, S.W, S.H); layList(); assert.equal(document.querySelector('#lay-list .ltext'), null);
 });
-t('document: crop-расширение обновляет клетки Tilemap', () => {
+t("module-int case 015", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('Tilemap', ts.id, 2, 2); S.layers = [L]; S.cur = 0;
@@ -296,23 +296,23 @@ t('document: crop-расширение обновляет клетки Tilemap',
   const h = toolHandler('tilebrush'); h.down({ gx: 12, gy: 12 }); h.up({});
   assert.equal(L.tilemap.cells[3 * 4 + 3].tileId, tile.id);
 });
-t('document: expandForEffects раздвигает холст под обводку у края', () => { reset4();
-  S.layers[0].grid[0][0] = [9, 9, 9, 255]; // пиксель в углу — обводке size 2 не хватает места
+t("module-int case 016", () => { reset4();
+  S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 2, color: '#ff0000' } }];
   const grew = doc.expandForEffects(S.layers[0]);
-  assert.equal(grew, true); assert.equal(S.W, 6); assert.equal(S.H, 6); // +2 слева и сверху (справа/снизу место уже есть)
+  assert.equal(grew, true); assert.equal(S.W, 6); assert.equal(S.H, 6);
   assert.deepEqual(S.layers[0].grid[2][2], [9, 9, 9, 255]); S.layers[0].effects = []; });
-t('render: рисует и шлёт событие overlay', () => { reset4();
+t("module-int case 017", () => { reset4();
   S.layers[0].grid[1][2] = [10, 20, 30, 255]; cache.dirtyAll();
   let ov = 0; const off = bus.on('overlay', () => ov++); render.render(); off();
   assert.equal(ov, 1);
 });
-t('render: с выделением и кропом не падает', () => { reset4();
+t("module-int case 018", () => { reset4();
   S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.tool = 'select'; render.render();
   S.sel = null; S.cropMode = { x0: 0, y0: 0, x1: 2, y1: 2, idx: 0, idy: 0 }; render.render();
   S.cropMode = null; assert.ok(true);
 });
-t('render: ants остаются только у выделения, ручки лежат поверх пунктира', () => { reset4();
+t("module-int case 019", () => { reset4();
   S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null; render.render();
   const ants = document.getElementById('sel-ants');
   assert.equal(ants.style.display, '');
@@ -324,8 +324,8 @@ t('render: ants остаются только у выделения, ручки 
   assert.equal(ants.querySelectorAll('.handles circle').length, 0);
   S.rotMode = null; S.rotQuad = null;
 });
-t('render: fitView ставит zoom ≥ 1', () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
-t('render: zoom in/out идут чётким шагом 50%', () => { reset4();
+t("module-int case 020", () => { reset4(); render.fitView(); assert.ok(S.view.zoom >= 1); });
+t("module-int case 021", () => { reset4();
   const cv = document.getElementById('cv');
   Object.defineProperty(cv, 'clientWidth', { configurable: true, value: 800 });
   Object.defineProperty(cv, 'clientHeight', { configurable: true, value: 600 });
@@ -338,27 +338,27 @@ t('render: zoom in/out идут чётким шагом 50%', () => { reset4();
   actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
   S.view = { zoom: 4.59, ox: 120, oy: 80 }; actions.run('zoom.out'); assert.equal(S.view.zoom, 4.5);
 });
-t('render: real size ставит масштаб 1:1 и центрирует холст', () => { reset4();
+t("module-int case 022", () => { reset4();
   const cv = document.getElementById('cv');
   Object.defineProperty(cv, 'clientWidth', { configurable: true, value: 800 });
   Object.defineProperty(cv, 'clientHeight', { configurable: true, value: 600 });
   S.view = { zoom: 8, ox: 120, oy: 80 }; actions.run('view.realSize');
   assert.equal(S.view.zoom, 1); assert.equal(S.view.ox, 398); assert.equal(S.view.oy, 298);
 });
-t('cursor: предпросмотр отпечатка рисуется в real/circle без падений', () => { reset4();
+t("module-int case 023", () => { reset4();
   S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; render.render();
-  S.cursorMode = 'circle'; render.render(); // круг размера
-  S.tool = 'eraser'; S.cursorMode = 'real'; render.render(); // ластик — белый отпечаток
-  S.stampBrush.pencil = { tok: 7, cov: null, params: {} }; S.tool = 'pencil'; render.render(); // штамп-кисть
+  S.cursorMode = 'circle'; render.render();
+  S.tool = 'eraser'; S.cursorMode = 'real'; render.render();
+  S.stampBrush.pencil = { tok: 7, cov: null, params: {} }; S.tool = 'pencil'; render.render();
   S.hoverPx = null; S.stampBrush.pencil = null; assert.ok(true); });
-t('cursor: при пипетке real brush скрыт, остаётся только прицел', () => { reset4();
+t("module-int case 024", () => { reset4();
   const ops = { drawImage: 0, lineTo: 0 }, ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, stroke() {},
     lineTo() { ops.lineTo++; }, drawImage() { ops.drawImage++; }, arc() {} };
   S.tool = 'pencil'; S.hoverPx = [2, 2]; S.cursorMode = 'real'; S.brushes.pencil.size = 5;
   S.eyedrop.active = true; drawBrushCursor(ctx, 0, 0, 10);
   assert.equal(ops.drawImage, 0); assert.ok(ops.lineTo > 0);
   S.eyedrop.active = false; S.hoverPx = null; S.brushes.pencil.size = 1; });
-t('cursor: при Shading real brush нейтрально-серый, не активный цвет', () => { reset4();
+t("module-int case 025", () => { reset4();
   const fills = [], proto = HTMLCanvasElement.prototype, orig = proto.getContext;
   proto.getContext = function (...args) { const ctx = orig.apply(this, args);
     return new Proxy(ctx, { set(tg, p, v) { if (p === 'fillStyle') fills.push(v); tg[p] = v; return true; } }); };
@@ -370,40 +370,40 @@ t('cursor: при Shading real brush нейтрально-серый, не ак�
     assert.ok(fills.includes('rgba(190,190,190,.72)')); assert.ok(!fills.includes('rgb(255,0,0)'));
   } finally { proto.getContext = orig; S.shading = { colors: [], on: false, open: false, picking: false }; S.hoverPx = null; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; }
 });
-t('cursor: cursor.cycleMode гоняет режимы по кругу', () => { reset4();
+t("module-int case 026", () => { reset4();
   S.cursorMode = 'real'; actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'circle');
   actions.run('cursor.cycleMode'); assert.equal(S.cursorMode, 'real'); });
 
 const ev = (code, mods = {}) => ({ code, target: document.body, preventDefault() {}, ...mods });
-t('keyboard: комбо из события', () => {
+t("module-int case 027", () => {
   assert.equal(kbd.comboOf({ code: 'KeyB' }), 'b');
   assert.equal(kbd.comboOf({ code: 'KeyZ', ctrlKey: true }), 'mod+z');
   assert.equal(kbd.comboOf({ code: 'KeyS', shiftKey: true }), 'shift+s');
   assert.equal(kbd.comboOf({ code: 'Equal' }), '='); assert.equal(kbd.comboOf({ code: 'Digit0' }), '0');
 });
-t('keyboard: хоткей запускает действие', () => { let ran = 0; actions.register('tool.pencil', () => ran++);
+t("module-int case 028", () => { let ran = 0; actions.register('tool.pencil', () => ran++);
   assert.ok(kbd.handle(ev('KeyB'))); assert.equal(ran, 1); });
-t('keyboard: несвязанная клавиша игнорится', () => { assert.equal(kbd.handle(ev('KeyJ')), false); });
-t('keyboard: rebind переназначает и сбрасывается', () => { let ran = 0; actions.register('edit.undo', () => ran++);
+t("module-int case 029", () => { assert.equal(kbd.handle(ev('KeyJ')), false); });
+t("module-int case 030", () => { let ran = 0; actions.register('edit.undo', () => ran++);
   kbd.rebind('b', 'edit.undo'); kbd.handle(ev('KeyB')); assert.equal(ran, 1); kbd.resetKeymap();
   actions.register('edit.undo', history.doUndo); actions.register('edit.redo', history.doRedo); });
-t('keyboard: ввод в поле не триггерит', () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
-t('keyboard: Ctrl+A выделяет содержимое активного слоя', () => { resetWH(4, 4); kbd.resetKeymap();
+t("module-int case 031", () => { assert.equal(kbd.handle(ev('KeyB', { target: document.createElement('input') })), false); });
+t("module-int case 032", () => { resetWH(4, 4); kbd.resetKeymap();
   S.layers[0].grid[0][1] = [1, 2, 3, 255]; S.layers[0].grid[2][3] = [4, 5, 6, 255]; cache.dirtyAll();
   assert.ok(kbd.handle(ev('KeyA', { ctrlKey: true })));
   assert.deepEqual(S.sel, { x0: 1, y0: 0, x1: 3, y1: 2 }); assert.deepEqual([...S.selMask].sort(), ['1,0', '3,2']);
 });
-t('keyboard: Ctrl+N создаёт новый слой', () => { resetWH(4, 4); kbd.resetKeymap();
+t("module-int case 033", () => { resetWH(4, 4); kbd.resetKeymap();
   assert.ok(kbd.handle(ev('KeyN', { ctrlKey: true }))); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
 });
 
-t('draw: кисть рисует активным цветом', () => { reset4(); S.active = [10, 20, 30]; setTool('pencil');
+t("module-int case 034", () => { reset4(); S.active = [10, 20, 30]; setTool('pencil');
   stroke.beginStroke(); stamp(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [10, 20, 30, 255]); });
-t('draw: ластик стирает', () => { reset4(); S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.tool = 'eraser';
+t("module-int case 035", () => { reset4(); S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.tool = 'eraser';
   stroke.beginStroke(); stamp(2, 2); assert.equal(S.layers[0].grid[2][2], null); });
-t('draw: заливка заполняет холст', () => { reset4(); S.active = [1, 2, 3]; S.tool = 'fill'; flood(0, 0);
+t("module-int case 036", () => { reset4(); S.active = [1, 2, 3]; S.tool = 'fill'; flood(0, 0);
   assert.deepEqual(S.layers[0].grid[3][3], [1, 2, 3]); assert.deepEqual(S.layers[0].grid[0][0], [1, 2, 3]); });
-t('draw: reference-слой задаёт контур заливки для нижнего слоя', () => { resetWH(5, 5); const r = blank(5, 5), line = [0, 0, 0, 255];
+t("module-int case 037", () => { resetWH(5, 5); const r = blank(5, 5), line = [0, 0, 0, 255];
   for (let i = 1; i <= 3; i++) { r[1][i] = line; r[3][i] = line; r[i][1] = line; r[i][3] = line; }
   S.layers.push({ name: 'ref', grid: r, opacity: 1, visible: true, fid: null, clip: false, reference: true, ext: new Map(), effects: [] });
   S.cur = 0; S.active = [8, 9, 10]; flood(2, 2);
@@ -412,137 +412,137 @@ t('draw: reference-слой задаёт контур заливки для ни
 const overCv = (zoom = 1) => { const cv = document.getElementById('cv'); S.view = { zoom, ox: 0, oy: 0 };
   cv.getBoundingClientRect = () => ({ left: 0, top: 0, right: S.W * zoom, bottom: S.H * zoom, width: S.W * zoom, height: S.H * zoom });
   const prev = document.elementFromPoint; document.elementFromPoint = () => cv; return () => { document.elementFromPoint = prev; }; };
-t('drop-color: бросок над выделением заливает всё выделение', () => { resetWH(6, 6);
+t("module-int case 038", () => { resetWH(6, 6);
   S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; const undo = overCv();
   dropColorAt([5, 6, 7], 2, 2); undo();
   assert.deepEqual(S.active, [5, 6, 7]); assert.deepEqual(S.layers[0].grid[2][2], [5, 6, 7, 255]); });
-t('drop-color: бросок без выделения заливает связную область под точкой', () => { resetWH(6, 6);
+t("module-int case 039", () => { resetWH(6, 6);
   S.sel = null; S.selMask = null; const undo = overCv();
   dropColorAt([1, 2, 3], 0, 0); undo();
   assert.deepEqual(S.active, [1, 2, 3]); assert.deepEqual(S.layers[0].grid[5][5], [1, 2, 3]); });
-t('drop-color: бросок мимо холста ничего не заливает', () => { resetWH(6, 6); S.sel = null; S.selMask = null;
+t("module-int case 040", () => { resetWH(6, 6); S.sel = null; S.selMask = null;
   const prev = document.elementFromPoint; document.elementFromPoint = () => null;
   dropColorAt([9, 9, 9], 0, 0); document.elementFromPoint = prev;
   assert.equal(S.layers[0].grid[0][0], null); });
-t('draw: линия фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('line'); S.tool = 'line';
+t("module-int case 041", () => { reset4(); S.active = [7, 7, 7]; setTool('line'); S.tool = 'line';
   S.linePrev = [0, 0, 3, 0]; commitLine(); assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[0][3]); });
-t('draw: линия с Shift снапится к 45 градусам', () => { resetWH(8, 8); S.active = [7, 7, 7]; setTool('line');
+t("module-int case 042", () => { resetWH(8, 8); S.active = [7, 7, 7]; setTool('line');
   const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 3, e: { shiftKey: true } });
   assert.deepEqual(S.linePrev, [1, 1, 5, 5]); h.up({});
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
-t('draw: контур рисует круглой кистью, замыкает и заливает без превью-состояния', () => { resetWH(8, 8); S.active = [7, 8, 9]; S.brushes.pencil.size = 3; S.lineMode = 'contour'; setTool('line');
+t("module-int case 043", () => { resetWH(8, 8); S.active = [7, 8, 9]; S.brushes.pencil.size = 3; S.lineMode = 'contour'; setTool('line');
   const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 1, e: {} }); h.move({ gx: 5, gy: 5, e: {} }); h.move({ gx: 1, gy: 5, e: {} }); h.up({});
   assert.equal(S.linePath, null); assert.equal(S.stroke, false);
-  assert.deepEqual(S.layers[0].grid[3][3], [7, 8, 9, 255]); // заливка внутри
-  assert.deepEqual(S.layers[0].grid[0][1], [7, 8, 9, 255]); // толщина от круглой кисти size=3
+  assert.deepEqual(S.layers[0].grid[3][3], [7, 8, 9, 255]);
+  assert.deepEqual(S.layers[0].grid[0][1], [7, 8, 9, 255]);
   S.lineMode = 'line'; });
-t('draw: контур с внутренней петлёй не оставляет дырки', () => { resetWH(10, 10); S.active = [2, 3, 4]; S.brushes.pencil.size = 1; S.tool = 'line'; S.lineMode = 'contour';
+t("module-int case 044", () => { resetWH(10, 10); S.active = [2, 3, 4]; S.brushes.pencil.size = 1; S.tool = 'line'; S.lineMode = 'contour';
   const pts = [[1, 1], [8, 1], [8, 8], [1, 8], [1, 1], [3, 3], [6, 3], [6, 6], [3, 6], [3, 3]];
   commitContour(pts);
   assert.deepEqual(S.layers[0].grid[4][4], [2, 3, 4, 255]);
   assert.deepEqual(S.layers[0].grid[2][2], [2, 3, 4, 255]);
   S.lineMode = 'line';
 });
-t('draw: смена инструмента финализирует уже начатый контур', () => { resetWH(8, 8); S.active = [4, 5, 6]; S.brushes.pencil.size = 1; S.lineMode = 'contour'; setTool('line');
+t("module-int case 045", () => { resetWH(8, 8); S.active = [4, 5, 6]; S.brushes.pencil.size = 1; S.lineMode = 'contour'; setTool('line');
   const h = toolHandler('line'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 5, gy: 1, e: {} }); h.move({ gx: 5, gy: 5, e: {} });
   setTool('pencil');
   assert.equal(S.linePath, null); assert.equal(S.stroke, false); assert.equal(S.tool, 'pencil');
-  assert.deepEqual(S.layers[0].grid[3][3], [4, 5, 6, 255]); // закрывающий сегмент + заливка остались
+  assert.deepEqual(S.layers[0].grid[3][3], [4, 5, 6, 255]);
 });
-t('draw: прямоугольник фиксируется в слой', () => { reset4(); S.active = [7, 7, 7]; setTool('rect'); S.tool = 'rect';
+t("module-int case 046", () => { reset4(); S.active = [7, 7, 7]; setTool('rect'); S.tool = 'rect';
   S.linePrev = [0, 0, 3, 3]; commitLine();
   assert.ok(S.layers[0].grid[0][0] && S.layers[0].grid[3][3] && S.layers[0].grid[0][3] && S.layers[0].grid[3][0]);
-  assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая — только контур
-t('draw: залитый прямоугольник (ПКМ-режим)', () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect'; S.fillShape.rect = true;
+  assert.equal(S.layers[0].grid[1][1], null); });
+t("module-int case 047", () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect'; S.fillShape.rect = true;
   S.linePrev = [0, 0, 3, 3]; commitLine(); S.fillShape.rect = false;
-  assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[2][2]); }); // середина залита
-t('draw: эллипс фиксируется в слой, shift — круг', () => { reset4(); S.active = [7, 7, 7]; S.tool = 'ellipse';
+  assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[2][2]); });
+t("module-int case 048", () => { reset4(); S.active = [7, 7, 7]; S.tool = 'ellipse';
   const h = toolHandler('ellipse');
-  h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 3, gy: 1, e: { shiftKey: true } }); // shift: бокс станет квадратом 0..3
+  h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 3, gy: 1, e: { shiftKey: true } });
   assert.deepEqual(S.linePrev, [0, 0, 3, 3]); h.up({});
-  assert.ok(S.layers[0].grid[0][1] && S.layers[0].grid[3][1]); // контур слева и справа
-  assert.equal(S.layers[0].grid[1][1], null); }); // середина пустая
-await ta('draw: удержание фигуры на месте → ровный квадрат/круг', async () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect';
-  const h = toolHandler('rect'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 1, gy: 3, e: {} }); // тянем узкий бокс 1×3
+  assert.ok(S.layers[0].grid[0][1] && S.layers[0].grid[3][1]);
+  assert.equal(S.layers[0].grid[1][1], null); });
+await ta("module-int case 049", async () => { reset4(); S.active = [7, 7, 7]; S.tool = 'rect';
+  const h = toolHandler('rect'); h.down({ gx: 1, gy: 1, e: {} }); h.move({ gx: 1, gy: 3, e: {} });
   assert.deepEqual(S.linePrev, [1, 1, 1, 3]);
-  await new Promise((r) => setTimeout(r, SHAPE_SNAP_MS + 60)); // держим на месте — должно снапнуться в квадрат
+  await new Promise((r) => setTimeout(r, SHAPE_SNAP_MS + 60));
   assert.deepEqual(S.linePrev, [1, 1, 3, 3]); h.up({}); });
-t('eyedropper: color.setActive ставит активный цвет, не меняя инструмент', () => { reset4(); S.tool = 'pencil'; S.active = [1, 2, 3];
+t("module-int case 050", () => { reset4(); S.tool = 'pencil'; S.active = [1, 2, 3];
   actions.run('color.setActive', [40, 50, 60]); assert.deepEqual(S.active, [40, 50, 60]); assert.equal(S.tool, 'pencil'); });
 
-t('rotate-canvas: поворачивает содержимое без изменения размера холста', () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
+t("module-int case 051", () => { resetWH(4, 6); S.layers[0].grid[0][0] = [7, 7, 7, 255];
   rotateCanvas(); assert.equal(S.W, 4); assert.equal(S.H, 6); assert.deepEqual(S.layers[0].ext.get('4,1'), [7, 7, 7, 255]); });
-t('flip: отражает слой по горизонтали', () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
-t('flip: без Selection отражает весь документ, с Selection — активный фрагмент слоя', () => { resetWH(4, 4); lops.doAddLayer();
+t("module-int case 052", () => { resetWH(4, 4); S.layers[0].grid[1][0] = [5, 5, 5, 255]; flipLayer(true); assert.deepEqual(S.layers[0].grid[1][3], [5, 5, 5, 255]); });
+t("module-int case 053", () => { resetWH(4, 4); lops.doAddLayer();
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255]; cache.dirtyAll();
   S.cur = 1; S.marked = new Set(); S.selFolder = null; S.bgSel = false;
-  flipLayer(true); // без выделения → весь canvas / все слои
+  flipLayer(true);
   assert.deepEqual(S.layers[0].grid[0][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[0][3], [2, 2, 2, 255]);
   resetWH(4, 4); lops.doAddLayer(); S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255];
   S.cur = 1; S.sel = { x0: 0, y0: 0, x1: 1, y1: 0 }; S.selMask = null;
-  flipLayer(true); // Selection → только активный слой и только выбранный фрагмент
+  flipLayer(true);
   assert.deepEqual(S.layers[1].grid[0][1], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
   assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]);
 });
-t('rotate-canvas: с Selection поворачивает только активный фрагмент слоя', () => { resetWH(4, 4); lops.doAddLayer();
+t("module-int case 054", () => { resetWH(4, 4); lops.doAddLayer();
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[0][0] = [2, 2, 2, 255];
   S.cur = 1; S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null;
   rotateCanvas();
   assert.deepEqual(S.layers[1].grid[0][1], [2, 2, 2, 255]); assert.equal(S.layers[1].grid[0][0], null);
   assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]);
 });
-t('symmetrize (lay-symm): фон → весь документ', () => { resetWH(4, 4); layers.mount(); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 055", () => { resetWH(4, 4); layers.mount(); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on');
   S.sym = false; S.symH = false; S.layers[0].grid[1][0] = [1, 1, 1, 255]; S.layers[1].grid[1][0] = [2, 2, 2, 255]; cache.dirtyAll();
   S.cur = 1; S.marked = new Set(); S.selFolder = null; S.bgSel = true; layList();
   document.getElementById('lay-symm').click();
-  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][3], [2, 2, 2, 255]); // оба слоя отзеркалены
+  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][3], [2, 2, 2, 255]);
   S.bgSel = false;
 });
-t('settings: фон → canvas scope, слой → layer scope', () => { resetWH(4, 4); tb.mount(); bc.mount();
+t("module-int case 056", () => { resetWH(4, 4); tb.mount(); bc.mount();
   S.bgSel = true; document.getElementById('img-settings').click();
-  assert.ok(document.querySelector('#bc-scope [data-scope="canvas"]').classList.contains('on')); // фон → весь документ
+  assert.ok(document.querySelector('#bc-scope [data-scope="canvas"]').classList.contains('on'));
   document.getElementById('bc-cancel').click();
   S.bgSel = false; document.getElementById('img-settings').click();
-  assert.ok(document.querySelector('#bc-scope [data-scope="layer"]').classList.contains('on')); // слой → к выбранному
+  assert.ok(document.querySelector('#bc-scope [data-scope="layer"]').classList.contains('on'));
   document.getElementById('bc-cancel').click();
 });
-t('trim: обрезает до контура и сохраняет экранный размер холста', () => { resetWH(6, 6); S.view = { zoom: 8, ox: 30, oy: 40 };
+t("module-int case 057", () => { resetWH(6, 6); S.view = { zoom: 8, ox: 30, oy: 40 };
   const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
   S.layers[0].grid[2][3] = [9, 9, 9, 255]; trimCanvas(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
   assert.equal(S.W * S.view.zoom, sw); assert.equal(S.H * S.view.zoom, sh);
   assert.equal(S.view.ox + S.W * S.view.zoom / 2, cx); assert.equal(S.view.oy + S.H * S.view.zoom / 2, cy); });
-t('center: объект встаёт в центр холста', () => { resetWH(8, 8); S.sel = null; S.selMask = null; S.layers[0].grid[1][1] = [1, 1, 1, 255]; cache.dirtyAll();
+t("module-int case 058", () => { resetWH(8, 8); S.sel = null; S.selMask = null; S.layers[0].grid[1][1] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[4][4], [1, 1, 1, 255]); assert.equal(S.layers[0].grid[1][1], null); });
-t('center: с выделением — в центр выделения', () => { resetWH(10, 10); S.layers[0].grid[0][0] = [2, 2, 2, 255]; S.sel = { x0: 4, y0: 4, x1: 5, y1: 5 }; S.selMask = null; cache.dirtyAll();
+t("module-int case 059", () => { resetWH(10, 10); S.layers[0].grid[0][0] = [2, 2, 2, 255]; S.sel = { x0: 4, y0: 4, x1: 5, y1: 5 }; S.selMask = null; cache.dirtyAll();
   actions.run('layer.center'); assert.deepEqual(S.layers[0].grid[5][5], [2, 2, 2, 255]); S.sel = null; });
-t('center: fit short side уменьшает слой до упора по меньшей стороне холста', () => { resetWH(10, 6);
+t("module-int case 060", () => { resetWH(10, 6);
   const d = new Uint8ClampedArray(20 * 12 * 4); for (let i = 0; i < 20 * 12; i++) { d[i * 4] = 9; d[i * 4 + 3] = 255; }
   doc.addImageLayerTop(20, 12, d, 'wide'); actions.run('layer.fitShortSide');
   const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
   assert.deepEqual(L.grid[0][0], [9, 0, 0, 255]); assert.deepEqual(L.grid[5][9], [9, 0, 0, 255]); });
-t('center: fit short side широкого слоя заполняет меньшую сторону без поля', () => { resetWH(10, 6);
+t("module-int case 061", () => { resetWH(10, 6);
   const d = new Uint8ClampedArray(12 * 4 * 4); for (let i = 0; i < 12 * 4; i++) { d[i * 4] = 9; d[i * 4 + 3] = 255; }
   doc.addImageLayerTop(12, 4, d, 'wide'); actions.run('layer.fitShortSide');
   const L = S.layers[S.cur]; assert.ok(L.ext.size > 0);
   assert.deepEqual(L.grid[0][0], [9, 0, 0, 255]); assert.deepEqual(L.grid[5][9], [9, 0, 0, 255]); });
-t('center: fit short side увеличивает маленький слой до меньшей стороны холста', () => { resetWH(10, 6);
+t("module-int case 062", () => { resetWH(10, 6);
   S.layers[0].grid[0][0] = [5, 5, 5, 255]; S.layers[0].grid[1][1] = [7, 7, 7, 255];
   actions.run('layer.fitShortSide'); const L = S.layers[S.cur]; assert.equal(L.ext.size, 0);
   assert.deepEqual(L.grid[0][2], [5, 5, 5, 255]); assert.deepEqual(L.grid[2][4], [5, 5, 5, 255]);
   assert.deepEqual(L.grid[3][5], [7, 7, 7, 255]); assert.deepEqual(L.grid[5][7], [7, 7, 7, 255]);
   assert.equal(L.grid[0][5], null); assert.equal(L.grid[5][4], null); });
-t('trim: расширяет холст до пикселей за краем (включая скрытые)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+t("module-int case 063", () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].visible = false; S.layers[0].ext.set('6,6', [1, 1, 1, 255]); trimCanvas();
   assert.equal(S.W, 7); assert.equal(S.H, 7); assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.layers[0].visible = true; });
-t('trim: расширяет холст под охват эффекта (обводка не обрезается)', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+t("module-int case 064", () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 2, color: '#ffffff' } }]; trimCanvas();
-  assert.equal(S.W, 5); assert.equal(S.H, 5); // пиксель (0,0) + обводка 2px по краям → bbox (-2..2)
+  assert.equal(S.W, 5); assert.equal(S.H, 5);
   assert.deepEqual(S.layers[0].grid[2][2], [9, 9, 9, 255]); S.layers[0].effects = []; });
-t('document: addImageLayerTop кладёт картинку верхним слоем', () => { resetWH(6, 6); const n = S.layers.length;
+t("module-int case 065", () => { resetWH(6, 6); const n = S.layers.length;
   const d = new Uint8ClampedArray(2 * 2 * 4); for (let i = 0; i < 4; i++) { d[i * 4] = 200; d[i * 4 + 3] = 255; }
   doc.addImageLayerTop(2, 2, d, 'pic'); assert.equal(S.layers.length, n + 1); assert.equal(S.cur, S.layers.length - 1);
   assert.ok(S.layers[S.cur].grid[2][2] && S.layers[S.cur].fid === null); });
-t('psd-insert: PSD → верхняя папка со слоями/группами/видимостью/эффектами', () => { resetWH(8, 8);
+t("module-int case 066", () => { resetWH(8, 8);
   const empty = () => Array.from({ length: 2 }, () => new Array(2).fill(null));
   const g = empty(); g[0][0] = [255, 0, 0, 255];
   const psd = { W: 2, H: 2, layers: [
@@ -556,62 +556,62 @@ t('psd-insert: PSD → верхняя папка со слоями/группа�
   const grp = S.folders.find((f) => f.name === 'Group'); assert.equal(grp.parent, top.id);
   const inside = S.layers.find((L) => L.name === 'inside'); assert.equal(inside.visible, false); assert.equal(inside.fid, grp.id);
   assert.equal(inside.effects.length, 1); assert.equal(inside.effects[0].type, 'stroke'); });
-t('mono: переводит в серый', () => { resetWH(4, 4); S.layers[0].grid[1][1] = [200, 50, 10, 255]; monoAll(); const c = S.layers[0].grid[1][1]; assert.ok(c[0] === c[1] && c[1] === c[2]); });
+t("module-int case 067", () => { resetWH(4, 4); S.layers[0].grid[1][1] = [200, 50, 10, 255]; monoAll(); const c = S.layers[0].grid[1][1]; assert.ok(c[0] === c[1] && c[1] === c[2]); });
 
-t('layer-effects: обводка даёт кольцо вокруг силуэта', () => { const mask = fxlogic.maskFromGrid([[null, null, null], [null, [1, 1, 1, 1], null], [null, null, null]], 3, 3);
+t("module-int case 068", () => { const mask = fxlogic.maskFromGrid([[null, null, null], [null, [1, 1, 1, 1], null], [null, null, null]], 3, 3);
   const px = fxlogic.strokePixels(mask, 3, 3, { size: 1 }); assert.ok(px.some(([x, y]) => x === 0 && y === 1)); });
-t('layer-effects: внутренняя тень только по силуэту', () => { const g = [[[1, 1, 1, 1], [1, 1, 1, 1]], [[1, 1, 1, 1], [1, 1, 1, 1]]];
+t("module-int case 069", () => { const g = [[[1, 1, 1, 1], [1, 1, 1, 1]], [[1, 1, 1, 1], [1, 1, 1, 1]]];
   const mask = fxlogic.maskFromGrid(g, 2, 2); const px = fxlogic.innerShadowPixels(mask, 2, 2, { size: 1, dx: 1, dy: 0, intensity: 1 });
   assert.ok(px.length && px.every(([x, y]) => x >= 0 && x < 2 && y >= 0 && y < 2)); });
-t('layer-effects: effectReach — обводка во все стороны, тень добавляет смещение, внутр. не вылезает', () => {
+t("module-int case 070", () => {
   assert.deepEqual(fxlogic.effectReach([{ type: 'stroke', params: { size: 3 } }]), { l: 3, r: 3, t: 3, b: 3 });
   assert.deepEqual(fxlogic.effectReach([{ type: 'dropShadow', params: { size: 2, dx: 5, dy: -3 } }]), { l: 2, r: 7, t: 5, b: 2 });
   assert.deepEqual(fxlogic.effectReach([{ type: 'innerShadow', params: { size: 4 } }]), { l: 0, r: 0, t: 0, b: 0 }); });
-t('layer-effects: effectLayerPixels(stroke) — кольцо и координаты за краем (для ext)', () => {
-  const W = 4, H = 4, mask = Array.from({ length: H }, () => new Array(W).fill(false)); mask[0][0] = true; // пиксель в углу
+t("module-int case 071", () => {
+  const W = 4, H = 4, mask = Array.from({ length: H }, () => new Array(W).fill(false)); mask[0][0] = true;
   const px = fxlogic.effectLayerPixels(mask, W, H, { type: 'stroke', visible: true, params: { size: 1, color: '#fff' } });
-  assert.ok(px.length > 0 && px.some(([x, y]) => x < 0 || y < 0)); }); // обводка вышла за холст — не обрезана
-t('effects-render: слой с эффектом рисуется через fx-канвас', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+  assert.ok(px.length > 0 && px.some(([x, y]) => x < 0 || y < 0)); });
+t("module-int case 072", () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   const c = fxr.layerFxCanvas(0); assert.ok(c && c.width === 8); assert.notEqual(c, cache.layerFloatCanvas(0)); S.layers[0].effects = []; });
-t('effects-render: эффект папки перерисовывается при добавлении эффекта слою внутри', () => { resetWH(8, 8);
+t("module-int case 073", () => { resetWH(8, 8);
   const mk = (name, fid) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid, clip: false, lock: false, alphaLock: false, ext: new Map(), effects: [] });
   S.layers = [mk('a', 1), mk('b', 1)]; S.layers[0].grid[3][3] = [9, 9, 9, 255]; S.layers[1].grid[4][4] = [8, 8, 8, 255];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [newEffect('stroke', { size: 1, color: '#ffffff' })] }];
   S.cur = 0; S.marked = new Set(); cache.dirtyAll();
   const c1 = fxr.folderFx(S.folders[0], 'below'); assert.ok(c1);
-  S.layers[1].effects = [newEffect('stroke', { size: 2, color: '#000000' })]; // добавили эффект слою внутри папки
+  S.layers[1].effects = [newEffect('stroke', { size: 2, color: '#000000' })];
   const c2 = fxr.folderFx(S.folders[0], 'below');
-  assert.notEqual(c1, c2); // эффект папки пересчитался по новому силуэту (а не отдал устаревший из кеша)
+  assert.notEqual(c1, c2);
   S.folders = []; S.layers = [mk('a', null)]; S.cur = 0; });
-t('effects-render: fx-канвас едет с поднятым фрагментом выделения (обводка не пропадает/не застывает)', () => {
+t("module-int case 074", () => {
   resetWH(8, 8); S.layers[0].grid[4][4] = [9, 9, 9, 255]; cache.dirtyAll();
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   S.selFloat = { cells: new Map([['0,0', [9, 9, 9, 255]]]), w: 1, h: 1, x: 4, y: 4, ox: 4, oy: 4, li: 0 };
-  const a = fxr.layerFxCanvas(0); assert.equal(fxr.layerFxCanvas(0), a); // тот же фрагмент → кеш
-  S.selFloat.x = 5; assert.notEqual(fxr.layerFxCanvas(0), a); // фрагмент сдвинут → обводка пересчитана
+  const a = fxr.layerFxCanvas(0); assert.equal(fxr.layerFxCanvas(0), a);
+  S.selFloat.x = 5; assert.notEqual(fxr.layerFxCanvas(0), a);
   S.selFloat = null; S.layers[0].effects = []; });
-t('effects-render: fxOnCanvas накладывает эффект (новый канвас), без эффектов — исходный', () => {
+t("module-int case 075", () => {
   const src = document.createElement('canvas'); src.width = 8; src.height = 8;
-  assert.equal(fxr.fxOnCanvas(src, [], 8, 8), src); // нет эффектов → тот же канвас (без работы)
+  assert.equal(fxr.fxOnCanvas(src, [], 8, 8), src);
   const out = fxr.fxOnCanvas(src, [{ type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }], 8, 8);
-  assert.notEqual(out, src); assert.equal(out.width, 8); }); // эффект → новый полнохолстовый канвас
-t('effects-render: adjustment входит в рендер слоя и наследуется от папки', () => { resetWH(4, 4);
+  assert.notEqual(out, src); assert.equal(out.width, 8); });
+t("module-int case 076", () => { resetWH(4, 4);
   const layerAdj = newEffect('adjustment', { saturation: -100 }); S.layers[0].effects = [layerAdj]; cache.dirtyAll();
   assert.deepEqual(fxr.layerRenderEffects(0), [layerAdj]); assert.notEqual(cache.layerSrcCanvas(0), cache.layerCanvas(0));
   const folderAdj = newEffect('adjustment', { brightness: 50 });
   S.layers[0].effects = []; S.layers[0].fid = 1; S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [folderAdj] }];
   cache.dirtyAll(); assert.deepEqual(fxr.layerRenderEffects(0), [folderAdj]); assert.notEqual(cache.layerSrcCanvas(0), cache.layerCanvas(0)); });
 
-t('recolor: меняет пиксели и добавляет новый цвет, не переписывая палитру', () => { resetWH(4, 4);
+t("module-int case 077", () => { resetWH(4, 4);
   S.layers[0].grid[1][1] = [9, 9, 9, 255]; S.layers[0].grid[2][2] = [8, 8, 8, 255]; S.palette = [[9, 9, 9], [8, 8, 8]]; cache.dirtyAll();
   recolorAll([[9, 9, 9], [8, 8, 8]], [200, 100, 50]);
   assert.deepEqual(S.layers[0].grid[1][1], [200, 100, 50]); assert.deepEqual(S.layers[0].grid[2][2], [200, 100, 50]);
   assert.deepEqual(S.palette, [[9, 9, 9], [8, 8, 8], [200, 100, 50]]);
 });
-t('free-rotate: поворачивает слой без ошибок', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
+t("module-int case 078", () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255];
   freeRotateLayer(S.layers[0], Math.PI / 4, 4); assert.ok(true); });
-t('bc: preview холста можно отменить через undo, не трогая историю документа', () => { bc.mount(); resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 079", () => { bc.mount(); resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
   bc.openBcPop(null, null, { scope: 'canvas' }); document.getElementById('bc-bri').value = '100';
   document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -621,12 +621,12 @@ t('bc: preview холста можно отменить через undo, не т
   assert.equal(document.getElementById('bcpop').classList.contains('on'), false);
   assert.equal(S.undoStack.length, 0);
 });
-t('bc: применение к холсту поднимает яркость и откатывается undo', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 080", () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[1][1] = [100, 100, 100, 255]; cache.dirtyAll();
   bc.openBcPop(null, null, { scope: 'canvas' }); document.getElementById('bc-bri').value = '100'; document.getElementById('bc-con').value = '0';
   bc.bcApply(); assert.ok(S.layers[0].grid[1][1][0] > 150);
   history.doUndo(); assert.deepEqual(S.layers[0].grid[1][1], [100, 100, 100, 255]); });
-t('bc: слой получает редактируемую настройку без изменения пикселей', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 081", () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[1][1] = [100, 50, 50, 255]; cache.dirtyAll();
   bc.openBcPop([S.layers[0]], null, { scope: 'layer' });
   document.getElementById('bc-sat').value = '-100'; document.getElementById('bc-hue').value = '90';
@@ -637,7 +637,7 @@ t('bc: слой получает редактируемую настройку �
   assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 1); assert.equal(S.layers[0].effects[0].type, 'adjustment');
   assert.equal(S.layers[0].effects[0].params.saturation, -100); assert.equal(S.layers[0].effects[0].params.hue, 90);
   history.doUndo(); assert.equal(S.layers[0].effects.length, 0); });
-t('bc: настройка эффекта открывается повторно и откатывается', () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 082", () => { resetWH(4, 4); S.undoStack.length = 0; S.redoStack.length = 0;
   const eff = newEffect('adjustment', { brightness: 10, contrast: 20, saturation: 30, hue: 40 }); S.layers[0].effects = [eff];
   actions.run('effect.bc.edit', S.layers[0], eff);
   assert.equal(document.getElementById('bc-bri').value, '10'); assert.equal(document.getElementById('bc-hue').value, '40');
@@ -649,7 +649,7 @@ t('bc: настройка эффекта открывается повторно
   document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
   document.getElementById('bc-apply').click(); assert.equal(eff.params.brightness, 50);
   history.doUndo(); assert.equal(S.layers[0].effects[0].params.brightness, 10); });
-t('adjust: Dodge/Burn/Colorize/Monochrome постепенно ведут к своим целям', () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
+t("module-int case 083", () => { resetWH(3, 3); S.adjAmt = 50; S.active = [210, 20, 30];
   S.layers[0].grid[0][0] = [200, 0, 0, 255]; S.adjMode = 'dodge'; history.snapshot(); adjust.adjustCell(0, 0);
   assert.ok(S.layers[0].grid[0][0][0] > 200 && S.layers[0].grid[0][0][1] > 0 && S.layers[0].grid[0][0][2] > 0);
   S.layers[0].grid[0][1] = [200, 100, 50, 255]; S.adjMode = 'burn'; history.snapshot(); adjust.adjustCell(1, 0);
@@ -661,7 +661,7 @@ t('adjust: Dodge/Burn/Colorize/Monochrome постепенно ведут к с�
   assert.equal(S.layers[0].grid[1][1][1], S.layers[0].grid[1][1][2]);
   S.undoStack.length = 0; S.redoStack.length = 0;
 });
-t('adjust: выбор режима включает кисть-коррекцию и окно силы', () => { tb.mount(); adjust.mount(); S.tool = 'pencil'; S.adjMode = 'dodge'; S.adjAmt = 8;
+t("module-int case 084", () => { tb.mount(); adjust.mount(); S.tool = 'pencil'; S.adjMode = 'dodge'; S.adjAmt = 8;
   document.getElementById('t-adjust').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   assert.equal(document.querySelectorAll('#adjust-choice [data-adjust-mode]').length, 4);
   document.querySelector('#adjust-choice [data-adjust-mode="burn"]').click();
@@ -671,17 +671,17 @@ t('adjust: выбор режима включает кисть-коррекци�
   assert.equal(document.getElementById('t-adjust').title, i18n.t('adj.burn'));
 });
 
-t('selection: fillSelection заливает рамку', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.active = [5, 6, 7];
+t("module-int case 085", () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.active = [5, 6, 7];
   sel.fillSelection(); assert.deepEqual(S.layers[0].grid[2][2], [5, 6, 7, 255]); });
-t('selection: deleteSelContent чистит', () => { resetWH(6, 6); S.layers[0].grid[2][2] = [1, 1, 1, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+t("module-int case 086", () => { resetWH(6, 6); S.layers[0].grid[2][2] = [1, 1, 1, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   assert.equal(sel.deleteSelContent(), true); assert.equal(S.layers[0].grid[2][2], null); });
-t('selection: selectColorPixels строит маску', () => { resetWH(6, 6); S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.sel = null; S.selMask = null;
+t("module-int case 087", () => { resetWH(6, 6); S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.sel = null; S.selMask = null;
   sel.selectColorPixels([9, 9, 9]); assert.ok(S.selMask && S.selMask.has('2,2') && S.selMask.has('4,4')); });
-t('selection: selectColorPixels принимает несколько цветов', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[0].grid[2][2] = [2, 2, 2, 255]; S.layers[0].grid[3][3] = [3, 3, 3, 255];
+t("module-int case 088", () => { resetWH(6, 6); S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[0].grid[2][2] = [2, 2, 2, 255]; S.layers[0].grid[3][3] = [3, 3, 3, 255];
   sel.selectColorPixels([[1, 1, 1], [3, 3, 3]]);
   assert.ok(S.selMask && S.selMask.has('1,1') && S.selMask.has('3,3') && !S.selMask.has('2,2'));
 });
-t('selection: содержимое выбранной папки выделяется по всем её слоям', () => { resetWH(5, 5);
+t("module-int case 089", () => { resetWH(5, 5);
   S.layers = [
     { name: 'outside', grid: blank(5, 5), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
     { name: 'a', grid: blank(5, 5), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
@@ -696,23 +696,23 @@ t('selection: содержимое выбранной папки выделяе�
 t('selection: invertSelection', () => { resetWH(4, 4); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null; sel.invertSelection();
   assert.ok(S.selMask && !S.selMask.has('0,0') && S.selMask.has('3,3')); });
 
-t('symmetry: applySelectionOp создаёт зеркальную копию (X)', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.sel = S.selMask = null;
+t("module-int case 090", () => { resetWH(8, 8); S.sym = true; S.symH = false; S.sel = S.selMask = null;
   sel.applySelectionOp(new Set(['1,1']), 'replace'); assert.ok(S.selMask.has('1,1') && S.selMask.has('6,1')); S.sym = false; });
-t('symmetry: Subtract вычитает оригинал и зеркало', () => { resetWH(8, 8); S.sym = true; S.symH = false;
+t("module-int case 091", () => { resetWH(8, 8); S.sym = true; S.symH = false;
   S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1', '2,2', '5,2']);
   sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.ok(!S.selMask.has('1,1') && !S.selMask.has('6,1') && S.selMask.has('2,2')); S.sym = false; });
-t('symmetry: заливка зеркалит обе стороны', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.active = [9, 9, 9]; S.sel = S.selMask = null;
-  for (let y = 0; y < 8; y++) { S.layers[0].grid[y][3] = [1, 1, 1, 255]; S.layers[0].grid[y][4] = [1, 1, 1, 255]; } cache.dirtyAll(); // стенка делит лево/право
-  flood(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9]); assert.deepEqual(S.layers[0].grid[1][6], [9, 9, 9]); // правая сторона залита зеркально
-  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); S.sym = false; }); // стенка цела
-t('symmetry: диагональная симметрия рисует и выделяет по 45 градусам', () => { resetWH(6, 6); S.symD1 = true; S.active = [8, 7, 6]; stamp(1, 3);
+t("module-int case 092", () => { resetWH(8, 8); S.sym = true; S.symH = false; S.active = [9, 9, 9]; S.sel = S.selMask = null;
+  for (let y = 0; y < 8; y++) { S.layers[0].grid[y][3] = [1, 1, 1, 255]; S.layers[0].grid[y][4] = [1, 1, 1, 255]; } cache.dirtyAll();
+  flood(1, 1); assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9]); assert.deepEqual(S.layers[0].grid[1][6], [9, 9, 9]);
+  assert.deepEqual(S.layers[0].grid[1][3], [1, 1, 1, 255]); S.sym = false; });
+t("module-int case 093", () => { resetWH(6, 6); S.symD1 = true; S.active = [8, 7, 6]; stamp(1, 3);
   assert.deepEqual(S.layers[0].grid[3][1], [8, 7, 6, 255]);
   assert.deepEqual(S.layers[0].grid[1][3], [8, 7, 6, 255]);
   sel.applySelectionOp(new Set(['0,4']), 'replace');
   assert.ok(S.selMask.has('0,4') && S.selMask.has('4,0'));
   S.symD1 = false;
 });
-t('symmetry: линию можно перенести и reset вернуть в центр', () => { resetWH(8, 8); symLines.mount(); S.sym = true; S.symLines = { x: 3.5, y: null, d1: null, d2: null, mode: 'move', hover: null };
+t("module-int case 094", () => { resetWH(8, 8); symLines.mount(); S.sym = true; S.symLines = { x: 3.5, y: null, d1: null, d2: null, mode: 'move', hover: null };
   S.view = { zoom: 10, ox: 0, oy: 0 }; const cv = document.getElementById('cv');
   cv.getBoundingClientRect = () => ({ left: 0, top: 0, width: 80, height: 80, right: 80, bottom: 80 });
   const gh = globalHandlers()[globalHandlers().length - 1];
@@ -722,92 +722,92 @@ t('symmetry: линию можно перенести и reset вернуть в
   assert.equal(S.symLines.x, 3.5);
   S.sym = false; S.symLines.mode = null;
 });
-t('symmetry: вырезание зеркального выделения вставляет стороны отдельными слоями', () => { resetWH(8, 8); S.sym = true; S.symH = false;
+t("module-int case 095", () => { resetWH(8, 8); S.sym = true; S.symH = false;
   S.layers[0].grid[1][1] = [5, 5, 5, 255]; S.layers[0].grid[1][6] = [5, 5, 5, 255]; S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,1', '6,1']); cache.dirtyAll();
-  const n0 = S.layers.length; clip.doCut(); assert.equal(S.layers[0].grid[1][1], null); assert.equal(S.layers[0].grid[1][6], null); // обе стороны вырезаны
-  clip.doPaste(); assert.equal(S.layers.length, n0 + 2); S.sym = false; }); // две стороны → два слоя
-t('symmetry: transform двигает стороны зеркально', () => { resetWH(8, 8); S.sym = true; S.symH = false; S.selFloat = null;
+  const n0 = S.layers.length; clip.doCut(); assert.equal(S.layers[0].grid[1][1], null); assert.equal(S.layers[0].grid[1][6], null);
+  clip.doPaste(); assert.equal(S.layers.length, n0 + 2); S.sym = false; });
+t("module-int case 096", () => { resetWH(8, 8); S.sym = true; S.symH = false; S.selFloat = null;
   S.layers[0].grid[3][1] = [5, 5, 5, 255]; S.layers[0].grid[3][6] = [5, 5, 5, 255]; cache.dirtyAll();
   S.sel = { x0: 0, y0: 0, x1: 7, y1: 7 }; S.selMask = new Set(['1,3', '6,3']);
-  actions.run('transform.enter'); assert.ok(S.rotMode && S.rotMode.sym); // трансформация выделения симметрична
+  actions.run('transform.enter'); assert.ok(S.rotMode && S.rotMode.sym);
   S.rotMode.tx = -1; S.rotMode.changed = true; tf.exitRotMode(true);
-  assert.ok(S.layers[0].grid[3][0] && S.layers[0].grid[3][7]); // лево ушло влево, право — зеркально вправо
+  assert.ok(S.layers[0].grid[3][0] && S.layers[0].grid[3][7]);
   assert.equal(S.layers[0].grid[3][1], null); assert.equal(S.layers[0].grid[3][6], null); S.sym = false; });
-t('selection: applySelectionOp add объединяет рамку и новую область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 097", () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   sel.applySelectionOp(new Set(['5,5']), 'add'); assert.ok(S.selMask.has('1,1') && S.selMask.has('5,5')); });
-t('selection: applySelectionOp subtract вычитает область', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 098", () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.ok(!S.selMask.has('1,1') && S.selMask.has('2,2')); });
-t('selection: applySelectionOp intersect оставляет пересечение', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+t("module-int case 099", () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   sel.applySelectionOp(new Set(['2,2', '9,9']), 'intersect'); assert.deepEqual([...S.selMask], ['2,2']); });
-t('selection: applySelectionOp пустой результат снимает выделение', () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 1, y1: 1 }; S.selMask = null;
+t("module-int case 100", () => { resetWH(6, 6); S.sel = { x0: 1, y0: 1, x1: 1, y1: 1 }; S.selMask = null;
   const r = sel.applySelectionOp(new Set(['1,1']), 'subtract'); assert.equal(r, false); assert.equal(S.sel, null); });
 
-t('lasso: Continuous строит маску одним движением и авто-замыкается', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = S.selMask = null;
+t("module-int case 101", () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = S.selMask = null;
   const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.move({ gx: 5, gy: 1 }); h.move({ gx: 5, gy: 5 }); h.move({ gx: 1, gy: 5 }); h.up({});
   assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); });
-t('lasso: Segment продолжает контур и замыкается у старта', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'segment'; S.lassoOp = 'replace'; S.sel = S.selMask = null; S.view.zoom = 12;
-  const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(fhpath.pathActive() && !S.selMask); // сегмент начат, не замкнут
+t("module-int case 102", () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'segment'; S.lassoOp = 'replace'; S.sel = S.selMask = null; S.view.zoom = 12;
+  const h = toolHandler('lasso'); h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(fhpath.pathActive() && !S.selMask);
   h.down({ gx: 5, gy: 1 }); h.up({}); h.down({ gx: 5, gy: 5 }); h.up({}); h.down({ gx: 1, gy: 5 }); h.up({}); assert.ok(fhpath.pathActive());
-  h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); }); // возврат к старту — замыкание
-t('lasso: New Selection сбрасывает старое выделение сразу на старте контура', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
-  toolHandler('lasso').down({ gx: 5, gy: 5 }); assert.equal(S.sel, null); }); // старое исчезло немедленно
-t('lasso: режим Add сохраняет старое выделение во время нового контура', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'add'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  h.down({ gx: 1, gy: 1 }); h.up({}); assert.ok(!fhpath.pathActive() && S.selMask && S.selMask.has('3,3')); });
+t("module-int case 103", () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'replace'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+  toolHandler('lasso').down({ gx: 5, gy: 5 }); assert.equal(S.sel, null); });
+t("module-int case 104", () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.lassoOp = 'add'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   toolHandler('lasso').down({ gx: 5, gy: 5 }); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); actions.run('lasso.cancel'); });
-t('lasso: cancel убирает контур, не трогая существующее выделение', () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+t("module-int case 105", () => { resetWH(8, 8); S.tool = 'lasso'; S.lassoMode = 'continuous'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   const h = toolHandler('lasso'); h.down({ gx: 5, gy: 5 }); h.move({ gx: 6, gy: 6 }); assert.ok(fhpath.pathActive());
   actions.run('lasso.cancel'); assert.ok(!fhpath.pathActive()); assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 3, y1: 3 }); });
 
-brushResize.mount(); // вешает слушатели один раз
+brushResize.mount();
 const brKey = (type, k) => window.dispatchEvent(new window.KeyboardEvent(type, { code: 'Key' + k.toUpperCase(), key: k }));
 const brPtr = (x, y, buttons) => document.getElementById('cv').dispatchEvent(new window.MouseEvent('pointermove', { clientX: x, clientY: y, buttons }));
-t('brush-resize: движение при зажатом Hot Key меняет размер кисти', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+t("module-int case 106", () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd'; S.brushResize.capturing = false;
-  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); // вправо → больше
+  brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0);
   assert.equal(S.brushes.pencil.size, 11); brKey('keyup', 'd'); });
-t('brush-resize: рисование не меняет размер, после штриха снова можно', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 8;
+t("module-int case 107", () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 8;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
-  brKey('keydown', 'd'); brPtr(200, 100, 0); brPtr(150, 100, 1); assert.equal(S.brushes.pencil.size, 8); // ЛКМ нажата — штрих, размер цел
-  brPtr(150, 100, 0); brPtr(100, 100, 0); assert.equal(S.brushes.pencil.size, 3); brKey('keyup', 'd'); }); // влево после штриха — уменьшает
-t('brush-resize: без зажатого Hot Key размер не меняется', () => { resetWH(8, 8); S.brushes.pencil.size = 4; S.brushResize.sensitivity = 0.1;
+  brKey('keydown', 'd'); brPtr(200, 100, 0); brPtr(150, 100, 1); assert.equal(S.brushes.pencil.size, 8);
+  brPtr(150, 100, 0); brPtr(100, 100, 0); assert.equal(S.brushes.pencil.size, 3); brKey('keyup', 'd'); });
+t("module-int case 108", () => { resetWH(8, 8); S.brushes.pencil.size = 4; S.brushResize.sensitivity = 0.1;
   brKey('keydown', 'd'); brKey('keyup', 'd'); brPtr(100, 100, 0); brPtr(300, 100, 0); assert.equal(S.brushes.pencil.size, 4); });
-t('brush-resize: направление и чувствительность переключаются циклически', () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
+t("module-int case 109", () => { S.brushResize.direction = 'both'; S.brushResize.sensitivity = 0.05;
   actions.run('brushResize.cycleDir'); assert.equal(S.brushResize.direction, 'horizontal');
   actions.run('brushResize.cycleSens'); assert.notEqual(S.brushResize.sensitivity, 0.05); });
 const wheel = (dy) => window.dispatchEvent(new window.WheelEvent('wheel', { deltaY: dy, cancelable: true }));
-t('brush-resize: колесо при зажатом D меняет размер', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 4; S.brushResize.key = 'd'; S.brushResize.capturing = false;
+t("module-int case 110", () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 4; S.brushResize.key = 'd'; S.brushResize.capturing = false;
   brKey('keydown', 'd'); wheel(-1); assert.equal(S.brushes.pencil.size, 5); wheel(1); assert.equal(S.brushes.pencil.size, 4); brKey('keyup', 'd'); });
-t('brush-resize: без зажатого D колесо размер не трогает', () => { resetWH(8, 8); S.brushes.pencil.size = 4;
+t("module-int case 111", () => { resetWH(8, 8); S.brushes.pencil.size = 4;
   wheel(-1); assert.equal(S.brushes.pencil.size, 4); });
 
 await import('../src/systems/draw/quickshape.js'); const { QUICKSHAPE } = await import('../src/config/quickshape.js');
-await ta('quickshape: удержание выравнивает прямоугольник и коммитит на слой', async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 12;
+await ta("module-int case 112", async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 12;
   const h = toolHandler('pencil'), add = (x, y) => h.move({ gx: x, gy: y }); h.down({ gx: 1, gy: 1 });
   for (let x = 1; x <= 12; x++) add(x, 1); for (let y = 2; y <= 9; y++) add(12, y);
   for (let x = 11; x >= 1; x--) add(x, 9); for (let y = 8; y >= 1; y--) add(1, y);
-  await new Promise((r) => setTimeout(r, 30)); assert.equal(S.qsShape && S.qsShape.type, 'rect'); // распозналось, превью активно
-  h.up({}); assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[1][12] && S.layers[0].grid[9][1] && S.layers[0].grid[9][12]); }); // ровный прямоугольник на слое
-await ta('quickshape: без удержания остаётся raw-штрих', async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 200;
-  const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2 }); h.move({ gx: 5, gy: 8 }); h.up({}); // отпустили сразу
-  assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[2][2] && S.layers[0].grid[8][5]); }); // кривой штрих как есть, без формы
+  await new Promise((r) => setTimeout(r, 30)); assert.equal(S.qsShape && S.qsShape.type, 'rect');
+  h.up({}); assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[1][1] && S.layers[0].grid[1][12] && S.layers[0].grid[9][1] && S.layers[0].grid[9][12]); });
+await ta("module-int case 113", async () => { resetWH(20, 20); S.tool = 'pencil'; S.active = [9, 9, 9]; S.qsShape = null; QUICKSHAPE.holdMs = 200;
+  const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2 }); h.move({ gx: 5, gy: 8 }); h.up({});
+  assert.equal(S.qsShape, null); assert.ok(S.layers[0].grid[2][2] && S.layers[0].grid[8][5]); });
 
 const penButton = await import('../src/systems/pen-button.js'); penButton.mount();
 const penBtn = (button = 2) => { const ev = new window.MouseEvent('pointerdown', { button, bubbles: true }); Object.defineProperty(ev, 'pointerType', { value: 'pen' }); window.dispatchEvent(ev); };
-t('pen-button: кнопка стилуса переключает кисть↔ластик', () => { resetWH(8, 8); S.tool = 'pencil';
+t("module-int case 114", () => { resetWH(8, 8); S.tool = 'pencil';
   penBtn(); assert.equal(S.tool, 'eraser'); penBtn(); assert.equal(S.tool, 'pencil'); });
-t('pen-button: контакт пера (button 0) инструмент не переключает', () => { resetWH(8, 8); S.tool = 'pencil';
+t("module-int case 115", () => { resetWH(8, 8); S.tool = 'pencil';
   penBtn(0); assert.equal(S.tool, 'pencil'); });
-eyedropper.mount(); // вешает слушатели Eyedropper System один раз
+eyedropper.mount();
 const bbTap = () => { const pk = document.getElementById('bb-pick'); pk.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true })); pk.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true })); };
-t('eyedropper: короткий клик по bb-pick включает залипающий режим (ПК)', () => { resetWH(8, 8); document.body.classList.remove('picking');
-  bbTap(); assert.ok(document.body.classList.contains('picking')); // пипетка активна без Hot Key
-  bus.emit('tool', 'pencil'); assert.ok(!document.body.classList.contains('picking')); }); // выбор инструмента выключает
-t('eyedropper: повторный клик по bb-pick выключает залипающий режим', () => { document.body.classList.remove('picking');
+t("module-int case 116", () => { resetWH(8, 8); document.body.classList.remove('picking');
+  bbTap(); assert.ok(document.body.classList.contains('picking'));
+  bus.emit('tool', 'pencil'); assert.ok(!document.body.classList.contains('picking')); });
+t("module-int case 117", () => { document.body.classList.remove('picking');
   bbTap(); assert.ok(document.body.classList.contains('picking'));
   bbTap(); assert.ok(!document.body.classList.contains('picking')); });
-t('eyedropper: brush-resize живёт на клавише D отдельно от пипетки', () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
+t("module-int case 118", () => { resetWH(8, 8); S.tool = 'pencil'; S.brushes.pencil.size = 1;
   S.brushResize.direction = 'horizontal'; S.brushResize.sensitivity = 0.1; S.brushResize.key = 'd';
   brKey('keydown', 'd'); brPtr(100, 100, 0); brPtr(200, 100, 0); assert.ok(S.brushes.pencil.size > 1); brKey('keyup', 'd'); });
-t('eyedropper: Alt+ПКМ по холсту добавляет цвет в палитру', () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.palette = [[1, 1, 1]]; S.active = [1, 1, 1];
+t("module-int case 119", () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.palette = [[1, 1, 1]]; S.active = [1, 1, 1];
   S.layers[0].grid[2][2] = [9, 8, 7, 255]; const undo = overCv();
   window.dispatchEvent(new window.KeyboardEvent('keydown', { code: 'AltLeft', bubbles: true }));
   const cv = document.getElementById('cv');
@@ -816,7 +816,7 @@ t('eyedropper: Alt+ПКМ по холсту добавляет цвет в па�
   window.dispatchEvent(new window.KeyboardEvent('keyup', { code: 'AltLeft', bubbles: true })); undo();
   assert.ok(S.palette.some((c) => c[0] === 9 && c[1] === 8 && c[2] === 7)); assert.deepEqual(S.active, [9, 8, 7]);
 });
-t('eyedropper: после выбора цвета ластик переключается на Brush', () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.tool = 'eraser'; S.active = [1, 1, 1];
+t("module-int case 120", () => { resetWH(8, 8); S.eyedrop.key = 'alt'; S.tool = 'eraser'; S.active = [1, 1, 1];
   S.layers[0].grid[2][2] = [9, 8, 7, 255]; const undo = overCv();
   window.dispatchEvent(new window.KeyboardEvent('keydown', { code: 'AltLeft', bubbles: true }));
   const cv = document.getElementById('cv');
@@ -826,55 +826,55 @@ t('eyedropper: после выбора цвета ластик переключ�
   window.dispatchEvent(new window.KeyboardEvent('keyup', { code: 'AltLeft', bubbles: true })); undo();
   assert.deepEqual(S.active, [9, 8, 7]); assert.equal(S.tool, 'pencil');
 });
-t('clipboard: copy/paste на новый слой', () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 121", () => { resetWH(6, 6); S.layers[0].grid[1][1] = [7, 7, 7, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   clip.doCopy(); const m = S.layers.length; S.sel = { x0: 3, y0: 3, x1: 4, y1: 4 }; clip.doPaste();
   assert.equal(S.layers.length, m + 1); assert.ok(S.layers[S.cur].grid[3][3]); assert.equal(S.sel, null); });
 
-// --- единый Export: дерево, форматы, пайплайн (Scope→Doc→Mode→Format→Save) ---
-t('export-tree: scope=project — все верхние узлы (папка + слой)', () => { exportProject();
+
+t("module-int case 122", () => { exportProject();
   const d = xtree.buildExportDoc('project', false);
   assert.equal(d.root.length, 2); assert.ok(d.root.some((n2) => n2.kind === 'folder' && n2.name === 'G')); });
-t('export-tree: includeHidden скрывает/раскрывает скрытый слой c', () => { exportProject();
+t("module-int case 123", () => { exportProject();
   const off = xtree.buildExportDoc('project', false), fol = off.root.find((x) => x.kind === 'folder');
-  assert.equal(fol.children.length, 1); // c скрыт
+  assert.equal(fol.children.length, 1);
   const on = xtree.buildExportDoc('project', true).root.find((x) => x.kind === 'folder');
   assert.equal(on.children.length, 2); });
-t('export-tree: scope=folder экспортирует выбранную папку', () => { exportProject(); S.selFolder = 1;
+t("module-int case 124", () => { exportProject(); S.selFolder = 1;
   const d = xtree.buildExportDoc('folder', false); assert.equal(d.root.length, 1); assert.equal(d.root[0].kind, 'folder'); });
-t('export-tree: scope=selected — отмеченные слои', () => { exportProject(); S.marked = new Set([0]); S.cur = 0;
+t("module-int case 125", () => { exportProject(); S.marked = new Set([0]); S.cur = 0;
   const d = xtree.buildExportDoc('selected', false); assert.ok(d.root.some((nd) => nd.name === 'a')); });
-t('export-render: flattenNodes даёт canvas W×H', () => { exportProject();
+t("module-int case 126", () => { exportProject();
   const d = xtree.buildExportDoc('project', false), c = xrender.flattenNodes(d.root, false);
   assert.equal(c.width, 6); assert.equal(c.height, 6); });
-t('export-format: возможности форматов (PNG без слоёв, PSD со слоями)', () => {
+t("module-int case 127", () => {
   assert.equal(FORMATS.png.supportsLayered, false); assert.equal(FORMATS.png.supportsFlattened, true);
   assert.equal(FORMATS.psd.supportsLayered, true); assert.equal(FORMATS.psd.supportsFolders, true); });
-t('export-psd: writePsd возвращает непустой Blob', () => { const W = 2, H = 2, z = new Uint8Array(W * H);
+t("module-int case 128", () => { const W = 2, H = 2, z = new Uint8Array(W * H);
   const b = writePsd({ W, H, layers: [{ name: 'L', opacity: 255, hidden: false, clip: false, lsct: 0, data: { 0: z, 1: z, 2: z, 3: z } }], comp: { 0: z, 1: z, 2: z, 3: z } });
   assert.ok(b.size > 0); });
-await ta('export: слой/папка/проект → PNG (flattened)', async () => { exportProject();
+await ta("module-int case 129", async () => { exportProject();
   for (const scope of ['selected', 'folder', 'project']) { S.selFolder = scope === 'folder' ? 1 : null; S.marked = new Set([0]);
     const out = await xpipe.runExport({ scope, mode: 'flattened', format: 'png', canvasBounds: 'current', includeHidden: false });
     assert.equal(out.length, 1); assert.ok(/\.png$/.test(out[0].name)); } });
-await ta('export: слой/папка/проект → PSD (layered)', async () => { exportProject();
+await ta("module-int case 130", async () => { exportProject();
   for (const scope of ['selected', 'folder', 'project']) { S.selFolder = scope === 'folder' ? 1 : null; S.marked = new Set([0]);
     const out = await xpipe.runExport({ scope, mode: 'layered', format: 'psd', canvasBounds: 'current', includeHidden: false });
     assert.equal(out.length, 1); assert.ok(/\.psd$/.test(out[0].name)); } });
-await ta('export: separate — все слои (leaf) = по файлу на слой', async () => { exportProject();
+await ta("module-int case 131", async () => { exportProject();
   const out = await xpipe.runExport({ scope: 'project', mode: 'separate', separateMode: 'leaf', boundsMode: 'each', format: 'png', canvasBounds: 'current', includeHidden: true });
   assert.equal(out.length, 3); }); // a, b, c
-await ta('export: separate top-level = папка одним файлом + слой', async () => { exportProject();
+await ta("module-int case 132", async () => { exportProject();
   const out = await xpipe.runExport({ scope: 'project', mode: 'separate', separateMode: 'top', boundsMode: 'same', format: 'png', canvasBounds: 'current', includeHidden: false });
   assert.equal(out.length, 2); });
-await ta('export: новый формат без переписывания пайплайна', async () => { exportProject();
+await ta("module-int case 133", async () => { exportProject();
   let got = null;
   FORMATS.fake = { id: 'fake', supportsFlattened: true, supportsLayered: false, supportsSeparateFiles: true,
     encode: (c, name) => Promise.resolve({ name: name + '.fake', blob: new Blob([new Uint8Array([1])]), mime: 'x/fake', desc: 'fake' }) };
   const out = await xpipe.runExport({ scope: 'project', mode: 'flattened', format: 'fake', canvasBounds: 'current', includeHidden: false });
   got = out[0].name; delete FORMATS.fake; assert.ok(/\.fake$/.test(got)); });
 
-t('import: ImageData → пиксель-документ', () => {
-  const data = new Uint8ClampedArray(4 * 4 * 4); // 2×2 красный блок в центре 4×4
+t("module-int case 134", () => {
+  const data = new Uint8ClampedArray(4 * 4 * 4);
   for (const [px, py] of [[1, 1], [2, 1], [1, 2], [2, 2]]) { const o = (py * 4 + px) * 4; data[o] = 200; data[o + 1] = 30; data[o + 2] = 30; data[o + 3] = 255; }
   imp.setImpData({ width: 4, height: 4, data }); imp.setImportMode('replace');
   imp.impConvert(); imp.applyImport();
@@ -882,33 +882,33 @@ t('import: ImageData → пиксель-документ', () => {
   assert.ok(S.W >= 1 && S.W <= 4 && S.H >= 1 && S.H <= 4); assert.ok(S.palette.length > 0);
 });
 
-t('import: drag в редактор — Pixelize верхним слоем, документ не стирается', () => {
+t("module-int case 135", () => {
   resetWH(6, 6); S.layers[0].grid[1][1] = [9, 9, 9, 255]; cache.dirtyAll();
   const baseLayers = S.layers.length, baseW = S.W, baseH = S.H;
   const data = new Uint8ClampedArray(2 * 2 * 4); for (let i = 0; i < 4; i++) { data[i * 4] = 200; data[i * 4 + 3] = 255; }
   imp.setImpData({ width: 2, height: 2, data }); imp.setImportMode('layer'); imp.impConvert(); imp.applyImport();
-  assert.equal(S.W, baseW); assert.equal(S.H, baseH); // холст НЕ заменён
-  assert.equal(S.layers.length, baseLayers + 1); // добавлен верхний слой
-  assert.equal(S.cur, S.layers.length - 1); // активен новый верхний
-  assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9, 255]); // прежний контент цел
+  assert.equal(S.W, baseW); assert.equal(S.H, baseH);
+  assert.equal(S.layers.length, baseLayers + 1);
+  assert.equal(S.cur, S.layers.length - 1);
+  assert.deepEqual(S.layers[0].grid[1][1], [9, 9, 9, 255]);
   imp.setImportMode('replace');
 });
 
-t('palette: buildPalette рисует свотчи', () => { resetWH(4, 4); S.palette = [[1, 1, 1], [2, 2, 2]]; S.active = [1, 1, 1];
+t("module-int case 136", () => { resetWH(4, 4); S.palette = [[1, 1, 1], [2, 2, 2]]; S.active = [1, 1, 1];
   pal.mount(); pal.buildPalette(); assert.equal(document.querySelectorAll('#pal .sw:not(.plus)').length, 2); });
-t('palette: кнопка used отмечает использованные цвета', () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [1, 2, 3];
+t("module-int case 137", () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [1, 2, 3];
   S.layers[0].grid[1][1] = [1, 2, 3, 255]; cache.dirtyAll(); pal.buildPalette();
   document.getElementById('pal-used').click();
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 1);
   document.getElementById('pal-used').click();
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
 });
-t('palette: used обновляется в реальном времени по render', () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [8, 8, 8];
+t("module-int case 138", () => { resetWH(4, 4); S.palette = [[1, 2, 3], [8, 8, 8]]; S.active = [8, 8, 8];
   S.layers[0].grid = blank(4, 4); cache.dirtyAll(); pal.buildPalette();
-  document.getElementById('pal-used').click(); // включить showUsed
+  document.getElementById('pal-used').click();
   assert.equal(document.querySelectorAll('#pal .sw.used').length, 0);
-  S.layers[0].grid[0][0] = [8, 8, 8, 255]; bus.emit('render'); // «нарисовали» цвет — без пересборки палитры
-  assert.equal(document.querySelectorAll('#pal .sw.used').length, 1); // отметился сразу по render
+  S.layers[0].grid[0][0] = [8, 8, 8, 255]; bus.emit('render');
+  assert.equal(document.querySelectorAll('#pal .sw.used').length, 1);
   document.getElementById('pal-used').click();
 });
 t('palette: setActiveColor changes the active color', () => { pal.setActiveColor([9, 8, 7], false); assert.deepEqual(S.active, [9, 8, 7]); });
@@ -924,7 +924,7 @@ t('palette: changing color returns non-coloring tools to Brush', () => {
   for (const tool of ['select', 'lasso', 'move', 'eraser']) { S.tool = tool; pal.setActiveColor([70, 80, 90]); assert.equal(S.tool, 'pencil'); }
   S.tool = 'adjust'; S.adjMode = 'dodge'; pal.setActiveColor([90, 100, 110]); assert.equal(S.tool, 'pencil');
 });
-await ta('palette: ЛКМ-протяжка переставляет цвет без выделения (без gap)', async () => {
+await ta("module-int case 139", async () => {
   shading.mount(); shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   try {
@@ -932,36 +932,36 @@ await ta('palette: ЛКМ-протяжка переставляет цвет б�
     sw[0].dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 20, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 0 }));
-    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]); // цвет 0 переставлен в конец
-    assert.deepEqual(S.shading.colors, []); // ЛКМ-драг больше не выделяет диапазон
-    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0); // одиночный перенос не оставляет выделения
-    assert.equal(document.querySelectorAll('.palette-drop-gap').length, 0); // gap отключён
+    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
+    assert.deepEqual(S.shading.colors, []);
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
+    assert.equal(document.querySelectorAll('.palette-drop-gap').length, 0);
   } finally { document.elementFromPoint = oldHit; }
-  await new Promise((r) => setTimeout(r)); // сбросить отложенный palSquelch до следующего теста
+  await new Promise((r) => setTimeout(r));
 });
-t('palette: Ctrl+клик — поштучный выбор и снятие', () => {
+t("module-int case 140", () => {
   shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); S.active = [0, 0, 0]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[7].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1);
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2); // поштучно, не диапазон
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2);
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1); // повторный ctrl снимает
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 1);
   assert.deepEqual(S.shading.colors, []);
 });
-t('palette: Shift+клик — диапазон от активного/якоря', () => {
+t("module-int case 141", () => {
   shading.clear(); S.palette = Array.from({ length: 8 }, (_, i) => [i, i, i]); S.active = [0, 0, 0]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // обычный клик задаёт активный = якорь
+  sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[5].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 6); // 0..5
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
-  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3); // якорь 0 → 0..2
+  assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
 });
 t('palette: right-click menu deletes the selected shift color range', () => {
   shading.clear(); S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; S.active = [1, 1, 1]; pal.buildPalette();
@@ -982,7 +982,7 @@ t('palette: right-click menu deletes the selected shift color range', () => {
     assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
   } finally { document.elementFromPoint = oldHit; }
 });
-t('palette: выделенный диапазон можно перетащить как блок', () => {
+t("module-int case 142", () => {
   S.palette = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; pal.buildPalette();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
@@ -998,7 +998,7 @@ t('palette: выделенный диапазон можно перетащит�
     assert.equal(document.querySelectorAll('#pal .pal-sel').length, 2);
   } finally { document.elementFromPoint = oldHit; }
 });
-t('palette: ПКМ-протяжка выделяет свотчи наведением, не переставляет', () => {
+t("module-int case 143", () => {
   S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   try {
@@ -1008,11 +1008,11 @@ t('palette: ПКМ-протяжка выделяет свотчи наведен
     document.elementFromPoint = () => sw[3];
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 40, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 40, clientY: 0 }));
-    assert.deepEqual(S.palette, [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]); // ПКМ-драг не переставляет
-    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3); // наведено на 0,2,3
+    assert.deepEqual(S.palette, [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]]);
+    assert.equal(document.querySelectorAll('#pal .pal-sel').length, 3);
   } finally { document.elementFromPoint = oldHit; }
 });
-await ta('palette: долгий тап поднимает свотч и переставляет с зазором', async () => {
+await ta("module-int case 144", async () => {
   S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.shading = { colors: [], on: false, open: false, picking: false }; pal.buildPalette();
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')], oldHit = document.elementFromPoint;
   const pe = (type, x) => { const ev = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: 0 });
@@ -1020,14 +1020,14 @@ await ta('palette: долгий тап поднимает свотч и пере
   try {
     document.elementFromPoint = () => sw[2];
     sw[0].dispatchEvent(pe('pointerdown', 0));
-    await new Promise((r) => setTimeout(r, 520)); // долгий тап → свотч поднимается
+    await new Promise((r) => setTimeout(r, 520));
     assert.ok(sw[0].classList.contains('lifting'));
     document.dispatchEvent(pe('pointermove', 20));
     document.dispatchEvent(pe('pointerup', 20));
-    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]); // цвет 0 переставлен в конец, не выделил соседей
+    assert.deepEqual(S.palette, [[2, 2, 2], [3, 3, 3], [1, 1, 1]]);
   } finally { document.elementFromPoint = oldHit; }
 });
-await ta('palette: кнопка Shading выбирает ramp без залипшего выделения палитры', async () => {
+await ta("module-int case 145", async () => {
   shading.clear(); S.palette = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40]]; pal.buildPalette();
   document.getElementById('shade-pick').click();
   let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; const oldHit = document.elementFromPoint;
@@ -1042,9 +1042,9 @@ await ta('palette: кнопка Shading выбирает ramp без залип�
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   assert.equal(document.querySelectorAll('#pal .pal-sel').length, 0);
   assert.equal(document.querySelectorAll('#pal .shade-sel').length, 0);
-  await new Promise((r) => setTimeout(r)); // сбросить отложенный palSquelch до следующего теста
+  await new Promise((r) => setTimeout(r));
 });
-t('palette: кнопка Shading требует мультивыбор и переключает режим', () => {
+t("module-int case 146", () => {
   shading.clear(); S.palette = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]; S.active = [1, 1, 1]; pal.buildPalette();
   const btn = document.getElementById('pal-shading');
   assert.equal(btn.disabled, true); btn.click(); assert.equal(S.shading.on, false);
@@ -1058,17 +1058,17 @@ t('palette: кнопка Shading требует мультивыбор и пер
   assert.equal(S.shading.on, true); assert.equal(S.tool, 'pencil'); assert.ok(btn.classList.contains('on'));
   btn.click(); assert.equal(S.shading.on, false); assert.equal(btn.disabled, true); assert.ok(!btn.classList.contains('on'));
 });
-t('shading: максимум 6 цветов и клик по линейке разворачивает направление', () => {
+t("module-int case 147", () => {
   shading.setRamp([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]);
   assert.equal(S.shading.colors.length, 6);
   document.querySelector('#shade-list .shade-sw').click();
   assert.deepEqual(S.shading.colors[0], [5, 5, 5]);
   shading.clear();
 });
-t('shading: закрытие и смена инструмента сбрасывают режим без потери ramp', () => {
+t("module-int case 148", () => {
   shading.setRamp([[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
   S.palette = [[0, 0, 0], [80, 80, 80], [160, 160, 160]]; pal.buildPalette();
-  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')]; // выделение через ctrl+клик
+  let sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
   sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
   sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
@@ -1084,7 +1084,7 @@ t('shading: закрытие и смена инструмента сбрасыв
   assert.deepEqual(S.shading.colors, [[0, 0, 0], [80, 80, 80], [160, 160, 160]]);
   shading.clear(); setTool('pencil');
 });
-t('shading: кисть двигает цвет на шаг к первому цвету линейки', () => { resetWH(3, 3);
+t("module-int case 149", () => { resetWH(3, 3);
   S.tool = 'pencil'; S.brushes.pencil.size = 1; S.layers[0].grid[1][1] = [200, 200, 200, 180];
   S.shading = { colors: [[0, 0, 0], [100, 100, 100], [200, 200, 200]], on: true, open: true, picking: false };
   stroke.beginStroke(); stamp(1, 1); stamp(1, 1); S.stroke = false;
@@ -1097,8 +1097,8 @@ t('shading: кисть двигает цвет на шаг к первому ц�
   S.shading = { colors: [], on: false, open: false, picking: false };
 });
 
-t('brush-bar: syncBars без ошибок', () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
-t('brush-prefs: сохраняет и читает последние настройки кисти', () => {
+t("module-int case 150", () => { S.brushes.pencil.size = 4; bb.syncBars(); assert.ok(true); });
+t("module-int case 151", () => {
   localStorage.removeItem(BRUSH_PREFS_STORE);
   S.brushes.pencil = { size: 7, op: 0.42 }; S.brushes.eraser = { size: 9, op: 0.75 };
   S.ppOn = true; S.stabOn = false; saveBrushPrefs(S);
@@ -1106,12 +1106,12 @@ t('brush-prefs: сохраняет и читает последние настр
   assert.deepEqual(loaded.brushes.pencil, { size: 7, op: 0.42 }); assert.deepEqual(loaded.brushes.eraser, { size: 9, op: 0.75 });
   assert.deepEqual(loaded.flags, { pixelPerfect: true, stabilize: false });
 });
-t('brush-bar: шкала доходит до нового потолка и бережёт малые размеры', () => {
+t("module-int case 152", () => {
   const linearMid = Math.round(1 + 0.5 * (BP_SMAX - 1));
   assert.equal(bb.sizeFromFrac(0), 1); assert.equal(bb.sizeFromFrac(1), BP_SMAX);
   assert.ok(bb.sizeFromFrac(0.5) < linearMid); assert.equal(bb.sizeFromFrac(bb.fracFromSize(BP_SMAX)), BP_SMAX);
 });
-t('brush-bar: хоткеи размера кисти упираются в потолок', () => {
+t("module-int case 153", () => {
   localStorage.removeItem(BRUSH_PREFS_STORE);
   resetWH(8, 8); S.brushes.pencil.size = BP_SMAX - 1; S.brushes.pencil.op = 0.5;
   actions.run('brush.bigger'); assert.equal(S.brushes.pencil.size, BP_SMAX);
@@ -1120,7 +1120,7 @@ t('brush-bar: хоткеи размера кисти упираются в по�
   actions.run('brush.smaller'); assert.equal(S.brushes.pencil.size, BP_SMAX - 1);
   S.brushes.pencil = { size: 1, op: 1 }; S.brushes.eraser = { size: 1, op: 1 }; saveBrushPrefs(S);
 });
-await ta('brush-library: кисть из выделения сразу активна и выделение снято', async () => { resetWH(6, 6);
+await ta("module-int case 154", async () => { resetWH(6, 6);
   S.layers[0].grid[2][2] = [20, 30, 40, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
   const proto = HTMLCanvasElement.prototype, orig = proto.getContext;
   proto.getContext = function (...args) { const ctx = orig.apply(this, args);
@@ -1136,7 +1136,7 @@ await ta('brush-library: кисть из выделения сразу акти�
     assert.ok(brushData.lib.brushes.some((b) => b.id === S.stampBrush.pencil.id));
   } finally { proto.getContext = orig; S.stampBrush.pencil = null; S.brushes.pencil = { size: 1, op: 1 }; }
 });
-t('brush-library: иконки остаются читаемыми при маленьком размере кисти', () => {
+t("module-int case 155", () => {
   const proto = HTMLCanvasElement.prototype, orig = proto.getContext, old = brushData.lib.brushes;
   proto.getContext = function (...args) { const ctx = orig.apply(this, args), canvas = this;
     return new Proxy(ctx, { get(tg, p) { if (p === 'putImageData') return (img) => { canvas.__pixels = img.data; };
@@ -1175,14 +1175,14 @@ t('brush-library: right-click selects a brush and keeps its menu open', () => {
     document.getElementById('brush-menu').classList.remove('on');
   }
 });
-t('menus: контекстное меню выше активной панели и закрывает другие меню', () => {
+t("module-int case 156", () => {
   const panel = document.getElementById('brush-pop'), menu = document.getElementById('brush-plus'), other = document.getElementById('lctx');
   do { panel.style.zIndex = nextFloatingZ(); } while (+panel.style.zIndex <= 75);
   other.classList.add('on'); showMenuAt(menu, 120, 120);
   assert.ok(+menu.style.zIndex > +panel.style.zIndex); assert.ok(menu.classList.contains('on'));
   assert.ok(!other.classList.contains('on')); menu.classList.remove('on');
 });
-t('menus: плашки закрываются кликом снаружи, ПКМ снаружи и началом drag', () => {
+t("module-int case 157", () => {
   const menu = document.getElementById('pal-new-choice'); showMenuAt(menu, 120, 120);
   document.body.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
   assert.ok(!menu.classList.contains('on'));
@@ -1191,7 +1191,7 @@ t('menus: плашки закрываются кликом снаружи, ПК�
   showMenuAt(menu, 120, 120); document.dispatchEvent(new window.CustomEvent('ui-close-popovers'));
   assert.ok(!menu.classList.contains('on'));
 });
-t('menus: tool-choice открывается снаружи панели тулбара', () => {
+t("module-int case 158", () => {
   const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
   const mockRect = (el, r) => { const old = el.getBoundingClientRect; el.getBoundingClientRect = () => r; return () => { el.getBoundingClientRect = old; }; };
   const sidebar = document.getElementById('sidebar'), sym = document.getElementById('sym'), symMenu = document.getElementById('sym-choice');
@@ -1217,7 +1217,7 @@ t('menus: tool-choice открывается снаружи панели тул�
     symMenu.classList.remove('on');
   } finally { undo.forEach((fn) => fn()); }
 });
-t('tile-toolbar: Add tile не появляется даже из старого сохранённого порядка', () => {
+t("module-int case 159", () => {
   const old = localStorage.getItem('tileToolbarOrder4');
   try {
     localStorage.setItem('tileToolbarOrder4', JSON.stringify(['draw', 'new', 'auto', 'manual', 'save']));
@@ -1228,7 +1228,7 @@ t('tile-toolbar: Add tile не появляется даже из старого
     if (old == null) localStorage.removeItem('tileToolbarOrder4'); else localStorage.setItem('tileToolbarOrder4', old);
   }
 });
-t('tile-toolbar: Place tile и Draw/Edit подсвечиваются взаимоисключающе', () => {
+t("module-int case 160", () => {
   const bar = tileToolbar.buildToolbar(); document.body.appendChild(bar);
   const on = (id) => bar.querySelector('[data-tb="' + id + '"]').classList.contains('on');
   try {
@@ -1242,7 +1242,7 @@ t('tile-toolbar: Place tile и Draw/Edit подсвечиваются взаим
     assert.equal(on('place'), false); assert.equal(on('drawtile'), true); assert.equal(on('edittile'), false);
   } finally { bar.remove(); }
 });
-await ta('floating-window: новое окно и активное окно поднимаются, toolbar выше всех', async () => {
+await ta("module-int case 161", async () => {
   const root = document.createElement('div'), rootGrip = document.createElement('div');
   const ovl = document.createElement('div'), sheet = document.createElement('div'), sheetGrip = document.createElement('div');
   const toolbar = document.createElement('div'), toolbarGrip = document.createElement('div');
@@ -1262,7 +1262,7 @@ await ta('floating-window: новое окно и активное окно по
     assert.ok(+toolbar.style.zIndex > +root.style.zIndex);
   } finally { root.remove(); ovl.remove(); toolbar.remove(); }
 });
-await ta('floating-window: drag из прокручиваемого тела не таскает окно, грип — таскает', async () => {
+await ta("module-int case 162", async () => {
   const win = document.createElement('div'), head = document.createElement('div'), body = document.createElement('div'), row = document.createElement('div');
   body.style.overflowY = 'auto'; body.appendChild(row); win.append(head, body); document.body.appendChild(win);
   try {
@@ -1271,11 +1271,11 @@ await ta('floating-window: drag из прокручиваемого тела н�
     row.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }));
     win.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 150, clientY: 130 }));
     win.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 150, clientY: 130 }));
-    assert.equal(win.style.left, '200px'); // окно не уехало — drag достался строке списка, а не окну
+    assert.equal(win.style.left, '200px');
     head.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }));
     win.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 150, clientY: 130 }));
     win.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 150, clientY: 130 }));
-    assert.equal(win.style.left, '50px'); // за грип (шапку) окно по-прежнему переносится
+    assert.equal(win.style.left, '50px');
   } finally { win.remove(); }
 });
 t('floating-window: header double-click runs the panel reset callback', () => {
@@ -1287,7 +1287,7 @@ t('floating-window: header double-click runs the panel reset callback', () => {
     assert.equal(called, 1); assert.equal(win.style.width, '321px');
   } finally { win.remove(); }
 });
-t('gallery: режим галереи сохраняет открытые окна редактора', () => {
+t("module-int case 163", () => {
   const ids = ['lay-pop', 'brush-pop', 'adjpop', 'prevwin'];
   ids.forEach((id) => document.getElementById(id).classList.add('on'));
   gallery.show();
@@ -1298,7 +1298,7 @@ t('gallery: режим галереи сохраняет открытые окн
   assert.ok(!document.body.classList.contains('gallery-open'));
   ids.forEach((id) => document.getElementById(id).classList.remove('on'));
 });
-t('gallery: плюс открывает диалог нового холста', () => {
+t("module-int case 164", () => {
   newCanvas.mount(); gallery.show();
   const ovl = document.getElementById('new-ovl'); ovl.classList.remove('on');
   document.getElementById('gal-new').click();
@@ -1307,7 +1307,7 @@ t('gallery: плюс открывает диалог нового холста',
   assert.ok(!ovl.classList.contains('on'));
   ovl.classList.remove('on'); gallery.hide();
 });
-await ta('gallery-doc: состояние сетки сохраняется вместе с документом', async () => {
+await ta("module-int case 165", async () => {
   galDoc.newWork(8, 8, 'grid-on'); const id = galDoc.curWorkId();
   S.grid = { w: 8, h: 4, color: '#ff00ff', opacity: 55, visible: true, preview: false, link: false };
   await galDoc.saveCurrent();
@@ -1316,7 +1316,7 @@ await ta('gallery-doc: состояние сетки сохраняется вм
   assert.equal(S.grid.visible, true); assert.equal(S.grid.w, 8); assert.equal(S.grid.h, 4);
   assert.equal(S.grid.color, '#ff00ff'); assert.equal(S.grid.opacity, 55); assert.equal(S.grid.link, false);
 });
-await ta('gallery: drag без gap — исходник затемнён, призрак без подписей, точка вставки', async () => {
+await ta("module-int case 166", async () => {
   const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
   grid.innerHTML = ''; back.style.display = 'none';
   Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
@@ -1332,19 +1332,19 @@ await ta('gallery: drag без gap — исходник затемнён, при
     a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 20, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
-    assert.ok(a.classList.contains('dragging')); // исходник остаётся в сетке (затемнён), не схлопывается
+    assert.ok(a.classList.contains('dragging'));
     const gh = document.querySelector('.gal-drag-ghost');
-    assert.ok(gh && !gh.querySelector('.gal-cap')); // призрак — только превью, без подписей
+    assert.ok(gh && !gh.querySelector('.gal-cap'));
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 215, clientY: 20, button: 0 }));
     assert.deepEqual(drop, { ids: ['a'], before: 'c' });
-    assert.equal(grid.querySelector('.drop-gap'), null); // gap не создаётся вовсе
-    assert.equal(document.querySelector('.gal-drag-ghost'), null); // призрак убран на отпускании
+    assert.equal(grid.querySelector('.drop-gap'), null);
+    assert.equal(document.querySelector('.gal-drag-ghost'), null);
   } finally {
     document.elementFromPoint = prevPoint; grid.innerHTML = '';
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
 });
-await ta('gallery: touch drag стартует только после поднятия плитки', async () => {
+await ta("module-int case 167", async () => {
   const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
   grid.innerHTML = ''; back.style.display = 'none';
   Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
@@ -1363,7 +1363,7 @@ await ta('gallery: touch drag стартует только после подн�
     a.dispatchEvent(pe('pointerdown', 10, 10));
     a.dispatchEvent(pe('pointermove', 30, 10));
     assert.ok(!a.classList.contains('dragging'));
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // подъём (рост картинки) после «клевка» (~1450мс)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     assert.ok(a.classList.contains('lifting'));
     a.dispatchEvent(pe('pointermove', 42, 10));
     assert.ok(a.classList.contains('dragging'));
@@ -1376,12 +1376,12 @@ await ta('gallery: touch drag стартует только после подн�
     await new Promise((resolve) => setTimeout(resolve, 460));
   }
 });
-await ta('gallery: сквозной drag через рендер+стор переставляет плитку', async () => {
+await ta("module-int case 168", async () => {
   const galScreen = await import('../src/systems/gallery/screen.js');
   const store = await import('../src/systems/gallery/store.js');
   const { saveDoc, removeDoc } = await import('../src/core/storage.js');
   const { sortGalleryItems } = await import('../src/logic/gallery-grid.js');
-  for (const d of await store.listAll()) await removeDoc(d.id); // изолируем корень
+  for (const d of await store.listAll()) await removeDoc(d.id);
   await saveDoc({ id: 'e1', kind: 'doc', name: 'E1', folder: null, W: 8, H: 8, order: 300, updated: 999, preview: '' });
   await saveDoc({ id: 'e2', kind: 'doc', name: 'E2', folder: null, W: 8, H: 8, order: 200, updated: 200, preview: '' });
   await saveDoc({ id: 'e3', kind: 'doc', name: 'E3', folder: null, W: 8, H: 8, order: 100, updated: 100, preview: '' });
@@ -1399,16 +1399,16 @@ await ta('gallery: сквозной drag через рендер+стор пер
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 330, clientY: 20, button: 0 }));
-    await new Promise((r) => setTimeout(r, 60)); // дождаться async onReorder + render
+    await new Promise((r) => setTimeout(r, 60));
     const order = sortGalleryItems(await store.childrenOf(null)).map((x) => x.id);
-    assert.deepEqual(order, ['e2', 'e3', 'e1']); // e1 переставлен в конец и держится в сторе
+    assert.deepEqual(order, ['e2', 'e3', 'e1']);
   } finally {
     document.elementFromPoint = prevPoint;
     for (const id of ['e1', 'e2', 'e3']) await removeDoc(id);
     await new Promise((r) => setTimeout(r, 460));
   }
 });
-await ta('gallery: бросок за крайнюю плитку ставит в край (не отскок)', async () => {
+await ta("module-int case 169", async () => {
   const grid = document.getElementById('gal-grid'), back = document.getElementById('gal-back');
   grid.innerHTML = ''; back.style.display = 'none';
   Object.defineProperty(grid, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 220 }) });
@@ -1418,25 +1418,25 @@ await ta('gallery: бросок за крайнюю плитку ставит в
     grid.appendChild(el); return el; };
   const a = mk('a', 0), b = mk('b', 120); mk('c', 240);
   let drop = null; const prevPoint = document.elementFromPoint;
-  document.elementFromPoint = () => grid; // курсор в отступе/за краем — не над плиткой
+  document.elementFromPoint = () => grid;
   const ctx = { gridEl: () => grid, selecting: () => false, dragIds: (id) => [id], onBack() {}, onStack() {}, onReorder: (ids, before) => { drop = { ids, before }; } };
   try {
     attachGalleryDrag(a, 'a', ctx); attachGalleryDrag(b, 'b', ctx);
     b.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 130, clientY: 20, button: 0 }));
-    b.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 480, clientY: 20, button: 0 })); // далеко вправо, за последнюю (c)
+    b.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 480, clientY: 20, button: 0 }));
     b.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 480, clientY: 20, button: 0 }));
     b.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 480, clientY: 20, button: 0 }));
-    assert.deepEqual(drop, { ids: ['b'], before: null }); // встал после последней, не отскочил
+    assert.deepEqual(drop, { ids: ['b'], before: null });
     drop = null;
     a.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 20, button: 0 }));
-    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 320, clientY: 20, button: 0 })); // даём начаться драгу
-    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 5, clientY: 20, button: 0 })); // далеко влево, перед первой (b)
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 320, clientY: 20, button: 0 }));
+    a.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 5, clientY: 20, button: 0 }));
     a.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 5, clientY: 20, button: 0 }));
-    assert.deepEqual(drop, { ids: ['a'], before: 'b' }); // встал перед первой оставшейся (b)
+    assert.deepEqual(drop, { ids: ['a'], before: 'b' });
   } finally { document.elementFromPoint = prevPoint; grid.innerHTML = ''; await new Promise((r) => setTimeout(r, 50)); }
 });
-await ta('layers-ui: быстрый бросок слоя переставляет до раскрытия зазора', async () => {
-  resetWH(4, 4); lops.doAddLayer(); layList(); // два слоя: index1 сверху, index0 ('a') снизу
+await ta("module-int case 170", async () => {
+  resetWH(4, 4); lops.doAddLayer(); layList();
   const rows = [...document.querySelectorAll('#lay-list .lrow')];
   const src = rows.find((r) => r.dataset.li === '0'), tgt = rows.find((r) => r.dataset.li === '1');
   const pop = document.getElementById('lay-pop');
@@ -1446,17 +1446,17 @@ await ta('layers-ui: быстрый бросок слоя переставляе
   document.elementFromPoint = () => tgt;
   try {
     src.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 80 }));
-    src.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 10 })); // вертикальный — старт драга + наведение на верхнюю строку
+    src.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 10 }));
     assert.ok(src.classList.contains('dragging'));
-    src.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 50, clientY: 10 })); // отпускаем сразу, зазор ещё не раскрылся
-    assert.equal(S.layers[1].name, 'a'); // слой 'a' переставлен наверх
+    src.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 50, clientY: 10 }));
+    assert.equal(S.layers[1].name, 'a');
   } finally {
     document.elementFromPoint = prevPoint;
-    delete pop.getBoundingClientRect; // вернуть прототипную реализацию для следующих тестов
+    delete pop.getBoundingClientRect;
     await new Promise((resolve) => setTimeout(resolve, 320));
   }
 });
-await ta('drop-gap: открывается после задержки и отдаёт точку вставки', async () => {
+await ta("module-int case 171", async () => {
   const box = document.createElement('div'); document.body.appendChild(box);
   const a = document.createElement('i'), b = document.createElement('i'); a.className = b.className = 'item';
   Object.defineProperty(b, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 100, height: 80 }) });
@@ -1474,7 +1474,7 @@ await ta('drop-gap: открывается после задержки и отд
     assert.equal(box.querySelector('.drop-gap'), null);
   } finally { gap.remove(); box.remove(); }
 });
-t('drag-ghost: клон плитки галереи сохраняет размер превью', () => {
+t("module-int case 172", () => {
   const tile = document.createElement('div'), thumb = document.createElement('div');
   tile.className = 'gal-tile dragging source-gap'; thumb.className = 'gal-thumb'; tile.appendChild(thumb);
   Object.defineProperty(tile, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 118, height: 176 }) });
@@ -1488,7 +1488,7 @@ t('drag-ghost: клон плитки галереи сохраняет разм�
   assert.ok(!el.classList.contains('source-gap'));
   ghost.remove();
 });
-t('new-canvas: поля размера считают относительные выражения', () => {
+t("module-int case 173", () => {
   newCanvas.mount(); gallery.show();
   const ovl = document.getElementById('new-ovl'); ovl.classList.add('on');
   const w = document.getElementById('new-w'), h = document.getElementById('new-h');
@@ -1498,8 +1498,8 @@ t('new-canvas: поля размера считают относительные
   assert.equal(S.W, 72); assert.equal(S.H, 32); assert.equal(S.docName, '72 x 32');
   ovl.classList.remove('on'); gallery.hide();
 });
-t('color-picker: sync из активного', () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
-t('color-picker: первый sync скрытого окна держит маркер внутри внутреннего круга', () => {
+t("module-int case 174", () => { S.active = [255, 0, 0]; cp.syncColFromActive(); assert.equal(document.getElementById('col-hv').textContent, '0'); });
+t("module-int case 175", () => {
   const pop = document.getElementById('colpop'), disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
   pop.classList.remove('on');
   disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 });
@@ -1511,7 +1511,7 @@ t('color-picker: первый sync скрытого окна держит мар
   assert.ok(x >= 47 && x <= 239);
   assert.ok(y >= 47 && y <= 239);
 });
-t('color-picker: диск, плюс и история использованных цветов работают без большой Add-кнопки', () => { localStorage.removeItem('pixel-heart:color-used-history'); cp.mount(); document.getElementById('col-hist-clear').click(); S.palette = [];
+t("module-int case 176", () => { localStorage.removeItem('pixel-heart:color-used-history'); cp.mount(); document.getElementById('col-hist-clear').click(); S.palette = [];
   assert.ok(document.getElementById('col-disc')); assert.ok(document.getElementById('col-prev-sw')); assert.ok(document.getElementById('col-copy')); assert.equal(document.querySelector('#colpop .iact'), null);
   S.active = [10, 20, 30]; cp.syncColFromActive();
   const hex = document.getElementById('col-hex'); hex.value = '#123456'; hex.dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -1531,7 +1531,7 @@ t('color-picker: диск, плюс и история использованны
   assert.equal(document.querySelectorAll('#col-hist button').length, 1);
   document.getElementById('col-hist-clear').click(); assert.equal(document.querySelectorAll('#col-hist button').length, 0);
 });
-t('color-picker: двойной клик во внутреннем круге снапает к ближайшей крайней точке', () => {
+t("module-int case 177", () => {
   const disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
   disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 });
   sv.getBoundingClientRect = () => ({ left: 54, top: 54, width: 92, height: 92, right: 146, bottom: 146 });
@@ -1545,7 +1545,7 @@ t('color-picker: двойной клик во внутреннем круге с
   disc.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 142 }));
   assert.deepEqual(S.active, [0, 0, 0]);
 });
-t('color-picker: hue-кольцо совпадает с HSV и зазор не выбирает цвет', () => {
+t("module-int case 178", () => {
   const disc = document.getElementById('col-disc'), sv = document.getElementById('col-svdisc');
   disc.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 });
   sv.getBoundingClientRect = () => ({ left: 33, top: 33, width: 134, height: 134, right: 167, bottom: 167 });
@@ -1560,7 +1560,7 @@ t('color-picker: hue-кольцо совпадает с HSV и зазор не �
   assert.equal(document.getElementById('col-hv').textContent, '90');
 });
 
-t('windows: preview/reference монтируются без ошибок', () => { prev.mount(); ref.mount(); assert.ok(true); });
+t("module-int case 179", () => { prev.mount(); ref.mount(); assert.ok(true); });
 await ta('reference: drop image into reference window and drag outside detaches it', async () => {
   const OldImage = globalThis.Image, OldWinImage = window.Image;
   class MockImage {
@@ -1657,9 +1657,9 @@ await ta('reference: drop image into reference window and drag outside detaches 
   } finally { window.removeEventListener('drop', onDrop); globalThis.Image = OldImage; window.Image = OldWinImage; }
 });
 
-t('palette-manager: монтируется и сохраняет палитру', () => { localStorage.removeItem('paletteCreateMode'); S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
-  document.getElementById('pal-name').value = 'тест'; document.getElementById('pal-save').click();
-  const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['тест'], [[1, 2, 3], [4, 5, 6]]);
+t("module-int case 180", () => { localStorage.removeItem('paletteCreateMode'); S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount();
+  document.getElementById('pal-name').value = 'palette-test'; document.getElementById('pal-save').click();
+  const saved = JSON.parse(localStorage.getItem('palettes')); assert.deepEqual(saved['palette-test'], [[1, 2, 3], [4, 5, 6]]);
   assert.equal(document.getElementById('pal-from-img'), null);
   assert.equal(document.querySelectorAll('#pal-act > button').length, 6);
   assert.equal(document.querySelectorAll('#pal-new-choice button').length, 3);
@@ -1667,23 +1667,26 @@ t('palette-manager: монтируется и сохраняет палитру'
   document.getElementById('pal-save-open').click(); assert.notEqual(document.getElementById('pal-save-row').style.display, 'none');
   document.getElementById('pal-new').click(); assert.deepEqual(S.palette, []);
 });
-t('palette-manager: новая палитра запоминает последний режим', () => { localStorage.removeItem('paletteCreateMode'); resetWH(2, 2);
+t("module-int case 181", () => { localStorage.removeItem('paletteCreateMode'); resetWH(2, 2);
   S.layers[0].grid[0][0] = [9, 8, 7, 255]; cache.dirtyAll(); palMgr.mount();
   document.querySelector('#pal-new-choice [data-pal-create="canvas"]').click();
   assert.deepEqual(S.palette, [[9, 8, 7]]);
   S.palette = [[1, 1, 1]]; document.getElementById('pal-new').click();
   assert.deepEqual(S.palette, [[9, 8, 7]]);
 });
-t('palette-manager: пустое имя сохраняется как следующий Palette NN', () => {
-  localStorage.setItem('palettes', JSON.stringify({ 'Palette 01': [[9, 9, 9]] }));
+t("module-int case 182", () => {
+  const firstName = i18n.t('palette.defaultName', { n: '01' });
+  const secondName = i18n.t('palette.defaultName', { n: '02' });
+  const thirdName = i18n.t('palette.defaultName', { n: '03' });
+  localStorage.setItem('palettes', JSON.stringify({ [firstName]: [[9, 9, 9]] }));
   S.palette = [[1, 2, 3], [4, 5, 6]]; palMgr.mount(); document.getElementById('pal-save-open').click();
-  assert.equal(document.getElementById('pal-name').value, 'Palette 02');
+  assert.equal(document.getElementById('pal-name').value, secondName);
   document.getElementById('pal-name').value = ''; document.getElementById('pal-save').click();
   const saved = JSON.parse(localStorage.getItem('palettes'));
-  assert.deepEqual(saved['Palette 02'], [[1, 2, 3], [4, 5, 6]]);
-  assert.equal(document.getElementById('pal-name').value, 'Palette 03');
+  assert.deepEqual(saved[secondName], [[1, 2, 3], [4, 5, 6]]);
+  assert.equal(document.getElementById('pal-name').value, thirdName);
 });
-t('palette-manager: Apollo 46 всегда есть во встроенных пресетах', () => {
+t("module-int case 183", () => {
   localStorage.removeItem('palettes'); S.palette = [[1, 1, 1]]; palMgr.mount(); document.getElementById('pal-presets').click();
   const row = document.querySelector('#pal-list .prow');
   assert.equal(row.querySelector('.pname').textContent, 'Apollo 46');
@@ -1691,19 +1694,19 @@ t('palette-manager: Apollo 46 всегда есть во встроенных п
   row.querySelector('.pswatches').click();
   assert.equal(S.palette.length, 46); assert.deepEqual(S.palette[0], [23, 32, 56]); assert.deepEqual(S.palette.at(-1), [235, 237, 233]);
 });
-t('palette-manager: пустая палитра не сохраняется', () => { localStorage.setItem('palettes', JSON.stringify({ keep: [[9, 9, 9]] }));
+t("module-int case 184", () => { localStorage.setItem('palettes', JSON.stringify({ keep: [[9, 9, 9]] }));
   S.palette = []; palMgr.mount(); document.getElementById('pal-name').value = 'empty'; document.getElementById('pal-save').click();
   assert.deepEqual(JSON.parse(localStorage.getItem('palettes')), { keep: [[9, 9, 9]] });
   assert.equal(document.getElementById('toast').textContent, i18n.t('toast.paletteEmpty'));
 });
-t('palette-manager: палитра из картинки сохраняет 46 точных цветов', () => {
+t("module-int case 185", () => {
   const d = new Uint8ClampedArray(46 * 2 * 4);
   for (let i = 0; i < 46; i++) for (let y = 0; y < 2; y++) { const o = (y * 46 + i) * 4;
     d[o] = i; d[o + 1] = 120 - i; d[o + 2] = 40 + i; d[o + 3] = 255; }
   const pal = palMgr.paletteFromImageData(d);
   assert.equal(pal.length, 46); assert.deepEqual(pal[0], [0, 120, 40]); assert.deepEqual(pal[45], [45, 75, 85]);
 });
-t('palette-manager: палитра из файла ограничивается 128 цветами', () => {
+t("module-int case 186", () => {
   const d = new Uint8ClampedArray(150 * 4);
   for (let i = 0; i < 150; i++) { d[i * 4] = i; d[i * 4 + 1] = 150 - i; d[i * 4 + 2] = (i * 3) % 255; d[i * 4 + 3] = 255; }
   assert.ok(palMgr.paletteFromImageData(d, 128).length <= 128);
@@ -1715,7 +1718,7 @@ t('palette-manager: image overflow palette uses requested source colors', () => 
   const pal = palMgr.paletteFromImageData(d, 48);
   assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
 });
-t('palette-manager: палитра с холста берёт видимые цвета', () => { resetWH(3, 3);
+t("module-int case 187", () => { resetWH(3, 3);
   S.layers[0].grid[0][0] = [1, 2, 3, 255]; S.layers[0].grid[1][1] = [7, 8, 9, 255];
   S.layers.push({ name: 'hidden', grid: blank(3, 3), opacity: 1, visible: false, fid: null, clip: false, ext: new Map(), effects: [] });
   S.layers[1].grid[2][2] = [80, 90, 100, 255]; cache.dirtyAll();
@@ -1733,14 +1736,14 @@ t('palette-manager: canvas palette is quantized to 48 significant colors', () =>
   assert.equal(pal.length, 48); assert.ok(pal.every((c) => source.has(c.join(','))));
 });
 
-t('tint-shade: окно открывается от активного цвета палитры, шкалы по 5', () => {
+t("module-int case 188", () => {
   tsg.mount(); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [200, 100, 50];
   document.getElementById('tsg-btn').click();
   assert.ok(document.getElementById('tsg-win').classList.contains('on'));
-  assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale').length, 2); // тинты + шейды
+  assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale').length, 2);
   assert.equal(document.querySelectorAll('#tsg-scales .tsg-scale')[0].querySelectorAll('.tsg-sw').length, 5);
 });
-t('tint-shade: HEX поля можно вставлять и редактировать', () => {
+t("module-int case 189", () => {
   document.querySelector('#tsg-scales .tsg-sw').click();
   assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 1);
   const input = document.getElementById('tsg-basehex');
@@ -1753,59 +1756,59 @@ t('tint-shade: HEX поля можно вставлять и редактиро�
   input.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(input.value, '#CC5577');
 });
-t('tint-shade: гармония рисует доп. шкалы по 5', () => {
+t("module-int case 190", () => {
   document.querySelector('#tsg-win [data-harm="triadic"]').click();
   const blocks = document.querySelectorAll('#tsg-harm .tsg-block');
   assert.equal(blocks.length, 2);
-  assert.equal(blocks[0].querySelectorAll('.tsg-sw').length, 10); // 5 тинтов + 5 шейдов
+  assert.equal(blocks[0].querySelectorAll('.tsg-sw').length, 10);
 });
-t('swipe-actions: action c icon рисует svg-кнопку, label идёт в title', () => {
+t("module-int case 191", () => {
   const row = document.createElement('div');
   swipe.attachSwipe(row, { actions: [
-    { icon: '<svg viewBox="0 0 24 24"><path d="M4 4"/></svg>', label: 'Замок', onClick: () => {} },
-    { label: 'Правка', onClick: () => {} }] });
+    { icon: '<svg viewBox="0 0 24 24"><path d="M4 4"/></svg>', label: 'Lock', onClick: () => {} },
+    { label: 'Edit', onClick: () => {} }] });
   const btns = row.querySelectorAll('.swipe-act');
-  assert.ok(btns[0].classList.contains('icon')); assert.ok(btns[0].querySelector('svg')); assert.equal(btns[0].title, 'Замок');
-  assert.ok(!btns[1].classList.contains('icon')); assert.equal(btns[1].textContent, 'Правка');
+  assert.ok(btns[0].classList.contains('icon')); assert.ok(btns[0].querySelector('svg')); assert.equal(btns[0].title, 'Lock');
+  assert.ok(!btns[1].classList.contains('icon')); assert.equal(btns[1].textContent, 'Edit');
 });
-t('tint-shade: галочка у базы выбирает/снимает всю шкалу целиком', () => {
+t("module-int case 192", () => {
   S.palette = [[40, 90, 200]]; S.active = [40, 90, 200];
-  document.getElementById('tsg-btn').click(); // переоткрыть — выбор чистый
+  document.getElementById('tsg-btn').click();
   const check = () => document.querySelector('#tsg-basecheck .tsg-check');
-  check().click(); // тинты(5)+шейды(5), база общая → 9 уникальных
+  check().click();
   assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 9);
   assert.ok(check().classList.contains('on'));
-  check().click(); // снять всю шкалу
+  check().click();
   assert.equal(document.querySelectorAll('#tsg-selprev .tsg-chip').length, 0);
 });
-t('tint-shade: кнопки Close в окне нет (закрытие крестиком)', () => {
+t("module-int case 193", () => {
   assert.equal(document.getElementById('tsg-close'), null);
 });
-t('tint-shade: addSelected/createNew меняют палитру', () => {
+t("module-int case 194", () => {
   S.palette = [[1, 2, 3]];
-  assert.equal(tsg.addSelectedToCurrentPalette([[9, 9, 9], [1, 2, 3]]), 1); // дубль не добавляется
+  assert.equal(tsg.addSelectedToCurrentPalette([[9, 9, 9], [1, 2, 3]]), 1);
   assert.deepEqual(S.palette, [[1, 2, 3], [9, 9, 9]]);
   tsg.createNewPaletteFromSelected([[7, 7, 7], [8, 8, 8]]);
   assert.deepEqual(S.palette, [[7, 7, 7], [8, 8, 8]]); assert.deepEqual(S.active, [7, 7, 7]);
 });
-t('tint-shade: кнопка New не закрывает окно (закрывается только крестиком)', () => {
+t("module-int case 195", () => {
   tsg.mount(); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [200, 100, 50];
-  document.getElementById('tsg-btn').click(); // открыть окно
-  document.querySelector('#tsg-scales .tsg-sw').click(); // выбрать цвет, иначе New ничего не делает
+  document.getElementById('tsg-btn').click();
+  document.querySelector('#tsg-scales .tsg-sw').click();
   document.getElementById('tsg-create').click();
-  assert.ok(document.getElementById('tsg-win').classList.contains('on')); // окно осталось
+  assert.ok(document.getElementById('tsg-win').classList.contains('on'));
   document.getElementById('tsg-x').click();
-  assert.ok(!document.getElementById('tsg-win').classList.contains('on')); // крестик закрывает
+  assert.ok(!document.getElementById('tsg-win').classList.contains('on'));
 });
-t('tint-shade: без активного цвета в палитре — окно не открывается', () => {
+t("module-int case 196", () => {
   document.getElementById('tsg-win').classList.remove('on');
-  S.palette = [[1, 2, 3]]; S.active = [200, 200, 200]; // нет в палитре
+  S.palette = [[1, 2, 3]]; S.active = [200, 200, 200];
   document.getElementById('tsg-btn').click();
   assert.ok(!document.getElementById('tsg-win').classList.contains('on'));
 });
 
-t('toolbars: mount + смена инструмента подсвечивает кнопку', () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
-t('toolbars: рабочие кнопки в вертикальном тулбаре, верхняя панель держит только глобальные окна', () => {
+t("module-int case 197", () => { tb.mount(); setTool('eraser'); assert.ok(document.getElementById('t-eraser').classList.contains('on')); assert.ok(!document.getElementById('t-pencil').classList.contains('on')); });
+t("module-int case 198", () => {
   const sideIds = ['t-pencil', 't-eraser', 't-fill', 't-shape', 't-move', 't-adjust', 't-select', 't-lasso',
     'sym', 'tile-btn', 'pp', 'stab', 'flip-h', 'crop', 'center', 'zoom'];
   for (const id of sideIds) assert.equal(document.getElementById(id).parentElement.id, 'sidebar');
@@ -1816,7 +1819,7 @@ t('toolbars: рабочие кнопки в вертикальном тулба�
   assert.equal(document.getElementById('zin'), null);
   assert.equal(document.getElementById('zout'), null);
 });
-t('toolbars: линия и фигуры выбираются одной кнопкой с режимами', () => { tb.mount(); resetWH(8, 8);
+t("module-int case 199", () => { tb.mount(); resetWH(8, 8);
   assert.equal(document.getElementById('t-line'), null); assert.equal(document.getElementById('line-choice'), null);
   document.getElementById('t-shape').click();
   assert.equal(S.tool, 'rect');
@@ -1835,7 +1838,7 @@ t('toolbars: линия и фигуры выбираются одной кноп
   assert.equal(S.tool, 'ellipse'); assert.equal(S.shapeTool, 'ellipse'); assert.equal(S.fillShape.ellipse, true);
   assert.ok(document.getElementById('t-shape').classList.contains('on'));
 });
-t('toolbars: ЛКМ кисти выбирает инструмент, ПКМ открывает библиотеку', () => {
+t("module-int case 200", () => {
   let opened = null; actions.register('ui.brushLibrary', (mode) => { opened = mode; });
   document.getElementById('brush-choice').classList.remove('on');
   resetWH(8, 8); S.tool = 'eraser'; document.getElementById('t-pencil').click();
@@ -1849,7 +1852,7 @@ t('toolbars: ЛКМ кисти выбирает инструмент, ПКМ о�
   document.getElementById('t-eraser').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   assert.equal(opened, 'eraser');
 });
-t('toolbars: повторный ЛКМ активного инструмента возвращает кисть', () => { tb.mount(); resetWH(8, 8);
+t("module-int case 201", () => { tb.mount(); resetWH(8, 8);
   for (const [tool, id] of [['eraser', 't-eraser'], ['fill', 't-fill'], ['lasso', 't-lasso']]) {
     setTool(tool); document.getElementById(id).click(); assert.equal(S.tool, 'pencil');
   }
@@ -1857,18 +1860,18 @@ t('toolbars: повторный ЛКМ активного инструмента
   assert.ok(['line', 'rect', 'ellipse'].includes(S.tool));
   document.getElementById('t-shape').click(); assert.equal(S.tool, 'pencil');
 });
-t('toolbars: повторное нажатие Move выключает трансформацию', () => { tb.mount(); resetWH(8, 8); S.tool = 'move'; S.layers[0].grid[2][2] = [1, 1, 1, 255]; cache.dirtyAll();
-  actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); assert.equal(S.tool, 'pencil'); }); // активная кнопка трансформации выключает
-t('toolbars: повторное нажатие выделения снимает выделение', () => { tb.mount(); resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
-  document.getElementById('t-select').click(); assert.equal(S.sel, null); assert.equal(S.tool, 'pencil'); }); // активная кнопка выделения снимает
-t('toolbars: выделение и Free Transform подсвечивают только текущий режим', () => { resetWH(8, 8); S.tool = 'pencil';
+t("module-int case 202", () => { tb.mount(); resetWH(8, 8); S.tool = 'move'; S.layers[0].grid[2][2] = [1, 1, 1, 255]; cache.dirtyAll();
+  actions.run('transform.enter'); assert.ok(S.rotMode); document.getElementById('t-move').click(); assert.equal(S.rotMode, null); assert.equal(S.tool, 'pencil'); });
+t("module-int case 203", () => { tb.mount(); resetWH(8, 8); S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.tool = 'select';
+  document.getElementById('t-select').click(); assert.equal(S.sel, null); assert.equal(S.tool, 'pencil'); });
+t("module-int case 204", () => { resetWH(8, 8); S.tool = 'pencil';
   S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; bus.emit('selection');
   assert.ok(document.getElementById('t-select').classList.contains('on'));
   actions.run('transform.enter');
   assert.ok(document.getElementById('t-move').classList.contains('on'));
   assert.ok(!document.getElementById('t-select').classList.contains('on'));
   tf.exitRotMode(false); assert.ok(!document.getElementById('t-move').classList.contains('on')); });
-t('toolbars: симметрия и Transform Canvas: ЛКМ запускает последний режим, ПКМ открывает меню', () => { tb.mount(); resetWH(4, 4);
+t("module-int case 205", () => { tb.mount(); resetWH(4, 4);
   S.sym = false; S.symH = false; document.getElementById('sym').click();
   assert.equal(S.sym, true);
   assert.ok(!document.getElementById('sym-choice').classList.contains('on'));
@@ -1905,7 +1908,7 @@ t('toolbars: симметрия и Transform Canvas: ЛКМ запускает �
   assert.equal(document.getElementById('sym-h'), null); assert.equal(document.getElementById('flip-v'), null);
   S.sym = false; S.symH = false; S.symD1 = false; S.symEnabled = true; S.symLines.mode = null;
 });
-t('toolbars: Zoom свернут в одну кнопку с последним выбранным действием', () => { tb.mount(); resetWH(8, 8);
+t("module-int case 206", () => { tb.mount(); resetWH(8, 8);
   document.getElementById('zoom').click();
   assert.equal(document.getElementById('zoom').title, i18n.t('tool.realSize'));
   document.getElementById('zoom').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
@@ -1916,7 +1919,7 @@ t('toolbars: Zoom свернут в одну кнопку с последним 
   assert.ok(document.getElementById('zoom-choice').classList.contains('on'));
   assert.equal(document.getElementById('zoom').title, i18n.t('tool.zoomIn'));
 });
-t('toolbars: Center открывает два режима и запоминает последний', () => { tb.mount(); resetWH(8, 8);
+t("module-int case 207", () => { tb.mount(); resetWH(8, 8);
   document.getElementById('center').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   assert.ok(document.getElementById('center-choice').classList.contains('on'));
   assert.equal(document.querySelectorAll('#center-choice [data-center-mode]').length, 2);
@@ -1924,13 +1927,13 @@ t('toolbars: Center открывает два режима и запоминае
   assert.ok(document.getElementById('center-choice').classList.contains('on'));
   assert.equal(document.getElementById('center').title, i18n.t('side.centerFit'));
 });
-t('grid: отдельного попапа нет, action переключает видимость сетки', () => { gridSys.mount(); resetWH(8, 8);
+t("module-int case 208", () => { gridSys.mount(); resetWH(8, 8);
   assert.equal(document.getElementById('grid-btn'), null); assert.equal(document.getElementById('grid-pop'), null);
   assert.equal(S.grid.visible, false); gridSys.openGridPop();
   assert.equal(S.grid.visible, true); assert.equal(S.grid.preview, false);
   gridSys.openGridPop(); assert.equal(S.grid.visible, false);
 });
-t('grid: Canvas size управляет видимостью сетки только чекбоксом', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+t("module-int case 209", () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const visible = document.getElementById('crop-grid-visible');
   assert.equal(document.getElementById('crop-grid'), null);
   assert.equal(S.grid.visible, false);
@@ -1940,14 +1943,14 @@ t('grid: Canvas size управляет видимостью сетки толь
   assert.equal(S.grid.visible, false);
   crop.cancelCrop();
 });
-t('toolbars: Pixel Perfect и стабилизация сохраняются', () => {
+t("module-int case 210", () => {
   localStorage.removeItem(BRUSH_PREFS_STORE); S.ppOn = false; S.stabOn = true; tb.mount();
   document.getElementById('pp').click(); document.getElementById('stab').click();
   const saved = JSON.parse(localStorage.getItem(BRUSH_PREFS_STORE));
   assert.equal(saved.pixelPerfect, true); assert.equal(saved.stabilize, false);
   S.ppOn = false; S.stabOn = true; saveBrushPrefs(S);
 });
-t('effects: новый эффект до Apply остаётся черновиком без строки в списке', () => { effects.mount(); adjust.mount();
+t("module-int case 211", () => { effects.mount(); adjust.mount();
   resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   actions.run('fx.panel'); assert.ok(document.getElementById('fx-panel').classList.contains('on'));
   document.querySelector('#fx-types button[data-fx="glow"]').click(); layList();
@@ -1955,7 +1958,7 @@ t('effects: новый эффект до Apply остаётся черновик
   assert.equal(document.querySelectorAll('#lay-list .fxrow').length, 0); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
   document.getElementById('fx-cancel').click(); assert.equal(S.fxDraft, null); assert.equal(S.layers[0].effects.length, 0); });
 
-t('effects: preview нового эффекта можно отменить через undo', () => { effects.mount(); resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 212", () => { effects.mount(); resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
   actions.run('fx.panel'); document.querySelector('#fx-types button[data-fx="stroke"]').click();
   assert.ok(S.fxDraft); assert.ok(document.getElementById('fx-edit').classList.contains('on'));
   history.doUndo();
@@ -1963,17 +1966,17 @@ t('effects: preview нового эффекта можно отменить че
   assert.equal(S.layers[0].effects.length, 0); assert.equal(S.undoStack.length, 0);
 });
 
-t('effects: новые эффекты берут активный цвет', () => { resetWH(8, 8); S.active = [12, 34, 56];
+t("module-int case 213", () => { resetWH(8, 8); S.active = [12, 34, 56];
   for (const type of EFFECT_TYPES) {
     document.querySelector(`#fx-types button[data-fx="${type}"]`).click();
     assert.equal(S.fxDraft.eff.params.color, '#0c2238'); document.getElementById('fx-cancel').click();
   } });
 
-t('effects: Apply фиксирует эффект, undo убирает', () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
+t("module-int case 214", () => { resetWH(8, 8); S.layers[0].grid[4][4] = [1, 1, 1, 255]; cache.dirtyAll();
   document.querySelector('#fx-types button[data-fx="stroke"]').click(); document.getElementById('fx-apply').click();
   assert.equal(S.layers[0].effects.length, 1); history.doUndo(); assert.equal(S.layers[0].effects.length, 0); });
 
-t('effects: preview изменения эффекта отменяется undo, Apply откатывается историей', () => { resetWH(8, 8); effects.mount(); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 215", () => { resetWH(8, 8); effects.mount(); S.undoStack.length = 0; S.redoStack.length = 0;
   const eff = newEffect('stroke', { size: 1, color: '#112233' }); S.layers[0].effects = [eff];
   actions.run('fx.edit', S.layers[0], eff); document.getElementById('fx-size').value = '5';
   document.getElementById('fx-size').dispatchEvent(new window.Event('input', { bubbles: true }));
@@ -1987,63 +1990,63 @@ t('effects: preview изменения эффекта отменяется undo,
   history.doUndo(); assert.equal(S.layers[0].effects[0].params.size, 1);
 });
 
-t('effects: copy/paste переносит эффект на выбранные слои', () => { resetWH(8, 8); lops.doAddLayer();
+t("module-int case 216", () => { resetWH(8, 8); lops.doAddLayer();
   S.layers[0].effects = [{ id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.copy');
   S.cur = 1; S.marked = new Set([0, 1]); actions.run('fx.paste');
   assert.ok(S.layers[1].effects.length >= 1 && S.layers[1].effects[0].type === 'stroke'); S.marked = new Set(); S.fxSel.clear(); S.fxCur = null; });
 
-t('fx: Convert To Layer — новый слой только с эффектом, источник цел', () => { resetWH(8, 8); const L = S.layers[0]; L.grid[4][4] = [1, 1, 1, 255];
+t("module-int case 217", () => { resetWH(8, 8); const L = S.layers[0]; L.grid[4][4] = [1, 1, 1, 255];
   L.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }]; cache.dirtyAll();
   const eff = L.effects[0], n0 = S.layers.length; actions.run('fx.convert', L, eff);
-  assert.equal(S.layers.length, n0 + 1); assert.equal(L.effects.length, 0); // эффект снят с источника
-  const nl = S.layers[S.layers.indexOf(L) - 1]; // слой под источником
-  assert.ok(nl && nl.grid.some((r) => r.some((c) => c && c[0] === 255))); // в новом слое только пиксели обводки
-  assert.deepEqual(L.grid[4][4], [1, 1, 1, 255]); }); // исходный пиксель не тронут
-t('fx: Convert To Layer у эффекта папки оставляет слой внутри этой папки', () => { resetWH(8, 8); const L = S.layers[0]; L.fid = 1; L.grid[4][4] = [1, 1, 1, 255];
+  assert.equal(S.layers.length, n0 + 1); assert.equal(L.effects.length, 0);
+  const nl = S.layers[S.layers.indexOf(L) - 1];
+  assert.ok(nl && nl.grid.some((r) => r.some((c) => c && c[0] === 255)));
+  assert.deepEqual(L.grid[4][4], [1, 1, 1, 255]); });
+t("module-int case 218", () => { resetWH(8, 8); const L = S.layers[0]; L.fid = 1; L.grid[4][4] = [1, 1, 1, 255];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }] }];
   cache.dirtyAll(); const eff = S.folders[0].effects[0]; actions.run('fx.convert', S.folders[0], eff);
   assert.equal(S.folders[0].effects.length, 0); assert.equal(S.layers.length, 2); assert.equal(S.layers[0].fid, 1);
   assert.equal(S.layers[1], L); assert.deepEqual(S.layers[1].grid[4][4], [1, 1, 1, 255]); });
-t('fx: adjustment нельзя превратить в слой', () => { resetWH(8, 8); const L = S.layers[0], eff = newEffect('adjustment', { brightness: 20 });
+t("module-int case 219", () => { resetWH(8, 8); const L = S.layers[0], eff = newEffect('adjustment', { brightness: 20 });
   L.effects = [eff]; actions.run('fx.convert', L, eff);
   assert.equal(S.layers.length, 1); assert.equal(L.effects[0], eff); });
-t('fx: Copy Effects + Paste копирует все эффекты, копии независимы', () => { resetWH(8, 8); const src = S.layers[0];
+t("module-int case 220", () => { resetWH(8, 8); const src = S.layers[0];
   src.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }, { id: 2, type: 'glow', visible: false, params: { size: 3, intensity: 0.5, color: '#00ff00' } }];
   lops.doAddLayer(); const tgt = S.layers[S.cur]; actions.run('fx.copyAll', src); actions.run('fx.paste');
-  assert.equal(tgt.effects.length, 2); assert.equal(tgt.effects[1].visible, false); // порядок и visibility сохранены
-  tgt.effects[0].params.size = 9; assert.equal(src.effects[0].params.size, 1); }); // вставленные эффекты независимы
-t('fx: Delete удаляет только выбранный эффект', () => { resetWH(8, 8); const L = S.layers[0];
+  assert.equal(tgt.effects.length, 2); assert.equal(tgt.effects[1].visible, false);
+  tgt.effects[0].params.size = 9; assert.equal(src.effects[0].params.size, 1); });
+t("module-int case 221", () => { resetWH(8, 8); const L = S.layers[0];
   L.effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }, { id: 2, type: 'glow', visible: true, params: { size: 3, intensity: 0.5, color: '#0f0' } }];
   S.fxCur = L.effects[0]; S.fxSel = new Set([L.effects[0]]); actions.run('fx.delete');
   assert.equal(L.effects.length, 1); assert.equal(L.effects[0].type, 'glow'); S.fxSel.clear(); S.fxCur = null; });
 
-t('effects: дублирование/удаление выделенных эффектов', () => { resetWH(8, 8);
+t("module-int case 222", () => { resetWH(8, 8);
   S.layers[0].effects = [{ id: 11, type: 'stroke', visible: true, params: { size: 1, color: '#ff0000' } }];
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]); actions.run('fx.duplicate'); assert.equal(S.layers[0].effects.length, 2);
   S.fxSel = new Set(S.layers[0].effects); actions.run('fx.delete'); assert.equal(S.layers[0].effects.length, 0); });
 
-t('effects: drag — перенос на слой и переупорядочивание', () => { resetWH(8, 8); lops.doAddLayer();
+t("module-int case 223", () => { resetWH(8, 8); lops.doAddLayer();
   const A = { id: 21, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } };
   const B = { id: 22, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } };
   S.layers[0].effects = [A, B]; S.layers[1].effects = []; S.fxSel = new Set();
-  const lrow = document.createElement('div'); lrow.dataset.li = '1'; // строка второго слоя
-  fxdrag.fxDrop([A], lrow, false); // тащим A на строку слоя → эффект применяется к нему
+  const lrow = document.createElement('div'); lrow.dataset.li = '1';
+  fxdrag.fxDrop([A], lrow, false);
   assert.deepEqual(S.layers[0].effects, [B]); assert.equal(S.layers[1].effects[0], A);
-  const bRow = document.createElement('div'); bRow.className = 'fxrow'; bRow.__eff = B; // строка эффекта B (в слое 0)
-  fxdrag.fxDrop([A], bRow, false); // тащим A над B (верх стека) — назад в слой 0
+  const bRow = document.createElement('div'); bRow.className = 'fxrow'; bRow.__eff = B;
+  fxdrag.fxDrop([A], bRow, false);
   assert.deepEqual(S.layers[0].effects, [B, A]); assert.equal(S.layers[1].effects.length, 0);
   S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null; });
-t('layers-ui: взятие неактивного слоя сразу делает его активным (синим)', () => {
+t("module-int case 224", () => {
   resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
   const row0 = [...document.querySelectorAll('#lay-list .lrow')].find((r) => r.dataset.li === '0');
   assert.equal(S.cur, 1);
   row0.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
-  assert.equal(S.cur, 0); assert.ok(row0.classList.contains('on')); // взятый ЛКМ слой стал активным
+  assert.equal(S.cur, 0); assert.ok(row0.classList.contains('on'));
   row0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }));
 });
-t('layers-ui: ПКМ-протяжка выбирает несколько слоёв', () => {
-  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); lops.doAddLayer(); layList(); // слои 0,1,2
+t("module-int case 225", () => {
+  resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); lops.doAddLayer(); layList();
   const rows = [...document.querySelectorAll('#lay-list .lrow')];
   const r0 = rows.find((r) => r.dataset.li === '0'), r1 = rows.find((r) => r.dataset.li === '1');
   const prevPoint = document.elementFromPoint; document.elementFromPoint = () => r1;
@@ -2052,10 +2055,10 @@ t('layers-ui: ПКМ-протяжка выбирает несколько сло
     r0.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
     r0.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
     const sel = new Set([S.cur, ...S.marked]);
-    assert.ok(sel.has(0) && sel.has(1)); // оба слоя попали в выборку протяжкой ПКМ
+    assert.ok(sel.has(0) && sel.has(1));
   } finally { document.elementFromPoint = prevPoint; S.marked = new Set(); }
 });
-t('layers-ui: ПКМ-протяжка цепляет и строки эффектов', () => {
+t("module-int case 226", () => {
   resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }];
   S.fxSel = new Set(); S.fxCur = null; S.marked = new Set(); layList();
@@ -2065,31 +2068,31 @@ t('layers-ui: ПКМ-протяжка цепляет и строки эффек�
     lrow.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 10, clientY: 50 }));
     lrow.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
     lrow.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 10, clientY: 20 }));
-    assert.ok(S.fxSel.has(S.layers[0].effects[0])); // эффект попал в выборку протяжкой
-    assert.equal(S.cur, 0); // слой под началом протяжки тоже выбран
+    assert.ok(S.fxSel.has(S.layers[0].effects[0]));
+    assert.equal(S.cur, 0);
   } finally { document.elementFromPoint = prevPoint; S.marked = new Set(); S.fxSel = new Set(); S.fxCur = null; S.layers[0].effects = []; }
 });
-t('layers-ui: тап по имени активного слоя — переименование, по неактивному — выбор', () => {
+t("module-int case 227", () => {
   resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer(); layList(); // S.cur = 1
   const tap = (el) => { for (const type of ['pointerdown', 'pointerup', 'click']) el.dispatchEvent(new window.MouseEvent(type, { bubbles: true, button: 0, clientX: 5, clientY: 5 })); };
   const nm0 = () => [...document.querySelectorAll('#lay-list .lrow')].find((r) => r.dataset.li === '0').querySelector('.lname');
-  tap(nm0()); // слой 0 был неактивен → тап выбирает его, не переименовывает
+  tap(nm0());
   assert.equal(S.cur, 0); assert.ok(!nm0().classList.contains('editing'));
-  tap(nm0()); // теперь активен → тап по имени переименовывает
+  tap(nm0());
   assert.ok(nm0().classList.contains('editing'));
   nm0().dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 });
-t('effects: быстрый двойной тап открывает окно правки эффекта', () => {
+t("module-int case 228", () => {
   resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); effects.mount();
   const eff = newEffect('stroke', { size: 1, color: '#112233' }); S.layers[0].effects = [eff]; S.fxSel = new Set(); S.fxCur = null; layList();
   document.getElementById('fx-edit').classList.remove('on');
   const row = document.querySelector('#lay-list .fxrow');
   row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
-  row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 })); // быстрый двойной тап
+  row.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
   assert.ok(document.getElementById('fx-edit').classList.contains('on'));
-  document.getElementById('fx-cancel').click(); S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null; // закрыть правку чисто, не оставляя сессию
+  document.getElementById('fx-cancel').click(); S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null;
 });
-await ta('effects: единый dragRow переставляет эффект через зазор', async () => {
+await ta("module-int case 229", async () => {
   resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   const A = { id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } };
   const B = { id: 32, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } };
@@ -2102,9 +2105,9 @@ await ta('effects: единый dragRow переставляет эффект ч
   document.elementFromPoint = () => rowB;
   try {
     rowA.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 60 }));
-    rowA.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 8 })); // вертикальный драг A над B
+    rowA.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, button: 0, clientX: 50, clientY: 8 }));
     rowA.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 0, clientX: 50, clientY: 8 }));
-    assert.deepEqual(S.layers[0].effects, [B, A]); // A переставлен наверх стека тем же механизмом, что и слои
+    assert.deepEqual(S.layers[0].effects, [B, A]);
   } finally {
     document.elementFromPoint = prevPoint; delete pop.getBoundingClientRect;
     S.layers[0].effects = []; S.fxSel.clear(); S.fxCur = null;
@@ -2112,69 +2115,69 @@ await ta('effects: единый dragRow переставляет эффект ч
   }
 });
 
-t('effects: удаление при выбранном эффекте бьёт по эффекту, а не по слою', () => { resetWH(8, 8);
+t("module-int case 230", () => { resetWH(8, 8);
   S.layers[0].effects = [{ id: 31, type: 'stroke', visible: true, params: { size: 1, color: '#f00' } }];
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]);
-  lops.deleteLayer(); // корзина в панели слоёв при выбранном эффекте
-  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0); // слой цел, эффект удалён
+  lops.deleteLayer();
+  assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0);
   S.layers[0].effects = [{ id: 32, type: 'glow', visible: true, params: { size: 4, intensity: 0.8, color: '#0f0' } }];
   S.fxCur = S.layers[0].effects[0]; S.fxSel = new Set([S.fxCur]);
-  actions.run('edit.delete'); // клавиатурный Delete при выбранном эффекте
+  actions.run('edit.delete');
   assert.equal(S.layers.length, 1); assert.equal(S.layers[0].effects.length, 0);
   S.fxSel.clear(); S.fxCur = null; });
-t('delete: после удаления эффекта активным становится эффект над ним', () => { resetWH(8, 8); effects.mount();
+t("module-int case 231", () => { resetWH(8, 8); effects.mount();
   const a = newEffect('stroke', {}), b = newEffect('glow', {}), c = newEffect('stroke', {});
-  S.layers[0].effects = [a, b, c]; S.cur = 0; S.fxSel = new Set([b]); S.fxCur = b; // выбран средний (верх стека = c)
-  actions.run('fx.delete'); assert.equal(S.fxCur, c); // активным стал эффект над удалённым
+  S.layers[0].effects = [a, b, c]; S.cur = 0; S.fxSel = new Set([b]); S.fxCur = b;
+  actions.run('fx.delete'); assert.equal(S.fxCur, c);
   S.layers[0].effects = []; S.fxSel = new Set(); S.fxCur = null; });
-t('delete: Delete удаляет активный слой из списка (не чистит), фон не удаляет', () => { resetWH(8, 8); lops.doAddLayer();
+t("module-int case 232", () => { resetWH(8, 8); lops.doAddLayer();
   S.cur = 1; S.marked = new Set(); S.selFolder = null; S.fxCur = null; S.fxSel = new Set(); S.sel = S.selMask = null; S.bgSel = false;
-  const before = S.layers.length; actions.run('edit.delete'); // Delete без выделения → удалить активный слой
-  assert.equal(S.layers.length, before - 1); // слой удалён из списка, а не очищен
-  S.bgSel = true; const keep = S.layers.length; actions.run('edit.delete'); // фон активен → ничего не удаляется
+  const before = S.layers.length; actions.run('edit.delete');
+  assert.equal(S.layers.length, before - 1);
+  S.bgSel = true; const keep = S.layers.length; actions.run('edit.delete');
   assert.equal(S.layers.length, keep); S.bgSel = false; });
-t('delete: Delete с выделением пикселей стирает выделение, слой остаётся', () => { resetWH(8, 8); lops.doAddLayer();
+t("module-int case 233", () => { resetWH(8, 8); lops.doAddLayer();
   S.cur = 1; S.layers[1].grid[2][2] = [5, 5, 5, 255]; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null; S.bgSel = false; cache.dirtyAll();
   const before = S.layers.length; actions.run('edit.delete');
-  assert.equal(S.layers.length, before); assert.equal(S.layers[1].grid[2][2], null); // слой цел, пиксель в выделении стёрт
+  assert.equal(S.layers.length, before); assert.equal(S.layers[1].grid[2][2], null);
   S.sel = null; });
 
-t('effects: list рисует строку эффекта под слоем', () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
+t("module-int case 234", () => { resetWH(8, 8); S.layers[0].effects = [{ id: 7, type: 'glow', visible: true, params: { ...({ size: 6, intensity: 0.8, color: '#78d7ff' }) } }];
   document.getElementById('lay-pop').classList.add('on'); layList(); assert.ok(document.querySelectorAll('#lay-list .fxrow').length >= 1); S.layers[0].effects = []; });
-t('effects: adjustment-строка использует иконку полукруга', () => { resetWH(8, 8);
+t("module-int case 235", () => { resetWH(8, 8);
   S.layers[0].effects = [newEffect('adjustment')]; document.getElementById('lay-pop').classList.add('on'); layList();
-  const row = document.querySelector('#lay-list .fxrow'); assert.ok(row.querySelector('.fxstar circle')); assert.equal(row.querySelector('.lname').textContent, 'Настройки');
+  const row = document.querySelector('#lay-list .fxrow'); assert.ok(row.querySelector('.fxstar circle')); assert.equal(row.querySelector('.lname').textContent, i18n.t('fx.adjustment'));
   S.layers[0].effects = []; });
 
-t('effects: цвет эффекта — наш #colpop, не системный input[type=color]', () => { cp.mount();
-  assert.equal(document.querySelectorAll('#fx-edit input[type=color]').length, 0); // системного пикера в окне эффекта нет
-  resetWH(8, 8); document.querySelector('#fx-types button[data-fx="stroke"]').click(); // черновик stroke
+t("module-int case 236", () => { cp.mount();
+  assert.equal(document.querySelectorAll('#fx-edit input[type=color]').length, 0);
+  resetWH(8, 8); document.querySelector('#fx-types button[data-fx="stroke"]').click();
   const eff = S.fxDraft.eff, before = eff.params.color;
-  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on')); // открылся НАШ пикер
+  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on'));
   const active0 = S.active.slice();
   const h = document.getElementById('col-h'); h.value = '200'; h.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.notEqual(eff.params.color, before); // цвет эффекта обновился через наш пикер
-  assert.deepEqual(S.active, active0); // активный цвет не тронут
+  assert.notEqual(eff.params.color, before);
+  assert.deepEqual(S.active, active0);
   document.getElementById('fx-cancel').click(); });
-t('эффект+палитра: клик по цвету палитры при открытом пикере эффекта красит и эффект, и активный, и круг', () => { cp.mount(); effects.mount(); pal.mount();
+t("module-int case 237", () => { cp.mount(); effects.mount(); pal.mount();
   resetWH(8, 8); S.palette = [[10, 20, 30], [200, 100, 50]]; S.active = [10, 20, 30]; pal.buildPalette();
   document.querySelector('#fx-types button[data-fx="stroke"]').click(); const eff = S.fxDraft.eff;
-  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on')); // пикер эффекта открыт
+  document.getElementById('fx-colsw').onclick(); assert.ok(document.getElementById('colpop').classList.contains('on'));
   const sw = [...document.querySelectorAll('#pal .sw:not(.plus)')];
-  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true })); // клик по [200,100,50] в палитре
-  assert.deepEqual(S.active, [200, 100, 50]); // стал активным
-  assert.equal(eff.params.color.toLowerCase(), '#c86432'); // покрасил эффект
-  assert.equal(+document.getElementById('col-h').value, 20); // круг сместился на тон активного цвета
+  sw[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.deepEqual(S.active, [200, 100, 50]);
+  assert.equal(eff.params.color.toLowerCase(), '#c86432');
+  assert.equal(+document.getElementById('col-h').value, 20);
   document.getElementById('fx-cancel').click(); });
 
-t('crop: toggle из выделения + apply кадрирует без fit-to-screen', () => { resetWH(8, 8); S.view = { zoom: 5, ox: 11, oy: 13 };
+t("module-int case 238", () => { resetWH(8, 8); S.view = { zoom: 5, ox: 11, oy: 13 };
   const sw = S.W * S.view.zoom, sh = S.H * S.view.zoom, cx = S.view.ox + sw / 2, cy = S.view.oy + sh / 2;
   S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = null;
   crop.toggleCrop(); assert.ok(S.cropMode); crop.applyCrop(); assert.equal(S.W, 4); assert.equal(S.H, 4);
   assert.equal(S.W * S.view.zoom, sw); assert.equal(S.H * S.view.zoom, sh);
   assert.equal(S.view.ox + S.W * S.view.zoom / 2, cx); assert.equal(S.view.oy + S.H * S.view.zoom / 2, cy); });
 
-t('crop: поля размера и скрепка меняют рамку', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+t("module-int case 239", () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
   cw.value = '4'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 4); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 8);
@@ -2182,21 +2185,21 @@ t('crop: поля размера и скрепка меняют рамку', () 
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 3); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 6);
   crop.cancelCrop(); });
 
-t('crop: режим клеток задаёт размер ровно по Grid даже в tile-контексте', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; S.tileset = { on: true }; S.tileGrid ||= {}; S.tileGrid.size = 16; crop.toggleCrop();
+t("module-int case 240", () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 7; S.tileset = { on: true }; S.tileGrid ||= {}; S.tileGrid.size = 16; crop.toggleCrop();
   const units = document.getElementById('crop-units'), link = document.getElementById('crop-link');
   if (link.classList.contains('on')) link.click();
-  if (!units.classList.contains('on')) units.click(); // переключить в клетки
+  if (!units.classList.contains('on')) units.click();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h');
   cw.value = '5'; cw.dispatchEvent(new window.Event('input', { bubbles: true }));
   ch.value = '7'; ch.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25); // 5 клеток × 5 px
-  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49); // 7 клеток × 7 px
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 25);
+  assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 49);
   units.click();
-  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 40); // отключение Cells убирает cell-preview
+  assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 40);
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 40);
   S.tileset.on = false; crop.cancelCrop(); });
 
-t('crop: Cell size в Cells пересчитывает холст по количеству клеток', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
+t("module-int case 241", () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
   const units = document.getElementById('crop-units'), link = document.getElementById('crop-link'), cs = document.getElementById('crop-cell-size');
   assert.equal(document.getElementById('crop-cell-size-row').classList.contains('on'), false);
   if (link.classList.contains('on')) link.click();
@@ -2214,7 +2217,7 @@ t('crop: Cell size в Cells пересчитывает холст по коли�
   units.click(); assert.equal(document.getElementById('crop-cell-size-row').classList.contains('on'), false);
   crop.cancelCrop(); });
 
-t('crop: скрепка держит пропорцию в Cells', () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
+t("module-int case 242", () => { crop.mount(); resetWH(40, 40); S.grid.w = 5; S.grid.h = 5; crop.toggleCrop();
   const units = document.getElementById('crop-units'), link = document.getElementById('crop-link');
   if (!units.classList.contains('on')) units.click();
   if (!link.classList.contains('on')) link.click();
@@ -2229,7 +2232,7 @@ t('crop: скрепка держит пропорцию в Cells', () => { crop.
   assert.equal(cw.value, '6');
   crop.cancelCrop(); });
 
-t('crop: Trim в Canvas size только выставляет рамку до Apply', () => { crop.mount(); resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; crop.toggleCrop();
+t("module-int case 243", () => { crop.mount(); resetWH(6, 6); S.layers[0].grid[2][3] = [9, 9, 9, 255]; crop.toggleCrop();
   const units = document.getElementById('crop-units'); if (units.classList.contains('on')) units.click();
   document.getElementById('crop-trim').click();
   assert.equal(document.getElementById('crop-trim').classList.contains('on'), true);
@@ -2237,7 +2240,7 @@ t('crop: Trim в Canvas size только выставляет рамку до A
   crop.applyCrop(); assert.equal(S.W, 1); assert.equal(S.H, 1); assert.deepEqual(S.layers[0].grid[0][0], [9, 9, 9, 255]);
 });
 
-t('crop: Cells берёт размер из общей сетки, видимость меняет чекбокс', () => { crop.mount(); resetWH(20, 20); S.grid.w = 4; S.grid.h = 4; S.grid.visible = false; crop.toggleCrop();
+t("module-int case 244", () => { crop.mount(); resetWH(20, 20); S.grid.w = 4; S.grid.h = 4; S.grid.visible = false; crop.toggleCrop();
   assert.equal(document.getElementById('crop-grid'), null);
   document.getElementById('crop-grid-visible').checked = true;
   document.getElementById('crop-grid-visible').dispatchEvent(new window.Event('change', { bubbles: true }));
@@ -2250,7 +2253,7 @@ t('crop: Cells берёт размер из общей сетки, видимо�
   assert.deepEqual({ x0: S.cropMode.x0, y0: S.cropMode.y0, x1: S.cropMode.x1, y1: S.cropMode.y1 }, { x0: 11, y0: 7, x1: 11, y1: 7 });
   crop.cancelCrop(); });
 
-t('crop: поля размера считают выражения от текущего значения', () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
+t("module-int case 245", () => { crop.mount(); resetWH(8, 8); crop.toggleCrop();
   const cw = document.getElementById('crop-w'), ch = document.getElementById('crop-h'), link = document.getElementById('crop-link');
   if (link.classList.contains('on')) link.click();
   cw.value = '+2'; cw.dispatchEvent(new window.Event('blur'));
@@ -2259,7 +2262,7 @@ t('crop: поля размера считают выражения от теку
   assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 4);
   crop.cancelCrop(); });
 
-t('crop: ЛКМ внутри двигает изображение, ПКМ внутри двигает рамку', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
+t("module-int case 246", () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
   input.down({ pointerType: 'mouse', button: 0, clientX: 25, clientY: 25, pointerId: 1 });
   input.move({ pointerType: 'mouse', button: 0, clientX: 35, clientY: 25, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
   assert.equal(S.cropMode.idx, 1); assert.equal(S.cropMode.x0, 0);
@@ -2267,13 +2270,13 @@ t('crop: ЛКМ внутри двигает изображение, ПКМ вн�
   input.move({ pointerType: 'mouse', button: 2, clientX: 35, clientY: 25, pointerId: 2 }); input.up({ pointerType: 'mouse', button: 2, pointerId: 2 });
   assert.equal(S.cropMode.idx, 1); assert.equal(S.cropMode.x0, 1); crop.cancelCrop(); });
 
-t('crop: скрепка держит пропорцию при растягивании ручкой', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
+t("module-int case 247", () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 }; crop.toggleCrop();
   const link = document.getElementById('crop-link'); if (!link.classList.contains('on')) link.click();
   input.down({ pointerType: 'mouse', button: 0, clientX: 80, clientY: 40, pointerId: 1 });
   input.move({ pointerType: 'mouse', button: 0, clientX: 100, clientY: 40, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
   assert.equal(S.cropMode.x1 - S.cropMode.x0 + 1, 10); assert.equal(S.cropMode.y1 - S.cropMode.y0 + 1, 10); crop.cancelCrop(); });
 
-t('status: при кропе/выделении/трансформе показывает размер рамки рядом с холстом', () => { resetWH(8, 8); S.view.zoom = 12; status.mount();
+t("module-int case 248", () => { resetWH(8, 8); S.view.zoom = 12; status.mount();
   bus.emit('layers'); assert.equal(document.getElementById('status').textContent, '8×8 px');
   assert.equal(document.getElementById('zoom-status').textContent, '1200%');
   S.view.zoom = 1.25; bus.emit('overlay', {});
@@ -2286,36 +2289,36 @@ t('status: при кропе/выделении/трансформе показ�
   assert.equal(document.getElementById('status').textContent, '8×8 → 6×2 px');
   S.rotMode = null; bus.emit('render'); assert.equal(document.getElementById('status').textContent, '8×8 px'); });
 
-t('canvas-handlers: pencil рисует через обработчик', () => { resetWH(8, 8); S.active = [1, 2, 3]; S.tool = 'pencil';
+t("module-int case 249", () => { resetWH(8, 8); S.active = [1, 2, 3]; S.tool = 'pencil';
   const h = toolHandler('pencil'); h.down({ gx: 2, gy: 2, e: {} }); h.move({ gx: 4, gy: 2, e: {} }); h.up({});
   assert.deepEqual(S.layers[0].grid[2][2], [1, 2, 3, 255]); assert.ok(S.layers[0].grid[2][4]); });
-t('canvas-handlers: move сдвигает слой', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [5, 5, 5, 255]; S.tool = 'move'; S.marked = new Set();
+t("module-int case 250", () => { resetWH(8, 8); S.layers[0].grid[2][2] = [5, 5, 5, 255]; S.tool = 'move'; S.marked = new Set();
   const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 1, gy: 1, e: {} }); h.up({});
   assert.deepEqual(S.layers[0].grid[3][3], [5, 5, 5, 255]); });
 
-t('canvas-handlers: move двигает все выделенные слои', () => { resetWH(8, 8); S.tool = 'move';
+t("module-int case 251", () => { resetWH(8, 8); S.tool = 'move';
   S.layers.push({ ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) });
   S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[1].grid[2][2] = [2, 2, 2, 255]; S.cur = 0; S.marked = new Set([1]);
   const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 1, gy: 1, e: {} }); h.up({});
   assert.deepEqual(S.layers[0].grid[2][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[3][3], [2, 2, 2, 255]);
   S.layers.pop(); S.marked = new Set(); });
 
-t('selection-handles: ручки активны и для лассо (перехватывают клик по области)', () => { resetWH(8, 8); S.tool = 'lasso'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = new Set(['2,2']); S.selFloat = null;
-  const gh = globalHandlers().find((h) => h.down); assert.equal(gh.down({ gx: 2, gy: 2, e: null }), true); // клик по выделению лассо → ручки (трансформ области), не новый контур
+t("module-int case 252", () => { resetWH(8, 8); S.tool = 'lasso'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = new Set(['2,2']); S.selFloat = null;
+  const gh = globalHandlers().find((h) => h.down); assert.equal(gh.down({ gx: 2, gy: 2, e: null }), true);
   gh.up({}); S.sel = S.selMask = null; });
-t('canvas-handlers: move двигает рамку выделения вместе со слоем', () => { resetWH(8, 8); S.tool = 'move'; S.marked = new Set();
+t("module-int case 253", () => { resetWH(8, 8); S.tool = 'move'; S.marked = new Set();
   S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = new Set(['2,2']);
   const h = toolHandler('move'); h.down({ gx: 0, gy: 0, e: {} }); h.move({ gx: 2, gy: 1, e: {} }); h.up({});
   assert.deepEqual(S.sel, { x0: 3, y0: 2, x1: 5, y1: 4 }); assert.ok(S.selMask.has('4,3')); S.sel = S.selMask = null; });
 
-t('input: mount + диспетч pencil рисует', () => { resetWH(8, 8); S.active = [3, 4, 5]; S.tool = 'pencil'; input.mount();
+t("module-int case 254", () => { resetWH(8, 8); S.active = [3, 4, 5]; S.tool = 'pencil'; input.mount();
   input.down({ pointerType: 'mouse', button: 0, clientX: 2, clientY: 2 }); input.up({ pointerType: 'mouse', button: 0 });
-  // координаты зависят от view; проверяем, что хоть одна клетка закрашена
+
   assert.ok(S.layers[0].grid.some((r) => r.some((c) => c))); });
-t('input: ПКМ пан холста работает и с инструментом move', () => { resetWH(8, 8); S.tool = 'move'; S.view.ox = 0; S.view.oy = 0;
+t("module-int case 255", () => { resetWH(8, 8); S.tool = 'move'; S.view.ox = 0; S.view.oy = 0;
   input.down({ pointerType: 'mouse', button: 2, clientX: 100, clientY: 100, pointerId: 1 });
   input.move({ pointerType: 'mouse', button: 2, clientX: 140, clientY: 100 });
-  assert.equal(S.view.ox, 40); // правая кнопка сдвинула холст, а не «съелась» move-инструментом
+  assert.equal(S.view.ox, 40);
   input.up({ pointerType: 'mouse', button: 2, pointerId: 1 }); });
 t('input: LMB outside canvas pans, inside still draws', () => { resetWH(8, 8); S.tool = 'pencil'; S.active = [4, 5, 6]; S.stabOn = false;
   const undo = overCv(10);
@@ -2327,90 +2330,90 @@ t('input: LMB outside canvas pans, inside still draws', () => { resetWH(8, 8); S
   input.down({ pointerType: 'mouse', button: 0, clientX: 20, clientY: 20, pointerId: 2 });
   input.up({ pointerType: 'mouse', button: 0, pointerId: 2 }); undo();
   assert.equal(S.view.ox, 0); assert.deepEqual(S.layers[0].grid[2][2], [4, 5, 6, 255]); });
-t('input: ЛКМ вне выделения снимает его у любого инструмента', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 256", () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   const undo = overCv(); input.down({ pointerType: 'mouse', button: 0, clientX: 6, clientY: 6, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
   assert.equal(S.sel, null); assert.equal(S.layers[0].grid[6][6], null); });
-t('input: ПКМ при выделении открывает selection-меню', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 257", () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 2, y1: 2 }; S.selMask = null;
   let sm = 0, cm = 0; const offS = bus.on('selection-menu', () => sm++), offC = bus.on('canvas-menu', () => cm++), undo = overCv();
   input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
   input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 }); undo(); offS(); offC();
   assert.equal(sm, 1); assert.equal(cm, 0); });
-t('input: ЛКМ по выделению двигает только рамку', () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+t("module-int case 258", () => { resetWH(8, 8); S.tool = 'pencil'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   S.layers[0].grid[2][2] = [7, 7, 7, 255]; const undo = overCv(10);
   input.down({ pointerType: 'mouse', button: 0, clientX: 25, clientY: 25, pointerId: 1 });
   input.move({ pointerType: 'mouse', button: 0, clientX: 45, clientY: 35, pointerId: 1 });
   input.up({ pointerType: 'mouse', button: 0, pointerId: 1 }); undo();
   assert.deepEqual(S.sel, { x0: 3, y0: 2, x1: 5, y1: 4 }); assert.deepEqual(S.layers[0].grid[2][2], [7, 7, 7, 255]); });
 
-t('selection-input: select-инструмент тянет рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
-  S.layers[0].grid[2][2] = [1, 1, 1, 255]; // в рамке есть пиксель — выделение валидно
+t("module-int case 259", () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+  S.layers[0].grid[2][2] = [1, 1, 1, 255];
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
   assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
-t('selection-input: Shift тянет квадратную рамку', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+t("module-int case 260", () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   S.layers[0].grid[4][4] = [1, 1, 1, 255];
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 2, e: { shiftKey: true } }); h.up({});
   assert.deepEqual(S.sel, { x0: 1, y0: 1, x1: 4, y1: 4 }); });
 
-t('selection-input: пустая рамка не создаётся', () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
+t("module-int case 261", () => { resetWH(8, 8); S.tool = 'select'; S.sel = null; S.selMask = null;
   const h = toolHandler('select'); h.down({ gx: 1, gy: 1, e: null }); h.move({ gx: 4, gy: 4, e: null }); h.up({});
   assert.equal(S.sel, null); });
-t('selection-input: клик в свободное место снимает активное выделение', () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
+t("module-int case 262", () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 3, y1: 3 }; S.selMask = null;
   const h = toolHandler('select'); h.down({ gx: 6, gy: 6, e: null }); h.move({ gx: 7, gy: 7, e: null }); h.up({});
   assert.equal(S.sel, null); });
-t('selection-input: клик в пустую клетку маски снимает выделение', () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = new Set(['2,2']);
+t("module-int case 263", () => { resetWH(8, 8); S.tool = 'select'; S.sel = { x0: 1, y0: 1, x1: 4, y1: 4 }; S.selMask = new Set(['2,2']);
   const h = toolHandler('select'); h.down({ gx: 3, gy: 3, e: null }); h.up({});
   assert.equal(S.sel, null); assert.equal(S.selMask, null); });
-t('selection-input: hover внутри рамки — курсор move', () => { resetWH(8, 8); S.tool = 'select';
+t("module-int case 264", () => { resetWH(8, 8); S.tool = 'select';
   S.sel = { x0: 2, y0: 2, x1: 5, y1: 5 }; S.selMask = null;
   const h = toolHandler('select');
   assert.equal(h.hover({ gx: 3, gy: 3, e: null }), 'move');
   assert.equal(h.hover({ gx: 7, gy: 7, e: null }), null); S.sel = null; });
-t('selection-float: lift + commit переносит фрагмент', () => { resetWH(8, 8); S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
+t("module-int case 265", () => { resetWH(8, 8); S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
   sfloat.liftSelection(); assert.equal(S.layers[0].grid[2][2], null); S.selFloat.x = 5; S.selFloat.y = 5; sfloat.commitFloat();
   assert.deepEqual(S.layers[0].grid[5][5], [7, 7, 7, 255]); });
 
-t('layer-cache: висящий фрагмент подмешивается в канвас слоя', () => { resetWH(8, 8);
+t("module-int case 266", () => { resetWH(8, 8);
   S.layers[0].grid[2][2] = [7, 7, 7, 255]; S.cur = 0; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
-  assert.equal(cache.layerFloatCanvas(0), cache.layerCanvas(0)); // фрагмента нет — кешированный канвас как есть
+  assert.equal(cache.layerFloatCanvas(0), cache.layerCanvas(0));
   sfloat.liftSelection();
-  assert.notEqual(cache.layerFloatCanvas(0), cache.layerCanvas(0)); // фрагмент в воздухе — слой рисуется с ним
+  assert.notEqual(cache.layerFloatCanvas(0), cache.layerCanvas(0));
   sfloat.commitFloat(); S.sel = S.selMask = null;
   assert.equal(cache.layerFloatCanvas(0), cache.layerCanvas(0)); });
 
-t('selection-float: повторный перенос не стирает подложку', () => { resetWH(8, 8); S.tool = 'select';
+t("module-int case 267", () => { resetWH(8, 8); S.tool = 'select';
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[0].grid[4][4] = [9, 9, 9, 255]; S.cur = 0;
   S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null;
   const h = toolHandler('select');
-  h.down({ gx: 0, gy: 0, e: null }); h.move({ gx: 4, gy: 4 }); h.up({});   // несём пиксель на (4,4): он висит, не оседает
-  assert.deepEqual(S.layers[0].grid[4][4], [9, 9, 9, 255]);                 // подложка под фрагментом цела
-  h.down({ gx: 4, gy: 4, e: null }); h.move({ gx: 6, gy: 6 }); h.up({});   // поднимаем тот же фрагмент дальше
-  actions.run('select.none');                                               // деселект — фрагмент оседает
+  h.down({ gx: 0, gy: 0, e: null }); h.move({ gx: 4, gy: 4 }); h.up({});
+  assert.deepEqual(S.layers[0].grid[4][4], [9, 9, 9, 255]);
+  h.down({ gx: 4, gy: 4, e: null }); h.move({ gx: 6, gy: 6 }); h.up({});
+  actions.run('select.none');
   assert.deepEqual(S.layers[0].grid[4][4], [9, 9, 9, 255]);
   assert.deepEqual(S.layers[0].grid[6][6], [1, 1, 1, 255]); S.sel = S.selMask = null; });
 
-t('transform: enter строит превью, exit применяет', () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
+t("module-int case 268", () => { resetWH(8, 8); S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[3][4] = [1, 1, 1, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); assert.ok(S.rotMode); assert.ok(S.rotPrev);
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true); assert.equal(S.rotMode, null); });
-t('transform: слой за краем не меняет размер холста', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [7, 7, 7, 255]; cache.dirtyAll();
+t("module-int case 269", () => { resetWH(4, 4); S.layers[0].grid[0][0] = [7, 7, 7, 255]; cache.dirtyAll();
   tf.enterRotMode(S.layers[0]); S.rotMode.tx = -2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.W, 4); assert.equal(S.H, 4); assert.deepEqual(S.layers[0].ext.get('-2,0'), [7, 7, 7, 255]); });
-t('transform: ЛКМ вне рамки завершает трансформацию', () => { tf.mount(); resetWH(8, 8); S.tool = 'move'; S.view = { zoom: 10, ox: 0, oy: 0 }; S.layers[0].grid[2][2] = [1, 2, 3, 255]; cache.dirtyAll();
-  actions.run('transform.enter'); assert.ok(S.rotMode); // вошли в свободную трансформацию
+t("module-int case 270", () => { tf.mount(); resetWH(8, 8); S.tool = 'move'; S.view = { zoom: 10, ox: 0, oy: 0 }; S.layers[0].grid[2][2] = [1, 2, 3, 255]; cache.dirtyAll();
+  actions.run('transform.enter'); assert.ok(S.rotMode);
   input.down({ pointerType: 'mouse', button: 0, clientX: -100, clientY: -100, pointerId: 1 }); input.up({ pointerType: 'mouse', button: 0, pointerId: 1 });
-  assert.equal(S.rotMode, null); }); // клик вне рамки применил и закрыл
-t('transform: угол Free Transform масштабирует при протяжке к центру', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
+  assert.equal(S.rotMode, null); });
+t("module-int case 271", () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
   for (let y = 2; y <= 5; y++) for (let x = 2; x <= 5; x++) S.layers[0].grid[y][x] = [1, 1, 1, 255];
   cache.dirtyAll(); actions.run('transform.enter');
   const pe = (x, y) => ({ clientX: x * S.view.zoom, clientY: y * S.view.zoom, shiftKey: false });
   tdrag.rotGrab({ e: pe(2, 2) }); tdrag.rotDrag(pe(3, 3), () => {});
   assert.ok(S.rotMode.sx < 1); assert.ok(S.rotMode.sy < 1); assert.ok(Math.abs(S.rotMode.ang) < 1e-6); tf.exitRotMode(false); });
-t('transform: боковая ручка умеет поворачивать без изменения масштаба', () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
+t("module-int case 272", () => { resetWH(8, 8); S.view = { zoom: 10, ox: 0, oy: 0 };
   for (let y = 2; y <= 5; y++) for (let x = 2; x <= 5; x++) S.layers[0].grid[y][x] = [1, 1, 1, 255];
   cache.dirtyAll(); actions.run('transform.enter');
   const pe = (x, y) => ({ clientX: x * S.view.zoom, clientY: y * S.view.zoom, shiftKey: false });
   tdrag.rotGrab({ e: pe(6, 4) }); tdrag.rotDrag(pe(4, 6), () => {});
   assert.ok(Math.abs(S.rotMode.ang - Math.PI / 2) < 1e-6); assert.equal(S.rotMode.sx, 1); assert.equal(S.rotMode.sy, 1); tf.exitRotMode(false); });
-t('transform: Ctrl+T с Selection трансформирует фрагмент и гасит выделение', () => { resetWH(8, 8);
+t("module-int case 273", () => { resetWH(8, 8);
   S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.layers[0].grid[5][5] = [1, 1, 1, 255];
   S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null; actions.run('transform.enter');
   assert.ok(S.rotMode && S.rotMode.selection); assert.equal(S.sel, null); assert.equal(S.layers[0].grid[2][2], null);
@@ -2418,11 +2421,11 @@ t('transform: Ctrl+T с Selection трансформирует фрагмент 
   S.rotMode.tx = 2; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.rotMode, null); assert.equal(S.sel, null); assert.deepEqual(S.layers[0].grid[2][2], null);
   assert.deepEqual(S.layers[0].grid[2][4], [9, 9, 9, 255]); assert.deepEqual(S.layers[0].grid[5][5], [1, 1, 1, 255]); });
-t('transform: Ctrl+T с Selection из лассо выключает режим лассо', () => { resetWH(8, 8);
+t("module-int case 274", () => { resetWH(8, 8);
   S.tool = 'lasso'; S.layers[0].grid[2][2] = [9, 9, 9, 255]; S.sel = { x0: 2, y0: 2, x1: 2, y1: 2 }; S.selMask = null;
   actions.run('transform.enter'); assert.ok(S.rotMode && S.rotMode.selection); assert.equal(S.tool, 'pencil');
   tf.exitRotMode(false); });
-t('transform: выделение на выбранной папке двигает содержимое всех её слоёв', () => { resetWH(6, 6);
+t("module-int case 275", () => { resetWH(6, 6);
   S.layers = [
     { name: 'outside', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
     { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
@@ -2437,7 +2440,7 @@ t('transform: выделение на выбранной папке двигае
   S.rotMode.tx = 1; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.deepEqual(S.layers[1].grid[1][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[2].grid[1][4], [2, 2, 2, 255]);
 });
-t('transform: пустое выделение папки не запускает transform всей папки', () => { resetWH(6, 6);
+t("module-int case 276", () => { resetWH(6, 6);
   S.layers = [
     { name: 'outside', grid: blank(6, 6), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] },
     { name: 'a', grid: blank(6, 6), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
@@ -2446,15 +2449,15 @@ t('transform: пустое выделение папки не запускает
   S.layers[1].grid[5][5] = [1, 1, 1, 255]; S.cur = 0; S.selFolder = 1; S.markedFolders = new Set([1]); S.sel = { x0: 0, y0: 0, x1: 1, y1: 1 }; S.selMask = null;
   actions.run('transform.enter'); assert.equal(S.rotMode, null); assert.deepEqual(S.sel, { x0: 0, y0: 0, x1: 1, y1: 1 });
 });
-t('transform: выделение за краем не меняет размер холста', () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
+t("module-int case 277", () => { resetWH(4, 4); S.layers[0].grid[0][0] = [9, 9, 9, 255];
   S.sel = { x0: 0, y0: 0, x1: 0, y1: 0 }; S.selMask = null; actions.run('transform.enter');
   S.rotMode.tx = -1; S.rotMode.changed = true; tf.exitRotMode(true);
   assert.equal(S.W, 4); assert.equal(S.H, 4); assert.deepEqual(S.layers[0].ext.get('-1,0'), [9, 9, 9, 255]); });
-t('transform: undo закрывает активную трансформацию без отката истории', () => { resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
+t("module-int case 278", () => { resetWH(8, 8); S.undoStack.length = 0; S.redoStack.length = 0;
   S.layers[0].grid[2][2] = [4, 4, 4, 255]; history.snapshot(); actions.run('transform.enter');
   S.rotMode.tx = 2; S.rotMode.changed = true; history.doUndo();
   assert.equal(S.rotMode, null); assert.deepEqual(S.layers[0].grid[2][2], [4, 4, 4, 255]); assert.equal(S.undoStack.length, 1); });
-t('transform: preview clipping mask режется base-слоем', () => { resetWH(8, 8);
+t("module-int case 279", () => { resetWH(8, 8);
   S.layers.push({ name: 'clip', grid: blank(8, 8), opacity: 1, visible: true, fid: null, clip: true, ext: new Map(), effects: [] });
   S.layers[0].grid[4][4] = [255, 255, 255, 255]; S.layers[1].grid[1][1] = [9, 9, 9, 255]; S.layers[1].grid[4][4] = [9, 9, 9, 255];
   let clips = 0; const proto = HTMLCanvasElement.prototype, orig = proto.getContext;
@@ -2462,7 +2465,7 @@ t('transform: preview clipping mask режется base-слоем', () => { res
     return new Proxy(ctx, { set(tg, p, v) { if (p === 'globalCompositeOperation' && v === 'destination-in') clips++; tg[p] = v; return true; } }); };
   try { tf.enterRotMode(S.layers[1]); } finally { if (S.rotMode) tf.exitRotMode(false); proto.getContext = orig; }
   assert.ok(clips > 0); });
-t('transform: выбранная папка строит рамку по скрытым слоям', () => { resetWH(8, 8);
+t("module-int case 280", () => { resetWH(8, 8);
   S.layers = [
     { name: 'v', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
     { name: 'h', grid: blank(8, 8), opacity: 1, visible: false, fid: 1, clip: false, ext: new Map(), effects: [] },
@@ -2470,7 +2473,7 @@ t('transform: выбранная папка строит рамку по скр�
   S.layers[0].grid[1][1] = [1, 1, 1, 255]; S.layers[1].grid[6][6] = [2, 2, 2, 255]; S.selFolder = 1; S.markedFolders = new Set([1]);
   actions.run('transform.enter'); assert.deepEqual(S.rotMode.b, { x0: 1, y0: 1, w: 6, h: 6 }); tf.exitRotMode(false); });
 
-t('transform: превью обновляется при скрытии слоя внутри папки', () => { resetWH(8, 8);
+t("module-int case 281", () => { resetWH(8, 8);
   S.layers = [
     { name: 'red', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
     { name: 'blue', grid: blank(8, 8), opacity: 1, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] },
@@ -2486,18 +2489,18 @@ t('transform: превью обновляется при скрытии слоя
   assert.equal(S.rotPrev.canvas, null);
   tf.exitRotMode(false); });
 
-t('transform: превью строится с эффектами слоя и папки (обводка не пропадает)', () => { resetWH(8, 8);
+t("module-int case 282", () => { resetWH(8, 8);
   S.layers[0].grid[3][3] = [1, 1, 1, 255]; S.layers[0].grid[4][3] = [1, 1, 1, 255];
   S.layers[0].effects = [{ id: 'e1', type: 'stroke', visible: true, params: { size: 1, color: '#ff7a18' } }];
   S.folders = [{ id: 1, name: 'g', visible: true, parent: null, effects: [{ id: 'e2', type: 'stroke', visible: true, params: { size: 2, color: '#5aa6f2' } }] }];
   S.layers[0].fid = 1; cache.dirtyAll();
-  tf.enterRotMode(S.layers[0]); assert.ok(S.rotPrev && S.rotPrev.canvas); // полнохолстовое превью с эффектами слоя+папки
+  tf.enterRotMode(S.layers[0]); assert.ok(S.rotPrev && S.rotPrev.canvas);
   assert.equal(S.rotPrev.canvas.width, S.W); assert.equal(S.rotPrev.ow, S.W);
   tf.exitRotMode(false); S.layers[0].effects = []; S.layers[0].fid = null; S.folders = []; });
 
-t('layers-ui: layList рисует строки', () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
+t("module-int case 283", () => { resetWH(8, 8); layers.mount(); document.getElementById('lay-pop').classList.add('on'); layList();
   assert.ok(document.querySelectorAll('#lay-list .lrow').length >= 1); });
-t('layers-ui: меню слоя не дублирует кнопки панели', () => { resetWH(8, 8); layers.mount(); effects.mount(); fxShared.setFxClip([]);
+t("module-int case 284", () => { resetWH(8, 8); layers.mount(); effects.mount(); fxShared.setFxClip([]);
   document.getElementById('lay-pop').classList.add('on'); layList();
   const row = document.querySelector('#lay-list .lrow[data-li="0"]');
   row.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientY: 120 }));
@@ -2514,7 +2517,7 @@ t('layers-ui: меню слоя не дублирует кнопки панел�
   assert.equal(document.getElementById('lctx-paste-fx').disabled, false);
   fxShared.setFxClip([]);
 });
-t('layers-ui: Tilemap settings есть только в ПКМ-меню Tilemap-слоя', () => {
+t("module-int case 285", () => {
   resetWH(8, 8); layers.mount(); tfl.mount(); tmDialog.mount(); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers = [L]; S.cur = 0; tmap.setCell(0, 0, 0, { tileId: tile.id });
@@ -2530,7 +2533,7 @@ t('layers-ui: Tilemap settings есть только в ПКМ-меню Tilemap-
   assert.equal(document.getElementById('tm-grid-h').value, '4');
   document.getElementById('tm-cancel').click();
 });
-t('layers-ui: иконка Tilemap в строке конвертирует этот слой обратно', () => {
+t("module-int case 286", () => {
   resetWH(8, 8); layers.mount(); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [4, 5, 6, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = 0; tmap.setCell(1, 0, 0, { tileId: tile.id });
@@ -2546,7 +2549,7 @@ t('layers-ui: иконка Tilemap в строке конвертирует эт
   assert.deepEqual(S.layers[1].grid[0][0], [4, 5, 6, 255]);
   assert.equal(S.tilesets[0].tiles.length, 1);
 });
-t('layers-ui: кнопка Tilemap первый раз открывает настройки, потом переключает по сохранённым', () => {
+t("module-int case 287", () => {
   resetWH(8, 8); layers.mount(); tmDialog.mount(); tmcreate.mount(); tfl.mount(); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].grid[0][0] = [7, 8, 9, 255]; document.getElementById('lay-pop').classList.add('on'); layList();
   const btn = document.getElementById('lay-tmap');
@@ -2564,7 +2567,7 @@ t('layers-ui: кнопка Tilemap первый раз открывает нас
   assert.equal(S.layers[0].tilemap.mapW, 2); assert.equal(S.layers[0].tilemap.mapH, 2);
   assert.ok(!document.getElementById('tilemap-ovl').classList.contains('on'));
 });
-t('layers-ui: Tilemap settings меняет размер сетки и запоминает его', () => {
+t("module-int case 288", () => {
   resetWH(8, 8); layers.mount(); tmDialog.mount(); tfl.mount(); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers = [L]; S.cur = 0; tmap.setCell(0, 0, 0, { tileId: tile.id });
@@ -2577,7 +2580,7 @@ t('layers-ui: Tilemap settings меняет размер сетки и запо�
   assert.equal(S.layers[0].tilemap.mapW, 1); assert.equal(S.layers[0].tilemap.mapH, 1);
   assert.equal(S.layers[0].tilemapSettings.tileW, 8); assert.equal(S.layers[0].tilemapSettings.tileH, 8);
 });
-t('layers-ui: окно слоёв растягивается за левый край независимо от строк', () => {
+t("module-int case 289", () => {
   const pop = document.getElementById('lay-pop'), edge = pop.querySelector('.fw-rsz-w');
   assert.ok(edge);
   pop.style.left = '100px'; pop.style.top = '100px'; pop.style.width = '272px'; pop.style.height = '220px';
@@ -2615,17 +2618,17 @@ t('layers-ui: header double-click expands the list within the viewport', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: oldW });
   }
 });
-t('layers-ui: папка показывает количество слоёв, пустая без счётчика', () => { resetWH(4, 4); const mk = (name, fid) => ({ name, fid, grid: blank(4, 4), opacity: 1, visible: true, clip: false, ext: new Map(), effects: [] });
+t("module-int case 290", () => { resetWH(4, 4); const mk = (name, fid) => ({ name, fid, grid: blank(4, 4), opacity: 1, visible: true, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('a', 1), mk('b', 1), mk('top', null)];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }, { id: 2, name: 'Empty', open: true, visible: true, parent: null, effects: [] }];
   layList();
   const full = document.querySelector('#lay-list .frow[data-fid="1"]'), empty = document.querySelector('#lay-list .frow[data-fid="2"]');
-  assert.equal(full.querySelector('.fcount').textContent, '2'); assert.equal(empty.querySelector('.fcount'), null); // '· ' — в CSS (.fcount::before)
+  assert.equal(full.querySelector('.fcount').textContent, '2'); assert.equal(empty.querySelector('.fcount'), null);
   assert.ok(S.folders.some((f) => f.id === 2));
 });
-t('layers-ui: бары действий слоя и команды слоя', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
+t("module-int case 291", () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on'); layList();
   const top = [...document.querySelectorAll('#lay-act-top > button')], bot = [...document.querySelectorAll('#lay-act-bottom > button')];
-  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-tmap', 'fx-btn', 'img-settings', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']); // эффекты и настройки переехали сюда из тулбара
+  assert.deepEqual(top.map((b) => b.id), ['lay-add', 'lay-tmap', 'fx-btn', 'img-settings', 'lay-group', 'lay-alpha', 'lay-clip', 'lay-ref', 'lay-clean']);
   assert.deepEqual(bot.map((b) => b.id), ['lay-dup', 'lay-symm', 'lay-merge', 'lay-select', 'lay-lock', 'lay-del']);
   assert.equal(document.querySelector('#lay-head #lay-add'), null);
   assert.equal(document.querySelectorAll('.lay-action-btn').length, 15);
@@ -2636,69 +2639,69 @@ t('layers-ui: бары действий слоя и команды слоя', ()
   document.getElementById('lay-lock').click(); assert.equal(S.layers[0].lock, true); assert.ok(document.getElementById('lay-lock').classList.contains('on'));
   document.getElementById('lay-dup').click(); assert.equal(S.layers.length, 2); assert.equal(S.cur, 1);
   document.getElementById('lay-del').click(); assert.equal(S.layers.length, 1); });
-await ta('panels: старый порядок тулбара не утаскивает эффекты/настройки из панели слоёв', async () => {
+await ta("module-int case 292", async () => {
   const panels = await import('../src/systems/panels.js');
   localStorage.setItem('panelOrder', JSON.stringify({ 'tb-left': ['fx-btn', 't-pencil'], 'tb-right': [], sidebar: ['img-settings', 'bc', 'layers', 'activewrap'] }));
   panels.mount();
-  assert.ok(document.getElementById('fx-btn').closest('#lay-act-top')); // эффекты остались в баре слоёв
-  assert.ok(document.getElementById('img-settings').closest('#lay-act-top')); // настройки остались в баре слоёв
-  assert.equal(document.querySelector('#tb-left #fx-btn'), null); // не вернулись на тулбар
+  assert.ok(document.getElementById('fx-btn').closest('#lay-act-top'));
+  assert.ok(document.getElementById('img-settings').closest('#lay-act-top'));
+  assert.equal(document.querySelector('#tb-left #fx-btn'), null);
   assert.equal(document.getElementById('t-pencil').parentElement.id, 'sidebar');
   assert.equal(document.getElementById('layers').parentElement.id, 'tb-right');
   assert.equal(document.getElementById('activewrap').parentElement.id, 'tb-right');
   localStorage.removeItem('panelOrder');
 });
-t('layers-ui: можно удалить все слои — остаётся фон и становится активным', () => { resetWH(8, 8);
-  lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 0); assert.equal(S.bgSel, true); // удалили последний → активен фон
-  lops.doAddLayer(); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(S.bgSel, false); // новый слой снимает выбор фона
-  S.bgSel = true; doc.ensureLayer(); assert.equal(S.bgSel, false); }); // рисование (ensureLayer) делает активным слой, а не фон
-t('layers-ui: reference-кнопка синяя на выбранном reference-слое', () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 293", () => { resetWH(8, 8);
+  lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers.length, 0); assert.equal(S.bgSel, true);
+  lops.doAddLayer(); assert.equal(S.layers.length, 1); assert.equal(S.cur, 0); assert.equal(S.bgSel, false);
+  S.bgSel = true; doc.ensureLayer(); assert.equal(S.bgSel, false); });
+t("module-int case 294", () => { resetWH(8, 8); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].reference = true; layList();
   assert.ok(document.getElementById('lay-ref').classList.contains('on')); assert.equal(document.querySelectorAll('#lay-list .lref').length, 1);
   document.querySelector('#lay-list .lref').click(); layList();
   assert.equal(S.layers[0].reference, false); assert.ok(!document.getElementById('lay-ref').classList.contains('on')); });
-t('layers-ui: Ctrl-клик выбирает слои поштучно (тумблер)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+t("module-int case 295", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
   const rowFor = (li) => [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === li);
   rowFor(2).dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(S.cur, 2); assert.deepEqual([...S.marked].sort((a, b) => a - b), [0]); // 2 — активный, 0 в наборе; слой 1 НЕ выбран (не диапазон)
+  assert.equal(S.cur, 2); assert.deepEqual([...S.marked].sort((a, b) => a - b), [0]);
   rowFor(2).dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
-  assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), []); }); // повторный ctrl снимает активный, повышая оставшийся
-t('layers-ui: Shift-клик выделяет диапазон до активного слоя', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), []); });
+t("module-int case 296", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   S.cur = 0; S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
   const target = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2);
   target.dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
   assert.equal(S.cur, 0); assert.deepEqual([...S.marked].sort((a, b) => a - b), [1, 2]); });
-t('layers-ui: Shift-клик берёт диапазон по видимому порядку строк (с папкой)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
-  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.layers[2].fid = 1; // папка тасует видимый порядок относительно индексов массива
+t("module-int case 297", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.layers[2].fid = 1;
   S.marked = new Set(); document.getElementById('lay-pop').classList.add('on'); layList();
-  const ord = [...document.querySelectorAll('#lay-list .lrow[data-li]')].map((r) => +r.dataset.li); // видимый порядок строк-слоёв
-  S.cur = ord[0]; layList(); // активный — верхняя видимая строка
+  const ord = [...document.querySelectorAll('#lay-list .lrow[data-li]')].map((r) => +r.dataset.li);
+  S.cur = ord[0]; layList();
   [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === ord[ord.length - 1])
-    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по нижней строке
-  assert.deepEqual([...S.marked].sort((a, b) => a - b), ord.filter((li) => li !== ord[0]).sort((a, b) => a - b)); // выделены все строки между верхом и низом
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  assert.deepEqual([...S.marked].sort((a, b) => a - b), ord.filter((li) => li !== ord[0]).sort((a, b) => a - b));
   S.layers[0].fid = null; S.layers[2].fid = null; S.folders = []; });
-t('layers-ui: Shift-клик берёт диапазон всех типов строк (слой/папка/эффект), кроме фона', () => { resetWH(8, 8); lops.doAddLayer();
+t("module-int case 298", () => { resetWH(8, 8); lops.doAddLayer();
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [{ id: 'fe', type: 'stroke', visible: true, params: { size: 1, color: '#fff' } }] }];
   S.layers[0].fid = 1; S.layers[0].effects = [{ id: 'le', type: 'glow', visible: true, params: {} }];
   S.cur = 0; S.marked = new Set(); S.markedFolders = new Set(); S.fxSel = new Set(); S.fxCur = null; S.selFolder = null; S.bgSel = false;
   document.getElementById('lay-pop').classList.add('on'); layList();
-  const first = [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')][0]; // верхняя строка — сделать её активной (любого типа)
+  const first = [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')][0];
   if (first.dataset.li != null) { S.cur = +first.dataset.li; }
   else if (first.dataset.fid != null) { S.selFolder = +first.dataset.fid; S.fxCur = null; }
   else { S.fxCur = first.__eff; S.fxSel = new Set([first.__eff]); }
   layList();
   const r2 = [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')];
-  r2[r2.length - 1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по нижней строке
-  [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')].forEach((r) => assert.ok(r.classList.contains('on') || r.classList.contains('marked'))); // все строки между верхом и низом выбраны
-  const bg = document.querySelector('#lay-list .bgrow'); assert.ok(!bg.classList.contains('on') && !bg.classList.contains('marked')); // фон не попал в выбор
+  r2[r2.length - 1].dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  [...document.querySelectorAll('#lay-list .lrow, #lay-list .fxrow')].forEach((r) => assert.ok(r.classList.contains('on') || r.classList.contains('marked')));
+  const bg = document.querySelector('#lay-list .bgrow'); assert.ok(!bg.classList.contains('on') && !bg.classList.contains('marked'));
   S.layers[0].fid = null; S.layers[0].effects = []; S.folders = []; S.markedFolders = new Set(); S.fxSel = new Set(); S.fxCur = null; S.selFolder = null; });
-t('layers-ui: активный фон не объединяется с другими (shift = одиночный выбор)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
-  document.getElementById('lay-pop').classList.add('on'); S.bgSel = true; S.cur = 0; S.marked = new Set(); layList(); // активен фон
+t("module-int case 299", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  document.getElementById('lay-pop').classList.add('on'); S.bgSel = true; S.cur = 0; S.marked = new Set(); layList();
   [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 2)
-    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true })); // shift по слою при активном фоне
-  assert.equal(S.bgSel, false); assert.equal(S.cur, 2); assert.equal(S.marked.size, 0); }); // фон сброшен, выбран только кликнутый слой
-t('layers-ui: цвет можно бросить прямо на слой', () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, shiftKey: true }));
+  assert.equal(S.bgSel, false); assert.equal(S.cur, 2); assert.equal(S.marked.size, 0); });
+t("module-int case 300", () => { resetWH(4, 4); lops.doAddLayer(); document.getElementById('lay-pop').classList.add('on'); layList();
   const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 1);
   const prev = document.elementFromPoint; document.elementFromPoint = () => row;
   try {
@@ -2707,7 +2710,7 @@ t('layers-ui: цвет можно бросить прямо на слой', () =
   assert.deepEqual(S.layers[1].grid[0][0], [9, 8, 7, 255]); assert.equal(S.layers[0].grid[0][0], null);
   assert.ok([...document.querySelectorAll('#col-hist button')].some((b) => b.title === '#090807'));
 });
-t('layers-ui: цвет на заполненный слой перекрашивает только содержимое', () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 301", () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].grid[1][1] = [1, 2, 3, 128]; S.layers[0].ext = new Map([['-1,0', [4, 5, 6, 200]]]); layList();
   const row = [...document.querySelectorAll('#lay-list .lrow[data-li]')].find((r) => +r.dataset.li === 0);
   const prev = document.elementFromPoint; document.elementFromPoint = () => row;
@@ -2717,7 +2720,7 @@ t('layers-ui: цвет на заполненный слой перекрашив
   assert.deepEqual(S.layers[0].grid[1][1], [9, 8, 7, 128]); assert.equal(S.layers[0].grid[0][0], null);
   assert.deepEqual(S.layers[0].ext.get('-1,0'), [9, 8, 7, 200]);
 });
-t('layers-ui: цвет можно бросить на строку эффекта', () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 302", () => { resetWH(4, 4); document.getElementById('lay-pop').classList.add('on');
   S.layers[0].effects = [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }]; layList();
   const row = document.querySelector('#lay-list .fxrow');
   const prev = document.elementFromPoint; document.elementFromPoint = () => row;
@@ -2727,9 +2730,9 @@ t('layers-ui: цвет можно бросить на строку эффект�
   assert.equal(S.layers[0].effects[0].params.color, '#0c2238'); assert.equal(S.fxCur, S.layers[0].effects[0]);
   assert.ok(S.fxSel.has(S.layers[0].effects[0]));
 });
-t('layers-ui: add/merge меняют число слоёв', () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
+t("module-int case 303", () => { resetWH(8, 8); const b = S.layers.length; lops.doAddLayer(); assert.equal(S.layers.length, b + 1);
   S.marked = new Set([0, 1]); lops.doMerge(); assert.equal(S.layers.length, b); });
-t('layers-ui: merge запекает clipping mask и эффекты слоя', () => { resetWH(5, 5);
+t("module-int case 304", () => { resetWH(5, 5);
   const base = { name: 'base', grid: blank(5, 5), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }] };
   const top = { name: 'clip', grid: blank(5, 5), opacity: 1, visible: true, fid: null, clip: true, ext: new Map(), effects: [] };
   base.grid[2][2] = [10, 20, 30, 255]; top.grid[2][2] = [120, 90, 200, 255]; top.grid[0][0] = [120, 90, 200, 255];
@@ -2737,14 +2740,14 @@ t('layers-ui: merge запекает clipping mask и эффекты слоя', 
   assert.equal(S.layers.length, 1); assert.equal(S.layers[0].clip, false); assert.equal(S.layers[0].effects.length, 0);
   assert.deepEqual(S.layers[0].grid[2][2], [120, 90, 200, 255]); assert.equal(S.layers[0].grid[0][0], null);
   assert.deepEqual(S.layers[0].grid[1][2], [255, 255, 255, 255]); });
-t('layers-ui: merge берёт папку и имя с верхнего слоя', () => { resetWH(4, 4);
+t("module-int case 305", () => { resetWH(4, 4);
   const mk = (name, fid = null) => ({ name, grid: blank(4, 4), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects: [] });
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }];
   S.layers = [mk('outside'), mk('inside', 1)]; S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[1].grid[1][1] = [2, 2, 2, 255];
   S.cur = 1; S.marked = new Set(); cache.dirtyAll(); lops.doMerge();
   assert.equal(S.layers.length, 1); assert.equal(S.layers[0].name, 'inside'); assert.equal(S.layers[0].fid, 1);
   assert.deepEqual(S.layers[0].grid[0][0], [1, 1, 1, 255]); assert.deepEqual(S.layers[0].grid[1][1], [2, 2, 2, 255]); });
-t('layers-ui: merge папки запекает её слои и эффекты в слой с именем папки', () => { resetWH(5, 5);
+t("module-int case 306", () => { resetWH(5, 5);
   const mk = (name, fid = null) => ({ name, grid: blank(5, 5), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects: [] });
   S.folders = [{ id: 1, name: 'Group', open: true, visible: true, parent: null, effects: [{ id: 1, type: 'stroke', visible: true, params: { size: 1, color: '#ffffff' } }] }];
   S.layers = [mk('below'), mk('a', 1), mk('b', 1), mk('above')]; S.layers[1].grid[2][2] = [10, 20, 30, 255]; S.layers[2].grid[2][3] = [120, 90, 200, 255];
@@ -2753,19 +2756,19 @@ t('layers-ui: merge папки запекает её слои и эффекты 
   assert.equal(S.layers[1].fid, null); assert.equal(S.layers[1].effects.length, 0);
   assert.deepEqual(S.layers[1].grid[2][2], [10, 20, 30, 255]); assert.deepEqual(S.layers[1].grid[2][3], [120, 90, 200, 255]);
   assert.deepEqual(S.layers[1].grid[1][2], [255, 255, 255, 255]); });
-t('layers-ui: pinch-merge сливает диапазон и оставляет результат наверху', () => { resetWH(4, 4);
+t("module-int case 307", () => { resetWH(4, 4);
   const mk = (name) => ({ name, grid: blank(4, 4), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] });
   S.layers = ['below', 'low', 'middle', 'top', 'above'].map(mk); S.cur = 1;
   S.layers[1].grid[0][0] = [10, 0, 0, 255]; S.layers[2].grid[2][2] = [1, 1, 1, 255]; S.layers[3].grid[1][1] = [0, 0, 10, 255];
   lops.mergeRange(1, 3);
   assert.equal(S.layers.length, 3); assert.equal(S.cur, 1); assert.deepEqual(S.layers.map((L) => L.name), ['below', 'top', 'above']);
   assert.deepEqual(S.layers[1].grid[0][0], [10, 0, 0, 255]); assert.deepEqual(S.layers[1].grid[2][2], [1, 1, 1, 255]); assert.deepEqual(S.layers[1].grid[1][1], [0, 0, 10, 255]); });
-t('layers-ui: после удаления активным становится слой над ним (иначе под ним)', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
-  S.cur = 1; const above = S.layers[2]; lops.deleteLayerRef(S.layers[1]); assert.equal(S.layers[S.cur], above); // выбрался слой над удалённым
-  const below = S.layers[0]; S.cur = S.layers.length - 1; lops.deleteLayerRef(S.layers[S.cur]); assert.equal(S.layers[S.cur], below); }); // верхний удалён — выбрался тот, что под ним
-t('layers-ui: удаление неактивного слоя сохраняет активный слой', () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+t("module-int case 308", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
+  S.cur = 1; const above = S.layers[2]; lops.deleteLayerRef(S.layers[1]); assert.equal(S.layers[S.cur], above);
+  const below = S.layers[0]; S.cur = S.layers.length - 1; lops.deleteLayerRef(S.layers[S.cur]); assert.equal(S.layers[S.cur], below); });
+t("module-int case 309", () => { resetWH(8, 8); lops.doAddLayer(); lops.doAddLayer();
   const active = S.layers[2]; S.cur = 2; lops.deleteLayerRef(S.layers[0]); assert.equal(S.layers[S.cur], active); });
-t('layers-ui: пустая папка остаётся на месте после удаления последнего слоя', () => { resetWH(4, 4);
+t("module-int case 310", () => { resetWH(4, 4);
   const mk = (name, fid = null) => ({ name, grid: blank(4, 4), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('bottom'), mk('inside', 1), mk('top')];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.cur = 1;
@@ -2773,7 +2776,7 @@ t('layers-ui: пустая папка остаётся на месте посл�
   const rows = [...document.querySelectorAll('#lay-list .lrow')].map((r) => (r.dataset.fid ? 'folder:' + r.dataset.fid : S.layers[+r.dataset.li].name));
   assert.deepEqual(rows, ['top', 'folder:1', 'bottom']); assert.equal(S.folders[0].emptyPos, 1);
 });
-t('layers-ui: корзина сохраняет позицию папки после удаления последнего слоя', () => { resetWH(4, 4);
+t("module-int case 311", () => { resetWH(4, 4);
   const mk = (name, fid = null) => ({ name, grid: blank(4, 4), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('bottom'), mk('inside', 1), mk('top')];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.cur = 1; S.marked = new Set();
@@ -2781,80 +2784,83 @@ t('layers-ui: корзина сохраняет позицию папки пос
   const rows = [...document.querySelectorAll('#lay-list .lrow')].map((r) => (r.dataset.fid ? 'folder:' + r.dataset.fid : S.layers[+r.dataset.li].name));
   assert.deepEqual(rows, ['top', 'folder:1', 'bottom']);
 });
-t('layers-ui: добавление слоёв не останавливается на восьми', () => { resetWH(8, 8);
+t("module-int case 312", () => { resetWH(8, 8);
   for (let i = 0; i < 9; i++) lops.doAddLayer();
   assert.equal(S.layers.length, 10); });
-t('layers-ui: имя нового слоя сбрасывается к 1 без номерных слоёв', () => { resetWH(8, 8);
+t("module-int case 313", () => { resetWH(8, 8);
+  i18n.setLocale('ru');
   S.layerSeq = 34; S.layers[0].name = 'Sketch';
-  lops.doAddLayer(); assert.equal(S.layers[S.cur].name, 'Слой 1'); assert.equal(S.layerSeq, 1); });
-t('layers-ui: имя нового слоя учитывает номерные слои любой локали', () => { resetWH(8, 8);
-  i18n.setLocale('en'); S.layerSeq = 34; S.layers[0].name = 'Слой 3';
+  lops.doAddLayer(); assert.equal(S.layers[S.cur].name, i18n.t('layer.name') + ' 1'); assert.equal(S.layerSeq, 1); });
+t("module-int case 314", () => { resetWH(8, 8);
+  i18n.setLocale('ru'); const localizedLayerName = i18n.t('layer.name');
+  i18n.setLocale('en'); S.layerSeq = 34; S.layers[0].name = localizedLayerName + ' 3';
   lops.doAddLayer(); assert.equal(S.layers[S.cur].name, 'Layer 4'); assert.equal(S.layerSeq, 4);
   i18n.setLocale('ru'); });
-t('layers-ui: имя новой папки берёт минимальный свободный номер', () => { resetWH(8, 8);
+t("module-int case 315", () => { resetWH(8, 8);
   i18n.setLocale('ru'); S.folderSeq = 8;
+  const localizedFolderName = i18n.t('folder.name');
   const mk = (name) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid: null, clip: false, ext: new Map(), effects: [] });
   S.layers = [mk('a'), mk('b')]; S.cur = 0; S.marked = new Set([1]);
   S.folders = [
-    { id: 2, name: 'Папка 2', open: true, visible: true, parent: null, effects: [] },
-    { id: 4, name: 'Папка 4', open: true, visible: true, parent: null, effects: [] },
+    { id: 2, name: localizedFolderName + ' 2', open: true, visible: true, parent: null, effects: [] },
+    { id: 4, name: localizedFolderName + ' 4', open: true, visible: true, parent: null, effects: [] },
   ];
-  lops.doGroup(); assert.equal(S.folders[S.folders.length - 1].name, 'Папка 1');
+  lops.doGroup(); assert.equal(S.folders[S.folders.length - 1].name, localizedFolderName + ' 1');
 });
-t('layers-ui: закрытая папка с активным слоем — мягкая подсветка, активным остаётся слой', () => { resetWH(8, 8);
+t("module-int case 316", () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0; S.selFolder = null; S.bgSel = false;
   document.getElementById('lay-pop').classList.add('on'); layList(); document.querySelector('#lay-list .frow .caret').click();
-  assert.equal(S.folders[0].open, false); assert.equal(S.selFolder, null); assert.equal(S.cur, 0); // активным остаётся слой, не папка
+  assert.equal(S.folders[0].open, false); assert.equal(S.selFolder, null); assert.equal(S.cur, 0);
   const fr = document.querySelector('#lay-list .frow');
-  assert.ok(fr.classList.contains('has-active')); assert.ok(!fr.classList.contains('on')); // мягкая голубая подсветка, не яркая
-  document.querySelector('#lay-list .frow .caret').click(); // раскрыли — слой виден, подсветка ушла
+  assert.ok(fr.classList.contains('has-active')); assert.ok(!fr.classList.contains('on'));
+  document.querySelector('#lay-list .frow .caret').click();
   assert.ok(!document.querySelector('#lay-list .frow').classList.contains('has-active')); });
-t('layers-ui: вложенные закрытые папки — подсвечивается внешняя, при раскрытии следующая', () => { resetWH(8, 8);
+t("module-int case 317", () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'A', open: false, visible: true, parent: null, effects: [] }, { id: 2, name: 'B', open: false, visible: true, parent: 1, effects: [] }];
   S.layers[0].fid = 2; S.cur = 0; S.selFolder = null; S.bgSel = false; document.getElementById('lay-pop').classList.add('on'); layList();
   const frA = () => document.querySelector('#lay-list .frow[data-fid="1"]'), frB = () => document.querySelector('#lay-list .frow[data-fid="2"]');
-  assert.ok(frA().classList.contains('has-active')); assert.equal(frB(), null); // B спрятана в закрытой A → подсвечена A
-  frA().querySelector('.caret').click(); // раскрыли A → видна B (закрытая), слой в ней
+  assert.ok(frA().classList.contains('has-active')); assert.equal(frB(), null);
+  frA().querySelector('.caret').click();
   assert.ok(!frA().classList.contains('has-active')); assert.ok(frB().classList.contains('has-active')); });
-t('layers-ui: плюс на активной папке создаёт активный верхний слой вне папки', () => { resetWH(8, 8);
+t("module-int case 318", () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: false, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.selFolder = 1; S.markedFolders = new Set([1]);
   lops.doAddLayer(); assert.equal(S.cur, S.layers.length - 1); assert.equal(S.layers[S.cur].fid, null); assert.equal(S.selFolder, null); });
-t('layers-ui: плюс на видимом слое папки создаёт слой в этой папке', () => { resetWH(8, 8);
+t("module-int case 319", () => { resetWH(8, 8);
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.layers[0].fid = 1; S.cur = 0; S.selFolder = null;
   lops.doAddLayer(); assert.equal(S.cur, 1); assert.equal(S.layers[S.cur].fid, 1); });
-t('layers-ui: группа уносит в папку и слои, и папки, и эффекты', () => { resetWH(8, 8);
+t("module-int case 320", () => { resetWH(8, 8);
   const mk = (name, fid = null, effects = []) => ({ name, grid: blank(8, 8), opacity: 1, visible: true, fid, clip: false, ext: new Map(), effects });
   const eff = { id: 9, type: 'stroke', visible: true, params: { size: 1, color: '#fff' } };
-  // top-слой с эффектом, отдельный слой 'x', и папка G(1) со слоем 'in'
+
   S.layers = [mk('in', 1), mk('x'), mk('top', null, [eff])];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [] }]; S.folderSeq = 1;
-  // смешанное выделение: слой 'x' (marked) + папка G + эффект слоя top
+
   S.cur = 1; S.marked = new Set([1]); S.markedFolders = new Set([1]); S.selFolder = 1; S.fxSel = new Set([eff]); S.fxCur = eff;
   lops.doGroup();
-  const nf = S.folders.find((f) => f.id !== 1); // новая папка
+  const nf = S.folders.find((f) => f.id !== 1);
   assert.ok(nf); assert.equal(nf.parent ?? null, null);
-  assert.equal(S.layers.find((L) => L.name === 'x').fid, nf.id); // слой 'x' внутри новой папки
-  assert.equal(S.layers.find((L) => L.name === 'top').fid, nf.id); // владелец выделенного эффекта тоже внутри
-  assert.equal(S.folders.find((f) => f.id === 1).parent, nf.id); // папка G вложена в новую
-  assert.equal(S.layers.find((L) => L.name === 'in').fid, 1); // слой папки G остался в G (которая теперь в новой)
+  assert.equal(S.layers.find((L) => L.name === 'x').fid, nf.id);
+  assert.equal(S.layers.find((L) => L.name === 'top').fid, nf.id);
+  assert.equal(S.folders.find((f) => f.id === 1).parent, nf.id);
+  assert.equal(S.layers.find((L) => L.name === 'in').fid, 1);
   S.folders = []; S.layers.forEach((L) => { L.fid = null; L.effects = []; }); S.marked = new Set(); S.markedFolders = new Set(); S.selFolder = null; S.fxSel = new Set(); S.fxCur = null;
 });
-t('i18n: новые слой/папка получают имя из текущей локали', () => { resetWH(8, 8);
-  i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer')); // англ. локаль → «Layer N»
+t("module-int case 321", () => { resetWH(8, 8);
+  i18n.setLocale('en'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Layer'));
   S.marked = new Set([0, 1]); lops.doGroup(); assert.ok(S.folders[0].name.startsWith('Folder'));
-  i18n.setLocale('ru'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith('Слой')); // рус. локаль → «Слой N»
+  i18n.setLocale('ru'); lops.doAddLayer(); assert.ok(S.layers[S.cur].name.startsWith(i18n.t('layer.name')));
   i18n.setLocale('ru'); });
-t('i18n: английская локаль убирает русский из title и placeholder', () => {
+t("module-int case 322", () => {
   i18n.setLocale('en');
   pal.buildPalette();
-  const bad = [...document.querySelectorAll('[title]')].filter((el) => /[А-Яа-яЁё]/.test(el.title)).map((el) => el.id || el.className || el.tagName);
+  const bad = [...document.querySelectorAll('[title]')].filter((el) => /[\u0400-\u04FF]/.test(el.title)).map((el) => el.id || el.className || el.tagName);
   assert.deepEqual(bad, []);
   assert.equal(document.getElementById('pal-name').placeholder, 'Palette name');
   assert.equal(document.getElementById('ovlimg').alt, 'result');
   assert.equal(document.querySelector('#pickflag span').textContent, 'Eyedropper');
   i18n.setLocale('ru');
 });
-t('i18n: html-шаблон не хранит локализованные fallback-строки', () => {
+t("module-int case 323", () => {
   const doc = makeDom().window.document;
   const textLeaks = [...doc.querySelectorAll('[data-i18n]')].flatMap((el) => [...el.childNodes]
     .filter((n) => n.nodeType === 3 && n.textContent.trim())
@@ -2867,69 +2873,69 @@ t('i18n: html-шаблон не хранит локализованные fallba
   assert.deepEqual(textLeaks, []);
   assert.deepEqual(attrLeaks, []);
 });
-t('opacity: прозрачность папки умножается на прозрачность слоя в композите', () => { resetWH(4, 4);
+t("module-int case 324", () => { resetWH(4, 4);
   S.layers = [{ name: 'in', grid: blank(4, 4), opacity: 0.5, visible: true, fid: 1, clip: false, ext: new Map(), effects: [] }];
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [], opacity: 0.5 }];
   S.layers[0].grid[0][0] = [1, 2, 3, 255]; cache.dirtyAll();
   let alpha = null; const mock = { globalAlpha: 1, fillStyle: '', fillRect() {}, drawImage() { alpha = mock.globalAlpha; } };
   cache.compositeLayers(mock);
-  assert.ok(Math.abs(alpha - 0.25) < 1e-9); // 0.5 (слой) × 0.5 (папка)
+  assert.ok(Math.abs(alpha - 0.25) < 1e-9);
   S.folders = []; S.layers[0].fid = null; S.layers[0].opacity = 1;
 });
-t('opacity: cloneFx сохраняет прозрачность эффекта', () => {
+t("module-int case 325", () => {
   const out = cloneFx([{ type: 'glow', visible: true, opacity: 0.3, params: {} }]); assert.ok(Math.abs(out[0].opacity - 0.3) < 1e-9);
 });
-t('opacity: ползунок правит активную строку (папка/эффект), не слой', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 326", () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   S.folders = [{ id: 1, name: 'G', open: true, visible: true, parent: null, effects: [], opacity: 1 }]; S.layers[0].fid = 1;
   S.selFolder = 1; S.markedFolders = new Set([1]); S.fxCur = null; S.fxSel = new Set(); layList();
   const op = document.getElementById('lay-op'); assert.equal(op.value, '100');
   op.value = '40'; op.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.ok(Math.abs(S.folders[0].opacity - 0.4) < 1e-9); assert.equal(S.layers[0].opacity, 1); // изменилась папка, не слой
+  assert.ok(Math.abs(S.folders[0].opacity - 0.4) < 1e-9); assert.equal(S.layers[0].opacity, 1);
   const eff = { id: 9, type: 'stroke', visible: true, opacity: 1, params: { size: 1, color: '#fff' } };
   S.layers[0].effects = [eff]; S.selFolder = null; S.markedFolders = new Set(); S.fxCur = eff; S.fxSel = new Set([eff]); layList();
   op.value = '25'; op.dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.ok(Math.abs(eff.opacity - 0.25) < 1e-9); // изменился эффект
+  assert.ok(Math.abs(eff.opacity - 0.25) < 1e-9);
   S.layers[0].effects = []; S.fxCur = null; S.fxSel = new Set(); S.folders = []; S.layers[0].fid = null;
 });
-t('tile: рисование заворачивается по модулю холста (рисуй по любому тайлу)', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
+t("module-int case 327", () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
   S.tile.on = true;
   stamp(5, 1); assert.deepEqual(S.layers[0].grid[1][1], [5, 5, 5, 255]); // x=5 → wrap → 1
   stamp(-1, 2); assert.deepEqual(S.layers[0].grid[2][3], [5, 5, 5, 255]); // x=-1 → wrap → 3
   S.tile.on = false; S.layers[0].grid = blank(4, 4); stamp(5, 1);
-  assert.equal(S.layers[0].grid[1][1], null); // без tile — за пределами, ничего не пишется
+  assert.equal(S.layers[0].grid[1][1], null);
 });
-t('tile: заливка заворачивается через шов', () => { resetWH(4, 4); S.active = [5, 5, 5];
-  for (let y = 0; y < 4; y++) { S.layers[0].grid[y][1] = [9, 9, 9, 255]; S.layers[0].grid[y][2] = [9, 9, 9, 255]; } // барьер по центру, свободны столбцы 0 и 3
+t("module-int case 328", () => { resetWH(4, 4); S.active = [5, 5, 5];
+  for (let y = 0; y < 4; y++) { S.layers[0].grid[y][1] = [9, 9, 9, 255]; S.layers[0].grid[y][2] = [9, 9, 9, 255]; }
   S.tile.on = true; flood(0, 0);
-  assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5]); assert.deepEqual(S.layers[0].grid[0][3], [5, 5, 5]); // оба края связаны через шов
-  assert.deepEqual(S.layers[0].grid[0][1], [9, 9, 9, 255]); // барьер цел
+  assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5]); assert.deepEqual(S.layers[0].grid[0][3], [5, 5, 5]);
+  assert.deepEqual(S.layers[0].grid[0][1], [9, 9, 9, 255]);
   resetWH(4, 4); S.active = [5, 5, 5]; for (let y = 0; y < 4; y++) { S.layers[0].grid[y][1] = [9, 9, 9, 255]; S.layers[0].grid[y][2] = [9, 9, 9, 255]; }
   S.tile.on = false; flood(0, 0);
-  assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5]); assert.equal(S.layers[0].grid[0][3], null); // без tile столбец 3 не залит
+  assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5]); assert.equal(S.layers[0].grid[0][3], null);
 });
-t('tile: перемещение сдвигает тайл по кругу (тороидально)', () => { resetWH(4, 4);
+t("module-int case 329", () => { resetWH(4, 4);
   S.layers[0].grid[0][3] = [7, 7, 7, 255]; cache.dirtyAll();
-  doc.shiftLayerGrid(S.layers[0], 1, 0, true); // вправо на 1 с заворотом: 3 → 0
+  doc.shiftLayerGrid(S.layers[0], 1, 0, true);
   assert.deepEqual(S.layers[0].grid[0][0], [7, 7, 7, 255]); assert.equal(S.layers[0].grid[0][3], null);
-  assert.equal(S.layers[0].ext.size, 0); // ничего не утекло в ext
+  assert.equal(S.layers[0].ext.size, 0);
   resetWH(4, 4); S.layers[0].grid[0][3] = [7, 7, 7, 255];
-  doc.shiftLayerGrid(S.layers[0], 1, 0, false); // без wrap — уезжает в ext
+  doc.shiftLayerGrid(S.layers[0], 1, 0, false);
   assert.equal(S.layers[0].grid[0][0], null); assert.ok(S.layers[0].ext.size >= 1);
 });
-t('tile: выделение рамкой заворачивается через шов', () => { resetWH(4, 4); S.tile.on = true; S.sel = null; S.selMask = null;
+t("module-int case 330", () => { resetWH(4, 4); S.tile.on = true; S.sel = null; S.selMask = null;
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.layers[0].grid[0][3] = [2, 2, 2, 255]; cache.dirtyAll();
   const h = toolHandler('select');
-  h.down({ gx: 3, gy: 0 }); h.move({ gx: 4, gy: 0 }); h.up({}); // тянем со столбца 3 на соседний тайл (=столбец 0)
-  assert.ok(S.selMask && S.selMask.has('3,0') && S.selMask.has('0,0')); // оба края попали в выделение через шов
+  h.down({ gx: 3, gy: 0 }); h.move({ gx: 4, gy: 0 }); h.up({});
+  assert.ok(S.selMask && S.selMask.has('3,0') && S.selMask.has('0,0'));
   S.sel = null; S.selMask = null; S.tile.on = false;
 });
-t('x-mirror: зажатый X флипает маску кисти, а не дублирует мазок', () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
-  S.xMirror = true; stamp(0, 0); // флип симметричной кисти 1×1 не виден и НЕ создаёт зеркальную копию
+t("module-int case 331", () => { resetWH(4, 4); S.tool = 'pencil'; S.brushes.pencil.size = 1; S.brushes.pencil.op = 1; S.active = [5, 5, 5]; S.stampBrush.pencil = null;
+  S.xMirror = true; stamp(0, 0);
   assert.deepEqual(S.layers[0].grid[0][0], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][3], null);
-  S.xMirror = false; S.layers[0].grid = blank(4, 4); stamp(3, 0); // обычный мазок справа — тоже без зеркала слева
+  S.xMirror = false; S.layers[0].grid = blank(4, 4); stamp(3, 0);
   assert.deepEqual(S.layers[0].grid[0][3], [5, 5, 5, 255]); assert.equal(S.layers[0].grid[0][0], null);
 });
-t('background: paintStack заливает фон под слоями, скрытый — нет', () => { resetWH(4, 4);
+t("module-int case 332", () => { resetWH(4, 4);
   S.bg = { color: [10, 20, 30], visible: true };
   let filled = null; const mock = { globalAlpha: 1, fillStyle: '', fillRect: (x, y, w, h) => { filled = [x, y, w, h, mock.fillStyle]; }, drawImage() {} };
   cache.compositeLayers(mock);
@@ -2937,77 +2943,77 @@ t('background: paintStack заливает фон под слоями, скры�
   S.bg = { color: [1, 2, 3], visible: false }; let n2 = 0; cache.compositeLayers({ globalAlpha: 1, fillStyle: '', fillRect: () => { n2++; }, drawImage() {} });
   assert.equal(n2, 0); S.bg = { color: null, visible: true };
 });
-t('background: undo восстанавливает цвет фона', () => { resetWH(4, 4);
+t("module-int case 333", () => { resetWH(4, 4);
   S.bg = { color: [1, 1, 1], visible: true }; history.snapshot(); S.bg.color = [9, 9, 9];
   history.doUndo(); assert.deepEqual(S.bg.color, [1, 1, 1]); S.bg = { color: null, visible: true };
 });
-t('background: строка фона внизу, выбор/глаз/заливка цветом', () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 334", () => { resetWH(4, 4); layers.mount(); document.getElementById('lay-pop').classList.add('on');
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false }; layList();
   let bgr = document.querySelector('#lay-list [data-bg]');
-  assert.ok(bgr && bgr.classList.contains('bgrow')); assert.equal(document.getElementById('lay-list').lastElementChild, bgr); // в самом низу
-  assert.equal(document.querySelectorAll('#lay-list .lrow[data-bg]').length, 0); // фон — не .lrow (не попадает в выборку/drag)
-  S.cur = 0; bgr.click(); assert.equal(S.bgSel, true); // выбор фона
-  document.querySelector('#lay-list .lrow[data-li]').click(); assert.equal(S.bgSel, false); // клик по слою снимает выбор фона
+  assert.ok(bgr && bgr.classList.contains('bgrow')); assert.equal(document.getElementById('lay-list').lastElementChild, bgr);
+  assert.equal(document.querySelectorAll('#lay-list .lrow[data-bg]').length, 0);
+  S.cur = 0; bgr.click(); assert.equal(S.bgSel, true);
+  document.querySelector('#lay-list .lrow[data-li]').click(); assert.equal(S.bgSel, false);
   bgr = document.querySelector('#lay-list [data-bg]'); const prev = document.elementFromPoint; document.elementFromPoint = () => bgr;
   try { assert.equal(actions.run('layer.dropColorAt', [7, 8, 9], 5, 5), true); } finally { document.elementFromPoint = prev; }
-  assert.deepEqual(S.bg.color, [7, 8, 9]); // фон залит брошенным цветом
-  document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false); // глаз скрывает фон
+  assert.deepEqual(S.bg.color, [7, 8, 9]);
+  document.querySelector('#lay-list [data-bg] .eye').click(); assert.equal(S.bg.visible, false);
   S.bg = { color: null, visible: true }; S.bgSel = false; S.xMirror = false; S.tile = { on: false };
 });
-t('настройки: при нескольких слоях/выбранном эффекте идут к активному слою с превью', () => { resetWH(4, 4); bc.mount(); tb.mount(); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer();
+t("module-int case 335", () => { resetWH(4, 4); bc.mount(); tb.mount(); layers.mount(); document.getElementById('lay-pop').classList.add('on'); lops.doAddLayer();
   S.layers[1].grid[2][2] = [120, 120, 120, 255]; S.layers[1].effects = [{ id: 99, type: 'stroke', visible: true, opacity: 1, params: { size: 1, color: '#fff' } }]; cache.dirtyAll();
-  // несколько слоёв выбрано, активна строка эффекта слоя 1 (fxCur)
+
   S.cur = 1; S.marked = new Set([0]); S.selFolder = null; S.fxSel = new Set([S.layers[1].effects[0]]); S.fxCur = S.layers[1].effects[0]; S.bgSel = false; layList();
   document.getElementById('img-settings').click();
-  assert.ok(S.fxDraft, 'создан черновик настройки (превью)'); // есть превью
-  assert.equal(S.fxDraft.target, S.layers[1]); // к активному слою (владельцу эффекта), не к эффекту
+  assert.ok(S.fxDraft, 'settings draft created');
+  assert.equal(S.fxDraft.target, S.layers[1]);
   assert.equal(S.fxDraft.eff.type, 'adjustment');
   document.getElementById('bc-bri').value = 40; document.getElementById('bc-bri').dispatchEvent(new window.Event('input', { bubbles: true }));
-  assert.equal(S.fxDraft.eff.params.brightness, 40); // слайдер обновляет черновик → живое превью
-  document.getElementById('bc-cancel').click(); assert.equal(S.fxDraft, null); // отмена убирает черновик
+  assert.equal(S.fxDraft.eff.params.brightness, 40);
+  document.getElementById('bc-cancel').click(); assert.equal(S.fxDraft, null);
   S.fxSel = new Set(); S.fxCur = null; S.layers[1].effects = [];
 });
-t('background: заливка/очистка/контекст-меню на выбранном фоне', () => { resetWH(4, 4); layers.mount(); tb.mount(); document.getElementById('lay-pop').classList.add('on');
+t("module-int case 336", () => { resetWH(4, 4); layers.mount(); tb.mount(); document.getElementById('lay-pop').classList.add('on');
   S.bg = { color: null, visible: true }; S.bgSel = true; S.active = [3, 4, 5]; layList();
-  document.getElementById('t-fill').click(); assert.deepEqual(S.bg.color, [3, 4, 5]); assert.equal(S.tool, 'pencil'); // Fill-кнопка сразу красит фон
-  document.getElementById('lay-clean').click(); assert.equal(S.bg.color, null); // кнопка очистить → прозрачный
+  document.getElementById('t-fill').click(); assert.deepEqual(S.bg.color, [3, 4, 5]); assert.equal(S.tool, 'pencil');
+  document.getElementById('lay-clean').click(); assert.equal(S.bg.color, null);
   const cv = document.getElementById('cv'); const prev = document.elementFromPoint; document.elementFromPoint = () => cv;
   try { actions.run('edit.dropColorAt', [2, 2, 2], 5, 5); } finally { document.elementFromPoint = prev; }
-  assert.deepEqual(S.bg.color, [2, 2, 2]); // бросок цвета на холст красит фон
+  assert.deepEqual(S.bg.color, [2, 2, 2]);
   S.active = [9, 9, 9];
-  let bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true })); // меню фона = общее #lctx
-  assert.ok(document.getElementById('lctx').classList.contains('on')); // то же меню, что у слоёв
-  assert.equal(document.getElementById('lctx-del').style.display, 'none'); // фон нельзя удалить — пункт скрыт
+  let bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.ok(document.getElementById('lctx').classList.contains('on'));
+  assert.equal(document.getElementById('lctx-del').style.display, 'none');
   assert.equal(document.getElementById('lctx-fill').textContent, i18n.t('menu.fill'));
   assert.equal(document.getElementById('lctx-clear').textContent, i18n.t('menu.clearSimple'));
-  document.getElementById('lctx-fill').click(); assert.deepEqual(S.bg.color, [9, 9, 9]); // меню: Залить
+  document.getElementById('lctx-fill').click(); assert.deepEqual(S.bg.color, [9, 9, 9]);
   bgr = document.querySelector('#lay-list [data-bg]'); bgr.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
-  document.getElementById('lctx-clear').click(); assert.equal(S.bg.color, null); // меню: Очистить
+  document.getElementById('lctx-clear').click(); assert.equal(S.bg.color, null);
   S.bgSel = false; S.bg = { color: null, visible: true };
 });
-t('background: группа не уносит фон, выбор фона исключает прочее', () => { resetWH(4, 4); lops.doAddLayer();
-  S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup(); // doGroup не должен трогать фон, primary не слой
-  assert.equal(S.bgSel, true); // фон остаётся фоном (не в S.layers, не группируется)
+t("module-int case 337", () => { resetWH(4, 4); lops.doAddLayer();
+  S.bgSel = true; S.cur = 0; S.marked = new Set(); lops.doGroup();
+  assert.equal(S.bgSel, true);
   S.bgSel = false;
 });
-t('layers: вложенные группы (группа в группе)', async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
+t("module-int case 338", async () => { resetWH(4, 4); const { folderChain } = await import('../src/core/layers.js');
   S.folders = []; S.folderSeq = 0; S.layers = [S.layers[0], { ...S.layers[0], name: 'b', grid: S.layers[0].grid.map((r) => r.slice()) }, { ...S.layers[0], name: 'c', grid: S.layers[0].grid.map((r) => r.slice()) }]; S.cur = 0; S.marked = new Set([1, 2]);
   lops.doGroup(); const A = S.folders[0]; assert.equal(A.parent ?? null, null);
   const inner = S.layers.map((L, i) => [L, i]).filter(([L]) => L.fid === A.id).map(([, i]) => i); S.marked = new Set(inner); lops.doGroup();
-  const B = S.folders.find((f) => f !== A); assert.equal(B.parent, A.id); // B вложена в A
+  const B = S.folders.find((f) => f !== A); assert.equal(B.parent, A.id);
   assert.deepEqual(folderChain(S.layers.find((L) => L.fid === B.id).fid).map((f) => f.id), [B.id, A.id]); });
 
-t('tilemap: рисование тайлом, правка source обновляет все экземпляры', () => {
+t("module-int case 339", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
   S.activeTile = { tilesetId: ts.id, tileId: tile.id }; S.tileMode = 'paint'; tmap.rasterLayer(S.cur);
   const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.up({});
-  assert.deepEqual(S.layers[S.cur].grid[0][0], [1, 2, 3, 255]); // тайл лёг в клетку (0,0)
+  assert.deepEqual(S.layers[S.cur].grid[0][0], [1, 2, 3, 255]);
   tile.grid[1][1] = [9, 9, 9, 255]; tmap.refreshTile(ts.id, tile.id);
-  assert.deepEqual(S.layers[S.cur].grid[1][1], [9, 9, 9, 255]); // правка source отразилась на экземпляре
+  assert.deepEqual(S.layers[S.cur].grid[1][1], [9, 9, 9, 255]);
 });
-t('tile-palette: выбор тайла включает Place tile и сохраняет последний Draw/Edit', () => {
+t("module-int case 340", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileAutoMode = 'manual'; S.tileMode = 'pick'; S.tool = 'pencil';
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   tileSelect.selectTile(ts, tile.id);
@@ -3015,7 +3021,7 @@ t('tile-palette: выбор тайла включает Place tile и сохра
   assert.deepEqual(S.placeTile, { tilesetId: ts.id, tileId: tile.id });
   assert.equal(S.tool, 'tilebrush'); assert.equal(S.tileMode, 'paint'); assert.equal(S.tileAutoMode, 'manual');
 });
-t('tile-palette: Ctrl и Shift выделяют тайлы как свотчи', () => {
+t("module-int case 341", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
   const ts = tsmgr.createTileset('t', 4, 4), tiles = Array.from({ length: 5 }, () => tsmgr.addTile(ts));
   S.activeTile = { tilesetId: ts.id, tileId: tiles[0].id }; tilePalette.mount(); tilePalette.openPanel();
@@ -3030,7 +3036,7 @@ t('tile-palette: Ctrl и Shift выделяют тайлы как свотчи',
   cells[2].dispatchEvent(new window.MouseEvent('click', { bubbles: true, ctrlKey: true }));
   assert.deepEqual([...S.tileMarks], [tiles[1].id, tiles[3].id]);
 });
-t('tile-palette: ПКМ-протяжка выделяет тайлы наведением, не переставляет', () => {
+t("module-int case 342", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
   const ts = tsmgr.createTileset('t', 4, 4); Array.from({ length: 4 }, () => tsmgr.addTile(ts));
   S.activeTile = { tilesetId: ts.id, tileId: ts.tiles[0].id }; tilePalette.mount(); tilePalette.openPanel();
@@ -3042,12 +3048,12 @@ t('tile-palette: ПКМ-протяжка выделяет тайлы навед�
     document.elementFromPoint = () => cells[3];
     document.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientX: 40, clientY: 0 }));
     document.dispatchEvent(new window.MouseEvent('pointerup', { bubbles: true, button: 2, clientX: 40, clientY: 0 }));
-    assert.deepEqual(ts.tiles.map((tile) => tile.id), [1, 2, 3, 4]); // ПКМ-драг не переставляет
+    assert.deepEqual(ts.tiles.map((tile) => tile.id), [1, 2, 3, 4]);
     assert.deepEqual([...S.tileMarks], [ts.tiles[0].id, ts.tiles[2].id, ts.tiles[3].id]);
     assert.equal(document.querySelectorAll('#tile-list .marked').length, 3);
   } finally { document.elementFromPoint = oldHit; }
 });
-await ta('tile-palette: Delete Tile удаляет весь мультивыбор', async () => {
+await ta("module-int case 343", async () => {
   resetWH(12, 4); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null;
   const ts = tsmgr.createTileset('t', 4, 4), a = tsmgr.addTile(ts), b = tsmgr.addTile(ts), c = tsmgr.addTile(ts);
   a.grid[0][0] = [1, 0, 0, 255]; b.grid[0][0] = [2, 0, 0, 255]; c.grid[0][0] = [3, 0, 0, 255];
@@ -3062,7 +3068,7 @@ await ta('tile-palette: Delete Tile удаляет весь мультивыбо
   assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: c.id }); assert.equal(S.tileMarks.size, 0); assert.equal(S.tileRandomNext, null);
   assert.equal(layerEvents, 1);
 });
-t('tile-palette: ПКМ-меню создаёт повернутый/отраженный новый тайл', () => {
+t("module-int case 344", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileMarks = new Set(); S.tilePattern = null; S.tileRandomNext = null;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts);
   tile.grid[0][0] = [1, 2, 3, 255]; tile.grid[1][0] = [4, 5, 6, 255];
@@ -3075,15 +3081,15 @@ t('tile-palette: ПКМ-меню создаёт повернутый/отраж�
   const rotated = ts.tiles[1];
   assert.deepEqual(tile.grid[0][0], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][3], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][2], [4, 5, 6, 255]);
   assert.deepEqual(S.activeTile, { tilesetId: ts.id, tileId: rotated.id }); assert.deepEqual([...S.tileMarks], [rotated.id]);
-  tops.transformTile(tile.id, 'rot90'); assert.equal(ts.tiles.length, 2); // тот же bitmap не дублируется
+  tops.transformTile(tile.id, 'rot90'); assert.equal(ts.tiles.length, 2);
 });
-t('tilemap: Place tile использует выбранный тайл, а не редактируемую клетку', () => {
+t("module-int case 345", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.w = 4; S.grid.h = 4;
   const ts = tsmgr.createTileset('t', 4, 4), a = tsmgr.addTile(ts), b = tsmgr.addTile(ts);
   a.grid[0][0] = [1, 1, 1, 255]; b.grid[0][0] = [2, 2, 2, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   tmap.setCell(S.cur, 0, 0, { tileId: a.id });
-  tileSelect.selectTile(ts, b.id); // именно этот тайл должен остаться источником Place tile
+  tileSelect.selectTile(ts, b.id);
   S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   assert.ok(tilePaint(0, 0));
   assert.notEqual(S.activeTile.tileId, b.id); assert.equal(S.placeTile.tileId, b.id);
@@ -3091,7 +3097,7 @@ t('tilemap: Place tile использует выбранный тайл, а не
   assert.equal(L.tilemap.cells[1].tileId, b.id);
   assert.deepEqual(b.grid[0][0], [2, 2, 2, 255]);
 });
-t('tilemap: цвет, кисть и ластик возвращают последний Draw/Edit режим', () => {
+t("module-int case 346", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tool = 'tilebrush'; S.tileMode = 'paint'; S.tileAutoMode = 'manual';
   pal.setActiveColor([9, 8, 7]); assert.equal(S.tool, 'pencil'); assert.equal(S.tileAutoMode, 'manual');
   S.tool = 'tilebrush'; S.tileAutoMode = 'auto'; setTool('eraser');
@@ -3099,18 +3105,18 @@ t('tilemap: цвет, кисть и ластик возвращают после
   S.tool = 'tilebrush'; S.tileAutoMode = 'manual'; setTool('pencil');
   assert.equal(S.tool, 'pencil'); assert.equal(S.tileAutoMode, 'manual');
 });
-t('tilemap: erase и pick через Tile Brush', () => {
+t("module-int case 347", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [5, 6, 7, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
   S.activeTile = { tilesetId: ts.id, tileId: tile.id }; S.tileMode = 'paint'; tmap.rasterLayer(S.cur);
   const h = toolHandler('tilebrush'); h.down({ gx: 0, gy: 0 }); h.up({});
   S.activeTile = { tilesetId: ts.id, tileId: null }; S.tileFlags = { flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
-  S.tileMode = 'pick'; h.down({ gx: 0, gy: 0 }); assert.equal(S.activeTile.tileId, tile.id); // pick вернул tileId
+  S.tileMode = 'pick'; h.down({ gx: 0, gy: 0 }); assert.equal(S.activeTile.tileId, tile.id);
   S.tileMode = 'erase'; h.down({ gx: 0, gy: 0 }); h.up({});
   assert.equal(S.layers[S.cur].tilemap.cells[0], null); assert.equal(S.layers[S.cur].grid[0][0], null);
 });
-t('tilemap: пустой tileId не остаётся в cells', () => {
+t("module-int case 348", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4), empty = tsmgr.addTile(ts);
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -3121,35 +3127,36 @@ t('tilemap: пустой tileId не остаётся в cells', () => {
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tile.grid[0][0] = null; tmap.refreshTile(ts.id, tile.id);
   assert.equal(L.tilemap.cells[0], null);
 });
-t('tilemap: Make Unique отделяет клетку, старые экземпляры целы', () => {
+t("module-int case 349", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 1, 1, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
   S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
   const before = ts.tiles.length; tsel.makeUnique();
-  assert.equal(ts.tiles.length, before + 1); // создан новый tileId
+  assert.equal(ts.tiles.length, before + 1);
   const c0 = L.tilemap.cells[0], c1 = L.tilemap.cells[1];
-  assert.notEqual(c0.tileId, tile.id); assert.equal(c1.tileId, tile.id); // соседний экземпляр не тронут
+  assert.notEqual(c0.tileId, tile.id); assert.equal(c1.tileId, tile.id);
 });
 
-t('tilemap: create tile from layer режет слой по сетке', () => {
+t("module-int case 350", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.cur = 0;
-  S.layers[0].grid[0][0] = [7, 7, 7, 255]; S.layers[0].grid[5][5] = [8, 8, 8, 255]; // блоки (0,0) и (1,1)
+  S.layers[0].grid[0][0] = [7, 7, 7, 255]; S.layers[0].grid[5][5] = [8, 8, 8, 255];
   tfl.fromLayer();
-  const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2); // два непустых тайла
+  const ts = S.tilesets[0]; assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 2);
 });
-t('tilemap: новые и конвертированные default-слои называются Tilemap', () => {
+t("module-int case 351", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; tmcreate.createTilemap();
-  assert.equal(S.layers[S.cur].name, 'Tilemap'); assert.equal(i18n.t('tile.newLayer'), 'New Tilemap');
+  const tilemapName = i18n.t('tile.tilemapLayer');
+  assert.equal(S.layers[S.cur].name, tilemapName); assert.equal(i18n.t('tile.newLayer'), i18n.localeValues('tile.newLayer')[0]);
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].name = i18n.t('layer.name') + ' 1'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
-  tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Tilemap');
+  tfl.convertToTile(); assert.equal(S.layers[S.cur].name, tilemapName);
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].name = 'Custom'; S.layers[0].grid[0][0] = [1, 1, 1, 255];
   tfl.convertToTile(); assert.equal(S.layers[S.cur].name, 'Custom');
 });
-t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () => {
+t("module-int case 352", () => {
   const old = localStorage.getItem('tilemapPresets');
   try {
     localStorage.removeItem('tilemapPresets'); tmDialog.mount();
@@ -3190,7 +3197,7 @@ t('tilemap-dialog: New Tilemap создаёт tileset с пресетом', () =
     if (old == null) localStorage.removeItem('tilemapPresets'); else localStorage.setItem('tilemapPresets', old);
   }
 });
-t('tilemap-dialog: Resize canvas расширяет холст до кратности тайла', () => {
+t("module-int case 353", () => {
   resetWH(50, 50); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   tmcreate.open(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
   if (document.getElementById('tm-link').classList.contains('on')) document.getElementById('tm-link').click();
@@ -3202,7 +3209,7 @@ t('tilemap-dialog: Resize canvas расширяет холст до кратно
   assert.equal(S.W, 72); assert.equal(S.H, 60);
   assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 5);
 });
-t('tilemap-dialog: Convert to Tilemap использует размер из диалога', () => {
+t("module-int case 354", () => {
   resetWH(32, 16); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   S.layers[0].grid[0][0] = [1, 2, 3, 255];
   tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
@@ -3218,7 +3225,7 @@ t('tilemap-dialog: Convert to Tilemap использует размер из д�
   assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 4); assert.equal(L.tilemap.mapH, 1);
   assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
 });
-t('tilemap-dialog: Convert to Tilemap может расширить canvas', () => {
+t("module-int case 355", () => {
   resetWH(33, 17); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   S.layers[0].grid[0][0] = [1, 2, 3, 255];
   tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
@@ -3231,7 +3238,7 @@ t('tilemap-dialog: Convert to Tilemap может расширить canvas', () 
   assert.equal(L.kind, 'tilemap'); assert.equal(L.tilemap.mapW, 3); assert.equal(L.tilemap.mapH, 2);
   assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
 });
-t('tilemap-dialog: Convert to Tilemap показывает превью сетки и Resize canvas', () => {
+t("module-int case 356", () => {
   resetWH(33, 17); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 16; tmDialog.mount();
   S.layers[0].grid[0][0] = [1, 2, 3, 255];
   tfl.openConvertDialog(); assert.ok(document.getElementById('tilemap-ovl').classList.contains('on'));
@@ -3243,7 +3250,7 @@ t('tilemap-dialog: Convert to Tilemap показывает превью сетк
     strokeRect(x, y, w, h) { calls.strokes.push([x, y, w, h]); },
   };
   bus.emit('overlay', { ctx, ox: 0, oy: 0, z: 1 });
-  assert.ok(calls.lines > 0); // выбранная сетка видна даже без Resize canvas
+  assert.ok(calls.lines > 0);
   assert.ok(calls.strokes.some((r) => r[2] === 33 && r[3] === 17));
   assert.equal(calls.fills.length, 0);
   document.getElementById('tm-resize-canvas').checked = true;
@@ -3255,7 +3262,7 @@ t('tilemap-dialog: Convert to Tilemap показывает превью сетк
   assert.ok(calls.fills.some((r) => r[1] === 17 && r[2] === 48 && r[3] === 15));
   document.getElementById('tm-cancel').click();
 });
-t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
+t("module-int case 357", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4);
   const red = tsmgr.addTile(ts); red.grid[0][0] = [200, 0, 0, 255];
@@ -3268,7 +3275,7 @@ t('tilemap: merge Tilemap-слоёв сохраняет Tilemap', () => {
   assert.equal(S.layers[0].tilemap.cells[0].tileId, red.id); assert.equal(S.layers[0].tilemap.cells[1].tileId, blue.id);
   assert.deepEqual(S.layers[0].grid[0][0], [200, 0, 0, 255]); assert.deepEqual(S.layers[0].grid[0][4], [0, 0, 200, 255]);
 });
-t('tilemap: merge Tilemap-слоёв объединяет палитры и композиты без дублей', () => {
+t("module-int case 358", () => {
   resetWH(8, 4); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const lowTs = tsmgr.createTileset('low', 4, 4), topTs = tsmgr.createTileset('top', 4, 4);
   const red = tsmgr.addTile(lowTs); red.grid[0][0] = [200, 0, 0, 255];
@@ -3291,7 +3298,7 @@ t('tilemap: merge Tilemap-слоёв объединяет палитры и ко
   assert.deepEqual(c0.grid[0][0], [100, 0, 100, 255]);
   assert.equal(c1.id, greenDup.id);
 });
-t('tilemap: Tileset-панель следует за активным Tilemap-слоем', () => {
+t("module-int case 359", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null; S.tileset = { on: false, open: false };
   tilePalette.mount(); tmode.mount();
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L);
@@ -3303,7 +3310,7 @@ t('tilemap: Tileset-панель следует за активным Tilemap-с
   S.cur = 0; bus.emit('layer-active');
   assert.equal(S.tileset.on, false); assert.equal(S.tileset.open, false); assert.ok(panel.classList.contains('closed'));
 });
-t('tilemap: уход с Tilemap возвращает стабилизацию и обычный инструмент', () => {
+t("module-int case 360", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.stabOn = true; S.tilesetPrev = null; S.tileset = { on: false, open: false };
   tilePalette.mount(); tmode.mount();
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -3312,7 +3319,7 @@ t('tilemap: уход с Tilemap возвращает стабилизацию и
   S.cur = 0; bus.emit('layer-active');
   assert.equal(S.stabOn, true); assert.equal(S.tool, 'pencil');
 });
-t('tilemap: фон или эффект не держат Tileset-панель открытой', () => {
+t("module-int case 361", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; S.tilesetPrev = null; S.tileset = { on: false, open: false };
   tilePalette.mount(); tmode.mount();
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -3322,16 +3329,16 @@ t('tilemap: фон или эффект не держат Tileset-панель о
   bus.emit('layer-active'); assert.equal(S.tileset.on, false);
   S.layers[S.cur].effects = []; S.fxCur = null;
 });
-t('tilemap: Edit All Tiles на пустой клетке автоматически переключается на Draw on Tile', () => {
+t("module-int case 362", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
-  tilePaint(0, 0); // красим по пустой клетке
-  assert.equal(S.tileAutoMode, 'auto'); // Edit All Tiles не работает на пустой → включился Draw on Tile
-  assert.equal(ts.tiles.length, 1); // тайл создан и в палитре
+  tilePaint(0, 0);
+  assert.equal(S.tileAutoMode, 'auto');
+  assert.equal(ts.tiles.length, 1);
   S.tileset = { on: false };
 });
-t('tilemap: контекст-меню Tilemap-клетки работает без Tileset mode', () => {
+t("module-int case 363", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1; tmap.setCell(S.cur, 0, 0, { tileId: tile.id });
@@ -3341,9 +3348,9 @@ t('tilemap: контекст-меню Tilemap-клетки работает бе
   input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
   input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 1 });
   m = document.getElementById('tile-cctx');
-  assert.ok(m && m.classList.contains('on')); // меню есть
+  assert.ok(m && m.classList.contains('on'));
   const labels = [...m.querySelectorAll('button')].map((b) => b.textContent);
-  assert.ok(!labels.includes(i18n.t('tile.addToSet'))); // но без Add tile
+  assert.ok(!labels.includes(i18n.t('tile.addToSet')));
   assert.deepEqual(labels, [i18n.t('tile.flipH'), i18n.t('tile.flipV'), i18n.t('tile.rot90'), i18n.t('tile.select'), i18n.t('tile.fill'), i18n.t('tile.clearCell')]);
   const rot = [...m.querySelectorAll('button')].find((b) => b.textContent === i18n.t('tile.rot90'));
   assert.ok(rot); rot.click(); undo();
@@ -3352,7 +3359,7 @@ t('tilemap: контекст-меню Tilemap-клетки работает бе
   assert.deepEqual(tile.grid[0][0], [1, 2, 3, 255]); assert.deepEqual(rotated.grid[0][3], [1, 2, 3, 255]);
   S.tileset = { on: false, open: false };
 });
-t('tilemap: Clear cell чистит экземпляр, не удаляя тайл из палитры', () => {
+t("module-int case 364", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [1, 2, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 2); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -3363,7 +3370,7 @@ t('tilemap: Clear cell чистит экземпляр, не удаляя тай
   input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 45, pointerId: 1 });
   input.up({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 45, pointerId: 1 });
   m = document.getElementById('tile-cctx');
-  assert.ok(m && m.classList.contains('on')); // пустая клетка Tilemap всё равно выбирается
+  assert.ok(m && m.classList.contains('on'));
   assert.deepEqual(S.tileSel, { li: S.cur, x0: 0, y0: 1, x1: 0, y1: 1 });
   m.classList.remove('on');
   input.down({ pointerType: 'mouse', button: 2, clientX: 5, clientY: 5, pointerId: 2 });
@@ -3386,13 +3393,13 @@ function tmSetup(tw) { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.grid.
   tmap.setCell(S.cur, 0, 0, { tileId: tile.id }); tmap.setCell(S.cur, 1, 0, { tileId: tile.id });
   S.tileset = { on: true }; S.tilePattern = null; S.tileRandom = false; return { ts, tile, L }; }
 
-t('tilemap: Edit All Tiles пишет в source — обновляются все экземпляры', () => {
+t("module-int case 365", () => {
   const { tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [10, 20, 30];
   assert.ok(tilePaint(0, 0));
-  assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]); // правка ушла в source
-  assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]); // оба экземпляра
+  assert.deepEqual(tile.grid[0][0], [10, 20, 30, 255]);
+  assert.deepEqual(L.grid[0][0], [10, 20, 30, 255]); assert.deepEqual(L.grid[0][4], [10, 20, 30, 255]);
 });
-t('tilemap: Edit All Tiles использует реальный размер кисти', () => {
+t("module-int case 366", () => {
   const { tile } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.brushes.pencil.size = 3; S.active = [2, 3, 4];
   assert.ok(tilePaint(1, 1));
   assert.deepEqual(tile.grid[0][0], [2, 3, 4, 255]);
@@ -3400,7 +3407,7 @@ t('tilemap: Edit All Tiles использует реальный размер к
   assert.deepEqual(tile.grid[2][2], [2, 3, 4, 255]);
   assert.equal(tile.grid[3][3], null);
 });
-t('tilemap: Draw on Tile создаёт локальный вариант занятой клетки', () => {
+t("module-int case 367", () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [9, 9, 9];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
   const localId = L.tilemap.cells[0].tileId, local = tsmgr.getTile(ts, localId);
@@ -3412,13 +3419,13 @@ t('tilemap: Draw on Tile создаёт локальный вариант зан
   assert.equal(ts.tiles.length, before + 1); assert.equal(L.tilemap.cells[0].tileId, localId);
   assert.deepEqual(local.grid[0][1], [8, 8, 8, 255]);
 });
-t('tilemap: Draw on Tile не оставляет дубль, если версия не изменилась', () => {
+t("module-int case 368", () => {
   const { ts, tile, L } = tmSetup(4); S.tool = 'pencil'; S.tileAutoMode = 'auto'; S.active = [1, 1, 1];
   const before = ts.tiles.length; assert.ok(tilePaint(0, 0));
   assert.equal(ts.tiles.length, before); assert.equal(L.tilemap.cells[0].tileId, tile.id);
   assert.equal(L.tilemap.cells[0].local, undefined);
 });
-t('tilemap: Draw on Tile на пустой клетке создаёт непустой тайл и оставляет его в tileset', () => {
+t("module-int case 369", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
   S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
@@ -3426,7 +3433,7 @@ t('tilemap: Draw on Tile на пустой клетке создаёт непу�
   assert.ok(tilePaint(0, 0)); assert.equal(ts.tiles.length, 1);
   assert.equal(L.tilemap.cells[0].tileId, ts.tiles[0].id); assert.deepEqual(ts.tiles[0].grid[0][0], [8, 7, 6, 255]);
 });
-t('tilemap: Draw on Tile на пустой клетке использует реальный размер кисти', () => {
+t("module-int case 370", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), L = tmap.makeTilemapLayer('tm', ts.id, 2, 1);
   S.layers.push(L); S.cur = S.layers.length - 1; S.tileset = { on: true };
@@ -3437,7 +3444,7 @@ t('tilemap: Draw on Tile на пустой клетке использует р�
   assert.deepEqual(ts.tiles[0].grid[2][2], [7, 6, 5, 255]);
   assert.equal(ts.tiles[0].grid[3][3], null);
 });
-t('tilemap: Rotate Selection добавляет повернутую версию в палитру', () => {
+t("module-int case 371", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts);
   tile.grid[0][0] = [1, 1, 1, 255]; tile.grid[1][0] = [2, 2, 2, 255];
@@ -3449,7 +3456,7 @@ t('tilemap: Rotate Selection добавляет повернутую верси�
   assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); assert.deepEqual(rotated.grid[0][3], [1, 1, 1, 255]);
   assert.deepEqual(rotated.grid[0][2], [2, 2, 2, 255]);
 });
-t('tilemap: Flip Selection добавляет отраженную версию в палитру', () => {
+t("module-int case 372", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4), tile = tsmgr.addTile(ts); tile.grid[0][0] = [3, 3, 3, 255];
   const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
@@ -3459,45 +3466,45 @@ t('tilemap: Flip Selection добавляет отраженную версию 
   assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id); assert.equal(L.tilemap.cells[0].flipX, false);
   assert.deepEqual(tile.grid[0][0], [3, 3, 3, 255]); assert.deepEqual(flipped.grid[0][3], [3, 3, 3, 255]);
 });
-t('tilemap: пустая клетка → тайл; стёртая в ноль → не создаётся', () => {
+t("module-int case 373", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'pencil'; S.tileAutoMode = 'manual'; S.active = [5, 5, 5];
-  tilePaint(0, 0); assert.equal(ts.tiles.length, 1); // в пустой клетке создан тайл
+  tilePaint(0, 0); assert.equal(ts.tiles.length, 1);
   const id = L.tilemap.cells[0].tileId; S.active = [6, 6, 6]; tilePaint(1, 0);
   assert.equal(ts.tiles.length, 1); assert.equal(L.tilemap.cells[0].tileId, id); assert.deepEqual(tsmgr.getTile(ts, id).grid[0][1], [6, 6, 6, 255]);
-  S.tool = 'eraser'; tilePaint(4, 0); assert.equal(ts.tiles.length, 1); // стёртая пустая клетка нового тайла не дала
+  S.tool = 'eraser'; tilePaint(4, 0); assert.equal(ts.tiles.length, 1);
 });
-t('tilemap: трансформ клетки меняет экземпляр, не source', () => {
+t("module-int case 374", () => {
   const { ts, tile, L } = tmSetup(4); tile.grid[0][1] = [2, 2, 2, 255]; S.tileSel = { li: S.cur, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.cellFlipH();
   const id = L.tilemap.cells[0].tileId, flipped = tsmgr.getTile(ts, id);
   assert.equal(ts.tiles.length, 2); assert.notEqual(id, tile.id);
-  assert.equal(L.tilemap.cells[0].flipX, false); assert.equal(L.tilemap.cells[1].tileId, tile.id); // только эта клетка
-  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]); // source не тронут
+  assert.equal(L.tilemap.cells[0].flipX, false); assert.equal(L.tilemap.cells[1].tileId, tile.id);
+  assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]);
   assert.deepEqual(flipped.grid[0][3], [1, 1, 1, 255]); assert.deepEqual(flipped.grid[0][2], [2, 2, 2, 255]);
 });
-t('tilemap: Delete Tile очищает все экземпляры', () => {
+t("module-int case 375", () => {
   const { ts, tile, L } = tmSetup(4); tops.removeTile(ts, tile.id);
   assert.equal(ts.tiles.length, 0); assert.equal(L.tilemap.cells[0], null); assert.equal(L.tilemap.cells[1], null);
 });
-t('tilemap: кнопка Clear очищает карту, а не только пиксельный кеш', () => {
+t("module-int case 376", () => {
   const { ts, tile, L } = tmSetup(4); layers.mount();
   document.getElementById('lay-clean').click();
   assert.ok(L.tilemap.cells.every((c) => c === null));
   assert.equal(L.grid[0][0], null);
-  tmap.rasterLayer(S.cur); // повторная пересборка после клика по холсту не должна вернуть тайл
+  tmap.rasterLayer(S.cur);
   assert.equal(L.grid[0][0], null);
   assert.equal(ts.tiles.length, 1);
   assert.deepEqual(tile.grid[0][0], [1, 1, 1, 255]);
 });
-t('tileset: addTileUnique не дублирует одинаковые тайлы', () => {
+t("module-int case 377", () => {
   const ts = tsmgr.createTileset('t', 1, 1); const g = [[[1, 2, 3, 255]]];
   const a = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
   const b = tsmgr.addTileUnique(ts, g.map((r) => r.map((c) => c.slice())));
   assert.equal(a.added, true); assert.equal(b.added, false); assert.equal(b.tile, a.tile);
 });
-t('tileset-manager: пустой тайлсет не сохраняется', () => { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.activeTile = null;
+t("module-int case 378", () => { resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.activeTile = null;
   const ts = tsmgr.createTileset('empty', 4, 4);
   const keep = { id: 1, name: 'keep', tileW: 1, tileH: 1, tiles: [], groups: [], tileSeq: 0 };
   localStorage.setItem('tilesetsLib', JSON.stringify({ keep }));
@@ -3505,7 +3512,7 @@ t('tileset-manager: пустой тайлсет не сохраняется', ()
   assert.deepEqual(JSON.parse(localStorage.getItem('tilesetsLib')), { keep });
   assert.equal(document.getElementById('toast').textContent, i18n.t('toast.tilesetEmpty'));
 });
-t('tile-brush: паттерн штампует выровненно по сетке', () => {
+t("module-int case 379", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 1, 1); const t1 = tsmgr.addTile(ts), t2 = tsmgr.addTile(ts);
   t1.grid[0][0] = [1, 1, 1, 255]; t2.grid[0][0] = [2, 2, 2, 255];
@@ -3515,16 +3522,16 @@ t('tile-brush: паттерн штампует выровненно по сет�
   assert.equal(L.tilemap.cells[0].tileId, t1.id); assert.equal(L.tilemap.cells[1].tileId, t2.id); S.tilePattern = null;
 });
 
-t('tilemap: заливка работает на одну клетку, не на весь слой', () => {
+t("module-int case 380", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4); const L = tmap.makeTilemapLayer('tm', ts.id, 2, 1); S.layers.push(L); S.cur = S.layers.length - 1;
   S.tileset = { on: true }; S.tool = 'fill'; S.tileAutoMode = 'manual'; S.active = [3, 4, 5];
   for (const gh of globalHandlers()) if (gh.down && gh.down({ gx: 0, gy: 0, e: {} })) { gh.up({ e: {} }); break; }
-  assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null); // залита только клетка 0
+  assert.ok(L.tilemap.cells[0]); assert.equal(L.tilemap.cells[1], null);
   assert.deepEqual(tsmgr.getTile(ts, L.tilemap.cells[0].tileId).grid[0][0], [3, 4, 5, 255]);
   S.tool = 'pencil'; S.tileset = { on: false }; });
 
-t('tilemap: Add to tileset собирает клетку по слоям и не дублирует', () => {
+t("module-int case 381", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   const ts = tsmgr.createTileset('t', 4, 4);
   const ta = tsmgr.addTile(ts); ta.grid[0][0] = [1, 1, 1, 255];
@@ -3534,62 +3541,62 @@ t('tilemap: Add to tileset собирает клетку по слоям и не
   tmap.setCell(i1, 0, 0, { tileId: ta.id }); tmap.setCell(i2, 0, 0, { tileId: tb.id });
   S.cur = i2; S.marked = new Set([i1]); S.tileSel = { li: i2, x0: 0, y0: 0, x1: 0, y1: 0 };
   const before = ts.tiles.length; tmode.addToSet();
-  assert.equal(ts.tiles.length, before + 1); // композит обоих слоёв добавлен
+  assert.equal(ts.tiles.length, before + 1);
   const added = ts.tiles[ts.tiles.length - 1];
   assert.deepEqual(added.grid[0][0], [1, 1, 1, 255]); assert.deepEqual(added.grid[3][3], [2, 2, 2, 255]);
-  tmode.addToSet(); assert.equal(ts.tiles.length, before + 1); // дубль не добавляется
+  tmode.addToSet(); assert.equal(ts.tiles.length, before + 1);
   S.marked = new Set(); });
 
-t('tilemap: Add to tileset из обычного слоя берёт пиксели клетки', () => {
-  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4; // активен обычный пиксельный слой
-  S.layers[0].grid[1][1] = [7, 8, 9, 255]; // пиксель в клетке (0,0)
+t("module-int case 382", () => {
+  resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
+  S.layers[0].grid[1][1] = [7, 8, 9, 255];
   S.cur = 0; S.marked = new Set(); S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.addToSet();
   const ts = S.tilesets[0]; assert.ok(ts); assert.equal(ts.tileW, 4); assert.equal(ts.tiles.length, 1);
-  assert.deepEqual(ts.tiles[0].grid[1][1], [7, 8, 9, 255]); // клетка обычного слоя стала тайлом
+  assert.deepEqual(ts.tiles[0].grid[1][1], [7, 8, 9, 255]);
 });
 
-t('tilemap: stampTileId — одиночный/паттерн/зафиксированный random', () => {
+t("module-int case 383", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0;
   const ts = tsmgr.createTileset('t', 1, 1); const a = tsmgr.addTile(ts), b = tsmgr.addTile(ts);
   S.tilePattern = null; S.tileRandom = false; S.activeTile = { tilesetId: ts.id, tileId: a.id };
-  assert.equal(tmap.stampTileId(0, 0), a.id); // одиночный
+  assert.equal(tmap.stampTileId(0, 0), a.id);
   S.tilePattern = { w: 2, h: 1, ids: [a.id, b.id] };
-  assert.equal(tmap.stampTileId(0, 0), a.id); assert.equal(tmap.stampTileId(1, 0), b.id); // паттерн по сетке
+  assert.equal(tmap.stampTileId(0, 0), a.id); assert.equal(tmap.stampTileId(1, 0), b.id);
   S.tileRandom = true; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = null;
   const oldRandom = Math.random; Math.random = () => 0.99;
   try { assert.equal(tmap.stampTileId(0, 0), b.id); assert.equal(tmap.stampTileId(1, 0), b.id); } finally { Math.random = oldRandom; }
   S.tilePattern = null; S.tileRandom = true; S.tileMarks = new Set([a.id, b.id]); S.tileRandomNext = null;
   const r1 = tmap.stampTileId(0, 0); assert.ok(r1 === a.id || r1 === b.id);
-  assert.equal(tmap.stampTileId(0, 0), r1); // random зафиксирован → превью == штамп
+  assert.equal(tmap.stampTileId(0, 0), r1);
   S.tileRandom = false; S.tileMarks = new Set();
 });
-t('tilemap: tile.flipH/flipV флипают флаги кисти (для превью)', () => {
+t("module-int case 384", () => {
   S.tileFlags = { flipX: false, flipY: false, diagonalFlip: false, rotation: 0 };
   actions.run('tile.flipH'); assert.equal(S.tileFlags.flipX, true);
   actions.run('tile.flipV'); assert.equal(S.tileFlags.flipY, true);
   actions.run('tile.flipH'); assert.equal(S.tileFlags.flipX, false);
 });
 
-t('tilemap: удаление Tile-слоя НЕ удаляет тайлы из палитры', () => {
+t("module-int case 385", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
-  const tsA = tsmgr.createTileset('A', 8, 8), tsB = tsmgr.createTileset('B', 4, 4); // несколько тайлсетов
+  const tsA = tsmgr.createTileset('A', 8, 8), tsB = tsmgr.createTileset('B', 4, 4);
   const tile = tsmgr.addTile(tsB);
   const L = tmap.makeTilemapLayer('tm', tsB.id, 2, 2); S.layers.push(L); S.cur = S.layers.indexOf(L);
   S.activeTile = { tilesetId: tsB.id, tileId: tile.id };
   lops.deleteLayerRef(L);
-  assert.ok(S.tilesets.includes(tsB)); assert.equal(tsB.tiles.length, 1); // тайлсет и тайл целы
-  assert.equal(tops.activeTileset(), tsB); // палитра по-прежнему показывает тайлсет активного тайла, не tsA
+  assert.ok(S.tilesets.includes(tsB)); assert.equal(tsB.tiles.length, 1);
+  assert.equal(tops.activeTileset(), tsB);
   assert.notEqual(tops.activeTileset(), tsA);
 });
 
-t('tilemap: Add tile после изменения слоёв даёт новый тайл (дедуп по контенту)', () => {
+t("module-int case 386", () => {
   resetWH(8, 8); S.tilesets = []; S.tilesetSeq = 0; S.tileGrid.size = 4;
   S.layers[0].grid[0][0] = [1, 1, 1, 255]; S.cur = 0; S.tileSel = { li: 0, x0: 0, y0: 0, x1: 0, y1: 0 };
   tmode.addToSet(); const ts = S.tilesets[0]; assert.equal(ts.tiles.length, 1);
-  tmode.addToSet(); assert.equal(ts.tiles.length, 1); // тот же контент → дубль не добавляется
-  S.layers[0].grid[1][1] = [2, 2, 2, 255]; // перерисовали клетку
-  tmode.addToSet(); assert.equal(ts.tiles.length, 2); // новый контент → новый тайл
+  tmode.addToSet(); assert.equal(ts.tiles.length, 1);
+  S.layers[0].grid[1][1] = [2, 2, 2, 255];
+  tmode.addToSet(); assert.equal(ts.tiles.length, 2);
 });
 
-console.log(`\nВсе ${n} интеграционных тестов прошли ✓`);
+console.log(`\nAll ${n} integration tests passed`);

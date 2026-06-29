@@ -1,6 +1,6 @@
-// Headless-окружение: jsdom + фейковый 2D-контекст canvas.
-// Возвращает { window, run(code) } — run исполняет код в одном лексическом scope
-// (как классические <script> в браузере, делящие общий global lexical environment).
+
+
+
 import { JSDOM } from 'jsdom';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +33,7 @@ export function makeDom() {
   proto.getContext = function () { if (!this.__ctx) { this.__ctx = fakeCtx(); this.__ctx.canvas = this; } return this.__ctx; };
   proto.toDataURL = () => 'data:image/png;base64,';
   proto.toBlob = (cb) => cb(new window.Blob([], { type: 'image/png' }));
-  window.HTMLAnchorElement.prototype.click = () => {}; // экспорт делает download-ссылку — гасим попытку навигации
+  window.HTMLAnchorElement.prototype.click = () => {};
 
   window.requestAnimationFrame = (cb) => { cb(0); return 0; };
   window.cancelAnimationFrame = () => {};

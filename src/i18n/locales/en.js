@@ -45,6 +45,7 @@ export const en = {
   'new.addCustom': 'Custom size', 'new.lockRatio': 'Keep aspect ratio',
   'new.sprites': 'Sprites', 'new.gameFrames': 'Frames', 'new.saved': 'Saved', 'new.custom': 'Custom',
   'new.savePreset': 'Save preset', 'new.savedEmpty': 'It is empty', 'new.colorMode': 'Color mode',
+  'new.modeRgba': 'RGBA', 'new.modeGray': 'Grayscale',
   'new.background': 'Canvas background', 'new.bgTransparent': 'Transparent', 'new.bgWhite': 'White', 'new.bgBlack': 'Black',
   'tilemap.tileset': 'Tileset', 'tilemap.newTileset': 'New Tileset', 'tilemap.saved': 'Presets',
   'tilemap.savedEmpty': 'No saved presets', 'tilemap.settings': 'Tilemap settings', 'tilemap.custom': 'Custom', 'tilemap.name': 'Name',
